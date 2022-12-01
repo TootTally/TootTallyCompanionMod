@@ -218,7 +218,7 @@ namespace TootTally
                 string songFilePath = Path.Combine(Globals.ChartFolders[trackRef], "song.tmb");
                 LogInfo($"TrackRef: {GlobalVariables.chosen_track}");
                 LogInfo($"Letter Score: {__instance.letterscore}");
-                LogInfo($"Score: {__instance.totalscore}");
+                LogInfo($"Score: {GlobalVariables.gameplay_scoretotal}");
                 LogInfo($"Max Combo: {maxCombo}");
                 LogInfo($"Nasties: {GlobalVariables.gameplay_notescores[0]}");
                 LogInfo($"Mehs: {GlobalVariables.gameplay_notescores[1]}");
@@ -230,7 +230,7 @@ namespace TootTally
                 ScoreSubmission score = new();
                 score.isCustom = isCustom;
                 score.letterScore = __instance.letterscore;
-                score.score = __instance.totalscore;
+                score.score = GlobalVariables.gameplay_scoretotal;
                 score.noteTally = GlobalVariables.gameplay_notescores;
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
