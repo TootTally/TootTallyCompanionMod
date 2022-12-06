@@ -25,6 +25,7 @@ namespace TootTally
         internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
+        public const int BUILDDATE = 20221205;
         public const string APIURL = "https://toottally.com";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
@@ -77,6 +78,7 @@ namespace TootTally
             // }
 
             Harmony.CreateAndPatchAll(typeof(SongSelect));
+            Harmony.CreateAndPatchAll(typeof(ReplaySystem));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -235,6 +237,32 @@ namespace TootTally
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
                 __instance.StartCoroutine(score.SubmitScore());
+            }
+        }
+    
+        public static class ReplaySystem
+        {
+            internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
+            internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
+            internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
+            internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
+            private static List<byte> replay = new List<byte>();
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void StartReplay()
+            {
+                replay.Clear();
+                LogInfo("Starting replay!");
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
+            [HarmonyPostfix]
+            public static void RecordReplay(GameController __instance)
+            {
+                UInt32 timeDelta = (UInt32) Mathf.FloorToInt(Time.deltaTime * 1000);
+                float pointerPos = __instance.pointer.transform.localPosition.y;
+                bool isTooting = __instance.noteplaying;
             }
         }
     }
