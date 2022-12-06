@@ -112,7 +112,6 @@ namespace TootTally
                 apiKey = Plugin.Instance.APIKey.Value;
                 string apiLink = $"{APIURL}/api/submitscore/";
                 string jsonified = JsonUtility.ToJson(this);
-                LogDebug($"Score JSON: {jsonified}");
                 var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
 
                 DownloadHandler dlHandler = new DownloadHandler();
