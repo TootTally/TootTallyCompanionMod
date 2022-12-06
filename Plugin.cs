@@ -103,6 +103,7 @@ namespace TootTally
             public int[] noteTally; // [nasties, mehs, okays, nices, perfects]
             public string songHash;
             public int maxCombo;
+            public string gameVersion;
 
             public IEnumerator<UnityWebRequestAsyncOperation> SubmitScore()
             {
@@ -234,6 +235,7 @@ namespace TootTally
                 score.noteTally = GlobalVariables.gameplay_notescores;
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
+                score.gameVersion = GlobalVariables.version;
                 __instance.StartCoroutine(score.SubmitScore());
             }
         }
