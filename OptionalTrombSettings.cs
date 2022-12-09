@@ -21,11 +21,11 @@ namespace TootTally
             }
         }
 
-        public static object? GetConfigPage(string pageName)
+        public static object GetConfigPage(string pageName)
         {
             try
             { 
-                Type? trombConfig = null;
+                Type trombConfig = null;
                 trombConfig = Type.GetType("TrombSettings.TrombConfig, TrombSettings");
                 if (trombConfig == null)
                 {
@@ -51,7 +51,7 @@ namespace TootTally
         {
             try
             {
-                Type? clazz = Type.GetType("TrombSettings.StepSliderConfig, TrombSettings");
+                Type clazz = Type.GetType("TrombSettings.StepSliderConfig, TrombSettings");
                 if (clazz == null)
                     return;
                 var ctor = clazz.GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float), typeof(bool), typeof(ConfigEntryBase) });
@@ -60,7 +60,7 @@ namespace TootTally
                 if (slider != null)
                 {
                     // Find "public new void Add(BaseConfig configEntry)"
-                    Type? baseConfigClass = Type.GetType("TrombSettings.BaseConfig, TrombSettings");
+                    Type baseConfigClass = Type.GetType("TrombSettings.BaseConfig, TrombSettings");
                     var addMethod = page.GetType().GetMethod("Add", new Type[] { baseConfigClass });
                     addMethod.Invoke(page, new object[] { slider });
                 }

@@ -1,12 +1,13 @@
 ﻿using BepInEx;
-using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
+using SimpleJSON;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using TrombLoader.Helpers;
 
@@ -25,7 +26,7 @@ namespace TootTally
         internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
-        public const string APIURL = "https://toottally.com";
+        public const string APIURL = "http://localhost";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
 
@@ -84,11 +85,48 @@ namespace TootTally
         public class ChartSubmission
         {
             public string tmb;
+            public bool is_official;
 
-            public static ChartSubmission GenerateChartSubmission(string songFilePath)
+            public static ChartSubmission GenerateChartSubmission(bool isCustom, string songFilePath)
             {
                 ChartSubmission chart = new();
-                chart.tmb = File.ReadAllText(songFilePath, System.Text.Encoding.UTF8);
+                if (isCustom)
+                {
+                    chart.tmb = File.ReadAllText(songFilePath, System.Text.Encoding.UTF8);
+                }
+                else
+                {
+                    var singleTrackData = GlobalVariables.chosen_track_data;
+                    var tmb = new JSONObject();
+                    tmb["name"] = singleTrackData.trackname_long;
+                    tmb["shortName"] = singleTrackData.trackname_short;
+                    tmb["trackRef"] = singleTrackData.trackref;
+                    tmb["year"] = int.Parse(singleTrackData.year);
+                    tmb["author"] = singleTrackData.artist;
+                    tmb["genre"] = singleTrackData.genre;
+                    tmb["description"] = singleTrackData.desc;
+                    tmb["difficulty"] = singleTrackData.difficulty;
+                    using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
+                    {
+                        var binaryFormatter = new BinaryFormatter();
+                        var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
+                        var levelData = new JSONArray();
+                        savedLevel.savedleveldata.ForEach(arr =>
+                        {
+                            var noteData = new JSONArray();
+                            foreach (var note in arr) noteData.Add(note);
+                            levelData.Add(noteData);
+                        });
+                        tmb["savednotespacing"] = savedLevel.savednotespacing;
+                        tmb["endpoint"] = savedLevel.endpoint;
+                        tmb["timesig"] = savedLevel.timesig;
+                        tmb["tempo"] = savedLevel.tempo;
+                        tmb["notes"] = levelData;
+                    }
+                    LogDebug(tmb.ToString());
+                    chart.tmb = tmb.ToString();
+                }
+                chart.is_official = !isCustom;
                 return chart;
             }
         }
@@ -106,7 +144,7 @@ namespace TootTally
 
             public IEnumerator<UnityWebRequestAsyncOperation> SubmitScore()
             {
-                apiKey = Plugin.Instance.APIKey.Value;
+                apiKey = Instance.APIKey.Value;
                 string apiLink = $"{APIURL}/api/submitscore/";
                 string jsonified = JsonUtility.ToJson(this);
                 LogDebug($"Score JSON: {jsonified}");
@@ -130,15 +168,14 @@ namespace TootTally
 
         public static class SongSelect
         {
-            internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
-            internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
-            internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
-            internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
+            internal static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
+            internal static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
+            internal static void LogError(string msg) => Instance.Logger.LogError(msg);
+            internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
             private static string songHash;
-            private static string songFilePath;
             private static int maxCombo;
             
-            public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB()
+            public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath)
             {
                 bool inDatabase = false;
                 UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
@@ -147,12 +184,10 @@ namespace TootTally
                 if (webRequest.isNetworkError)
                 {
                     LogError("Network error detected, will not attempt anything");
-                    inDatabase = false;
                 }
                 else if (webRequest.isHttpError)
                 {
                     LogInfo("HTTP error returned, assuming not in database");
-                    inDatabase = false;
                 }
                 else
                 {
@@ -160,9 +195,9 @@ namespace TootTally
                     inDatabase = true;
                 }
 
-                if (Plugin.Instance.AllowTMBUploads.Value && !inDatabase)
+                if (Instance.AllowTMBUploads.Value && !inDatabase)
                 {
-                    var chart = ChartSubmission.GenerateChartSubmission(songFilePath);
+                    var chart = ChartSubmission.GenerateChartSubmission(isCustom, songFilePath);
                     string apiLink = $"{APIURL}/api/upload/";
                     string jsonified = JsonUtility.ToJson(chart);
                     LogDebug($"Chart JSON: {jsonified}");
@@ -190,13 +225,19 @@ namespace TootTally
             {
                 string trackRef = GlobalVariables.chosen_track;
                 bool isCustom = Globals.IsCustomTrack(trackRef);
-                if (!isCustom) return; // Official chart, unsupported for now.
-                songFilePath = Path.Combine(Globals.ChartFolders[trackRef], "song.tmb");
+                string songFilePath = GetSongFilePath(isCustom, trackRef);
                 LogInfo($"Hashing {songFilePath}");
-                songHash = Plugin.Instance.CalcFileHash(songFilePath);
+                songHash = Instance.CalcFileHash(songFilePath);
                 LogInfo($"Calculated hash: {songHash}");
-                __instance.StartCoroutine(CheckHashInDB());
+                __instance.StartCoroutine(CheckHashInDB(isCustom, songFilePath));
                 maxCombo = 0; // Reset tracked maxCombo
+            }
+
+            public static string GetSongFilePath(bool isCustom, string trackRef)
+            {
+                return isCustom
+                    ? Path.Combine(Globals.ChartFolders[trackRef], "song.tmb")
+                    : $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.updateHighestCombo))]
@@ -214,8 +255,6 @@ namespace TootTally
                 if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
                 string trackRef = GlobalVariables.chosen_track;
                 bool isCustom = Globals.IsCustomTrack(trackRef);
-                if (!isCustom) return; // Official chart, unsupported for now.
-                string songFilePath = Path.Combine(Globals.ChartFolders[trackRef], "song.tmb");
                 LogInfo($"TrackRef: {GlobalVariables.chosen_track}");
                 LogInfo($"Letter Score: {__instance.letterscore}");
                 LogInfo($"Score: {GlobalVariables.gameplay_scoretotal}");
