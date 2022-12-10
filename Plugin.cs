@@ -27,6 +27,7 @@ namespace TootTally
         internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
+        public const int BUILDDATE = 20221206;
         public const string APIURL = "https://toottally.com";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
@@ -143,13 +144,14 @@ namespace TootTally
             public int[] noteTally; // [nasties, mehs, okays, nices, perfects]
             public string songHash;
             public int maxCombo;
+            public string gameVersion;
+            public int modVersion;
 
             public IEnumerator<UnityWebRequestAsyncOperation> SubmitScore()
             {
                 apiKey = Instance.APIKey.Value;
                 string apiLink = $"{APIURL}/api/submitscore/";
                 string jsonified = JsonUtility.ToJson(this);
-                LogDebug($"Score JSON: {jsonified}");
                 var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
 
                 DownloadHandler dlHandler = new DownloadHandler();
@@ -275,6 +277,8 @@ namespace TootTally
                 score.noteTally = GlobalVariables.gameplay_notescores;
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
+                score.gameVersion = GlobalVariables.version;
+                score.modVersion = Plugin.BUILDDATE;
                 __instance.StartCoroutine(score.SubmitScore());
             }
 
