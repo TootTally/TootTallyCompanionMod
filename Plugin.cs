@@ -5,8 +5,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 using SimpleJSON;
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using TrombLoader.Helpers;
@@ -26,7 +27,7 @@ namespace TootTally
         internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
-        public const string APIURL = "http://localhost";
+        public const string APIURL = "https://toottally.com";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
 
@@ -87,7 +88,7 @@ namespace TootTally
             public string tmb;
             public bool is_official;
 
-            public static ChartSubmission GenerateChartSubmission(bool isCustom, string songFilePath)
+            public static ChartSubmission GenerateChartSubmission(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
             {
                 ChartSubmission chart = new();
                 if (isCustom)
@@ -96,12 +97,14 @@ namespace TootTally
                 }
                 else
                 {
-                    var singleTrackData = GlobalVariables.chosen_track_data;
+                    if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
                     var tmb = new JSONObject();
                     tmb["name"] = singleTrackData.trackname_long;
                     tmb["shortName"] = singleTrackData.trackname_short;
                     tmb["trackRef"] = singleTrackData.trackref;
-                    tmb["year"] = int.Parse(singleTrackData.year);
+                    int year = 0;
+                    int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
+                    tmb["year"] = year;
                     tmb["author"] = singleTrackData.artist;
                     tmb["genre"] = singleTrackData.genre;
                     tmb["description"] = singleTrackData.desc;
@@ -123,7 +126,6 @@ namespace TootTally
                         tmb["tempo"] = savedLevel.tempo;
                         tmb["notes"] = levelData;
                     }
-                    LogDebug(tmb.ToString());
                     chart.tmb = tmb.ToString();
                 }
                 chart.is_official = !isCustom;
@@ -175,7 +177,7 @@ namespace TootTally
             private static string songHash;
             private static int maxCombo;
             
-            public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath)
+            public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
             {
                 bool inDatabase = false;
                 UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
@@ -197,7 +199,7 @@ namespace TootTally
 
                 if (Instance.AllowTMBUploads.Value && !inDatabase)
                 {
-                    var chart = ChartSubmission.GenerateChartSubmission(isCustom, songFilePath);
+                    var chart = ChartSubmission.GenerateChartSubmission(isCustom, songFilePath, singleTrackData);
                     string apiLink = $"{APIURL}/api/upload/";
                     string jsonified = JsonUtility.ToJson(chart);
                     LogDebug($"Chart JSON: {jsonified}");
@@ -274,6 +276,21 @@ namespace TootTally
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
                 __instance.StartCoroutine(score.SubmitScore());
+            }
+
+            //[HarmonyPostfix] [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            public static void UploadBaseSongs(LevelSelectController __instance)
+            {
+                var baseTmbs = Directory.EnumerateFiles($"{Application.streamingAssetsPath}/leveldata", "*.tmb");
+                foreach (var songFilePath in baseTmbs) {
+                    LogInfo($"Hashing {songFilePath}");
+                    songHash = Instance.CalcFileHash(songFilePath);
+                    LogInfo($"Calculated hash: {songHash}");
+                    string tmb = songFilePath.Substring(songFilePath.LastIndexOf('\\') + 1);
+                    string trackRef = tmb.Substring(0, tmb.Length - 4);
+                    var singleTrackData = __instance.alltrackslist.Where(i => i.trackref == trackRef).FirstOrDefault();
+                    __instance.StartCoroutine(CheckHashInDB(false, songFilePath, singleTrackData));
+                }
             }
         }
     }
