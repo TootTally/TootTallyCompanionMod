@@ -87,7 +87,6 @@ namespace TootTally
         public class ChartSubmission
         {
             public string tmb;
-            public bool is_official;
 
             public static ChartSubmission GenerateChartSubmission(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
             {
@@ -129,7 +128,6 @@ namespace TootTally
                     }
                     chart.tmb = tmb.ToString();
                 }
-                chart.is_official = !isCustom;
                 return chart;
             }
         }
