@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Text;
 using TrombLoader.Helpers;
 
 namespace TootTally
@@ -27,7 +28,7 @@ namespace TootTally
         internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
-        public const int BUILDDATE = 20221206;
+        public const int BUILDDATE = 20221213;
         public const string APIURL = "https://toottally.com";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
@@ -83,60 +84,50 @@ namespace TootTally
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
+        public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
+        {
+            if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
+            var tmb = new JSONObject();
+            tmb["name"] = singleTrackData.trackname_long;
+            tmb["shortName"] = singleTrackData.trackname_short;
+            tmb["trackRef"] = singleTrackData.trackref;
+            int year = 0;
+            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
+            tmb["year"] = year;
+            tmb["author"] = singleTrackData.artist;
+            tmb["genre"] = singleTrackData.genre;
+            tmb["description"] = singleTrackData.desc;
+            tmb["difficulty"] = singleTrackData.difficulty;
+            using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
+            {
+                var binaryFormatter = new BinaryFormatter();
+                var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
+                var levelData = new JSONArray();
+                savedLevel.savedleveldata.ForEach(arr =>
+                {
+                    var noteData = new JSONArray();
+                    foreach (var note in arr) noteData.Add(note);
+                    levelData.Add(noteData);
+                });
+                tmb["savednotespacing"] = savedLevel.savednotespacing;
+                tmb["endpoint"] = savedLevel.endpoint;
+                tmb["timesig"] = savedLevel.timesig;
+                tmb["tempo"] = savedLevel.tempo;
+                tmb["notes"] = levelData;
+            }
+            return tmb.ToString();
+        }
+
         [Serializable]
         public class ChartSubmission
         {
             public string tmb;
-
-            public static ChartSubmission GenerateChartSubmission(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
-            {
-                ChartSubmission chart = new();
-                if (isCustom)
-                {
-                    chart.tmb = File.ReadAllText(songFilePath, System.Text.Encoding.UTF8);
-                }
-                else
-                {
-                    if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-                    var tmb = new JSONObject();
-                    tmb["name"] = singleTrackData.trackname_long;
-                    tmb["shortName"] = singleTrackData.trackname_short;
-                    tmb["trackRef"] = singleTrackData.trackref;
-                    int year = 0;
-                    int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-                    tmb["year"] = year;
-                    tmb["author"] = singleTrackData.artist;
-                    tmb["genre"] = singleTrackData.genre;
-                    tmb["description"] = singleTrackData.desc;
-                    tmb["difficulty"] = singleTrackData.difficulty;
-                    using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
-                    {
-                        var binaryFormatter = new BinaryFormatter();
-                        var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                        var levelData = new JSONArray();
-                        savedLevel.savedleveldata.ForEach(arr =>
-                        {
-                            var noteData = new JSONArray();
-                            foreach (var note in arr) noteData.Add(note);
-                            levelData.Add(noteData);
-                        });
-                        tmb["savednotespacing"] = savedLevel.savednotespacing;
-                        tmb["endpoint"] = savedLevel.endpoint;
-                        tmb["timesig"] = savedLevel.timesig;
-                        tmb["tempo"] = savedLevel.tempo;
-                        tmb["notes"] = levelData;
-                    }
-                    chart.tmb = tmb.ToString();
-                }
-                return chart;
-            }
         }
 
         [Serializable]
         public class ScoreSubmission
         {
             public string apiKey;
-            public bool isCustom;
             public string letterScore;
             public int score;
             public int[] noteTally; // [nasties, mehs, okays, nices, perfects]
@@ -180,6 +171,10 @@ namespace TootTally
             public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
             {
                 bool inDatabase = false;
+                string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : GenerateBaseTmb(songFilePath, singleTrackData);
+                LogInfo($"Hashing {songFilePath}");
+                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+                LogInfo($"Calculated hash: {songHash}");
                 UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
                 yield return webRequest.SendWebRequest();
 
@@ -199,7 +194,7 @@ namespace TootTally
 
                 if (Instance.AllowTMBUploads.Value && !inDatabase)
                 {
-                    var chart = ChartSubmission.GenerateChartSubmission(isCustom, songFilePath, singleTrackData);
+                    ChartSubmission chart = new ChartSubmission { tmb = tmb };
                     string apiLink = $"{APIURL}/api/upload/";
                     string jsonified = JsonUtility.ToJson(chart);
                     LogDebug($"Chart JSON: {jsonified}");
@@ -228,9 +223,6 @@ namespace TootTally
                 string trackRef = GlobalVariables.chosen_track;
                 bool isCustom = Globals.IsCustomTrack(trackRef);
                 string songFilePath = GetSongFilePath(isCustom, trackRef);
-                LogInfo($"Hashing {songFilePath}");
-                songHash = Instance.CalcFileHash(songFilePath);
-                LogInfo($"Calculated hash: {songHash}");
                 __instance.StartCoroutine(CheckHashInDB(isCustom, songFilePath));
                 maxCombo = 0; // Reset tracked maxCombo
             }
@@ -256,7 +248,6 @@ namespace TootTally
                 if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
                 if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
                 string trackRef = GlobalVariables.chosen_track;
-                bool isCustom = Globals.IsCustomTrack(trackRef);
                 LogInfo($"TrackRef: {GlobalVariables.chosen_track}");
                 LogInfo($"Letter Score: {__instance.letterscore}");
                 LogInfo($"Score: {GlobalVariables.gameplay_scoretotal}");
@@ -269,14 +260,13 @@ namespace TootTally
                 LogInfo($"Song Hash: {songHash}");
 
                 ScoreSubmission score = new();
-                score.isCustom = isCustom;
                 score.letterScore = __instance.letterscore;
                 score.score = GlobalVariables.gameplay_scoretotal;
                 score.noteTally = GlobalVariables.gameplay_notescores;
                 score.songHash = songHash;
                 score.maxCombo = maxCombo;
                 score.gameVersion = GlobalVariables.version;
-                score.modVersion = Plugin.BUILDDATE;
+                score.modVersion = BUILDDATE;
                 __instance.StartCoroutine(score.SubmitScore());
             }
 
@@ -285,9 +275,6 @@ namespace TootTally
             {
                 var baseTmbs = Directory.EnumerateFiles($"{Application.streamingAssetsPath}/leveldata", "*.tmb");
                 foreach (var songFilePath in baseTmbs) {
-                    LogInfo($"Hashing {songFilePath}");
-                    songHash = Instance.CalcFileHash(songFilePath);
-                    LogInfo($"Calculated hash: {songHash}");
                     string tmb = songFilePath.Substring(songFilePath.LastIndexOf('\\') + 1);
                     string trackRef = tmb.Substring(0, tmb.Length - 4);
                     var singleTrackData = __instance.alltrackslist.Where(i => i.trackref == trackRef).FirstOrDefault();
