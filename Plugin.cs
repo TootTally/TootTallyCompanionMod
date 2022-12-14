@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
+using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -136,7 +137,7 @@ namespace TootTally
             internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
             internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
             internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
-            private static string songHash;
+            public static string songHash { get; private set; }
             private static string songFilePath;
             private static int maxCombo;
             
@@ -246,7 +247,7 @@ namespace TootTally
             internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
             internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
             internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
-            private static List<byte> replay = new List<byte>();
+            private static List<byte[]> replay = new List<byte[]>();
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
@@ -263,6 +264,42 @@ namespace TootTally
                 UInt32 timeDelta = (UInt32) Mathf.FloorToInt(Time.deltaTime * 1000);
                 float pointerPos = __instance.pointer.transform.localPosition.y;
                 bool isTooting = __instance.noteplaying;
+                byte[] toSave = new byte[sizeof(UInt32) + sizeof(float) + sizeof(bool)];
+                byte[] time = BitConverter.GetBytes(timeDelta);
+                byte[] pointer = BitConverter.GetBytes(pointerPos);
+                byte[] toot = BitConverter.GetBytes(isTooting);
+                Buffer.BlockCopy(time, 0, toSave, 0, sizeof(UInt32));
+                Buffer.BlockCopy(pointer, 0, toSave, sizeof(UInt32), sizeof(float));
+                Buffer.BlockCopy(toot, 0, toSave, sizeof(float), sizeof(bool));
+                replay.Add(toSave);
+            }
+
+            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+            [HarmonyPostfix]
+            public static void SaveReplayToFile(PointSceneController __instance)
+            {
+                string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+                // Create Replays directory in case it doesn't exist
+                if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
+
+                string username = "TestUser";
+                DateTimeOffset currentDateTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
+                string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
+                string replayFilename = Path.Combine(replayDir, $"{username} - {currentDateTimeUnix}");
+                byte[] usernameBytes = System.Text.Encoding.UTF8.GetBytes(username);
+                int usernameByteCount = usernameBytes.Length;
+
+                List<byte[]> replayBytes = new();
+                replayBytes.Add(System.Text.Encoding.ASCII.GetBytes("TOOT")); // Magic bytes
+                replayBytes.Add(BitConverter.GetBytes(Plugin.BUILDDATE)); // Build Date Integer
+                replayBytes.Add(BitConverter.GetBytes(usernameByteCount)); // Length of name string
+                replayBytes.Add(usernameBytes); // Player name in bytes
+                replayBytes.Add(System.Text.Encoding.ASCII.GetBytes(SongSelect.songHash)); // Song Hash for song identification
+                // TODO: Add the rest of the format here
+                replayBytes.Add(replay.SelectMany(a => a).ToArray()); // Replay Data
+
+                byte[] replayByteArray = replayBytes.SelectMany(a => a).ToArray();
+                File.WriteAllBytes();
             }
         }
     }
