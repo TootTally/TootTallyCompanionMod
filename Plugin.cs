@@ -299,7 +299,7 @@ namespace TootTally
                 replayBytes.Add(replay.SelectMany(a => a).ToArray()); // Replay Data
 
                 byte[] replayByteArray = replayBytes.SelectMany(a => a).ToArray();
-                File.WriteAllBytes();
+                File.WriteAllBytes(replayFilename, replayByteArray);
             }
         }
     }
