@@ -58,12 +58,12 @@ namespace TootTally
                 return "";
             return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
         }
-        
+
         private void Awake()
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
-            
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
@@ -81,7 +81,7 @@ namespace TootTally
             // }
 
             Harmony.CreateAndPatchAll(typeof(SongSelect));
-            Harmony.CreateAndPatchAll(typeof(ReplaySystem));
+            Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -168,7 +168,7 @@ namespace TootTally
             internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
             public static string songHash { get; private set; }
             private static int maxCombo;
-            
+
             public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
             {
                 bool inDatabase = false;
@@ -275,7 +275,8 @@ namespace TootTally
             public static void UploadBaseSongs(LevelSelectController __instance)
             {
                 var baseTmbs = Directory.EnumerateFiles($"{Application.streamingAssetsPath}/leveldata", "*.tmb");
-                foreach (var songFilePath in baseTmbs) {
+                foreach (var songFilePath in baseTmbs)
+                {
                     string tmb = songFilePath.Substring(songFilePath.LastIndexOf('\\') + 1);
                     string trackRef = tmb.Substring(0, tmb.Length - 4);
                     var singleTrackData = __instance.alltrackslist.Where(i => i.trackref == trackRef).FirstOrDefault();
@@ -283,7 +284,7 @@ namespace TootTally
                 }
             }
         }
-    
+
         public static class ReplaySystem
         {
             internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
@@ -304,7 +305,7 @@ namespace TootTally
             [HarmonyPostfix]
             public static void RecordReplay(GameController __instance)
             {
-                UInt32 timeDelta = (UInt32) Mathf.FloorToInt(Time.deltaTime * 1000);
+                UInt32 timeDelta = (UInt32)Mathf.FloorToInt(Time.deltaTime * 1000);
                 float pointerPos = __instance.pointer.transform.localPosition.y;
                 bool isTooting = __instance.noteplaying;
                 byte[] toSave = new byte[sizeof(UInt32) + sizeof(float) + sizeof(bool)];
@@ -343,6 +344,86 @@ namespace TootTally
 
                 byte[] replayByteArray = replayBytes.SelectMany(a => a).ToArray();
                 File.WriteAllBytes(replayFilename, replayByteArray);
+            }
+        }
+
+
+        public static class ReplaySystemJson
+        {
+            internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
+            internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
+            internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
+            internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
+            private static List<int[]> replayData = new List<int[]>();
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void StartReplay(GameController __instance)
+            {
+                replayData.Clear();
+                LogInfo("Starting replay");
+            }
+
+            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+            [HarmonyPostfix]
+            public static void StopReplay(PointSceneController __instance)
+            {
+                SaveReplayToFile(__instance);
+                LogInfo("Replay finished");
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
+            [HarmonyPostfix]
+            public static void RecordReplay(GameController __instance)
+            {
+                UInt32 timeDelta = (UInt32)Mathf.FloorToInt(Time.deltaTime * 1000);
+                int pointerPos = (int)Math.Round(__instance.pointer.transform.localPosition.y * 100f); //times 100 and convert to int for 2 decimal precision
+                bool isTooting = __instance.noteplaying;
+                replayData.Add(new int[] { (int)timeDelta, pointerPos, isTooting ? 1 : 0 });
+            }
+
+
+            public static void SaveReplayToFile(PointSceneController __instance)
+            {
+                string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+                // Create Replays directory in case it doesn't exist
+                if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
+
+                string username = "TestUser";
+                DateTimeOffset currentDateTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
+                string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
+                string replayFilename = $"{username} - {currentDateTimeUnix}";
+
+                var replayJson = new JSONObject();
+                replayJson["username"] = username;
+                replayJson["date"] = currentDateTimeUnix;
+                var replayFrameData = new JSONArray();
+                OptimizeReplayData(ref replayData);
+                replayData.ForEach(frame =>
+                {
+                    var frameDataJsonArray = new JSONArray();
+                    foreach (var frameData in frame)
+                        frameDataJsonArray.Add(frameData);
+                    replayFrameData.Add(frameDataJsonArray);
+                });
+                replayJson["replaydata"] = replayFrameData;
+
+                File.WriteAllText(replayDir + replayFilename, replayJson.ToString());
+            }
+
+            public static void OptimizeReplayData(ref List<int[]> rawReplayData)
+            {
+                LogInfo("Optimizing Replay...");
+
+                //Look for matching position && tooting values and merge their deltas into one frame
+                for (int i = 0; i < rawReplayData.Count - 1; i++)
+                {
+                    for (int j = i + 1; j < rawReplayData.Count && rawReplayData[i][1] == rawReplayData[j][1] && rawReplayData[i][2] == rawReplayData[j][2];)
+                    {
+                        rawReplayData[i][0] += rawReplayData[j][0];
+                        rawReplayData.Remove(rawReplayData[j]);
+                    }
+                }
             }
         }
     }

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32421.90
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TootTally", "TootTally.csproj", "{B7BFF518-F5B9-42C0-A6E2-7A0882954450}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7BFF518-F5B9-42C0-A6E2-7A0882954450}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7BFF518-F5B9-42C0-A6E2-7A0882954450}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7BFF518-F5B9-42C0-A6E2-7A0882954450}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7BFF518-F5B9-42C0-A6E2-7A0882954450}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A2A49218-2D9C-4A46-99E3-CCC2D64850E8}
+	EndGlobalSection
+EndGlobal
