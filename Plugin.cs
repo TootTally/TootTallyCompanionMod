@@ -162,10 +162,6 @@ namespace TootTally
 
         public static class SongSelect
         {
-            internal static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
-            internal static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
-            internal static void LogError(string msg) => Instance.Logger.LogError(msg);
-            internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
             public static string songHash { get; private set; }
             private static int maxCombo;
 
@@ -287,10 +283,7 @@ namespace TootTally
 
         public static class ReplaySystem
         {
-            internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
-            internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
-            internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
-            internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
+
             private static List<byte[]> replay = new List<byte[]>();
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -348,83 +341,6 @@ namespace TootTally
         }
 
 
-        public static class ReplaySystemJson
-        {
-            internal static void LogDebug(string msg) => Plugin.Instance.Logger.LogDebug(msg);
-            internal static void LogInfo(string msg) => Plugin.Instance.Logger.LogInfo(msg);
-            internal static void LogError(string msg) => Plugin.Instance.Logger.LogError(msg);
-            internal static void LogWarning(string msg) => Plugin.Instance.Logger.LogWarning(msg);
-            private static List<int[]> replayData = new List<int[]>();
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-            [HarmonyPostfix]
-            public static void StartReplay(GameController __instance)
-            {
-                replayData.Clear();
-                LogInfo("Starting replay");
-            }
-
-            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-            [HarmonyPostfix]
-            public static void StopReplay(PointSceneController __instance)
-            {
-                SaveReplayToFile(__instance);
-                LogInfo("Replay finished");
-            }
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
-            [HarmonyPostfix]
-            public static void RecordReplay(GameController __instance)
-            {
-                UInt32 timeDelta = (UInt32)Mathf.FloorToInt(Time.deltaTime * 1000);
-                int pointerPos = (int)Math.Round(__instance.pointer.transform.localPosition.y * 100f); //times 100 and convert to int for 2 decimal precision
-                bool isTooting = __instance.noteplaying;
-                replayData.Add(new int[] { (int)timeDelta, pointerPos, isTooting ? 1 : 0 });
-            }
-
-
-            public static void SaveReplayToFile(PointSceneController __instance)
-            {
-                string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
-                // Create Replays directory in case it doesn't exist
-                if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
-
-                string username = "TestUser";
-                DateTimeOffset currentDateTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-                string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
-                string replayFilename = $"{username} - {currentDateTimeUnix}";
-
-                var replayJson = new JSONObject();
-                replayJson["username"] = username;
-                replayJson["date"] = currentDateTimeUnix;
-                var replayFrameData = new JSONArray();
-                OptimizeReplayData(ref replayData);
-                replayData.ForEach(frame =>
-                {
-                    var frameDataJsonArray = new JSONArray();
-                    foreach (var frameData in frame)
-                        frameDataJsonArray.Add(frameData);
-                    replayFrameData.Add(frameDataJsonArray);
-                });
-                replayJson["replaydata"] = replayFrameData;
-
-                File.WriteAllText(replayDir + replayFilename, replayJson.ToString());
-            }
-
-            public static void OptimizeReplayData(ref List<int[]> rawReplayData)
-            {
-                LogInfo("Optimizing Replay...");
-
-                //Look for matching position && tooting values and merge their deltas into one frame
-                for (int i = 0; i < rawReplayData.Count - 1; i++)
-                {
-                    for (int j = i + 1; j < rawReplayData.Count && rawReplayData[i][1] == rawReplayData[j][1] && rawReplayData[i][2] == rawReplayData[j][2];)
-                    {
-                        rawReplayData[i][0] += rawReplayData[j][0];
-                        rawReplayData.Remove(rawReplayData[j]);
-                    }
-                }
-            }
-        }
+        
     }
 }
