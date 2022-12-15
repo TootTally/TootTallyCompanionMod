@@ -4,9 +4,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>TootTally</AssemblyName>
     <Description>Companion mod for TootTally.com</Description>
-    <Version>0.1.0</Version>
+    <Version>0.1.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,34 +23,38 @@
 
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\TromboneChamp_Data\Managed\Assembly-CSharp-nstrip.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Assembly-CSharp-nstrip.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\TromboneChamp_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\TromboneChamp_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\TromboneChamp_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\TromboneChamp_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="TrombLoader">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\BepInEx\plugins\TrombLoader.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombLoader.dll</HintPath>
     </Reference>
     <Reference Include="AutoToot">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\BepInEx\plugins\AutoToot.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\BepInEx\plugins\AutoToot.dll</HintPath>
     </Reference>
     <Reference Include="HoverToot">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\BepInEx\plugins\HoverToot.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\BepInEx\plugins\HoverToot.dll</HintPath>
     </Reference>
     <Reference Include="TrombSettings">
-      <HintPath>E:\SteamLibrary\steamapps\common\TromboneChamp\BepInEx\plugins\TrombSettings.dll</HintPath>
+      <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombSettings.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneChampDir)/BepInEx/plugins" />
+  </Target>
 </Project>
