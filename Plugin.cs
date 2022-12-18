@@ -12,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using TrombLoader.Helpers;
+using UnityEngine.UI;
 
 namespace TootTally
 {
@@ -279,68 +280,48 @@ namespace TootTally
                     __instance.StartCoroutine(CheckHashInDB(false, songFilePath, singleTrackData));
                 }
             }
+
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            public class LevelSelectControllerStarterPatch : MonoBehaviour
+            {
+
+                static void Postfix(LevelSelectController __instance, List<SingleTrackData> ___alltracklist)
+                {
+                    addReplayButton(__instance, ___alltracklist);
+                }
+            }
+
+            public static void addReplayButton(LevelSelectController __instance, List<SingleTrackData> ___alltracklist)
+            {
+                Text[] scoresNumbers = GameObject.Find("MainCanvas/FullScreenPanel/Leaderboard")
+                    .GetComponentsInChildren<Text>()
+                    .Where(x => Enumerable.Range(1, 5)
+                        .Select(i => i.ToString())
+                        .Contains(x.name))
+                    .OrderBy(x => x.name).ToArray();
+                Button replayButton = createReplayButton(__instance, scoresNumbers[0], ___alltracklist);
+            }
+
+            private static Button createReplayButton(LevelSelectController __instance, Text scoreNumbers, List<SingleTrackData> ___alltracklist)
+            {
+                var scoreRectTransform = scoreNumbers.GetComponent<RectTransform>();
+                var replayButton = Instantiate(__instance.ui_testbtn0, scoreRectTransform);
+                var replayButtonRect = replayButton.GetComponent<RectTransform>();
+                replayButton.name = "Replay Button";
+                replayButton.onClick.AddListener(delegate { });
+                replayButton.onClick.RemoveAllListeners();
+
+                replayButtonRect.sizeDelta = new Vector2(12, 12);
+                replayButtonRect.position = scoreRectTransform.position;
+                replayButtonRect.anchoredPosition = scoreRectTransform.sizeDelta + new Vector2(20, 10);
+
+                var replayButtonText = replayButton.GetComponent<Text>();
+                replayButtonText.text = "R";
+                replayButtonText.fontSize = 8;
+                return replayButton;
+            }
+
         }
-
-        public static class ReplaySystem
-        {
-
-            private static List<byte[]> replay = new List<byte[]>();
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-            [HarmonyPostfix]
-            public static void StartReplay()
-            {
-                replay.Clear();
-                LogInfo("Starting replay!");
-            }
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
-            [HarmonyPostfix]
-            public static void RecordReplay(GameController __instance)
-            {
-                UInt32 timeDelta = (UInt32)Mathf.FloorToInt(Time.deltaTime * 1000);
-                float pointerPos = __instance.pointer.transform.localPosition.y;
-                bool isTooting = __instance.noteplaying;
-                byte[] toSave = new byte[sizeof(UInt32) + sizeof(float) + sizeof(bool)];
-                byte[] time = BitConverter.GetBytes(timeDelta);
-                byte[] pointer = BitConverter.GetBytes(pointerPos);
-                byte[] toot = BitConverter.GetBytes(isTooting);
-                Buffer.BlockCopy(time, 0, toSave, 0, sizeof(UInt32));
-                Buffer.BlockCopy(pointer, 0, toSave, sizeof(UInt32), sizeof(float));
-                Buffer.BlockCopy(toot, 0, toSave, sizeof(float), sizeof(bool));
-                replay.Add(toSave);
-            }
-
-            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-            [HarmonyPostfix]
-            public static void SaveReplayToFile(PointSceneController __instance)
-            {
-                string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
-                // Create Replays directory in case it doesn't exist
-                if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
-
-                string username = "TestUser";
-                DateTimeOffset currentDateTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-                string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
-                string replayFilename = Path.Combine(replayDir, $"{username} - {currentDateTimeUnix}");
-                byte[] usernameBytes = System.Text.Encoding.UTF8.GetBytes(username);
-                int usernameByteCount = usernameBytes.Length;
-
-                List<byte[]> replayBytes = new();
-                replayBytes.Add(System.Text.Encoding.ASCII.GetBytes("TOOT")); // Magic bytes
-                replayBytes.Add(BitConverter.GetBytes(Plugin.BUILDDATE)); // Build Date Integer
-                replayBytes.Add(BitConverter.GetBytes(usernameByteCount)); // Length of name string
-                replayBytes.Add(usernameBytes); // Player name in bytes
-                replayBytes.Add(System.Text.Encoding.ASCII.GetBytes(SongSelect.songHash)); // Song Hash for song identification
-                // TODO: Add the rest of the format here
-                replayBytes.Add(replay.SelectMany(a => a).ToArray()); // Replay Data
-
-                byte[] replayByteArray = replayBytes.SelectMany(a => a).ToArray();
-                File.WriteAllBytes(replayFilename, replayByteArray);
-            }
-        }
-
-
-        
     }
 }
