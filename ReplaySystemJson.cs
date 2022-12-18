@@ -53,7 +53,7 @@ namespace TootTally
             if (_isReplayRecording && _elapsedTime >= 1f / _targetFramerate)
             {
                 _elapsedTime = 0;
-                float noteHolderPosition = __instance.noteholder.transform.localPosition.x * 10; // 1 decimal precision
+                float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
                 float pointerPos = __instance.pointer.transform.localPosition.y * 100; //times 100 and convert to int for 2 decimal precision
                 bool isTooting = __instance.noteplaying;
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, isTooting ? 1 : 0 });
@@ -105,6 +105,7 @@ namespace TootTally
             replayJson["date"] = currentDateTimeUnix;
             replayJson["song"] = songName;
             replayJson["samplerate"] = _targetFramerate;
+            replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
             var replayFrameData = new JSONArray();
             OptimizeFrameDataV2(ref _frameData);
             _frameData.ForEach(frame =>
@@ -172,12 +173,10 @@ namespace TootTally
 
         #endregion
         */
-
-
         
         #region ReplayPlayer
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         public static void StartReplayPlayer(GameController __instance)
         {
             _frameData.Clear();
@@ -185,7 +184,7 @@ namespace TootTally
             _lastTiming = 0;
             _isTooting = false;
             _isReplayPlaying = true;
-            LoadReplay("TestUser - Koi wa Chaos - 1671315489");
+            LoadReplay("TestUser - Densmore - 1671331005");
             Plugin.LogInfo("Started replay");
         }
 
@@ -214,6 +213,7 @@ namespace TootTally
 
             string jsonFile = File.ReadAllText(replayDir + replayFileName);
             var replayJson = JSONObject.Parse(jsonFile);
+            GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
             foreach (JSONArray jsonArray in replayJson["framedata"])
                 _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
             foreach (JSONArray jsonArray in replayJson["notedata"])
@@ -228,9 +228,7 @@ namespace TootTally
         {
             if (!__instance.controllermode) __instance.controllermode = true;
 
-            var currentMapPosition = __instance.noteholder.transform.localPosition.x * 10;
-
-
+            var currentMapPosition = __instance.noteholder.transform.position.x * 10;
 
             if (_frameData.Count >= _replayIndex && _lastTiming != 0)
             {
@@ -314,7 +312,6 @@ namespace TootTally
         }
         #endregion
         
-
         private static float Lerp(float firstFloat, float secondFloat, float by)
         {
             return firstFloat + (secondFloat - firstFloat) * by;
