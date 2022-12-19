@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using TootTally.Graphics;
 using UnityEngine;
 
 namespace TootTally
@@ -12,30 +13,121 @@ namespace TootTally
     public static class ReplaySystemJson
     {
         private static int _targetFramerate;
-        private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
-        private static float _elapsedTime;
-        private static bool _isTooting, _isReplayPlaying, _isReplayRecording;
+        private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
+        private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
+        private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
+
+        public static bool wasPlayingReplay;
+        private static bool _isReplayPlaying, _isReplayRecording;
+        private static bool _isTooting;
+
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
-        private static int _scores_A, _scores_B, _scores_C, _scores_D;
+        private static float _elapsedTime;
 
-        /*
-        #region ReplayRecorder
+        private static string _replayFileName;
+
+        #region LevelSelectControllerPatches
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+        [HarmonyPostfix]
+        public static void AddTestButtonToLevelSelect(LevelSelectController __instance)
+        {
+            Transform mainCanvasTransform = GameObject.Find("MainCanvas/FullScreenPanel").transform;
+            CustomButton mybutton = InteractableGameObjectFactory.CreateCustomButton(mainCanvasTransform, -new Vector2(400, 150), new Vector2(200, 50), "WATCH REPLAY", "ReplayButton", delegate { _replayFileName = "TestUser - Densmore - 1671466769"; __instance.playbtn.onClick?.Invoke(); });
+        }
+
+        #endregion
+
+        #region GameControllerPatches
+
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
         [HarmonyPostfix]
-        public static void StartReplayRecorder(GameController __instance)
+        public static void GameControllerPostfixPatch(GameController __instance)
         {
             _frameData.Clear();
+            _noteData.Clear();
+            if (_replayFileName == null)
+                StartReplayRecorder(__instance);
+            else
+                StartReplayPlayer(__instance);
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+        [HarmonyPostfix]
+        public static void PointSceneControllerPostfixPatch(PointSceneController __instance)
+        {
+            if (_isReplayRecording)
+                StopReplayRecorder(__instance);
+            else if (_isReplayPlaying)
+                StopReplayPlayer(__instance);
+
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
+        [HarmonyPrefix]
+        public static void GameControllerUpdatePrefixPatch(GameController __instance)
+        {
+            if (_isReplayRecording)
+                RecordFrameDataV2(__instance);
+            else if (_isReplayPlaying)
+                PlaybackReplayV2(__instance);
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
+        [HarmonyPrefix]
+        public static void GameControllerGetScoreAveragePrefixPatch(GameController __instance)
+        {
+            if (_isReplayRecording)
+                RecordNote(__instance);
+            else if (_isReplayPlaying)
+                SetNoteScore(__instance);
+
+        }
+
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
+        [HarmonyPostfix]
+        public static void GameControllerGetScoreAveragePostfixPatch(GameController __instance)
+        {
+            if (_isReplayRecording)
+                AddNoteJudgementToNoteData(__instance);
+            else if (_isReplayPlaying)
+                UpdateInstanceTotalScore(__instance);
+        }
+
+        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
+        [HarmonyPostfix]
+        static void PauseCanvasControllerShowPausePanelPostfixPatch(PauseCanvasController __instance)
+        {
+            _isReplayPlaying = _isReplayRecording = false;
+            Plugin.LogInfo("Level paused, stopped " + (_isReplayPlaying ? "replay" : "recording"));
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
+        [HarmonyPostfix]
+        static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
+        {
+            ClearData();
+            _isReplayPlaying = _isReplayRecording = false;
+            _replayFileName = null;
+            Plugin.LogInfo("Level quit, clearing replay data");
+        }
+        #endregion
+
+
+        #region ReplayRecorder
+        public static void StartReplayRecorder(GameController __instance)
+        {
             _isReplayRecording = true;
+            wasPlayingReplay = false;
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             Plugin.LogInfo("Started recording replay");
         }
 
-        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-        [HarmonyPostfix]
         public static void StopReplayRecorder(PointSceneController __instance)
         {
             SaveReplayToFile(__instance);
@@ -43,9 +135,6 @@ namespace TootTally
             Plugin.LogInfo("Replay recording finished");
         }
 
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
-        [HarmonyPrefix]
         public static void RecordFrameDataV2(GameController __instance)
         {
             float deltaTime = Time.deltaTime;
@@ -60,8 +149,6 @@ namespace TootTally
             }
         }
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
-        [HarmonyPrefix]
         public static void RecordNote(GameController __instance)
         {
             var noteIndex = __instance.currentnoteindex;
@@ -77,14 +164,12 @@ namespace TootTally
             _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 }); // has to do the note judgement on postfix
         }
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
-        [HarmonyPostfix]
         public static void AddNoteJudgementToNoteData(GameController __instance)
         {
-            var noteLetter = _scores_A != __instance.scores_A ? 1 :
-               _scores_B != __instance.scores_B ? 2 :
-               _scores_C != __instance.scores_C ? 3 :
-               _scores_D != __instance.scores_D ? 4 : 5;
+            var noteLetter = _scores_A != __instance.scores_A ? 0 :
+               _scores_B != __instance.scores_B ? 1 :
+               _scores_C != __instance.scores_C ? 2 :
+               _scores_D != __instance.scores_D ? 3 : 4;
             _noteData[_noteData.Count - 1][4] = noteLetter;
         }
 
@@ -150,49 +235,28 @@ namespace TootTally
         {
             for (int i = 0; i < rawReplayNoteData.Count; i++)
             {
-                if (rawReplayNoteData[i][1] == 0)
-                    rawReplayNoteData.Remove(rawReplayNoteData[i]);
+                //todo
             }
         }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
-        [HarmonyPostfix]
-        static void OnPauseStopRecording(GameController __instance)
-        {
-            _isReplayRecording = false;
-            Plugin.LogInfo("Replay Stopped");
-        }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
-        [HarmonyPostfix]
-        static void OnQuitDeleteReplay(GameController __instance)
-        {
-            _frameData.Clear();
-            Plugin.LogInfo("Replay Deleted");
-        }
-
         #endregion
-        */
-        
+
+
         #region ReplayPlayer
-        [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-        [HarmonyPrefix]
         public static void StartReplayPlayer(GameController __instance)
         {
-            _frameData.Clear();
-            _noteData.Clear();
             _lastTiming = 0;
             _isTooting = false;
-            _isReplayPlaying = true;
-            LoadReplay("TestUser - Densmore - 1671331005");
+            _totalScore = 0;
+            _noteTally = new int[5];
+            _isReplayPlaying = wasPlayingReplay = true;
+            LoadReplay(_replayFileName);
             Plugin.LogInfo("Started replay");
         }
 
-        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-        [HarmonyPostfix]
         public static void StopReplayPlayer(PointSceneController __instance)
         {
             _isReplayPlaying = false;
+            GlobalVariables.gameplay_notescores = _noteTally;
             Plugin.LogInfo("Replay finished");
         }
 
@@ -217,30 +281,32 @@ namespace TootTally
             foreach (JSONArray jsonArray in replayJson["framedata"])
                 _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
             foreach (JSONArray jsonArray in replayJson["notedata"])
-                _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4], jsonArray[5], jsonArray[6] });
+                _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
             _replayIndex = 0;
 
         }
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
-        [HarmonyPrefix]
         public static void PlaybackReplayV2(GameController __instance)
         {
             if (!__instance.controllermode) __instance.controllermode = true;
 
             var currentMapPosition = __instance.noteholder.transform.position.x * 10;
 
-            if (_frameData.Count >= _replayIndex && _lastTiming != 0)
+            if (_frameData.Count >= _replayIndex && _lastPosition != 0)
             {
                 var newCursorPosition = Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
                 SetCursorPosition(__instance, newCursorPosition);
+            }
+            else
+            {
+                __instance.totalscore = _totalScore;
             }
 
 
             while (_frameData.Count >= _replayIndex && _isReplayPlaying && currentMapPosition <= _frameData[_replayIndex][0]) //smaller or equal to because noteholder goes toward negative
             {
                 _lastTiming = _frameData[_replayIndex][0];
-                _nextTimingTarget = _frameData[_replayIndex][1];
+                _nextTimingTarget = _frameData[_replayIndex + 1][0];
                 _lastPosition = _frameData[_replayIndex][1] / 100f;
                 _nextPositionTarget = _frameData[_replayIndex + 1][1] / 100f;
 
@@ -250,40 +316,24 @@ namespace TootTally
                 _replayIndex++;
             }
 
-
-
         }
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
-        [HarmonyPrefix]
         public static void SetNoteScore(GameController __instance)
         {
             var note = _noteData.Find(x => x[0] == __instance.currentnoteindex);
 
             if (note != null)
             {
-                __instance.totalscore = note[1];
+                __instance.totalscore = _totalScore = note[1]; //total score has to be set postfix because notes SOMEHOW still give more points than they should during replay...
                 __instance.multiplier = note[2];
                 __instance.currenthealth = note[3];
-                switch (note[4])
-                {
-                    case 1:
-                        __instance.scores_A++;
-                        break;
-                    case 2:
-                        __instance.scores_B++;
-                        break;
-                    case 3:
-                        __instance.scores_C++;
-                        break;
-                    case 4:
-                        __instance.scores_D++;
-                        break;
-                    default:
-                        __instance.scores_F++;
-                        break;
-                }
+                _noteTally[note[4] - 1]++;
             }
+        }
+
+        public static void UpdateInstanceTotalScore(GameController __instance)
+        {
+            __instance.totalscore = _totalScore;
         }
 
 
@@ -301,17 +351,9 @@ namespace TootTally
             _isTooting = !_isTooting;
             OnTootStateChange(__instance);
         }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
-        [HarmonyPostfix]
-        static void OnPauseStopReplay(GameController __instance)
-        {
-            __instance.controllermode = false;
-            _isReplayPlaying = false;
-            Plugin.LogInfo("Replay finished");
-        }
         #endregion
-        
+
+
         private static float Lerp(float firstFloat, float secondFloat, float by)
         {
             return firstFloat + (secondFloat - firstFloat) * by;
@@ -322,6 +364,11 @@ namespace TootTally
             Vector3 pointerPosition = __instance.pointer.transform.localPosition;
             pointerPosition.y = newPosition;
             __instance.pointer.transform.localPosition = pointerPosition;
+        }
+        private static void ClearData()
+        {
+            _frameData.Clear();
+            _noteData.Clear();
         }
     }
 }

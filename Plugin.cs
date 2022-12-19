@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using TrombLoader.Helpers;
 using UnityEngine.UI;
+using TootTally.Graphics;
 
 namespace TootTally
 {
@@ -65,6 +66,7 @@ namespace TootTally
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
 
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
@@ -83,6 +85,7 @@ namespace TootTally
 
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
+            Harmony.CreateAndPatchAll(typeof(InteractableGameObjectFactory));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -245,6 +248,7 @@ namespace TootTally
             {
                 if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
                 if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
+                if (ReplaySystemJson.wasPlayingReplay) return; // Don't submit anything if watching a replay.
                 string trackRef = GlobalVariables.chosen_track;
                 LogInfo($"TrackRef: {GlobalVariables.chosen_track}");
                 LogInfo($"Letter Score: {__instance.letterscore}");
@@ -279,47 +283,6 @@ namespace TootTally
                     var singleTrackData = __instance.alltrackslist.Where(i => i.trackref == trackRef).FirstOrDefault();
                     __instance.StartCoroutine(CheckHashInDB(false, songFilePath, singleTrackData));
                 }
-            }
-
-
-            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
-            public class LevelSelectControllerStarterPatch : MonoBehaviour
-            {
-
-                static void Postfix(LevelSelectController __instance, List<SingleTrackData> ___alltracklist)
-                {
-                    addReplayButton(__instance, ___alltracklist);
-                }
-            }
-
-            public static void addReplayButton(LevelSelectController __instance, List<SingleTrackData> ___alltracklist)
-            {
-                Text[] scoresNumbers = GameObject.Find("MainCanvas/FullScreenPanel/Leaderboard")
-                    .GetComponentsInChildren<Text>()
-                    .Where(x => Enumerable.Range(1, 5)
-                        .Select(i => i.ToString())
-                        .Contains(x.name))
-                    .OrderBy(x => x.name).ToArray();
-                Button replayButton = createReplayButton(__instance, scoresNumbers[0], ___alltracklist);
-            }
-
-            private static Button createReplayButton(LevelSelectController __instance, Text scoreNumbers, List<SingleTrackData> ___alltracklist)
-            {
-                var scoreRectTransform = scoreNumbers.GetComponent<RectTransform>();
-                var replayButton = Instantiate(__instance.ui_testbtn0, scoreRectTransform);
-                var replayButtonRect = replayButton.GetComponent<RectTransform>();
-                replayButton.name = "Replay Button";
-                replayButton.onClick.AddListener(delegate { });
-                replayButton.onClick.RemoveAllListeners();
-
-                replayButtonRect.sizeDelta = new Vector2(12, 12);
-                replayButtonRect.position = scoreRectTransform.position;
-                replayButtonRect.anchoredPosition = scoreRectTransform.sizeDelta + new Vector2(20, 10);
-
-                var replayButtonText = replayButton.GetComponent<Text>();
-                replayButtonText.text = "R";
-                replayButtonText.fontSize = 8;
-                return replayButton;
             }
 
         }
