@@ -19,7 +19,7 @@ namespace TootTally.Replays
             _config = new ConfigFile(configPath + CONFIG_NAME, true);
             ConfigEntryReplayFileNameArray = new ConfigEntry<string>[5];
         }
-        public static void ReadConfig(string songNameAndHash)
+        public static void ReadConfig(string songNameAndHash) //Probably a better way to do this but well
         {
             _options = new Options()
             {

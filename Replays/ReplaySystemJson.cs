@@ -70,42 +70,13 @@ namespace TootTally.Replays
         }
         #endregion
 
-
-        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
-
-        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist)
-        {
-            string trackref = ___alltrackslist[GlobalVariables.levelselect_index].trackref;
-            bool isCustom = Globals.IsCustomTrack(trackref);
-            if (isCustom)
-            {
-                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
-                string songHash = GetSongHash(trackref);
-                if (songHash != null)
-                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
-            }
-        }
-        public static void ReadReplayConfig()
-        {
-            string trackref = GlobalVariables.chosen_track_data.trackref;
-            bool isCustom = Globals.IsCustomTrack(trackref);
-            if (isCustom)
-            {
-                string songName = GlobalVariables.chosen_track_data.trackname_short;
-                string songHash = GetSongHash(trackref);
-                if (songHash != null)
-                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
-            }
-        }
-
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
-            _frameData.Clear();
-            _noteData.Clear();
+            ClearData();
             if (_replayFileName == null)
                 StartReplayRecorder(__instance);
             else
@@ -174,6 +145,35 @@ namespace TootTally.Replays
         }
         #endregion
 
+        #region Config
+
+        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
+
+        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist)
+        {
+            string trackref = ___alltrackslist[GlobalVariables.levelselect_index].trackref;
+            bool isCustom = Globals.IsCustomTrack(trackref);
+            if (isCustom)
+            {
+                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
+                string songHash = GetSongHash(trackref);
+                if (songHash != null)
+                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
+            }
+        }
+        public static void ReadReplayConfig()
+        {
+            string trackref = GlobalVariables.chosen_track_data.trackref;
+            bool isCustom = Globals.IsCustomTrack(trackref);
+            if (isCustom)
+            {
+                string songName = GlobalVariables.chosen_track_data.trackname_short;
+                string songHash = GetSongHash(trackref);
+                if (songHash != null)
+                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
+            }
+        }
+        #endregion
 
         #region ReplayRecorder
         private static void StartReplayRecorder(GameController __instance)
@@ -302,7 +302,6 @@ namespace TootTally.Replays
         }
         #endregion
 
-
         #region ReplayPlayer
         private static void StartReplayPlayer(GameController __instance)
         {
@@ -427,7 +426,7 @@ namespace TootTally.Replays
         }
         #endregion
 
-
+        #region Utils
         private static float Lerp(float firstFloat, float secondFloat, float by)
         {
             return firstFloat + (secondFloat - firstFloat) * by;
@@ -444,5 +443,6 @@ namespace TootTally.Replays
             _frameData.Clear();
             _noteData.Clear();
         }
+        #endregion
     }
 }
