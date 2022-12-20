@@ -40,17 +40,14 @@ namespace TootTally.Replays
 
             _replayBtnArray = new CustomButton[5];
 
-            Plugin.LogInfo("ReadingConfig");
             ReadReplayConfig(___alltrackslist);
 
 
-            Plugin.LogInfo("Creating Replay Buttons");
             for (int i = 0; i < _replayBtnArray.Length; i++)
             {
                 Transform scoreTextTranform = leaderboard.transform.Find((i + 1).ToString()).transform;
 
                 string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
-                Plugin.LogInfo("Getting Config File Names:" + replayFileName);
                 _replayBtnArray[i] =
                     InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "R", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
                 _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
@@ -65,13 +62,16 @@ namespace TootTally.Replays
             for (int i = 0; i < _replayBtnArray.Length; i++)
             {
                 string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
-                Plugin.LogInfo("Getting Config File Names2:" + replayFileName);
                 _replayBtnArray[i].RemoveAllOnClickActions();
                 _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
                 _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
 
             }
         }
+        #endregion
+
+
+        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
 
         public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist)
         {
@@ -97,11 +97,6 @@ namespace TootTally.Replays
                     ReplayConfig.ReadConfig($"{songName} - {songHash}");
             }
         }
-
-        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
-
-
-        #endregion
 
         #region GameControllerPatches
 
@@ -135,7 +130,7 @@ namespace TootTally.Replays
             if (_isReplayRecording)
                 RecordFrameDataV2(__instance);
             else if (_isReplayPlaying)
-                PlaybackReplayV2(__instance);
+                PlaybackReplay(__instance);
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
@@ -181,24 +176,24 @@ namespace TootTally.Replays
 
 
         #region ReplayRecorder
-        public static void StartReplayRecorder(GameController __instance)
+        private static void StartReplayRecorder(GameController __instance)
         {
             _isReplayRecording = true;
             wasPlayingReplay = false;
-            _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate;
+            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             Plugin.LogInfo("Started recording replay");
         }
 
-        public static void StopReplayRecorder(PointSceneController __instance)
+        private static void StopReplayRecorder(PointSceneController __instance)
         {
             SaveReplayToFile(__instance);
             _isReplayRecording = false;
             Plugin.LogInfo("Replay recording finished");
         }
 
-        public static void RecordFrameDataV2(GameController __instance)
+        private static void RecordFrameDataV2(GameController __instance)
         {
             float deltaTime = Time.deltaTime;
             _elapsedTime += deltaTime;
@@ -212,7 +207,7 @@ namespace TootTally.Replays
             }
         }
 
-        public static void RecordNote(GameController __instance)
+        private static void RecordNote(GameController __instance)
         {
             var noteIndex = __instance.currentnoteindex;
             var totalScore = __instance.totalscore;
@@ -227,7 +222,7 @@ namespace TootTally.Replays
             _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 }); // has to do the note judgement on postfix
         }
 
-        public static void AddNoteJudgementToNoteData(GameController __instance)
+        private static void AddNoteJudgementToNoteData(GameController __instance)
         {
             var noteLetter = _scores_A != __instance.scores_A ? 4 :
                _scores_B != __instance.scores_B ? 3 :
@@ -236,7 +231,7 @@ namespace TootTally.Replays
             _noteData[_noteData.Count - 1][4] = noteLetter;
         }
 
-        public static void SaveReplayToFile(PointSceneController __instance)
+        private static void SaveReplayToFile(PointSceneController __instance)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             // Create Replays directory in case it doesn't exist
@@ -255,7 +250,7 @@ namespace TootTally.Replays
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
             var replayFrameData = new JSONArray();
-            OptimizeFrameDataV2(ref _frameData);
+            OptimizeFrameData(ref _frameData);
             _frameData.ForEach(frame =>
             {
                 var frameDataJsonArray = new JSONArray();
@@ -284,9 +279,9 @@ namespace TootTally.Replays
         }
 
 
-        public static void OptimizeFrameDataV2(ref List<int[]> rawReplayFrameData)
+        private static void OptimizeFrameData(ref List<int[]> rawReplayFrameData)
         {
-            Plugin.LogInfo("Optimizing ReplayV2...");
+            Plugin.LogInfo("Optimizing Replay...");
 
             //Look for matching position && tooting values and remove same frames with the same positions
             for (int i = 0; i < rawReplayFrameData.Count - 1; i++)
@@ -298,7 +293,7 @@ namespace TootTally.Replays
             }
         }
 
-        public static void OptimizeNoteData(ref List<int[]> rawReplayNoteData)
+        private static void OptimizeNoteData(ref List<int[]> rawReplayNoteData)
         {
             for (int i = 0; i < rawReplayNoteData.Count; i++)
             {
@@ -309,7 +304,7 @@ namespace TootTally.Replays
 
 
         #region ReplayPlayer
-        public static void StartReplayPlayer(GameController __instance)
+        private static void StartReplayPlayer(GameController __instance)
         {
             _lastTiming = 0;
             _isTooting = false;
@@ -323,14 +318,14 @@ namespace TootTally.Replays
                 __instance.pauseQuitLevel();
         }
 
-        public static void StopReplayPlayer(PointSceneController __instance)
+        private static void StopReplayPlayer(PointSceneController __instance)
         {
             _isReplayPlaying = false;
             GlobalVariables.gameplay_notescores = _noteTally;
             Plugin.LogInfo("Replay finished");
         }
 
-        public static bool LoadReplay(string replayFileName)
+        private static bool LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
@@ -356,7 +351,7 @@ namespace TootTally.Replays
             return true;
         }
 
-        public static void PlaybackReplayV2(GameController __instance)
+        private static void PlaybackReplay(GameController __instance)
         {
             if (!__instance.controllermode) __instance.controllermode = true;
 
@@ -397,7 +392,7 @@ namespace TootTally.Replays
 
         }
 
-        public static void SetNoteScore(GameController __instance)
+        private static void SetNoteScore(GameController __instance)
         {
             var note = _noteData.Find(x => x[0] == __instance.currentnoteindex);
 
@@ -410,7 +405,7 @@ namespace TootTally.Replays
             }
         }
 
-        public static void UpdateInstanceTotalScore(GameController __instance)
+        private static void UpdateInstanceTotalScore(GameController __instance)
         {
             __instance.totalscore = _totalScore;
         }

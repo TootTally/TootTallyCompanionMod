@@ -1,18 +1,22 @@
-﻿using BepInEx.Configuration;
+﻿using BepInEx;
+using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace TootTally.Replays
 {
     public static class ReplayConfig
     {
+        private const string CONFIG_NAME = "ReplayConfig.cfg";
         private static ConfigFile _config;
         private static Options _options;
         public static ConfigEntry<string>[] ConfigEntryReplayFileNameArray;
         static ReplayConfig()
         {
-            _config = new ConfigFile("BepInEx/config/ReplayConfig.cfg", true);
+            string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
+            _config = new ConfigFile(configPath + CONFIG_NAME, true);
             ConfigEntryReplayFileNameArray = new ConfigEntry<string>[5];
         }
         public static void ReadConfig(string songNameAndHash)
