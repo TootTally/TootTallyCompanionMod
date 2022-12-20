@@ -6,9 +6,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using TootTally.Graphics;
+using TrombLoader.Helpers;
 using UnityEngine;
 
-namespace TootTally
+namespace TootTally.Replays
 {
     public static class ReplaySystemJson
     {
@@ -17,6 +18,7 @@ namespace TootTally
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
         private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
+        private static CustomButton[] _replayBtnArray;
 
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
@@ -32,11 +34,72 @@ namespace TootTally
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
-        public static void AddTestButtonToLevelSelect(LevelSelectController __instance)
+        public static void AddReplayButtonToLeaderboardPannel(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            Transform mainCanvasTransform = GameObject.Find("MainCanvas/FullScreenPanel").transform;
-            CustomButton mybutton = InteractableGameObjectFactory.CreateCustomButton(mainCanvasTransform, -new Vector2(400, 150), new Vector2(200, 50), "WATCH REPLAY", "ReplayButton", delegate { _replayFileName = "TestUser - Densmore - 1671466769"; __instance.playbtn.onClick?.Invoke(); });
+            GameObject leaderboard = GameObject.Find("MainCanvas/FullScreenPanel/Leaderboard").gameObject;
+
+            _replayBtnArray = new CustomButton[5];
+
+            Plugin.LogInfo("ReadingConfig");
+            ReadReplayConfig(___alltrackslist);
+
+
+            Plugin.LogInfo("Creating Replay Buttons");
+            for (int i = 0; i < _replayBtnArray.Length; i++)
+            {
+                Transform scoreTextTranform = leaderboard.transform.Find((i + 1).ToString()).transform;
+
+                string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
+                Plugin.LogInfo("Getting Config File Names:" + replayFileName);
+                _replayBtnArray[i] =
+                    InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "R", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
+                _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
+            }
         }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
+        [HarmonyPostfix]
+        public static void SetActiveReplayButtons(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
+        {
+            ReadReplayConfig(___alltrackslist);
+            for (int i = 0; i < _replayBtnArray.Length; i++)
+            {
+                string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
+                Plugin.LogInfo("Getting Config File Names2:" + replayFileName);
+                _replayBtnArray[i].RemoveAllOnClickActions();
+                _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
+                _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
+
+            }
+        }
+
+        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist)
+        {
+            string trackref = ___alltrackslist[GlobalVariables.levelselect_index].trackref;
+            bool isCustom = Globals.IsCustomTrack(trackref);
+            if (isCustom)
+            {
+                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
+                string songHash = GetSongHash(trackref);
+                if (songHash != null)
+                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
+            }
+        }
+        public static void ReadReplayConfig()
+        {
+            string trackref = GlobalVariables.chosen_track_data.trackref;
+            bool isCustom = Globals.IsCustomTrack(trackref);
+            if (isCustom)
+            {
+                string songName = GlobalVariables.chosen_track_data.trackname_short;
+                string songHash = GetSongHash(trackref);
+                if (songHash != null)
+                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
+            }
+        }
+
+        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
+
 
         #endregion
 
@@ -122,7 +185,7 @@ namespace TootTally
         {
             _isReplayRecording = true;
             wasPlayingReplay = false;
-            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
+            _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate;
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             Plugin.LogInfo("Started recording replay");
@@ -166,10 +229,10 @@ namespace TootTally
 
         public static void AddNoteJudgementToNoteData(GameController __instance)
         {
-            var noteLetter = _scores_A != __instance.scores_A ? 0 :
-               _scores_B != __instance.scores_B ? 1 :
+            var noteLetter = _scores_A != __instance.scores_A ? 4 :
+               _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
-               _scores_D != __instance.scores_D ? 3 : 4;
+               _scores_D != __instance.scores_D ? 1 : 0;
             _noteData[_noteData.Count - 1][4] = noteLetter;
         }
 
@@ -202,6 +265,8 @@ namespace TootTally
             });
             replayJson["framedata"] = replayFrameData;
 
+
+            _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
             var replayNoteData = new JSONArray();
             _noteData.ForEach(notes =>
             {
@@ -214,6 +279,8 @@ namespace TootTally
 
             File.WriteAllText(replayDir + replayFilename, replayJson.ToString());
 
+            ReadReplayConfig();
+            ReplayConfig.SaveToConfig(replayFilename);
         }
 
 
@@ -249,8 +316,11 @@ namespace TootTally
             _totalScore = 0;
             _noteTally = new int[5];
             _isReplayPlaying = wasPlayingReplay = true;
-            LoadReplay(_replayFileName);
-            Plugin.LogInfo("Started replay");
+            Plugin.LogInfo("Loading replay: " + _replayFileName);
+            if (LoadReplay(_replayFileName))
+                Plugin.LogInfo("Started replay");
+            else
+                __instance.pauseQuitLevel();
         }
 
         public static void StopReplayPlayer(PointSceneController __instance)
@@ -260,19 +330,19 @@ namespace TootTally
             Plugin.LogInfo("Replay finished");
         }
 
-        public static void LoadReplay(string replayFileName)
+        public static bool LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
             {
                 Plugin.LogInfo("Replay folder not found");
-                return;
+                return false;
             }
 
             if (!File.Exists(replayDir + replayFileName))
             {
                 Plugin.LogInfo("Replay File not found");
-                return;
+                return false;
             }
 
             string jsonFile = File.ReadAllText(replayDir + replayFileName);
@@ -283,7 +353,7 @@ namespace TootTally
             foreach (JSONArray jsonArray in replayJson["notedata"])
                 _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
             _replayIndex = 0;
-
+            return true;
         }
 
         public static void PlaybackReplayV2(GameController __instance)
@@ -292,7 +362,7 @@ namespace TootTally
 
             var currentMapPosition = __instance.noteholder.transform.position.x * 10;
 
-            if (_frameData.Count >= _replayIndex && _lastPosition != 0)
+            if (_frameData.Count > _replayIndex && _lastPosition != 0)
             {
                 var newCursorPosition = Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
                 SetCursorPosition(__instance, newCursorPosition);
@@ -303,12 +373,21 @@ namespace TootTally
             }
 
 
-            while (_frameData.Count >= _replayIndex && _isReplayPlaying && currentMapPosition <= _frameData[_replayIndex][0]) //smaller or equal to because noteholder goes toward negative
+            while (_frameData.Count > _replayIndex && _isReplayPlaying && currentMapPosition <= _frameData[_replayIndex][0]) //smaller or equal to because noteholder goes toward negative
             {
                 _lastTiming = _frameData[_replayIndex][0];
-                _nextTimingTarget = _frameData[_replayIndex + 1][0];
                 _lastPosition = _frameData[_replayIndex][1] / 100f;
-                _nextPositionTarget = _frameData[_replayIndex + 1][1] / 100f;
+                if (_replayIndex < _frameData.Count - 1)
+                {
+                    _nextTimingTarget = _frameData[_replayIndex + 1][0];
+                    _nextPositionTarget = _frameData[_replayIndex + 1][1] / 100f;
+                }
+                else
+                {
+                    _nextTimingTarget = _lastTiming;
+                    _nextPositionTarget = _lastPosition;
+                }
+                
 
                 SetCursorPosition(__instance, _frameData[_replayIndex][1] / 100f);
                 if ((_frameData[_replayIndex][2] == 1 && !_isTooting) || (_frameData[_replayIndex][2] == 0 && _isTooting)) //if tooting state changes
@@ -327,7 +406,7 @@ namespace TootTally
                 __instance.totalscore = _totalScore = note[1]; //total score has to be set postfix because notes SOMEHOW still give more points than they should during replay...
                 __instance.multiplier = note[2];
                 __instance.currenthealth = note[3];
-                _noteTally[note[4] - 1]++;
+                _noteTally[note[4]]++;
             }
         }
 

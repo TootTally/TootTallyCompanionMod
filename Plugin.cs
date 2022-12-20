@@ -14,6 +14,7 @@ using System.Text;
 using TrombLoader.Helpers;
 using UnityEngine.UI;
 using TootTally.Graphics;
+using TootTally.Replays;
 
 namespace TootTally
 {
@@ -230,9 +231,9 @@ namespace TootTally
 
             public static string GetSongFilePath(bool isCustom, string trackRef)
             {
-                return isCustom
-                    ? Path.Combine(Globals.ChartFolders[trackRef], "song.tmb")
-                    : $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
+                return isCustom ? 
+                    Path.Combine(Globals.ChartFolders[trackRef], "song.tmb"):
+                    $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.updateHighestCombo))]
