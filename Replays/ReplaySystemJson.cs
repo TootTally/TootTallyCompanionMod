@@ -82,6 +82,13 @@ namespace TootTally.Replays
             else
                 StartReplayPlayer(__instance);
         }
+        [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
+        [HarmonyPostfix]
+        public static void GameControllerIsNoteButtonPressedPostfixPatch(ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+        {
+            if (_isReplayPlaying)
+                __result = _isTooting;
+        }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPostfix]
@@ -381,11 +388,11 @@ namespace TootTally.Replays
                     _nextTimingTarget = _lastTiming;
                     _nextPositionTarget = _lastPosition;
                 }
-                
+
 
                 SetCursorPosition(__instance, _frameData[_replayIndex][1] / 100f);
                 if ((_frameData[_replayIndex][2] == 1 && !_isTooting) || (_frameData[_replayIndex][2] == 0 && _isTooting)) //if tooting state changes
-                    ToggleTooting(__instance);
+                    _isTooting = !_isTooting;
                 _replayIndex++;
             }
 
@@ -409,21 +416,6 @@ namespace TootTally.Replays
             __instance.totalscore = _totalScore;
         }
 
-
-        private static void OnTootStateChange(GameController __instance)
-        {
-            __instance.setPuppetShake(_isTooting);
-            __instance.noteplaying = _isTooting;
-
-            if (_isTooting) __instance.playNote();
-            else __instance.stopNote();
-        }
-
-        private static void ToggleTooting(GameController __instance)
-        {
-            _isTooting = !_isTooting;
-            OnTootStateChange(__instance);
-        }
         #endregion
 
         #region Utils
