@@ -62,7 +62,7 @@ namespace TootTally.Graphics
             UnityEngine.Object.DontDestroyOnLoad(gameObjectHolder);
         }
 
-        public static void SetTextPrefab()
+        public static void SetTextPrefab() //Plan on yoinking some other graphics in the future
         {
 
         }

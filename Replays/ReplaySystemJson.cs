@@ -63,7 +63,7 @@ namespace TootTally.Replays
             {
                 string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
                 _replayBtnArray[i].RemoveAllOnClickActions();
-                _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
+                _replayBtnArray[i].gameObject.SetActive(Globals.IsCustomTrack(___alltrackslist[GlobalVariables.levelselect_index].trackref) && replayFileName != "NA");
                 _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
 
             }
@@ -208,8 +208,8 @@ namespace TootTally.Replays
             {
                 _elapsedTime = 0;
                 float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
-                float pointerPos = __instance.pointer.transform.localPosition.y * 100; //times 100 and convert to int for 2 decimal precision
-                bool isTooting = __instance.noteplaying;
+                float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
+                bool isTooting = __instance.noteplaying; //Have to fix pressing multiple keys at the same time
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, isTooting ? 1 : 0 });
             }
         }
@@ -367,6 +367,7 @@ namespace TootTally.Replays
             {
                 var newCursorPosition = Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
                 SetCursorPosition(__instance, newCursorPosition);
+                __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450 
             }
             else
             {
