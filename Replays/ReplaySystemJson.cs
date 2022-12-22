@@ -187,7 +187,7 @@ namespace TootTally.Replays
         {
             _isReplayRecording = true;
             wasPlayingReplay = false;
-            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
+            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             Plugin.LogInfo("Started recording replay");
@@ -321,7 +321,7 @@ namespace TootTally.Replays
             if (LoadReplay(_replayFileName))
                 Plugin.LogInfo("Started replay");
             else
-                __instance.pauseQuitLevel();
+                __instance.pauseQuitLevel(); //if replay failed to load, exit
         }
 
         private static void StopReplayPlayer(PointSceneController __instance)
@@ -359,7 +359,7 @@ namespace TootTally.Replays
 
         private static void PlaybackReplay(GameController __instance)
         {
-            if (!__instance.controllermode) __instance.controllermode = true;
+            if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
             var currentMapPosition = __instance.noteholder.transform.position.x * 10;
 
@@ -404,7 +404,7 @@ namespace TootTally.Replays
 
             if (note != null)
             {
-                __instance.totalscore = _totalScore = note[1]; //total score has to be set postfix because notes SOMEHOW still give more points than they should during replay...
+                __instance.totalscore = _totalScore = note[1]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
                 __instance.multiplier = note[2];
                 __instance.currenthealth = note[3];
                 _noteTally[note[4]]++;
@@ -419,7 +419,7 @@ namespace TootTally.Replays
         #endregion
 
         #region Utils
-        private static float Lerp(float firstFloat, float secondFloat, float by)
+        private static float Lerp(float firstFloat, float secondFloat, float by) //Linear easing
         {
             return firstFloat + (secondFloat - firstFloat) * by;
         }
