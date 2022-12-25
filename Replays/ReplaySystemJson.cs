@@ -19,6 +19,7 @@ namespace TootTally.Replays
         private static int _replayIndex;
         private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
         private static CustomButton[] _replayBtnArray;
+        private static DateTime _startTime, _endTime;
 
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
@@ -190,6 +191,7 @@ namespace TootTally.Replays
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
+            _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime())
             Plugin.LogInfo("Started recording replay");
         }
 
@@ -197,6 +199,7 @@ namespace TootTally.Replays
         {
             SaveReplayToFile(__instance);
             _isReplayRecording = false;
+            _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             Plugin.LogInfo("Replay recording finished");
         }
 
@@ -209,7 +212,8 @@ namespace TootTally.Replays
                 _elapsedTime = 0;
                 float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
                 float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
-                bool isTooting = __instance.noteplaying; //Have to fix pressing multiple keys at the same time
+                bool isTooting = __instance.noteplaying; 
+                bool isTootingV2 = GlobalVariables
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, isTooting ? 1 : 0 });
             }
         }
@@ -246,13 +250,13 @@ namespace TootTally.Replays
 
             string username = "TestUser";
             string songName = GlobalVariables.chosen_track_data.trackname_short;
-            DateTimeOffset currentDateTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
             string replayFilename = $"{username} - {songName} - {currentDateTimeUnix}";
 
             var replayJson = new JSONObject();
             replayJson["username"] = username;
-            replayJson["date"] = currentDateTimeUnix;
+            replayJson["startTime"] = _startTime;
+            replayJson["endTime"] = _endTime;
             replayJson["song"] = songName;
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
