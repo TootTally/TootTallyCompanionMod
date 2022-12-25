@@ -254,7 +254,7 @@ namespace TootTally.Replays
                _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
                _scores_D != __instance.scores_D ? 1 : 0;
-            _noteData[_noteData.Count - 1][(int)NoteDataStrucutre.NoteJudgement] = noteLetter;
+            _noteData[_noteData.Count - 1][(int)NoteDataStructure.NoteJudgement] = noteLetter;
         }
 
         private static void SaveReplayToFile(PointSceneController __instance)
@@ -269,9 +269,8 @@ namespace TootTally.Replays
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
             string replayFilename = $"{username} - {songName} - {endDateTimeUnix}";
 
-            string inputType = "mouse";
-            if (Input.touchCount > 0)
-                inputType = "touchscreen";
+            string inputType = "mouse"; // No Detection yet
+
             var replayJson = new JSONObject();
             replayJson["username"] = username;
             replayJson["starttime"] = startDateTimeUnix;
@@ -425,14 +424,14 @@ namespace TootTally.Replays
 
         private static void SetNoteScore(GameController __instance)
         {
-            var note = _noteData.Find(x => x[(int)NoteDataStrucutre.NoteIndex] == __instance.currentnoteindex);
+            var note = _noteData.Find(x => x[(int)NoteDataStructure.NoteIndex] == __instance.currentnoteindex);
 
             if (note != null)
             {
-                __instance.totalscore = _totalScore = note[(int)NoteDataStrucutre.TotalScore]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
-                __instance.multiplier = note[(int)NoteDataStrucutre.Multiplier];
-                __instance.currenthealth = note[(int)NoteDataStrucutre.CurrentHealth];
-                _noteTally[note[(int)NoteDataStrucutre.NoteJudgement]]++;
+                __instance.totalscore = _totalScore = note[(int)NoteDataStructure.TotalScore]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
+                __instance.multiplier = note[(int)NoteDataStructure.Multiplier];
+                __instance.currenthealth = note[(int)NoteDataStructure.CurrentHealth];
+                _noteTally[note[(int)NoteDataStructure.NoteJudgement]]++;
             }
         }
 
@@ -468,7 +467,7 @@ namespace TootTally.Replays
             IsTooting = 2,
         }
 
-        private enum NoteDataStrucutre
+        private enum NoteDataStructure
         {
             NoteIndex = 0,
             TotalScore = 1,
