@@ -3,6 +3,7 @@ using HarmonyLib;
 using SimpleJSON;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Text;
 using TootTally.Graphics;
@@ -14,7 +15,7 @@ namespace TootTally.Replays
     public static class ReplaySystemJson
     {
         private static int _targetFramerate;
-        private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
+        private static int _scores_A, _scores_B, _scores_C, _scores_D, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
         private static int _lastTootingKeyPressed, _tootingKeyPressed;
@@ -268,11 +269,14 @@ namespace TootTally.Replays
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
             string replayFilename = $"{username} - {songName} - {endDateTimeUnix}";
 
+            string inputType = "mouse";
+            if (Input.touchCount > 0)
+                inputType = "touchscreen";
             var replayJson = new JSONObject();
             replayJson["username"] = username;
             replayJson["starttime"] = startDateTimeUnix;
             replayJson["endtime"] = endDateTimeUnix;
-            replayJson["input"] = "mouse";
+            replayJson["input"] = inputType;
             replayJson["song"] = songName;
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
