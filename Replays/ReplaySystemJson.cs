@@ -17,13 +17,14 @@ namespace TootTally.Replays
         private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
+        private static int _lastTootingKeyPressed, _tootingKeyPressed;
+
         private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
         private static CustomButton[] _replayBtnArray;
-        private static DateTime _startTime, _endTime;
+        private static DateTimeOffset _startTime, _endTime;
 
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
-        private static bool _isTooting;
 
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
@@ -88,7 +89,10 @@ namespace TootTally.Replays
         public static void GameControllerIsNoteButtonPressedPostfixPatch(ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
         {
             if (_isReplayPlaying)
-                __result = _isTooting;
+            {
+                __result = _tootingKeyPressed > 0 && _tootingKeyPressed == _lastTootingKeyPressed;
+                _lastTootingKeyPressed = _tootingKeyPressed;
+            }
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
@@ -168,6 +172,11 @@ namespace TootTally.Replays
                 if (songHash != null)
                     ReplayConfig.ReadConfig($"{songName} - {songHash}");
             }
+            else
+            {
+                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
+                ReplayConfig.ReadConfig($"{songName}");
+            }
         }
         public static void ReadReplayConfig()
         {
@@ -191,7 +200,7 @@ namespace TootTally.Replays
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
-            _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime())
+            _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             Plugin.LogInfo("Started recording replay");
         }
 
@@ -212,9 +221,8 @@ namespace TootTally.Replays
                 _elapsedTime = 0;
                 float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
                 float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
-                bool isTooting = __instance.noteplaying; 
-                bool isTootingV2 = GlobalVariables
-                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, isTooting ? 1 : 0 });
+                int isTootingV2 = __instance.toot_keys.FindAll(Input.GetKey).Count;
+                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, isTootingV2 });
             }
         }
 
@@ -239,7 +247,7 @@ namespace TootTally.Replays
                _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
                _scores_D != __instance.scores_D ? 1 : 0;
-            _noteData[_noteData.Count - 1][4] = noteLetter;
+            _noteData[_noteData.Count - 1][(int)NoteDataStrucutre.NoteJudgement] = noteLetter;
         }
 
         private static void SaveReplayToFile(PointSceneController __instance)
@@ -250,13 +258,15 @@ namespace TootTally.Replays
 
             string username = "TestUser";
             string songName = GlobalVariables.chosen_track_data.trackname_short;
-            string currentDateTimeUnix = currentDateTime.ToUnixTimeSeconds().ToString();
-            string replayFilename = $"{username} - {songName} - {currentDateTimeUnix}";
+            string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
+            string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
+            string replayFilename = $"{username} - {songName} - {endDateTimeUnix}";
 
             var replayJson = new JSONObject();
             replayJson["username"] = username;
-            replayJson["startTime"] = _startTime;
-            replayJson["endTime"] = _endTime;
+            replayJson["starttime"] = startDateTimeUnix;
+            replayJson["endtime"] = endDateTimeUnix;
+            replayJson["input"] = "mouse";
             replayJson["song"] = songName;
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
@@ -317,10 +327,10 @@ namespace TootTally.Replays
         private static void StartReplayPlayer(GameController __instance)
         {
             _lastTiming = 0;
-            _isTooting = false;
             _totalScore = 0;
             _noteTally = new int[5];
             _isReplayPlaying = wasPlayingReplay = true;
+            _lastTootingKeyPressed = _tootingKeyPressed = 0;
             Plugin.LogInfo("Loading replay: " + _replayFileName);
             if (LoadReplay(_replayFileName))
                 Plugin.LogInfo("Started replay");
@@ -379,14 +389,14 @@ namespace TootTally.Replays
             }
 
 
-            while (_frameData.Count > _replayIndex && _isReplayPlaying && currentMapPosition <= _frameData[_replayIndex][0]) //smaller or equal to because noteholder goes toward negative
+            while (_frameData.Count > _replayIndex && _isReplayPlaying && currentMapPosition <= _frameData[_replayIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
             {
-                _lastTiming = _frameData[_replayIndex][0];
-                _lastPosition = _frameData[_replayIndex][1] / 100f;
+                _lastTiming = _frameData[_replayIndex][(int)FrameDataStructure.NoteHolder];
+                _lastPosition = _frameData[_replayIndex][(int)FrameDataStructure.PointerPosition] / 100f;
                 if (_replayIndex < _frameData.Count - 1)
                 {
-                    _nextTimingTarget = _frameData[_replayIndex + 1][0];
-                    _nextPositionTarget = _frameData[_replayIndex + 1][1] / 100f;
+                    _nextTimingTarget = _frameData[_replayIndex + 1][(int)FrameDataStructure.NoteHolder];
+                    _nextPositionTarget = _frameData[_replayIndex + 1][(int)FrameDataStructure.PointerPosition] / 100f;
                 }
                 else
                 {
@@ -395,9 +405,9 @@ namespace TootTally.Replays
                 }
 
 
-                SetCursorPosition(__instance, _frameData[_replayIndex][1] / 100f);
-                if ((_frameData[_replayIndex][2] == 1 && !_isTooting) || (_frameData[_replayIndex][2] == 0 && _isTooting)) //if tooting state changes
-                    _isTooting = !_isTooting;
+                SetCursorPosition(__instance, _frameData[_replayIndex][(int)FrameDataStructure.PointerPosition] / 100f);
+
+                _tootingKeyPressed = _frameData[_replayIndex][(int)FrameDataStructure.IsTooting];
                 _replayIndex++;
             }
 
@@ -405,14 +415,14 @@ namespace TootTally.Replays
 
         private static void SetNoteScore(GameController __instance)
         {
-            var note = _noteData.Find(x => x[0] == __instance.currentnoteindex);
+            var note = _noteData.Find(x => x[(int)NoteDataStrucutre.NoteIndex] == __instance.currentnoteindex);
 
             if (note != null)
             {
-                __instance.totalscore = _totalScore = note[1]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
-                __instance.multiplier = note[2];
-                __instance.currenthealth = note[3];
-                _noteTally[note[4]]++;
+                __instance.totalscore = _totalScore = note[(int)NoteDataStrucutre.TotalScore]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
+                __instance.multiplier = note[(int)NoteDataStrucutre.Multiplier];
+                __instance.currenthealth = note[(int)NoteDataStrucutre.CurrentHealth];
+                _noteTally[note[(int)NoteDataStrucutre.NoteJudgement]]++;
             }
         }
 
@@ -440,6 +450,23 @@ namespace TootTally.Replays
             _frameData.Clear();
             _noteData.Clear();
         }
+
+        private enum FrameDataStructure
+        {
+            NoteHolder = 0,
+            PointerPosition = 1,
+            IsTooting = 2,
+        }
+
+        private enum NoteDataStrucutre
+        {
+            NoteIndex = 0,
+            TotalScore = 1,
+            Multiplier = 2,
+            CurrentHealth = 3,
+            NoteJudgement = 4,
+        }
+
         #endregion
     }
 }
