@@ -25,6 +25,7 @@ namespace TootTally.Replays
 
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
+        private static bool _isReplayBtnInitialized;
 
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
@@ -42,7 +43,7 @@ namespace TootTally.Replays
 
             _replayBtnArray = new CustomButton[5];
 
-            ReadReplayConfig(___alltrackslist);
+            ReadReplayConfig(___alltrackslist, __instance);
 
 
             for (int i = 0; i < _replayBtnArray.Length; i++)
@@ -54,20 +55,24 @@ namespace TootTally.Replays
                     InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "R", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
                 _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
             }
+            _isReplayBtnInitialized = true;
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         public static void SetActiveReplayButtons(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            ReadReplayConfig(___alltrackslist);
-            for (int i = 0; i < _replayBtnArray.Length; i++)
+            if (_isReplayBtnInitialized)
             {
-                string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
-                _replayBtnArray[i].RemoveAllOnClickActions();
-                _replayBtnArray[i].gameObject.SetActive(Globals.IsCustomTrack(___alltrackslist[GlobalVariables.levelselect_index].trackref) && replayFileName != "NA");
-                _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
+                ReadReplayConfig(___alltrackslist, __instance);
+                for (int i = 0; i < _replayBtnArray.Length; i++)
+                {
+                    string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
+                    _replayBtnArray[i].RemoveAllOnClickActions();
+                    _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
+                    _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
 
+                }
             }
         }
         #endregion
@@ -161,20 +166,21 @@ namespace TootTally.Replays
 
         public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
 
-        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist)
+        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            string trackref = ___alltrackslist[GlobalVariables.levelselect_index].trackref;
+            SingleTrackData trackData = ___alltrackslist[__instance.songindex];
+            string trackref = trackData.trackref;
             bool isCustom = Globals.IsCustomTrack(trackref);
             if (isCustom)
             {
-                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
+                string songName = trackData.trackname_short;
                 string songHash = GetSongHash(trackref);
                 if (songHash != null)
                     ReplayConfig.ReadConfig($"{songName} - {songHash}");
             }
             else
             {
-                string songName = ___alltrackslist[GlobalVariables.levelselect_index].trackname_short;
+                string songName = trackData.trackname_short;
                 ReplayConfig.ReadConfig($"{songName}");
             }
         }
