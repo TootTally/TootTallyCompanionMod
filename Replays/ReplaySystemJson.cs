@@ -3,6 +3,7 @@ using HarmonyLib;
 using SimpleJSON;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
 using System.Text;
@@ -15,7 +16,7 @@ namespace TootTally.Replays
     public static class ReplaySystemJson
     {
         private static int _targetFramerate;
-        private static int _scores_A, _scores_B, _scores_C, _scores_D, _totalScore;
+        private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
         private static int _lastTootingKeyPressed, _tootingKeyPressed;
@@ -27,12 +28,14 @@ namespace TootTally.Replays
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
         private static bool _isReplayBtnInitialized;
+        private static bool _wasTouchScreenUsed;
 
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
         private static float _elapsedTime;
 
         private static string _replayFileName;
+
 
         #region LevelSelectControllerPatches
 
@@ -213,14 +216,15 @@ namespace TootTally.Replays
 
         private static void StopReplayRecorder(PointSceneController __instance)
         {
+            _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             SaveReplayToFile(__instance);
             _isReplayRecording = false;
-            _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             Plugin.LogInfo("Replay recording finished");
         }
 
         private static void RecordFrameDataV2(GameController __instance)
         {
+            if (Input.touchCount > 0) _wasTouchScreenUsed = true;
             float deltaTime = Time.deltaTime;
             _elapsedTime += deltaTime;
             if (_isReplayRecording && _elapsedTime >= 1f / _targetFramerate)
@@ -243,6 +247,7 @@ namespace TootTally.Replays
             _scores_B = __instance.scores_B;
             _scores_C = __instance.scores_C;
             _scores_D = __instance.scores_D;
+            _scores_F = __instance.scores_F;
 
 
             _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 }); // has to do the note judgement on postfix
@@ -263,22 +268,34 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
+
+
             string username = "TestUser";
-            string songName = GlobalVariables.chosen_track_data.trackname_short;
+            string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
+            string trackRef = GlobalVariables.chosen_track_data.trackref;
+            bool isCustom = Globals.IsCustomTrack(trackRef);
+            string songHash = isCustom ? GetSongHash(trackRef) : "ost";
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
-            string replayFilename = $"{username} - {songName} - {endDateTimeUnix}";
+            string replayFilename = $"{username} - {songNameShort} - {endDateTimeUnix}";
 
-            string inputType = "mouse"; // No Detection yet
-
+            string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
             var replayJson = new JSONObject();
             replayJson["username"] = username;
             replayJson["starttime"] = startDateTimeUnix;
             replayJson["endtime"] = endDateTimeUnix;
             replayJson["input"] = inputType;
-            replayJson["song"] = songName;
+            replayJson["song"] = songNameLong;
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
+            replayJson["pluginbuilddate"] = Plugin.BUILDDATE;
+            replayJson["gameversion"] = GlobalVariables.version;
+            replayJson["songhash"] = isCustom ? songHash : "ost";
+            replayJson["finalscore"] = GlobalVariables.gameplay_scoretotal;
+
+            var noteJudgmentData = new JSONArray();
+            noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
+            replayJson["finalnotetallies"] = noteJudgmentData;
             var replayFrameData = new JSONArray();
             OptimizeFrameData(ref _frameData);
             _frameData.ForEach(frame =>
