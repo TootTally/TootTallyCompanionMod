@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using TootTally.Graphics;
 using TrombLoader.Helpers;
@@ -268,8 +269,6 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-
-
             string username = "TestUser";
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
@@ -277,7 +276,7 @@ namespace TootTally.Replays
             string songHash = isCustom ? GetSongHash(trackRef) : "ost";
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
-            string replayFilename = $"{username} - {songNameShort} - {endDateTimeUnix}";
+            string replayFileName = $"{username} - {songNameShort} - {endDateTimeUnix}";
 
             string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
             var replayJson = new JSONObject();
@@ -319,10 +318,29 @@ namespace TootTally.Replays
             });
             replayJson["notedata"] = replayNoteData;
 
-            File.WriteAllText(replayDir + replayFilename, replayJson.ToString());
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    var zipFile = zipArchive.CreateEntry(replayFileName);
+
+                    using (var entry = zipFile.Open())
+                    using (var sw = new StreamWriter(entry))
+                    {
+                        sw.Write(replayJson.ToString());
+                    }
+                }
+                 
+                using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Create))
+                {
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    memoryStream.CopyTo(fileStream);
+                }
+            }
 
             ReadReplayConfig();
-            ReplayConfig.SaveToConfig(replayFilename);
+            ReplayConfig.SaveToConfig(replayFileName);
+
         }
 
 
@@ -386,8 +404,29 @@ namespace TootTally.Replays
                 return false;
             }
 
-            string jsonFile = File.ReadAllText(replayDir + replayFileName);
-            var replayJson = JSONObject.Parse(jsonFile);
+            string jsonFileFromZip;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Open))
+                {
+                    fileStream.CopyTo(memoryStream);
+                }
+
+                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read, true))
+                {
+                    var zipFile = zipArchive.GetEntry(replayFileName);
+
+                    using (var entry = zipFile.Open())
+                    using (var sr = new StreamReader(entry))
+                    {
+                        jsonFileFromZip = sr.ReadToEnd();
+                    }
+
+                }
+            }
+
+            var replayJson = JSONObject.Parse(jsonFileFromZip);
             GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
             foreach (JSONArray jsonArray in replayJson["framedata"])
                 _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
