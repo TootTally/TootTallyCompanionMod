@@ -36,7 +36,7 @@ namespace TootTally
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
 
-        private string CalcSHA256Hash(byte[] data)
+        public string CalcSHA256Hash(byte[] data)
         {
             using (SHA256 sha256 = SHA256.Create())
             {
@@ -87,6 +87,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(InteractableGameObjectFactory));
+            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -155,7 +156,6 @@ namespace TootTally
 
                 UnityWebRequest www = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
                 yield return www.SendWebRequest();
-
                 if (www.isNetworkError)
                     LogError($"ERROR IN SENDING SCORE: {www.error}");
                 else if (www.isHttpError)

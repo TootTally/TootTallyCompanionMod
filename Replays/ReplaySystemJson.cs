@@ -11,6 +11,7 @@ using System.Text;
 using TootTally.Graphics;
 using TrombLoader.Helpers;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace TootTally.Replays
 {
@@ -57,7 +58,7 @@ namespace TootTally.Replays
 
                 string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
                 _replayBtnArray[i] =
-                    InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "R", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
+                    InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
                 _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
             }
             _isReplayBtnInitialized = true;
@@ -269,11 +270,30 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-            string username = "TestUser";
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songHash = isCustom ? GetSongHash(trackRef) : "ost";
+
+            //Web Request
+            UnityWebRequest webRequest = UnityWebRequest.Get($"{Plugin.APIURL}/hashcheck/{songHash}/");
+            //webRequest.SendWebRequest();
+
+            if (webRequest.isNetworkError)
+            {
+                Plugin.LogError("Network error detected, will not attempt anything");
+            }
+            else if (webRequest.isHttpError)
+            {
+                Plugin.LogError("HTTP error returned, assuming not in database");
+            }
+            else
+            {
+                Plugin.LogInfo("HTTP 200 OK: It's in the database!");
+            }
+
+            string username = "TestUser";
+            
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
             string replayFileName = $"{username} - {songNameShort} - {endDateTimeUnix}";
