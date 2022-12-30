@@ -236,23 +236,6 @@ namespace TootTally.Replays
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songHash = isCustom ? GetSongHash(trackRef) : "ost";
 
-            //Web Request
-            UnityWebRequest webRequest = UnityWebRequest.Get($"{Plugin.APIURL}/hashcheck/{songHash}/");
-            //webRequest.SendWebRequest();
-
-            if (webRequest.isNetworkError)
-            {
-                Plugin.LogError("Network error detected, will not attempt anything");
-            }
-            else if (webRequest.isHttpError)
-            {
-                Plugin.LogError("HTTP error returned, assuming not in database");
-            }
-            else
-            {
-                Plugin.LogInfo("HTTP 200 OK: It's in the database!");
-            }
-
             string username = "TestUser";
 
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();

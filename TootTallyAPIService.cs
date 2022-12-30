@@ -20,19 +20,19 @@ namespace TootTally
         internal static void LogWarning(string msg) => Plugin.LogWarning(msg);
         #endregion
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(string songHash, Action<bool> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, Action<int> callback)
         {
-            bool isInDatabase = false;
             UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest))
             {
-                LogInfo("HTTP 200 OK: It's in the database!");
-                isInDatabase = true;
+                LogInfo($"hash {webRequest.downloadHandler.text} is in the database");
+                callback(int.Parse(webRequest.downloadHandler.text)); //.text returns the digit of ex: https://toottally.com/api/songs/182/leaderboard/
             }
-
-            callback(isInDatabase);
+            else
+                callback(0); //hash 0 is null
+            
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableSubmissionClass.Chart chart)
@@ -77,31 +77,34 @@ namespace TootTally
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest))
-                Plugin.LogInfo($"LEADERBOARD SCORES LOADED!");
-            List<SerializableSubmissionClass.ScoreDataFromDB> scoreList = new List<SerializableSubmissionClass.ScoreDataFromDB>();
-
-            var leaderboardJson = JSONObject.Parse(webRequest.downloadHandler.GetText());
-            foreach (JSONObject scoreJson in leaderboardJson["results"])
             {
-                SerializableSubmissionClass.ScoreDataFromDB score = new SerializableSubmissionClass.ScoreDataFromDB()
+                Plugin.LogInfo("Scores loaded into leaderboard");
+                List<SerializableSubmissionClass.ScoreDataFromDB> scoreList = new List<SerializableSubmissionClass.ScoreDataFromDB>();
+
+                var leaderboardJson = JSONObject.Parse(webRequest.downloadHandler.GetText());
+                foreach (JSONObject scoreJson in leaderboardJson["results"])
                 {
-                    score = scoreJson["score"],
-                    player = scoreJson["player"],
-                    played_on = scoreJson["played_on"],
-                    grade = scoreJson["grade"],
-                    noteTally = new int[] 
-                    { scoreJson["perfect"],
+                    SerializableSubmissionClass.ScoreDataFromDB score = new SerializableSubmissionClass.ScoreDataFromDB()
+                    {
+                        score = scoreJson["score"],
+                        player = scoreJson["player"],
+                        played_on = scoreJson["played_on"],
+                        grade = scoreJson["grade"],
+                        noteTally = new int[]
+                        { scoreJson["perfect"],
                     scoreJson["nice"],
                     scoreJson["okay"],
                     scoreJson["meh"],
                     scoreJson["nasty"]},
-                    max_combo = scoreJson["max_combo"],
-                    percentage = scoreJson["percentage"],
-                    game_version = scoreJson["game_version"],
-                };
-                scoreList.Add(score);
+                        max_combo = scoreJson["max_combo"],
+                        percentage = scoreJson["percentage"],
+                        game_version = scoreJson["game_version"],
+                    };
+                    scoreList.Add(score);
+                }
+                callback(scoreList);
             }
-            callback(scoreList);
+            
         }
 
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")

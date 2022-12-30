@@ -142,10 +142,10 @@ namespace TootTally
                 string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
                 songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
 
-                __instance.StartCoroutine(TootTallyAPIService.CheckHashInDB(songHash, (isInDatabase) =>
+                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
                 {
                     SerializableSubmissionClass.Chart chart = new SerializableSubmissionClass.Chart { tmb = tmb };
-                    if (Instance.AllowTMBUploads.Value && !isInDatabase)
+                    if (Instance.AllowTMBUploads.Value && songHashInDB != 0)
                         __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
                 }));
                 maxCombo = 0; // Reset tracked maxCombo

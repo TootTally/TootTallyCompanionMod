@@ -27,7 +27,7 @@ namespace TootTally.Graphics
         private static Slider _scrollSlider;
         private static CustomButton[] _replayBtnArray;
         private static LevelSelectController _levelSelectControllerInstance;
-        private static bool _isReplayBtnInitialized;
+        private static bool _isReplayBtnInitialized, _isFirstRefresh;
 
         private const int PADDING_X = 5;
         private const int PADDING_Y = 2;
@@ -44,42 +44,56 @@ namespace TootTally.Graphics
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
-        static void YoinkLotOfGraphics(LevelSelectController __instance)
+        static void YoinkLotOfGraphics(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             _levelSelectControllerInstance = __instance;
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLeaderboardScoresFromDB(182, (scoreDataList) =>
-            {
-
-                List<List<string>> scoresMatrix = new List<List<string>>();
-
-                int count = 1;
-                foreach (SerializableSubmissionClass.ScoreDataFromDB scoreData in scoreDataList)
-                {
-                    List<string> scoreDataText = new List<string>
-                {
-                    "#" + count,
-                    Truncate(scoreData.player, 8),
-                    string.Format("{0:n0}",scoreData.score),
-                    scoreData.percentage.ToString("0.00") + "%",
-                    scoreData.grade,
-                    scoreData.max_combo + "x",
-                };
-                    scoresMatrix.Add(scoreDataText);
-                    count++;
-                }
-
-                Initialize();
-                RefreshLeaderboard(scoresMatrix);
-            }));
-
+            Initialize();
+            UpdateLeaderboard(___alltrackslist, __instance);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         static void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
+            
+           
 
+            string trackRef = ___alltrackslist[__instance.songindex].trackref;
+            bool isCustom = Globals.IsCustomTrack(trackRef);
+            string songFilePath = Plugin.SongSelect.GetSongFilePath(isCustom, trackRef);
+            string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
+            string songHash = isCustom ? Plugin.Instance.CalcFileHash(songFilePath) : Plugin.Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+
+            __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
+            {
+                if (songHashInDB != 0)
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                    {
+
+                        List<List<string>> scoresMatrix = new List<List<string>>();
+
+                        int count = 1;
+                        foreach (SerializableSubmissionClass.ScoreDataFromDB scoreData in scoreDataList)
+                        {
+                            List<string> scoreDataText = new List<string>
+                            {
+                                "#" + count,
+                                Truncate(scoreData.player, 8),
+                                string.Format("{0:n0}",scoreData.score),
+                                scoreData.percentage.ToString("0.00") + "%",
+                                scoreData.grade,
+                                scoreData.max_combo + "x",
+                            };
+                            scoresMatrix.Add(scoreDataText);
+                            count++;
+                        }
+                        if (!_isFirstRefresh)
+                            ClearLeaderboard();
+                        RefreshLeaderboard(scoresMatrix);
+                        _isFirstRefresh = false;
+                    }));
+            }));
         }
 
         public static string Truncate(this string value, int maxLength)
@@ -90,6 +104,7 @@ namespace TootTally.Graphics
 
         public static void Initialize()
         {
+            _isFirstRefresh = true;
             _diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
             _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
 
@@ -103,6 +118,15 @@ namespace TootTally.Graphics
 
             _leaderboardHeaderPrefab = lbTextHolder.AddComponent<LeaderboardText>();
             _leaderboardHeaderPrefab.ConstructLeaderboardHeaderText(myText, lbTextHolder.GetComponent<RectTransform>());
+
+            GameObject.DestroyImmediate(_leaderBoard.transform.Find(".......").gameObject);
+            GameObject.DestroyImmediate(_leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject);
+
+            for (int i = 1; i < 6; i++)
+            {
+                _leaderBoard.transform.Find("score" + i).gameObject.SetActive(false);
+                _leaderBoard.transform.Find(i.ToString()).gameObject.SetActive(false);
+            }
 
             lbTextHolder.SetActive(false);
         }
@@ -146,15 +170,6 @@ namespace TootTally.Graphics
 
             }
             lbContainer.OrganizeRows();
-
-            GameObject.DestroyImmediate(_leaderBoard.transform.Find(".......").gameObject);
-            GameObject.DestroyImmediate(_leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject);
-
-            for (int i = 1; i < 6; i++)
-            {
-                _leaderBoard.transform.Find("score" + i).gameObject.SetActive(false);
-                _leaderBoard.transform.Find(i.ToString()).gameObject.SetActive(false);
-            }
 
             Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
             RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
