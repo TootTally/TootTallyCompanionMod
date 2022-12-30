@@ -86,9 +86,9 @@ namespace TootTally
                 SerializableSubmissionClass.ScoreDataFromDB score = new SerializableSubmissionClass.ScoreDataFromDB()
                 {
                     score = scoreJson["score"],
-                    player = scoreJson["score"],
-                    played_on = scoreJson["score"],
-                    grade = scoreJson["score"],
+                    player = scoreJson["player"],
+                    played_on = scoreJson["played_on"],
+                    grade = scoreJson["grade"],
                     noteTally = new int[] 
                     { scoreJson["perfect"],
                     scoreJson["nice"],

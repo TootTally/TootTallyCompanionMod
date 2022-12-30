@@ -32,8 +32,14 @@ namespace TootTally.Graphics
         private const int PADDING_X = 5;
         private const int PADDING_Y = 2;
         private const int SM_PADDING_Y = 1;
-        private const string FULLSCREEN_PANEL_PATH = "";
+        private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
 
+        /* Leaderboard logic:
+         * The main element of a leaderboard is the container,
+         * a container has rows, which represents a score. Rows are organized vertically and have a static width and height
+         * a row has columns, which represents one or a pair of scoreData. columns are organized horizontally and have dynamic width and height
+         * a column has a list of gameobjects which represents the scoreData. gameobjects have static width and height
+         */
 
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
