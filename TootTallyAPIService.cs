@@ -35,6 +35,38 @@ namespace TootTally
             
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUser(Action<SerializableSubmissionClass.User> callback)
+        {
+            // TODO: Might have to redo this to follow the same pattern as SubmitScore
+            var apiObj = new SerializableSubmissionClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/profile/self/", apiKey);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest))
+            {
+                var jsonData = JSONObject.Parse(webRequest.downloadHandler.text);
+                LogInfo($"Received data: {webRequest.downloadHandler.text}");
+                LogInfo($"JSON Data: {jsonData.ToString()}");
+                SerializableSubmissionClass.User user = new SerializableSubmissionClass.User()
+                {
+                    username = jsonData["username"],
+                    id = jsonData["id"],
+                };
+                LogInfo($"Welcome, {user.username} (User ID: {user.id})!");
+                callback(user);
+            }
+            else
+            {
+                var user = new SerializableSubmissionClass.User()
+                {
+                    username = "Guest",
+                    id = 0,
+                };
+                callback(user);
+            }
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableSubmissionClass.Chart chart)
         {
 
@@ -110,7 +142,7 @@ namespace TootTally
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")
         {
 
-            DownloadHandler dlHandler = new DownloadHandler();
+            DownloadHandler dlHandler = new DownloadHandlerBuffer();
             UploadHandler ulHandler = new UploadHandlerRaw(data);
             ulHandler.contentType = contentType;
 

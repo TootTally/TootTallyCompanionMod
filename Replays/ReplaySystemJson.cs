@@ -17,6 +17,7 @@ namespace TootTally.Replays
 {
     public static class ReplaySystemJson
     {
+        private static SerializableSubmissionClass.User _user;
         private static int _targetFramerate;
         private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
@@ -127,6 +128,17 @@ namespace TootTally.Replays
             replayFileName = null;
             Plugin.LogInfo("Level quit, clearing replay data");
         }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+        [HarmonyPostfix]
+        public static void GetUserProfile(LevelSelectController __instance)
+        {
+            __instance.StartCoroutine(TootTallyAPIService.GetUser((user) => {
+                if (user != null) {
+                    _user = user;
+                }
+            }));
+        }
         #endregion
 
         #region Config
@@ -236,7 +248,7 @@ namespace TootTally.Replays
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songHash = isCustom ? GetSongHash(trackRef) : "ost";
 
-            string username = "TestUser";
+            string username = _user.username;
 
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();

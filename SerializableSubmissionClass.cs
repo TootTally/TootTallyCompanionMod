@@ -38,5 +38,17 @@ namespace TootTally
             public string game_version;
         }
 
+        [Serializable]
+        public class APISubmission
+        {
+            public string apiKey;
+        }
+
+        [Serializable]
+        public class User
+        {
+            public string username;
+            public int id;
+        }
     }
 }
