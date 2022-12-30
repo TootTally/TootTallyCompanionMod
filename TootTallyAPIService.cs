@@ -27,7 +27,6 @@ namespace TootTally
 
             if (!HasError(webRequest))
             {
-                LogInfo($"hash {webRequest.downloadHandler.text} is in the database");
                 callback(int.Parse(webRequest.downloadHandler.text)); //.text returns the digit of ex: https://toottally.com/api/songs/182/leaderboard/
             }
             else
@@ -35,10 +34,10 @@ namespace TootTally
             
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetUser(Action<SerializableSubmissionClass.User> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUser(Action<SerializableClass.User> callback)
         {
             // TODO: Might have to redo this to follow the same pattern as SubmitScore
-            var apiObj = new SerializableSubmissionClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
             var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest($"{APIURL}/api/profile/self/", apiKey);
             yield return webRequest.SendWebRequest();
@@ -46,19 +45,17 @@ namespace TootTally
             if (!HasError(webRequest))
             {
                 var jsonData = JSONObject.Parse(webRequest.downloadHandler.text);
-                LogInfo($"Received data: {webRequest.downloadHandler.text}");
-                LogInfo($"JSON Data: {jsonData.ToString()}");
-                SerializableSubmissionClass.User user = new SerializableSubmissionClass.User()
+                SerializableClass.User user = new SerializableClass.User()
                 {
                     username = jsonData["username"],
                     id = jsonData["id"],
                 };
-                LogInfo($"Welcome, {user.username} (User ID: {user.id})!");
+                LogInfo($"Welcome, {user.username}!");
                 callback(user);
             }
             else
             {
-                var user = new SerializableSubmissionClass.User()
+                var user = new SerializableClass.User()
                 {
                     username = "Guest",
                     id = 0,
@@ -67,7 +64,7 @@ namespace TootTally
             }
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableSubmissionClass.Chart chart)
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart)
         {
 
             string apiLink = $"{APIURL}/api/upload/";
@@ -79,12 +76,12 @@ namespace TootTally
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest))
-                LogInfo($"CHART SENT SUCCESFULLY");
+                LogInfo($"Chart Sent.");
 
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitScore(SerializableSubmissionClass.SendableScore score)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitScore(SerializableClass.SendableScore score)
         {
             string apiLink = $"{APIURL}/api/submitscore/";
             string jsonified = JsonUtility.ToJson(score);
@@ -97,10 +94,10 @@ namespace TootTally
             UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest))
-                LogInfo($"SCORE SENT SUCCESFULLY");
+                LogInfo($"Score Sent.");
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableSubmissionClass.ScoreDataFromDB>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
         {
             string apiLink = $"{Plugin.APIURL}/api/songs/{songID}/leaderboard/";
 
@@ -110,13 +107,12 @@ namespace TootTally
 
             if (!HasError(webRequest))
             {
-                Plugin.LogInfo("Scores loaded into leaderboard");
-                List<SerializableSubmissionClass.ScoreDataFromDB> scoreList = new List<SerializableSubmissionClass.ScoreDataFromDB>();
+                List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
                 var leaderboardJson = JSONObject.Parse(webRequest.downloadHandler.GetText());
                 foreach (JSONObject scoreJson in leaderboardJson["results"])
                 {
-                    SerializableSubmissionClass.ScoreDataFromDB score = new SerializableSubmissionClass.ScoreDataFromDB()
+                    SerializableClass.ScoreDataFromDB score = new SerializableClass.ScoreDataFromDB()
                     {
                         score = scoreJson["score"],
                         player = scoreJson["player"],

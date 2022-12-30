@@ -144,7 +144,7 @@ namespace TootTally
 
                 __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
                 {
-                    SerializableSubmissionClass.Chart chart = new SerializableSubmissionClass.Chart { tmb = tmb };
+                    SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
                     if (Instance.AllowTMBUploads.Value && songHashInDB != 0)
                         __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
                 }));
@@ -184,7 +184,7 @@ namespace TootTally
                 LogInfo($"Perfects: {GlobalVariables.gameplay_notescores[4]}");
                 LogInfo($"Song Hash: {songHash}");
 
-                SerializableSubmissionClass.SendableScore score = new();
+                SerializableClass.SendableScore score = new();
                 score.apiKey = Instance.APIKey.Value;
                 score.letterScore = __instance.letterscore;
                 score.score = GlobalVariables.gameplay_scoretotal;

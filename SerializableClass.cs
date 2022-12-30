@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TootTally
 {
-    public static class SerializableSubmissionClass
+    public static class SerializableClass
     {
         [Serializable]
         public class Chart

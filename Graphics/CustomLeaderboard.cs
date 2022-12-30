@@ -74,7 +74,7 @@ namespace TootTally.Graphics
                         List<List<string>> scoresMatrix = new List<List<string>>();
 
                         int count = 1;
-                        foreach (SerializableSubmissionClass.ScoreDataFromDB scoreData in scoreDataList)
+                        foreach (SerializableClass.ScoreDataFromDB scoreData in scoreDataList)
                         {
                             List<string> scoreDataText = new List<string>
                             {

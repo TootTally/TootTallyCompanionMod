@@ -17,7 +17,7 @@ namespace TootTally.Replays
 {
     public static class ReplaySystemJson
     {
-        private static SerializableSubmissionClass.User _user;
+        private static SerializableClass.User _user;
         private static int _targetFramerate;
         private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
@@ -313,6 +313,8 @@ namespace TootTally.Replays
                     memoryStream.CopyTo(fileStream);
                 }
             }
+
+            //Send Replay to server async here
 
             ReadReplayConfig();
             ReplayConfig.SaveToConfig(replayFileName);
