@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TootTally.Replays;
 using TrombLoader.Helpers;
 using UnityEngine;
 using UnityEngine.Bindings;
@@ -20,10 +21,13 @@ namespace TootTally.Graphics
     public static class CustomLeaderboard
     {
         private static List<ScoreData> _scoreDataList;
-        private static GameObject _leaderBoard;
-        private static List<List<string>> fakeDataMatrix, realDataMatrix;
-        private static LeaderboardHeaderText _leaderboardHeaderPrefab;
+        private static GameObject _leaderBoard, _diffBar;
+        private static LeaderboardText _leaderboardHeaderPrefab;
         private static Slider _scrollSlider;
+        private static CustomButton[] _replayBtnArray;
+        private static LevelSelectController _levelSelectControllerInstance;
+        private static bool _isReplayBtnInitialized;
+
         private const int PADDING_X = 5;
         private const int PADDING_Y = 2;
         private const int SM_PADDING_Y = 1;
@@ -35,6 +39,7 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         static void YoinkLotOfGraphics(LevelSelectController __instance)
         {
+            _levelSelectControllerInstance = __instance;
 
             Plugin.Instance.StartCoroutine(GetScoresFromDB(182));
 
@@ -81,8 +86,8 @@ namespace TootTally.Graphics
                 count++;
             }
 
-            fakeDataMatrix = scoresMatrix;
             Initialize();
+            RefreshLeaderboard(scoresMatrix);
         }
         public static string Truncate(this string value, int maxLength)
         {
@@ -90,83 +95,63 @@ namespace TootTally.Graphics
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
 
-
-        public class LeaderboardVerticalSlider
-        {
-            public Slider slider;
-            public Vector2 sizeDelta;
-            public RectTransform rectTransform;
-
-            public void ConstructVerticalSlider(Slider slider, Vector2 sizeDelta, Vector2 anchoredPosition, RectTransform rectTransform)
-            {
-                slider.name = "LeaderboardVerticalSlider";
-                this.slider = slider;
-                this.rectTransform = rectTransform;
-                rectTransform.sizeDelta = sizeDelta;
-                rectTransform.anchoredPosition = anchoredPosition;
-            }
-        }
-
-        /*public LeaderboardVerticalSlider CreateLeaderboardVerticalSlider(Transform canvasTransform, Slider prefab)
-        {
-            Slider mySlider = GameObject.Instantiate(prefab, canvasTransform);
-            mySlider.direction = Slider.Direction.TopToBottom;
-            RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
-            RectTransform sliderPrefabRect = prefab.GetComponent<RectTransform>();
-            sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 2.8f);
-            sliderRect.anchoredPosition = new Vector2(156, -190);
-            mySlider.handleRect = sliderRect;
-            RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
-            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
-            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-            mySlider.minValue = 0;
-            mySlider.maxValue = 1;
-            //mySlider.onValueChanged.AddListener((float _value) => { mySlider.fillRect.sizeDelta = new Vector2(mySlider.fillRect.sizeDelta.x, 5); }); //not working for some reasons
-            GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
-            return mySlider;
-        }*/
-
         public static void Initialize()
         {
             _scoreDataList = new List<ScoreData>();
-
-            GameObject diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
-
+            _diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
             _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
-            LeaderBoardContainer lbContainer = CreateContainer(_leaderBoard, diffBar);
 
-            GameObject leaderboardHeader = _leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject;
-            GameObject headerHolder = GameObject.Instantiate(leaderboardHeader, _leaderBoard.transform);
+            GameObject leaderboardText = _leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject;
+            GameObject lbTextHolder = GameObject.Instantiate(leaderboardText, _leaderBoard.transform);
 
-            Font yoinktextfont = headerHolder.GetComponent<Text>().font;
-            UnityEngine.Object.DestroyImmediate(headerHolder.GetComponent<Text>());
-            Text myText = headerHolder.AddComponent<Text>();
+            Font yoinktextfont = lbTextHolder.GetComponent<Text>().font;
+            UnityEngine.Object.DestroyImmediate(lbTextHolder.GetComponent<Text>());
+            Text myText = lbTextHolder.AddComponent<Text>();
             myText.font = yoinktextfont;
 
-            _leaderboardHeaderPrefab = headerHolder.AddComponent<LeaderboardHeaderText>();
-            _leaderboardHeaderPrefab.ConstructLeaderboardHeaderText(myText, headerHolder.GetComponent<RectTransform>());
-            headerHolder.SetActive(false);
+            _leaderboardHeaderPrefab = lbTextHolder.AddComponent<LeaderboardText>();
+            _leaderboardHeaderPrefab.ConstructLeaderboardHeaderText(myText, lbTextHolder.GetComponent<RectTransform>());
 
-            foreach (List<string> dataList in fakeDataMatrix)
+            lbTextHolder.SetActive(false);
+        }
+
+        public static void ClearLeaderboard()
+        {
+            GameObject.DestroyImmediate(_leaderBoard.transform.Find("LeaderboardContainer").gameObject);
+        }
+
+        public static void RefreshLeaderboard(List<List<string>> scoreDataLists)
+        {
+            LeaderBoardContainer lbContainer = CreateContainer(_leaderBoard, _diffBar);
+
+            foreach (List<string> dataList in scoreDataLists)
             {
-                LeaderBoardRowContainer rowContainer = CreateLeaderboardRow(lbContainer, diffBar);
+                LeaderBoardRowContainer rowContainer = CreateLeaderboardRow(lbContainer, _diffBar);
 
                 for (int i = 0; i < dataList.Count; i++)
                 {
-                    LeaderBoardColumnContainer colContainer = CreateLeaderboardColumn(rowContainer, diffBar);
+                    LeaderBoardColumnContainer colContainer = CreateLeaderboardColumn(rowContainer, _diffBar);
 
-                    LeaderboardHeaderText header = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
+                    LeaderboardText header = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
                     colContainer.AddGameObjectToList(header.gameObject);
 
                     if (i == 1 || i == 4)
                     {
                         i++;
 
-                        LeaderboardHeaderText header2 = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
+                        LeaderboardText header2 = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
                         colContainer.AddGameObjectToList(header2.gameObject);
                     }
 
                 }
+
+                LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
+                CustomButton replayButton = 
+                    InteractableGameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton", delegate { ReplaySystemJson.replayFileName = "TestUser - Happy Birthday - 1672164571"; _levelSelectControllerInstance.playbtn.onClick?.Invoke(); });
+
+                colContainerReplay.AddGameObjectToList(replayButton.gameObject);
+
+
             }
             lbContainer.OrganizeRows();
 
@@ -203,7 +188,6 @@ namespace TootTally.Graphics
                     row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + _value) / 30), 0);
                 });
             });
-
         }
 
         private class ScoreData
@@ -223,7 +207,7 @@ namespace TootTally.Graphics
             }
         }
 
-        private class LeaderboardHeaderText : MonoBehaviour
+        private class LeaderboardText : MonoBehaviour
         {
             public Text textHolder;
             public RectTransform rectTransform;
@@ -231,19 +215,6 @@ namespace TootTally.Graphics
             public void ConstructLeaderboardHeaderText(Text text, RectTransform rectTransform)
             {
                 textHolder = text;
-                this.rectTransform = rectTransform;
-            }
-        }
-
-
-        private class LeaderboardText : MonoBehaviour
-        {
-            public Text text;
-            public Transform rectTransform;
-
-            public void ConstructLeaderboardText(Text text, Transform rectTransform)
-            {
-                this.text = text;
                 this.rectTransform = rectTransform;
             }
         }
@@ -439,9 +410,9 @@ namespace TootTally.Graphics
             return colContainer;
         }
 
-        private static LeaderboardHeaderText CreateLeaderBoardHeader(Transform canvasTransform, string text, string name)
+        private static LeaderboardText CreateLeaderBoardHeader(Transform canvasTransform, string text, string name)
         {
-            LeaderboardHeaderText headerText = GameObject.Instantiate(_leaderboardHeaderPrefab, canvasTransform);
+            LeaderboardText headerText = GameObject.Instantiate(_leaderboardHeaderPrefab, canvasTransform);
 
             headerText.name = name;
             headerText.textHolder.text = text;

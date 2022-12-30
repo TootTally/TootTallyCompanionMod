@@ -25,10 +25,11 @@ namespace TootTally
     [BepInDependency("TrombLoader", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
-        internal static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
-        internal static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
-        internal static void LogError(string msg) => Instance.Logger.LogError(msg);
-        internal static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
+        public static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
+        public static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
+        public static void LogError(string msg) => Instance.Logger.LogError(msg);
+        public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
+
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
         public const int BUILDDATE = 20221213;
@@ -125,98 +126,11 @@ namespace TootTally
             return tmb.ToString();
         }
 
-        [Serializable]
-        public class ChartSubmission
-        {
-            public string tmb;
-        }
-
-        [Serializable]
-        public class ScoreSubmission
-        {
-            public string apiKey;
-            public string letterScore;
-            public int score;
-            public int[] noteTally; // [nasties, mehs, okays, nices, perfects]
-            public string songHash;
-            public int maxCombo;
-            public string gameVersion;
-            public int modVersion;
-
-            public IEnumerator<UnityWebRequestAsyncOperation> SubmitScore()
-            {
-                apiKey = Instance.APIKey.Value;
-                string apiLink = $"{APIURL}/api/submitscore/";
-                string jsonified = JsonUtility.ToJson(this);
-                var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
-
-                DownloadHandler dlHandler = new DownloadHandler();
-                UploadHandler ulHandler = new UploadHandlerRaw(jsonbin);
-                ulHandler.contentType = "application/json";
-
-                UnityWebRequest www = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
-                yield return www.SendWebRequest();
-                if (www.isNetworkError)
-                    LogError($"ERROR IN SENDING SCORE: {www.error}");
-                else if (www.isHttpError)
-                    LogError($"HTTP ERROR {www.error}");
-                else
-                    LogInfo($"SCORE SENT SUCCESFULLY");
-            }
-        }
-
         public static class SongSelect
         {
             public static string songHash { get; private set; }
             private static int maxCombo;
 
-            public static IEnumerator<UnityWebRequestAsyncOperation> CheckHashInDB(bool isCustom, string songFilePath, SingleTrackData singleTrackData = null)
-            {
-                bool inDatabase = false;
-                string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : GenerateBaseTmb(songFilePath, singleTrackData);
-                LogInfo($"Hashing {songFilePath}");
-                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
-                LogInfo($"Calculated hash: {songHash}");
-                UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
-                yield return webRequest.SendWebRequest();
-
-                if (webRequest.isNetworkError)
-                {
-                    LogError("Network error detected, will not attempt anything");
-                }
-                else if (webRequest.isHttpError)
-                {
-                    LogInfo("HTTP error returned, assuming not in database");
-                }
-                else
-                {
-                    LogInfo("HTTP 200 OK: It's in the database!");
-                    inDatabase = true;
-                }
-
-                if (Instance.AllowTMBUploads.Value && !inDatabase)
-                {
-                    ChartSubmission chart = new ChartSubmission { tmb = tmb };
-                    string apiLink = $"{APIURL}/api/upload/";
-                    string jsonified = JsonUtility.ToJson(chart);
-                    LogDebug($"Chart JSON: {jsonified}");
-                    var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
-
-                    DownloadHandler dlHandler = new DownloadHandler();
-                    UploadHandler ulHandler = new UploadHandlerRaw(jsonbin);
-                    ulHandler.contentType = "application/json";
-
-                    UnityWebRequest www = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
-                    yield return www.SendWebRequest();
-
-                    if (www.isNetworkError)
-                        LogError($"ERROR IN SENDING CHART: {www.error}");
-                    else if (www.isHttpError)
-                        LogError($"HTTP ERROR {www.error}");
-                    else
-                        LogInfo($"CHART SENT SUCCESFULLY");
-                }
-            }
 
             [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
             [HarmonyPrefix]
@@ -225,14 +139,21 @@ namespace TootTally
                 string trackRef = GlobalVariables.chosen_track;
                 bool isCustom = Globals.IsCustomTrack(trackRef);
                 string songFilePath = GetSongFilePath(isCustom, trackRef);
-                __instance.StartCoroutine(CheckHashInDB(isCustom, songFilePath));
+                string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
+                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+                __instance.StartCoroutine(TootTallyAPIService.CheckHashInDB(songHash, (isInDatabase) =>
+                {
+                    SerializableSubmissionClass.Chart chart = new SerializableSubmissionClass.Chart { tmb = tmb };
+                    if (Instance.AllowTMBUploads.Value && !isInDatabase)
+                        __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
+                }));
                 maxCombo = 0; // Reset tracked maxCombo
             }
 
             public static string GetSongFilePath(bool isCustom, string trackRef)
             {
-                return isCustom ? 
-                    Path.Combine(Globals.ChartFolders[trackRef], "song.tmb"):
+                return isCustom ?
+                    Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
                     $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
             }
 
@@ -262,7 +183,8 @@ namespace TootTally
                 LogInfo($"Perfects: {GlobalVariables.gameplay_notescores[4]}");
                 LogInfo($"Song Hash: {songHash}");
 
-                ScoreSubmission score = new();
+                SerializableSubmissionClass.Score score = new();
+                score.apiKey = Instance.APIKey.Value;
                 score.letterScore = __instance.letterscore;
                 score.score = GlobalVariables.gameplay_scoretotal;
                 score.noteTally = GlobalVariables.gameplay_notescores;
@@ -270,22 +192,8 @@ namespace TootTally
                 score.maxCombo = maxCombo;
                 score.gameVersion = GlobalVariables.version;
                 score.modVersion = BUILDDATE;
-                __instance.StartCoroutine(score.SubmitScore());
+                __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score));
             }
-
-            //[HarmonyPostfix] [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
-            public static void UploadBaseSongs(LevelSelectController __instance)
-            {
-                var baseTmbs = Directory.EnumerateFiles($"{Application.streamingAssetsPath}/leveldata", "*.tmb");
-                foreach (var songFilePath in baseTmbs)
-                {
-                    string tmb = songFilePath.Substring(songFilePath.LastIndexOf('\\') + 1);
-                    string trackRef = tmb.Substring(0, tmb.Length - 4);
-                    var singleTrackData = __instance.alltrackslist.Where(i => i.trackref == trackRef).FirstOrDefault();
-                    __instance.StartCoroutine(CheckHashInDB(false, songFilePath, singleTrackData));
-                }
-            }
-
 
         }
     }

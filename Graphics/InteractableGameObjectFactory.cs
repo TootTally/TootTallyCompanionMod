@@ -83,7 +83,7 @@ namespace TootTally.Graphics
             newButton.gameObject.SetActive(true);
 
             newButton.textHolder.text = text;
-            newButton.textHolder.alignment = TextAnchor.UpperCenter;
+            newButton.textHolder.alignment = TextAnchor.MiddleCenter;
             newButton.textHolder.fontSize = 11;
             newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;

@@ -24,7 +24,6 @@ namespace TootTally.Replays
         private static int _lastTootingKeyPressed, _tootingKeyPressed;
 
         private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
-        private static CustomButton[] _replayBtnArray;
         private static DateTimeOffset _startTime, _endTime;
 
         public static bool wasPlayingReplay;
@@ -36,52 +35,7 @@ namespace TootTally.Replays
         private static float _nextTimingTarget, _lastTiming;
         private static float _elapsedTime;
 
-        private static string _replayFileName;
-
-
-        #region LevelSelectControllerPatches
-
-        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
-        [HarmonyPostfix]
-        public static void AddReplayButtonToLeaderboardPannel(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
-        {
-            GameObject leaderboard = GameObject.Find("MainCanvas/FullScreenPanel/Leaderboard").gameObject;
-
-            _replayBtnArray = new CustomButton[5];
-
-            ReadReplayConfig(___alltrackslist, __instance);
-
-
-            for (int i = 0; i < _replayBtnArray.Length; i++)
-            {
-                Transform scoreTextTranform = leaderboard.transform.Find((i + 1).ToString()).transform;
-
-                string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
-                _replayBtnArray[i] =
-                    InteractableGameObjectFactory.CreateCustomButton(scoreTextTranform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton" + i, delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
-                _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
-            }
-            _isReplayBtnInitialized = true;
-        }
-
-        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
-        [HarmonyPostfix]
-        public static void SetActiveReplayButtons(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
-        {
-            if (_isReplayBtnInitialized)
-            {
-                ReadReplayConfig(___alltrackslist, __instance);
-                for (int i = 0; i < _replayBtnArray.Length; i++)
-                {
-                    string replayFileName = ReplayConfig.ConfigEntryReplayFileNameArray[i].Value;
-                    _replayBtnArray[i].RemoveAllOnClickActions();
-                    _replayBtnArray[i].gameObject.SetActive(replayFileName != "NA");
-                    _replayBtnArray[i].button.onClick.AddListener(delegate { _replayFileName = replayFileName; __instance.playbtn.onClick?.Invoke(); });
-
-                }
-            }
-        }
-        #endregion
+        public  static string replayFileName;
 
         #region GameControllerPatches
 
@@ -89,12 +43,19 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
-            ClearData();
-            if (_replayFileName == null)
+            if (replayFileName == null)
                 StartReplayRecorder(__instance);
-            else
+        }
+
+        [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
+        [HarmonyPrefix]
+        public static void LoadControllerPrefixPatch(LoadController __instance)
+        {
+            ClearData();
+            if (replayFileName != null)
                 StartReplayPlayer(__instance);
         }
+
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
         [HarmonyPostfix]
         public static void GameControllerIsNoteButtonPressedPostfixPatch(ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
@@ -163,7 +124,7 @@ namespace TootTally.Replays
         {
             ClearData();
             _isReplayPlaying = _isReplayRecording = false;
-            _replayFileName = null;
+            replayFileName = null;
             Plugin.LogInfo("Level quit, clearing replay data");
         }
         #endregion
@@ -293,7 +254,7 @@ namespace TootTally.Replays
             }
 
             string username = "TestUser";
-            
+
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
             string replayFileName = $"{username} - {songNameShort} - {endDateTimeUnix}";
@@ -350,7 +311,7 @@ namespace TootTally.Replays
                         sw.Write(replayJson.ToString());
                     }
                 }
-                 
+
                 using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Create))
                 {
                     memoryStream.Seek(0, SeekOrigin.Begin);
@@ -388,18 +349,21 @@ namespace TootTally.Replays
         #endregion
 
         #region ReplayPlayer
-        private static void StartReplayPlayer(GameController __instance)
+        private static void StartReplayPlayer(LoadController __instance)
         {
             _lastTiming = 0;
             _totalScore = 0;
             _noteTally = new int[5];
             _isReplayPlaying = wasPlayingReplay = true;
             _lastTootingKeyPressed = _tootingKeyPressed = 0;
-            Plugin.LogInfo("Loading replay: " + _replayFileName);
-            if (LoadReplay(_replayFileName))
-                Plugin.LogInfo("Started replay");
+            Plugin.LogInfo("Loading replay: " + replayFileName);
+            if (LoadReplay(replayFileName))
+                Plugin.LogInfo("Started replay.");
             else
-                __instance.pauseQuitLevel(); //if replay failed to load, exit
+            {
+                Plugin.LogError("Replay failed to start.");
+                replayFileName = null;
+            }
         }
 
         private static void StopReplayPlayer(PointSceneController __instance)
