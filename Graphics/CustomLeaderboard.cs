@@ -2,8 +2,10 @@
 using SimpleJSON;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TootTally.Replays;
@@ -20,7 +22,6 @@ namespace TootTally.Graphics
 {
     public static class CustomLeaderboard
     {
-        private static List<ScoreData> _scoreDataList;
         private static GameObject _leaderBoard, _diffBar;
         private static LeaderboardText _leaderboardHeaderPrefab;
         private static Slider _scrollSlider;
@@ -41,7 +42,30 @@ namespace TootTally.Graphics
         {
             _levelSelectControllerInstance = __instance;
 
-            Plugin.Instance.StartCoroutine(GetScoresFromDB(182));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLeaderboardScoresFromDB(182, (scoreDataList) =>
+            {
+
+                List<List<string>> scoresMatrix = new List<List<string>>();
+
+                int count = 1;
+                foreach (SerializableSubmissionClass.ScoreDataFromDB scoreData in scoreDataList)
+                {
+                    List<string> scoreDataText = new List<string>
+                {
+                    "#" + count,
+                    Truncate(scoreData.player, 8),
+                    string.Format("{0:n0}",scoreData.score),
+                    scoreData.percentage.ToString("0.00") + "%",
+                    scoreData.grade,
+                    scoreData.max_combo + "x",
+                };
+                    scoresMatrix.Add(scoreDataText);
+                    count++;
+                }
+
+                Initialize();
+                RefreshLeaderboard(scoresMatrix);
+            }));
 
         }
 
@@ -52,43 +76,6 @@ namespace TootTally.Graphics
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetScoresFromDB(int songID)
-        {
-            string apiLink = $"{Plugin.APIURL}/api/songs/{songID}/leaderboard/";
-
-            UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
-
-            yield return webRequest.SendWebRequest();
-
-            if (webRequest.isNetworkError)
-                Plugin.LogError($"ERROR IN LOADING LEADERBOARD: {webRequest.error}");
-            else if (webRequest.isHttpError)
-                Plugin.LogError($"HTTP ERROR {webRequest.error}");
-            else
-                Plugin.LogInfo($"LEADERBOARD SCORES LOADED!");
-
-            List<List<string>> scoresMatrix = new List<List<string>>();
-
-            var leaderboardJson = JSONObject.Parse(webRequest.downloadHandler.GetText());
-            int count = 1;
-            foreach (JSONObject scoreJson in leaderboardJson["results"])
-            {
-                List<string> scoreData = new List<string>
-                {
-                    "#" + count,
-                    Truncate(scoreJson["player"], 8),
-                    string.Format("{0:n0}",int.Parse(scoreJson["score"])),
-                    float.Parse(scoreJson["percentage"]).ToString("0.00") + "%",
-                    scoreJson["grade"],
-                    scoreJson["max_combo"] + "x",
-                };
-                scoresMatrix.Add(scoreData);
-                count++;
-            }
-
-            Initialize();
-            RefreshLeaderboard(scoresMatrix);
-        }
         public static string Truncate(this string value, int maxLength)
         {
             if (string.IsNullOrEmpty(value)) return value;
@@ -97,7 +84,6 @@ namespace TootTally.Graphics
 
         public static void Initialize()
         {
-            _scoreDataList = new List<ScoreData>();
             _diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
             _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
 
@@ -146,7 +132,7 @@ namespace TootTally.Graphics
                 }
 
                 LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
-                CustomButton replayButton = 
+                CustomButton replayButton =
                     InteractableGameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton", delegate { ReplaySystemJson.replayFileName = "TestUser - Happy Birthday - 1672164571"; _levelSelectControllerInstance.playbtn.onClick?.Invoke(); });
 
                 colContainerReplay.AddGameObjectToList(replayButton.gameObject);
@@ -188,23 +174,6 @@ namespace TootTally.Graphics
                     row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + _value) / 30), 0);
                 });
             });
-        }
-
-        private class ScoreData
-        {
-            public int rank, name, score, maxCombo;
-            public float percentage;
-            public Grade grade;
-
-            public enum Grade
-            {
-                S,
-                A,
-                B,
-                C,
-                D,
-                E,
-            }
         }
 
         private class LeaderboardText : MonoBehaviour

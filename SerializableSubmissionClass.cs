@@ -13,7 +13,7 @@ namespace TootTally
         }
 
         [Serializable]
-        public class Score
+        public class SendableScore
         {
             public string apiKey;
             public string letterScore;
@@ -24,5 +24,19 @@ namespace TootTally
             public string gameVersion;
             public int modVersion;
         }
+
+        [Serializable]
+        public class ScoreDataFromDB
+        {
+            public int score;
+            public string player;
+            public string played_on;
+            public string grade;
+            public int[] noteTally;
+            public int max_combo;
+            public float percentage;
+            public string game_version;
+        }
+
     }
 }

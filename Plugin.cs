@@ -141,6 +141,7 @@ namespace TootTally
                 string songFilePath = GetSongFilePath(isCustom, trackRef);
                 string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
                 songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+
                 __instance.StartCoroutine(TootTallyAPIService.CheckHashInDB(songHash, (isInDatabase) =>
                 {
                     SerializableSubmissionClass.Chart chart = new SerializableSubmissionClass.Chart { tmb = tmb };
@@ -183,7 +184,7 @@ namespace TootTally
                 LogInfo($"Perfects: {GlobalVariables.gameplay_notescores[4]}");
                 LogInfo($"Song Hash: {songHash}");
 
-                SerializableSubmissionClass.Score score = new();
+                SerializableSubmissionClass.SendableScore score = new();
                 score.apiKey = Instance.APIKey.Value;
                 score.letterScore = __instance.letterscore;
                 score.score = GlobalVariables.gameplay_scoretotal;
