@@ -23,6 +23,7 @@ namespace TootTally.Replays
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
         private static int _replayIndex;
         private static int _lastTootingKeyPressed, _tootingKeyPressed;
+        private static int _maxCombo;
 
         private static List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>();
         private static DateTimeOffset _startTime, _endTime;
@@ -36,7 +37,9 @@ namespace TootTally.Replays
         private static float _nextTimingTarget, _lastTiming;
         private static float _elapsedTime;
 
-        public  static string replayFileName;
+        private static string _replayUUID;
+        public static string replayFileName;
+
 
         #region GameControllerPatches
 
@@ -186,14 +189,18 @@ namespace TootTally.Replays
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
+            _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
+
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID((UUID) => _replayUUID = UUID));
+
             Plugin.LogInfo("Started recording replay");
         }
 
         private static void StopReplayRecorder(PointSceneController __instance)
         {
             _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-            SaveReplayToFile(__instance);
+            SaveAndUploadReplay(__instance);
             _isReplayRecording = false;
             Plugin.LogInfo("Replay recording finished");
         }
@@ -224,7 +231,7 @@ namespace TootTally.Replays
             _scores_C = __instance.scores_C;
             _scores_D = __instance.scores_D;
             _scores_F = __instance.scores_F;
-
+            _maxCombo = __instance.highestcombo_level;
 
             _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 }); // has to do the note judgement on postfix
         }
@@ -238,7 +245,7 @@ namespace TootTally.Replays
             _noteData[_noteData.Count - 1][(int)NoteDataStructure.NoteJudgement] = noteLetter;
         }
 
-        private static void SaveReplayToFile(PointSceneController __instance)
+        private static void SaveAndUploadReplay(PointSceneController __instance)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             // Create Replays directory in case it doesn't exist
@@ -247,7 +254,7 @@ namespace TootTally.Replays
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songHash = isCustom ? GetSongHash(trackRef) : "ost";
+            string songHash = isCustom ? GetSongHash(trackRef) : trackRef;
 
             string username = _user.username;
 
@@ -260,14 +267,16 @@ namespace TootTally.Replays
             replayJson["username"] = username;
             replayJson["starttime"] = startDateTimeUnix;
             replayJson["endtime"] = endDateTimeUnix;
+            replayJson["uuid"] = _replayUUID;
             replayJson["input"] = inputType;
             replayJson["song"] = songNameLong;
             replayJson["samplerate"] = _targetFramerate;
             replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
             replayJson["pluginbuilddate"] = Plugin.BUILDDATE;
             replayJson["gameversion"] = GlobalVariables.version;
-            replayJson["songhash"] = isCustom ? songHash : "ost";
+            replayJson["songhash"] = songHash;
             replayJson["finalscore"] = GlobalVariables.gameplay_scoretotal;
+            replayJson["maxcombo"] = _maxCombo;
 
             var noteJudgmentData = new JSONArray();
             noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
@@ -315,7 +324,7 @@ namespace TootTally.Replays
                 }
 
                 //Send Replay bytes to server async here
-
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(memoryStream.GetBuffer(), replayFileName));
             }
 
 

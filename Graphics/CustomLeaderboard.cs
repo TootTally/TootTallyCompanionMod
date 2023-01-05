@@ -119,35 +119,33 @@ namespace TootTally.Graphics
 
             currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
             {
-                if (songHashInDB != 0)
+                if (songHashInDB == 0) return; // Skip if no song found
+                currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
                 {
-                    currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
-                    {
-                        List<List<string>> scoresMatrix = new List<List<string>>();
+                    List<List<string>> scoresMatrix = new List<List<string>>();
 
-                        int count = 1;
-                        foreach (SerializableClass.ScoreDataFromDB scoreData in scoreDataList)
+                    int count = 1;
+                    foreach (SerializableClass.ScoreDataFromDB scoreData in scoreDataList)
+                    {
+                        List<string> scoreDataText = new List<string>
                         {
-                            List<string> scoreDataText = new List<string>
-                            {
                                 "#" + count,
                                 Truncate(scoreData.player, 8),
                                 string.Format("{0:n0}",scoreData.score),
                                 scoreData.percentage.ToString("0.00") + "%",
                                 scoreData.grade,
                                 scoreData.max_combo + "x",
-                            };
-                            scoresMatrix.Add(scoreDataText);
-                            count++;
-                        }
+                        };
+                        scoresMatrix.Add(scoreDataText);
+                        count++;
+                    }
 
-                        RefreshLeaderboard(scoresMatrix);
-                        _leaderboardLoaded = true;
-                        _loadingStarList.ForEach(star => star.gameObject.SetActive(false));
-                        currentLeaderboardCoroutines.Clear();
-                    }));
-                    Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
-                }
+                    RefreshLeaderboard(scoresMatrix);
+                    _leaderboardLoaded = true;
+                    _loadingStarList.ForEach(star => star.gameObject.SetActive(false));
+                    currentLeaderboardCoroutines.Clear();
+                }));
+                Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
             }));
             Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
         }

@@ -33,7 +33,6 @@ namespace TootTally
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
         public const int BUILDDATE = 20221213;
-        public const string APIURL = "https://toottally.com";
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
 
@@ -129,7 +128,7 @@ namespace TootTally
         public static class SongSelect
         {
             public static string songHash { get; private set; }
-            private static int maxCombo;
+            public static int maxCombo;
 
 
             [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
@@ -193,7 +192,8 @@ namespace TootTally
                 score.maxCombo = maxCombo;
                 score.gameVersion = GlobalVariables.version;
                 score.modVersion = BUILDDATE;
-                __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score));
+                //Disabled score submission for testing
+                // __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score)); 
             }
 
         }

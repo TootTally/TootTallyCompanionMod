@@ -11,8 +11,8 @@ namespace TootTally
 {
     public static class TootTallyAPIService
     {
-        public const string APIURL = "https://toottally.com";
-
+        //public const string APIURL = "https://toottally.com";
+        public const string APIURL = "http://localhost"; //localTesting
         #region Logs
         internal static void LogDebug(string msg) => Plugin.LogDebug(msg);
         internal static void LogInfo(string msg) => Plugin.LogInfo(msg);
@@ -97,9 +97,37 @@ namespace TootTally
                 LogInfo($"Score Sent.");
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(Action<string> callback)
+        {
+            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/replay/start", apiKey);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                LogInfo(webRequest.downloadHandler.text);
+                callback(webRequest.downloadHandler.text);
+            }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(byte[] replayData, string replayName)
+        {
+            WWWForm form = new WWWForm();
+            form.AddBinaryData("ReplayData", replayData, replayName);
+
+            string apiLink = $"{APIURL}/api/replay/submit";
+
+            UnityWebRequest webRequest = UnityWebRequest.Post(apiLink, form);
+            
+            yield return webRequest.SendWebRequest();
+            if (!HasError(webRequest, true))
+                LogInfo($"Replay Sent.");
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
         {
-            string apiLink = $"{Plugin.APIURL}/api/songs/{songID}/leaderboard/";
+            string apiLink = $"{APIURL}/api/songs/{songID}/leaderboard/";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
 
@@ -145,7 +173,6 @@ namespace TootTally
             UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
             return webRequest;
         }
-
 
         private static bool HasError(UnityWebRequest webRequest, bool isLoggingErrors)
         {
