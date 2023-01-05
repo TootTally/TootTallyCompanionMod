@@ -31,7 +31,7 @@ namespace TootTally.Graphics
         private static List<IEnumerator<UnityWebRequestAsyncOperation>> currentLeaderboardCoroutines;
         private static List<GameObject> _loadingStarList;
 
-        private const int PADDING_X = 5;
+        private const int PADDING_X = 10;
         private const int PADDING_Y = 2;
         private const int SM_PADDING_Y = 1;
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
@@ -228,8 +228,17 @@ namespace TootTally.Graphics
             RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
             backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
             backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-            mySlider.minValue = 0;
+            mySlider.minValue = -0.1f;
             mySlider.maxValue = 1;
+            mySlider.onValueChanged.RemoveAllListeners();
+            mySlider.onValueChanged.AddListener((float _value) =>
+            {
+                if (_value < 0)
+                    mySlider.value = 0;
+                if (_value > 0.9f)
+                    mySlider.value = 0.9f;
+                mySlider.fillRect.anchoredPosition = new Vector2(0, mySlider.value * mySlider.fillRect.sizeDelta.y);
+            });
             GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
             lbContainer.AddSliderToContainer(mySlider);
         }
@@ -297,6 +306,7 @@ namespace TootTally.Graphics
                 foreach (LeaderBoardRowContainer row in leaderboardRowList)
                 {
                     row.SetColumnsWidth(columnsWidthList);
+                    row.rectTransform.sizeDelta = new Vector2(columnsWidthList.Sum() + 45, row.rectTransform.sizeDelta.y); //auto width
                 }
             }
 
@@ -308,8 +318,8 @@ namespace TootTally.Graphics
                     leaderboardRowList.ForEach(row =>
                     {
                         RectTransform rect = row.gameObject.GetComponent<RectTransform>();
-                        rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.basePosY + (_value * rectTransform.sizeDelta.y));
-                        row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + _value) / 30), 0);
+                        rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.basePosY + (slider.value * rectTransform.sizeDelta.y));
+                        row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + slider.value) / 30), 0);
                     });
                 });
             }
@@ -397,13 +407,21 @@ namespace TootTally.Graphics
 
             public void OrganizeGameObjects()
             {
-                Vector2 objPos = Vector2.zero;
+                Vector2 objPos = new Vector2(0, -PADDING_Y);
                 foreach (GameObject gameObject in gameObjectList)
                 {
                     RectTransform rect = gameObject.GetComponent<RectTransform>();
-                    rect.anchoredPosition = objPos;
-                    rect.sizeDelta = new Vector2(rect.sizeDelta.x, this.rectTransform.sizeDelta.y / gameObjectList.Count);
-                    objPos.y -= rect.sizeDelta.y;
+                    if (gameObject.GetComponent<CustomButton>() == null) //scuffed way of getting replay buttons but whatever
+                    {
+                        rect.sizeDelta = new Vector2(rect.sizeDelta.x, (this.rectTransform.sizeDelta.y / gameObjectList.Count) - (PADDING_Y * 2));
+                        rect.anchoredPosition = objPos;
+                    }
+                    else
+                    {
+                        rect.anchoredPosition = new Vector2(0, objPos.y - (rect.sizeDelta.y / 2) + (PADDING_Y * 3));
+                    }
+
+                    objPos.y -= rect.sizeDelta.y + PADDING_Y;
                 }
             }
 
@@ -434,7 +452,7 @@ namespace TootTally.Graphics
 
             GameObject leaderboardRowHolder = GameObject.Instantiate(prefab, lbContainer.transform);
             LeaderBoardRowContainer rowContainer = leaderboardRowHolder.gameObject.AddComponent<LeaderBoardRowContainer>();
-            rowContainer.ConstructLeaderBoardRow(leaderboardRowHolder.gameObject, new Vector2(260, 30), Vector2.zero, leaderboardRowHolder.GetComponent<RectTransform>());
+            rowContainer.ConstructLeaderBoardRow(leaderboardRowHolder.gameObject, new Vector2(200, 22), Vector2.zero, leaderboardRowHolder.GetComponent<RectTransform>());
             lbContainer.AddRowToList(rowContainer);
             //leaderboardRowHolder.GetComponent<Image>().color = Color.red; //debug color
 
@@ -445,7 +463,7 @@ namespace TootTally.Graphics
         {
             GameObject leaderboardColHolder = GameObject.Instantiate(prefab, lbRowContainer.transform);
             LeaderBoardColumnContainer colContainer = leaderboardColHolder.gameObject.AddComponent<LeaderBoardColumnContainer>();
-            colContainer.ConstructLeaderBoardColumn(leaderboardColHolder.gameObject, new Vector2(30, 30), Vector2.zero, leaderboardColHolder.GetComponent<RectTransform>());
+            colContainer.ConstructLeaderBoardColumn(leaderboardColHolder.gameObject, new Vector2(10, 24), Vector2.zero, leaderboardColHolder.GetComponent<RectTransform>());
             lbRowContainer.AddColumnToList(colContainer);
             //leaderboardColHolder.GetComponent<Image>().color = Color.blue; //debug color
             GameObject.DestroyImmediate(leaderboardColHolder.GetComponent<Image>());
@@ -458,7 +476,7 @@ namespace TootTally.Graphics
 
             headerText.name = name;
             headerText.textHolder.text = text;
-            headerText.textHolder.fontSize = 14;
+            headerText.textHolder.fontSize = 10;
             headerText.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
             headerText.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             headerText.textHolder.alignment = TextAnchor.MiddleRight;

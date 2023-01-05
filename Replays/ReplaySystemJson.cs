@@ -313,9 +313,11 @@ namespace TootTally.Replays
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     memoryStream.CopyTo(fileStream);
                 }
+
+                //Send Replay bytes to server async here
+
             }
 
-            //Send Replay to server async here
 
             ReadReplayConfig();
             ReplayConfig.SaveToConfig(replayFileName);
