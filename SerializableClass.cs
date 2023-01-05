@@ -45,6 +45,13 @@ namespace TootTally
         }
 
         [Serializable]
+        public class ReplayUUIDSubmission
+        {
+            public string apiKey;
+            public string songHash;
+        }
+
+        [Serializable]
         public class User
         {
             public string username;

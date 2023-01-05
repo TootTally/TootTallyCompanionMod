@@ -97,17 +97,17 @@ namespace TootTally
                 LogInfo($"Score Sent.");
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(Action<string> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
         {
-            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
-            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
-            var webRequest = PostUploadRequest($"{APIURL}/api/replay/start", apiKey);
+            var apiObj = new SerializableClass.ReplayUUIDSubmission() { apiKey = Plugin.Instance.APIKey.Value, songHash = songHash };
+            var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/replay/start/", apiKeyAndSongHash);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
             {
-                LogInfo(webRequest.downloadHandler.text);
-                callback(webRequest.downloadHandler.text);
+                LogInfo(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
+                callback(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
             }
         }
 
@@ -116,7 +116,7 @@ namespace TootTally
             WWWForm form = new WWWForm();
             form.AddBinaryData("ReplayData", replayData, replayName);
 
-            string apiLink = $"{APIURL}/api/replay/submit";
+            string apiLink = $"{APIURL}/api/replay/submit/";
 
             UnityWebRequest webRequest = UnityWebRequest.Post(apiLink, form);
             

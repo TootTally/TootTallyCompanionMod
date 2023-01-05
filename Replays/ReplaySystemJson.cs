@@ -147,26 +147,7 @@ namespace TootTally.Replays
 
         #region Config
 
-        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
 
-        public static void ReadReplayConfig(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
-        {
-            SingleTrackData trackData = ___alltrackslist[__instance.songindex];
-            string trackref = trackData.trackref;
-            bool isCustom = Globals.IsCustomTrack(trackref);
-            if (isCustom)
-            {
-                string songName = trackData.trackname_short;
-                string songHash = GetSongHash(trackref);
-                if (songHash != null)
-                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
-            }
-            else
-            {
-                string songName = trackData.trackname_short;
-                ReplayConfig.ReadConfig($"{songName}");
-            }
-        }
         public static void ReadReplayConfig()
         {
             string trackref = GlobalVariables.chosen_track_data.trackref;
@@ -192,7 +173,7 @@ namespace TootTally.Replays
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID((UUID) => _replayUUID = UUID));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(),(UUID) => _replayUUID = JSONObject.Parse(UUID)["id"]));
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -508,6 +489,14 @@ namespace TootTally.Replays
             _frameData.Clear();
             _noteData.Clear();
         }
+
+        private static string GetChoosenSongHash()
+        {
+            string trackRef = GlobalVariables.chosen_track_data.trackref;
+            bool isCustom = Globals.IsCustomTrack(trackRef);
+            return isCustom ? GetSongHash(trackRef) : trackRef;
+        }
+        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
 
         private enum FrameDataStructure
         {
