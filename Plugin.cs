@@ -145,7 +145,7 @@ namespace TootTally
                 __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
                 {
                     SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
-                    if (Instance.AllowTMBUploads.Value && songHashInDB != 0)
+                    if (Instance.AllowTMBUploads.Value && songHashInDB == 0)
                         __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
                 }));
                 maxCombo = 0; // Reset tracked maxCombo

@@ -25,13 +25,13 @@ namespace TootTally
             UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest))
+            if (!HasError(webRequest, false))
             {
                 callback(int.Parse(webRequest.downloadHandler.text)); //.text returns the digit of ex: https://toottally.com/api/songs/182/leaderboard/
             }
             else
                 callback(0); //hash 0 is null
-            
+
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetUser(Action<SerializableClass.User> callback)
@@ -42,7 +42,7 @@ namespace TootTally
             var webRequest = PostUploadRequest($"{APIURL}/api/profile/self/", apiKey);
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest))
+            if (!HasError(webRequest, false))
             {
                 var jsonData = JSONObject.Parse(webRequest.downloadHandler.text);
                 SerializableClass.User user = new SerializableClass.User()
@@ -75,7 +75,7 @@ namespace TootTally
             UnityWebRequest webRequest = PostUploadRequest(apiLink, jsonbin);
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest))
+            if (!HasError(webRequest, true))
                 LogInfo($"Chart Sent.");
 
 
@@ -93,7 +93,7 @@ namespace TootTally
 
             UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
             yield return webRequest.SendWebRequest();
-            if (!HasError(webRequest))
+            if (!HasError(webRequest, true))
                 LogInfo($"Score Sent.");
         }
 
@@ -105,7 +105,7 @@ namespace TootTally
 
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest))
+            if (!HasError(webRequest, true))
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
@@ -119,11 +119,11 @@ namespace TootTally
                         played_on = scoreJson["played_on"],
                         grade = scoreJson["grade"],
                         noteTally = new int[]
-                        { scoreJson["perfect"],
-                    scoreJson["nice"],
-                    scoreJson["okay"],
-                    scoreJson["meh"],
-                    scoreJson["nasty"]},
+                        {   scoreJson["perfect"],
+                            scoreJson["nice"],
+                            scoreJson["okay"],
+                            scoreJson["meh"],
+                            scoreJson["nasty"]},
                         max_combo = scoreJson["max_combo"],
                         percentage = scoreJson["percentage"],
                         game_version = scoreJson["game_version"],
@@ -132,7 +132,7 @@ namespace TootTally
                 }
                 callback(scoreList);
             }
-            
+
         }
 
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")
@@ -147,12 +147,13 @@ namespace TootTally
         }
 
 
-        private static bool HasError(UnityWebRequest webRequest)
+        private static bool HasError(UnityWebRequest webRequest, bool isLoggingErrors)
         {
-            if (webRequest.isNetworkError)
-                LogError($"NETWORK ERROR: {webRequest.error}");
-            else if (webRequest.isHttpError)
-                LogError($"HTTP ERROR {webRequest.error}");
+            if (isLoggingErrors)
+                if (webRequest.isNetworkError)
+                    LogError($"NETWORK ERROR: {webRequest.error}");
+                else if (webRequest.isHttpError)
+                    LogError($"HTTP ERROR {webRequest.error}");
             return webRequest.isNetworkError || webRequest.isHttpError;
         }
     }

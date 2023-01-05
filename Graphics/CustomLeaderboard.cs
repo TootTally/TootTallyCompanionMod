@@ -72,6 +72,20 @@ namespace TootTally.Graphics
 
                 }
         }
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
+        [HarmonyPostfix]
+        static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
+        {
+            if (_leaderBoard != null)
+                UpdateLeaderboard(___alltrackslist, __instance);
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
+        [HarmonyPostfix]
+        static void OnDoneRandomizingReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
+        {
+            UpdateLeaderboard(___alltrackslist, __instance);
+        }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
@@ -84,11 +98,18 @@ namespace TootTally.Graphics
                 ClearLeaderboard();
             }
 
+            if (__instance.randomizing) return; //Do nothing if randomizing
+
             string trackRef = ___alltrackslist[__instance.songindex].trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songFilePath = Plugin.SongSelect.GetSongFilePath(isCustom, trackRef);
-            string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
-            string songHash = isCustom ? Plugin.Instance.CalcFileHash(songFilePath) : Plugin.Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+            string songHash;
+            if (isCustom)
+            {
+                string songFilePath = Plugin.SongSelect.GetSongFilePath(isCustom, trackRef);
+                songHash = Plugin.Instance.CalcFileHash(songFilePath);
+            }
+            else
+                songHash = trackRef;
 
             if (currentLeaderboardCoroutines.Count != 0)
             {
@@ -229,15 +250,14 @@ namespace TootTally.Graphics
             backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
             backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
             mySlider.minValue = -0.1f;
-            mySlider.maxValue = 1;
+            mySlider.maxValue = 1.1f;
             mySlider.onValueChanged.RemoveAllListeners();
             mySlider.onValueChanged.AddListener((float _value) =>
             {
                 if (_value < 0)
                     mySlider.value = 0;
-                if (_value > 0.9f)
-                    mySlider.value = 0.9f;
-                mySlider.fillRect.anchoredPosition = new Vector2(0, mySlider.value * mySlider.fillRect.sizeDelta.y);
+                if (_value > 1)
+                    mySlider.value = 1f;
             });
             GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
             lbContainer.AddSliderToContainer(mySlider);
@@ -442,7 +462,7 @@ namespace TootTally.Graphics
         {
             GameObject leaderboardHolder = GameObject.Instantiate(prefab, leaderboard.transform);
             LeaderBoardContainer lbContainer = leaderboardHolder.AddComponent<LeaderBoardContainer>();
-            lbContainer.ConstructLeaderBoardContainer(leaderboardHolder, 260, new Vector2(32, -160), leaderboardHolder.GetComponent<RectTransform>());
+            lbContainer.ConstructLeaderBoardContainer(leaderboardHolder, 200, new Vector2(32, -160), leaderboardHolder.GetComponent<RectTransform>());
             GameObject.DestroyImmediate(leaderboardHolder.GetComponent<Image>());
             return lbContainer;
         }
