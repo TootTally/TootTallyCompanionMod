@@ -46,6 +46,7 @@ namespace TootTally.Replays
         {
             if (replayFileName == null)
                 StartReplayRecorder(__instance);
+            __instance.notescoresamples = 0; //Temporary fix for a glitch
         }
 
         [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]

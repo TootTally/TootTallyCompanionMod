@@ -7,12 +7,13 @@ using UnityEngine.UI;
 
 namespace TootTally.Graphics
 {
-    public static class InteractableGameObjectFactory
+    public static class GameObjectFactory
     {
         private static CustomButton _buttonPrefab;
         private static Text _textPrefab;
         private static Toggle _togglePrefab;
         private static Slider _sliderPrefab;
+        private static GameObject _starPrefab;
 
         private static GameObject _settingsGraphics;
 
@@ -34,6 +35,7 @@ namespace TootTally.Graphics
 
             SetCustomButtonPrefab();
             SetTextPrefab();
+            SetStarPrefab();
             SetTogglePrefab();
             SetCustomSliderPrefab();
         }
@@ -61,6 +63,17 @@ namespace TootTally.Graphics
 
             UnityEngine.Object.DontDestroyOnLoad(gameObjectHolder);
         }
+
+        public static void SetStarPrefab()
+        {
+            GameObject star = _settingsGraphics.transform.Find("ALLEGIANCE/star (back)").gameObject;
+
+            _starPrefab = UnityEngine.Object.Instantiate(star);
+
+            _starPrefab.SetActive(false);
+
+            UnityEngine.Object.DontDestroyOnLoad(_starPrefab);
+        } 
 
         public static void SetTextPrefab() //Plan on yoinking some other graphics in the future
         {
@@ -96,6 +109,24 @@ namespace TootTally.Graphics
             newButton.button.onClick.AddListener(() => onClick?.Invoke());
 
             return newButton;
+        }
+
+        public static GameObject CreateLoadingScreenStar(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, float eulerRotationY, string name)
+        {
+            GameObject myStar = UnityEngine.Object.Instantiate(_starPrefab, canvasTransform);
+            myStar.name = name;
+            myStar.gameObject.SetActive(true);
+
+            RectTransform rectBack = myStar.GetComponent<RectTransform>();
+            rectBack.anchoredPosition = anchoredPosition;
+            rectBack.eulerAngles = new Vector3(0, eulerRotationY, 0);
+            rectBack.sizeDelta = size;
+
+            RectTransform rectFront = myStar.transform.Find("star (front)").GetComponent<RectTransform>();
+            rectFront.anchoredPosition = new Vector2(-1, 1);
+            rectFront.sizeDelta = size;
+
+            return myStar;
         }
     }
 }

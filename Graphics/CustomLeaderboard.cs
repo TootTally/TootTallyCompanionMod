@@ -27,12 +27,15 @@ namespace TootTally.Graphics
         private static Slider _scrollSlider;
         private static CustomButton[] _replayBtnArray;
         private static LevelSelectController _levelSelectControllerInstance;
-        private static bool _isReplayBtnInitialized, _isFirstRefresh;
+        private static bool _isReplayBtnInitialized, _leaderboardLoaded;
+        private static List<IEnumerator<UnityWebRequestAsyncOperation>> currentLeaderboardCoroutines;
+        private static List<GameObject> _loadingStarList;
 
         private const int PADDING_X = 5;
         private const int PADDING_Y = 2;
         private const int SM_PADDING_Y = 1;
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
+        private const float starSpeed = 0.5f;
 
         /* Leaderboard logic:
          * The main element of a leaderboard is the container,
@@ -47,17 +50,39 @@ namespace TootTally.Graphics
         static void YoinkLotOfGraphics(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             _levelSelectControllerInstance = __instance;
+            _leaderboardLoaded = false;
 
             Initialize();
             UpdateLeaderboard(___alltrackslist, __instance);
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
+        [HarmonyPostfix]
+        static void UpdateLoadingStarAnimation()
+        {
+            if (!_leaderboardLoaded && _loadingStarList != null && _loadingStarList.Count > 0)
+                foreach (GameObject star in _loadingStarList)
+                {
+                    RectTransform starRect = star.GetComponent<RectTransform>();
+                    starRect.Rotate(0, starSpeed * Time.deltaTime * 1000, 0);
+                    if (starRect.eulerAngles.y <= 90)
+                        star.GetComponent<CanvasGroup>().alpha = 1 - (starRect.eulerAngles.y / 90);
+                    else if (starRect.eulerAngles.y >= 270)
+                        star.GetComponent<CanvasGroup>().alpha = (starRect.eulerAngles.y - 270) / 90;
+
+                }
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         static void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            
-           
+            if (_leaderboardLoaded)
+            {
+                _leaderboardLoaded = false;
+                _loadingStarList.ForEach(star => star.gameObject.SetActive(true));
+                ClearLeaderboard();
+            }
 
             string trackRef = ___alltrackslist[__instance.songindex].trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
@@ -65,12 +90,18 @@ namespace TootTally.Graphics
             string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
             string songHash = isCustom ? Plugin.Instance.CalcFileHash(songFilePath) : Plugin.Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
 
-            __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
+            if (currentLeaderboardCoroutines.Count != 0)
+            {
+                currentLeaderboardCoroutines.ForEach(routine => Plugin.Instance.StopCoroutine(routine));
+                currentLeaderboardCoroutines.Clear();
+            }
+
+            currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
             {
                 if (songHashInDB != 0)
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                {
+                    currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
                     {
-
                         List<List<string>> scoresMatrix = new List<List<string>>();
 
                         int count = 1;
@@ -88,12 +119,16 @@ namespace TootTally.Graphics
                             scoresMatrix.Add(scoreDataText);
                             count++;
                         }
-                        if (!_isFirstRefresh)
-                            ClearLeaderboard();
+
                         RefreshLeaderboard(scoresMatrix);
-                        _isFirstRefresh = false;
+                        _leaderboardLoaded = true;
+                        _loadingStarList.ForEach(star => star.gameObject.SetActive(false));
+                        currentLeaderboardCoroutines.Clear();
                     }));
+                    Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
+                }
             }));
+            Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
         }
 
         public static string Truncate(this string value, int maxLength)
@@ -104,9 +139,19 @@ namespace TootTally.Graphics
 
         public static void Initialize()
         {
-            _isFirstRefresh = true;
+            currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
+
             _diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
             _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
+            _loadingStarList = new List<GameObject>();
+
+            for (int i = 0; i < 5; i++)
+            {
+                GameObject star = GameObjectFactory.CreateLoadingScreenStar(_leaderBoard.transform, new Vector2(135 + (15 * i), -225), new Vector2(12, 12), i * 72, "LoadingStar" + i);
+                star.AddComponent<CanvasGroup>();
+                _loadingStarList.Add(star);
+            }
+
 
             GameObject leaderboardText = _leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject;
             GameObject lbTextHolder = GameObject.Instantiate(leaderboardText, _leaderBoard.transform);
@@ -163,22 +208,22 @@ namespace TootTally.Graphics
 
                 LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
                 CustomButton replayButton =
-                    InteractableGameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton", delegate { ReplaySystemJson.replayFileName = "TestUser - Happy Birthday - 1672164571"; _levelSelectControllerInstance.playbtn.onClick?.Invoke(); });
+                    GameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton", delegate { ReplaySystemJson.replayFileName = "TestUser - Happy Birthday - 1672164571"; _levelSelectControllerInstance.playbtn.onClick?.Invoke(); });
 
                 colContainerReplay.AddGameObjectToList(replayButton.gameObject);
-
-
             }
             lbContainer.OrganizeRows();
 
+
+            //Yoink slider and make it vertical
             Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
             RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
 
             Slider mySlider = GameObject.Instantiate(sliderPrefab, lbContainer.transform);
             mySlider.direction = Slider.Direction.TopToBottom;
             RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
-            sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 2.8f);
-            sliderRect.anchoredPosition = new Vector2(230, 0);
+            sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 3.5f);
+            sliderRect.anchoredPosition = new Vector2(lbContainer.rectTransform.sizeDelta.x / 2 + (PADDING_X * 5), (lbContainer.rectTransform.sizeDelta.y / 2) - (sliderRect.sizeDelta.y / 5) - PADDING_Y);
             mySlider.handleRect = sliderRect;
             RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
             backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
@@ -186,15 +231,7 @@ namespace TootTally.Graphics
             mySlider.minValue = 0;
             mySlider.maxValue = 1;
             GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
-            mySlider.onValueChanged.AddListener((float _value) =>
-            {
-                lbContainer.leaderboardRowList.ForEach(row =>
-                {
-                    RectTransform rect = row.gameObject.GetComponent<RectTransform>();
-                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.basePosY + (_value * lbContainer.rectTransform.sizeDelta.y));
-                    row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + _value) / 30), 0);
-                });
-            });
+            lbContainer.AddSliderToContainer(mySlider);
         }
 
         private class LeaderboardText : MonoBehaviour
@@ -214,6 +251,7 @@ namespace TootTally.Graphics
             public GameObject leaderboardContainer;
             public RectTransform rectTransform;
             public List<LeaderBoardRowContainer> leaderboardRowList;
+            public Slider slider;
 
             public void ConstructLeaderBoardContainer(GameObject leaderboardContainer, float width, Vector2 anchoredPosition, RectTransform rectTransform)
             {
@@ -224,6 +262,7 @@ namespace TootTally.Graphics
                 rectTransform.anchoredPosition = anchoredPosition;
                 rectTransform.eulerAngles = Vector3.zero;
                 leaderboardRowList = new List<LeaderBoardRowContainer>();
+
             }
 
             public void OrganizeRows()
@@ -259,6 +298,20 @@ namespace TootTally.Graphics
                 {
                     row.SetColumnsWidth(columnsWidthList);
                 }
+            }
+
+            public void AddSliderToContainer(Slider slider)
+            {
+                this.slider = slider;
+                slider.onValueChanged.AddListener((float _value) =>
+                {
+                    leaderboardRowList.ForEach(row =>
+                    {
+                        RectTransform rect = row.gameObject.GetComponent<RectTransform>();
+                        rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.basePosY + (_value * rectTransform.sizeDelta.y));
+                        row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + _value) / 30), 0);
+                    });
+                });
             }
 
             public void AddRowToList(LeaderBoardRowContainer rowContainer)
@@ -357,7 +410,6 @@ namespace TootTally.Graphics
             public float GetWidth() => rectTransform.sizeDelta.x;
 
             public void SetWidth(float width) => rectTransform.sizeDelta = new Vector2(width, rectTransform.sizeDelta.y);
-            public void SetAlpha(float alpha) => gameObjectList.ForEach(gameObject => gameObject.GetComponent<CanvasRenderer>().SetAlpha(alpha));
 
             public void AddGameObjectToList(GameObject gameObject)
             {
