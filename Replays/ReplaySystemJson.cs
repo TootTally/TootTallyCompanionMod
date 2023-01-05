@@ -173,7 +173,7 @@ namespace TootTally.Replays
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(),(UUID) => _replayUUID = JSONObject.Parse(UUID)["id"]));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(),(UUID) => _replayUUID = UUID));
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -305,7 +305,7 @@ namespace TootTally.Replays
                 }
 
                 //Send Replay bytes to server async here
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(memoryStream.GetBuffer(), replayFileName));
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(replayJson.ToString(), _replayUUID));
             }
 
 

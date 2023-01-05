@@ -105,21 +105,23 @@ namespace TootTally
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
-            {
-                LogInfo(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
                 callback(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
-            }
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(byte[] replayData, string replayName)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayData, string uuid)
         {
-            WWWForm form = new WWWForm();
-            form.AddBinaryData("ReplayData", replayData, replayName);
-
             string apiLink = $"{APIURL}/api/replay/submit/";
+            var replayObj = new SerializableClass.ReplayJsonSubmission()
+            {
+                apiKey = Plugin.Instance.APIKey.Value,
+                replayData = replayData,
+                uuid = uuid
+            };
 
-            UnityWebRequest webRequest = UnityWebRequest.Post(apiLink, form);
-            
+            var replaySubmission = Encoding.UTF8.GetBytes(JsonUtility.ToJson(replayObj));
+
+            var webRequest = PostUploadRequest(apiLink, replaySubmission);
+
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, true))
                 LogInfo($"Replay Sent.");
