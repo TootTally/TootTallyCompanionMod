@@ -183,23 +183,6 @@ namespace TootTally.Replays
         }
         #endregion
 
-        #region Config
-
-
-        public static void ReadReplayConfig()
-        {
-            string trackref = GlobalVariables.chosen_track_data.trackref;
-            bool isCustom = Globals.IsCustomTrack(trackref);
-            if (isCustom)
-            {
-                string songName = GlobalVariables.chosen_track_data.trackname_short;
-                string songHash = GetSongHash(trackref);
-                if (songHash != null)
-                    ReplayConfig.ReadConfig($"{songName} - {songHash}");
-            }
-        }
-        #endregion
-
         #region ReplayRecorder
         private static void StartReplayRecorder(GameController __instance)
         {
@@ -325,7 +308,7 @@ namespace TootTally.Replays
 
             using (var memoryStream = new MemoryStream())
             {
-                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true, Encoding.UTF8))
                 {
                     var zipFile = zipArchive.CreateEntry(replayFileName);
 
@@ -345,9 +328,6 @@ namespace TootTally.Replays
             }
 
             Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(replayFileName + ".ttr", _replayUUID));
-
-            ReadReplayConfig();
-            ReplayConfig.SaveToConfig(replayFileName);
 
         }
 
