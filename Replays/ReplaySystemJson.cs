@@ -385,7 +385,7 @@ namespace TootTally.Replays
 
                 using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read, true))
                 {
-                    var zipFile = zipArchive.GetEntry(replayFileName);
+                    var zipFile = zipArchive.GetEntry(zipArchive.Entries[0].Name);
 
                     using (var entry = zipFile.Open())
                     using (var sr = new StreamReader(entry))
