@@ -38,7 +38,7 @@ namespace TootTally.Replays
         private static float _elapsedTime;
 
         private static string _replayUUID;
-        public static string replayFileName;
+        private static string _replayFileName;
 
 
         #region GameControllerPatches
@@ -47,7 +47,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
-            if (replayFileName == null)
+            if (_replayFileName == null)
                 StartReplayRecorder(__instance);
             __instance.notescoresamples = 0; //Temporary fix for a glitch
         }
@@ -56,9 +56,10 @@ namespace TootTally.Replays
         [HarmonyPrefix]
         public static void LoadControllerPrefixPatch(LoadController __instance)
         {
-            ClearData();
-            if (replayFileName != null)
+            if (_replayFileName != null)
                 StartReplayPlayer(__instance);
+            else
+                ClearData();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -129,7 +130,7 @@ namespace TootTally.Replays
         {
             ClearData();
             _isReplayPlaying = _isReplayRecording = false;
-            replayFileName = null;
+            _replayFileName = null;
             Plugin.LogInfo("Level quit, clearing replay data");
         }
 
@@ -137,8 +138,10 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GetUserProfile(LevelSelectController __instance)
         {
-            __instance.StartCoroutine(TootTallyAPIService.GetUser((user) => {
-                if (user != null) {
+            __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+            {
+                if (user != null)
+                {
                     _user = user;
                 }
             }));
@@ -173,7 +176,7 @@ namespace TootTally.Replays
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(),(UUID) => _replayUUID = UUID));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -241,7 +244,7 @@ namespace TootTally.Replays
 
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
-            string replayFileName = $"{username} - {songNameShort} - {endDateTimeUnix}";
+            string replayFileName = $"{_replayUUID}";
 
             string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
             var replayJson = new JSONObject();
@@ -298,16 +301,15 @@ namespace TootTally.Replays
                     }
                 }
 
-                using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Create))
+                using (var fileStream = new FileStream(replayDir + replayFileName + ".ttr", FileMode.Create))
                 {
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     memoryStream.CopyTo(fileStream);
                 }
 
-                //Send Replay bytes to server async here
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(replayJson.ToString(), _replayUUID));
             }
 
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(replayFileName + ".ttr", _replayUUID));
 
             ReadReplayConfig();
             ReplayConfig.SaveToConfig(replayFileName);
@@ -346,14 +348,7 @@ namespace TootTally.Replays
             _noteTally = new int[5];
             _isReplayPlaying = wasPlayingReplay = true;
             _lastTootingKeyPressed = _tootingKeyPressed = 0;
-            Plugin.LogInfo("Loading replay: " + replayFileName);
-            if (LoadReplay(replayFileName))
-                Plugin.LogInfo("Started replay.");
-            else
-            {
-                Plugin.LogError("Replay failed to start.");
-                replayFileName = null;
-            }
+            Plugin.LogInfo("Starting replay: " + _replayFileName);
         }
 
         private static void StopReplayPlayer(PointSceneController __instance)
@@ -363,7 +358,7 @@ namespace TootTally.Replays
             Plugin.LogInfo("Replay finished");
         }
 
-        private static bool LoadReplay(string replayFileName)
+        public static bool LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
@@ -371,18 +366,19 @@ namespace TootTally.Replays
                 Plugin.LogInfo("Replay folder not found");
                 return false;
             }
-
-            if (!File.Exists(replayDir + replayFileName))
+            if (!File.Exists(replayDir + replayFileName + ".ttr"))
             {
-                Plugin.LogInfo("Replay File not found");
+                Plugin.LogInfo("Replay File does not exist");
                 return false;
             }
+            _replayFileName = replayFileName;
+            
 
             string jsonFileFromZip;
 
             using (var memoryStream = new MemoryStream())
             {
-                using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Open))
+                using (var fileStream = new FileStream(replayDir + replayFileName + ".ttr", FileMode.Open))
                 {
                     fileStream.CopyTo(memoryStream);
                 }
@@ -400,6 +396,7 @@ namespace TootTally.Replays
                 }
             }
 
+            ClearData();
             var replayJson = JSONObject.Parse(jsonFileFromZip);
             GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
             foreach (JSONArray jsonArray in replayJson["framedata"])
@@ -407,6 +404,7 @@ namespace TootTally.Replays
             foreach (JSONArray jsonArray in replayJson["notedata"])
                 _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
             _replayIndex = 0;
+
             return true;
         }
 

@@ -193,7 +193,7 @@ namespace TootTally
                 score.gameVersion = GlobalVariables.version;
                 score.modVersion = BUILDDATE;
                 //Disabled score submission for testing
-                 __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score)); 
+                // __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score)); 
             }
 
         }

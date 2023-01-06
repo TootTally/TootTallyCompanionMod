@@ -33,6 +33,7 @@ namespace TootTally
             public string played_on;
             public string grade;
             public int[] noteTally;
+            public string replay_id;
             public int max_combo;
             public float percentage;
             public string game_version;

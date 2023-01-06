@@ -135,6 +135,7 @@ namespace TootTally.Graphics
                                 scoreData.percentage.ToString("0.00") + "%",
                                 scoreData.grade,
                                 scoreData.max_combo + "x",
+                                scoreData.replay_id,
                         };
                         scoresMatrix.Add(scoreDataText);
                         count++;
@@ -208,7 +209,7 @@ namespace TootTally.Graphics
             {
                 LeaderBoardRowContainer rowContainer = CreateLeaderboardRow(lbContainer, _diffBar);
 
-                for (int i = 0; i < dataList.Count; i++)
+                for (int i = 0; i < dataList.Count - 1; i++) //count - 1 because last data is replay uuid
                 {
                     LeaderBoardColumnContainer colContainer = CreateLeaderboardColumn(rowContainer, _diffBar);
 
@@ -224,12 +225,30 @@ namespace TootTally.Graphics
                     }
 
                 }
+                var replayId = dataList.Last();
+                if (replayId != "NA") //if there's a uuid, add a replay button
+                {
+                    LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
+                    CustomButton replayButton =
+                        GameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton",
+                        delegate
+                        {
+                            if (ReplaySystemJson.LoadReplay(replayId)) //Try loading replay locally
+                                    _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                            else //Download it first, then try loading again
+                            {
+                                //add some loading indicator here to let user know replay is being downloaded
+                                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                                {
+                                    if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded and Loaded
+                                        _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                                }));
+                            }
 
-                LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
-                CustomButton replayButton =
-                    GameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton", delegate { ReplaySystemJson.replayFileName = "TestUser - Happy Birthday - 1672164571"; _levelSelectControllerInstance.playbtn.onClick?.Invoke(); });
+                        });
 
-                colContainerReplay.AddGameObjectToList(replayButton.gameObject);
+                    colContainerReplay.AddGameObjectToList(replayButton.gameObject);
+                }
             }
             lbContainer.OrganizeRows();
 

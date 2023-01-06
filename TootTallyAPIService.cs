@@ -1,7 +1,10 @@
-﻿using SimpleJSON;
+﻿using BepInEx;
+using SimpleJSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -13,6 +16,7 @@ namespace TootTally
     {
         //public const string APIURL = "https://toottally.com";
         public const string APIURL = "http://localhost"; //localTesting
+        public const string REPLAYURL = "https://sgp1.digitaloceanspaces.com/toottally/replays/";
         #region Logs
         internal static void LogDebug(string msg) => Plugin.LogDebug(msg);
         internal static void LogInfo(string msg) => Plugin.LogInfo(msg);
@@ -108,23 +112,46 @@ namespace TootTally
                 callback(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayData, string uuid)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid)
         {
-            string apiLink = $"{APIURL}/api/replay/submit/";
-            var replayObj = new SerializableClass.ReplayJsonSubmission()
+            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+
+            byte[] replayFile;
+            using (var memoryStream = new MemoryStream())
             {
-                apiKey = Plugin.Instance.APIKey.Value,
-                replayData = replayData,
-                uuid = uuid
-            };
+                using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Open))
+                    fileStream.CopyTo(memoryStream);
+                replayFile = memoryStream.ToArray();
+            }
 
-            var replaySubmission = Encoding.UTF8.GetBytes(JsonUtility.ToJson(replayObj));
+            string apiLink = $"{APIURL}/api/replay/submit/";
+            WWWForm form = new WWWForm();
+            form.AddField("apiKey", Plugin.Instance.APIKey.Value);
+            form.AddField("replayId", uuid);
+            form.AddBinaryData("replayFile", replayFile);
 
-            var webRequest = PostUploadRequest(apiLink, replaySubmission);
+            var webRequest = UnityWebRequest.Post(apiLink, form);
 
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, true))
                 LogInfo($"Replay Sent.");
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
+        {
+            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(REPLAYURL + uuid + ".ttr");
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                File.WriteAllBytes(replayDir + uuid + ".ttr", webRequest.downloadHandler.data);
+                
+                LogInfo("Replay Downloaded.");
+                callback(uuid);
+            }
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
@@ -154,6 +181,7 @@ namespace TootTally
                             scoreJson["okay"],
                             scoreJson["meh"],
                             scoreJson["nasty"]},
+                        replay_id = scoreJson["replay_id"] != null ? scoreJson["replay_id"] : "NA", //if no replay_id, set to NA
                         max_combo = scoreJson["max_combo"],
                         percentage = scoreJson["percentage"],
                         game_version = scoreJson["game_version"],
