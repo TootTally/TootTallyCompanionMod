@@ -80,8 +80,43 @@ namespace TootTally.Replays
             if (_isReplayRecording)
                 StopReplayRecorder(__instance);
             else if (_isReplayPlaying)
+            {
                 StopReplayPlayer(__instance);
+                GlobalVariables.localsave.tracks_played--;
+            }
 
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
+        [HarmonyPostfix]
+        public static void ReplayIndicator(PointSceneController __instance)
+        {
+            if (_isReplayRecording) return; // Replay not running, an actual play happened
+            // This code came from AutoToot (https://github.com/TomDotBat/AutoToot/blob/master/Patches/PointSceneControllerPatch.cs)
+            GameObject tootTextObject = GameObject.Find("Canvas/buttons/coingroup/Text");
+            if (tootTextObject == null)
+            {
+                Plugin.LogError("Could not find Toot Text object, cannot display replay indicator");
+            }
+            else
+            {
+                __instance.tootstext.text = "Replay Done";
+            }
+            __instance.Invoke(nameof(PointSceneController.showContinue),  0.75f);
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.updateSave))]
+        [HarmonyPrefix]
+        public static bool AvoidSaveChange(PointSceneController __instance)
+        {
+            return _isReplayRecording; // Don't touch the savefile if we just did a replay
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.checkScoreCheevos))]
+        [HarmonyPrefix]
+        public static bool AvoidAchievementCheck(PointSceneController __instance)
+        {
+            return _isReplayRecording; // Don't check for achievements if we just did a replay
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
