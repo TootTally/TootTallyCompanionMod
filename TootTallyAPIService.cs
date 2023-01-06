@@ -44,28 +44,29 @@ namespace TootTally
             var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
             var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest($"{APIURL}/api/profile/self/", apiKey);
+            SerializableClass.User user;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, false))
             {
                 var jsonData = JSONObject.Parse(webRequest.downloadHandler.text);
-                SerializableClass.User user = new SerializableClass.User()
+                user = new SerializableClass.User()
                 {
                     username = jsonData["username"],
                     id = jsonData["id"],
                 };
                 LogInfo($"Welcome, {user.username}!");
-                callback(user);
             }
             else
             {
-                var user = new SerializableClass.User()
+                user = new SerializableClass.User()
                 {
                     username = "Guest",
                     id = 0,
                 };
-                callback(user);
             }
+            callback(user);
+
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart)

@@ -205,7 +205,7 @@ namespace TootTally.Replays
         {
             _isReplayRecording = true;
             wasPlayingReplay = false;
-            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
+            _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             _maxCombo = 0;
