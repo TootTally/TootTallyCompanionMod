@@ -17,11 +17,23 @@ namespace TootTally.Graphics
         {
             this.singleScore = singleScore;
             this.rank = rank;
+            rank.GetComponent<RectTransform>().sizeDelta = new Vector2(25, 45);
+
             this.username = username;
+            username.GetComponent<RectTransform>().sizeDelta = new Vector2(125, 45);
+
             this.score = score;
+            score.GetComponent<RectTransform>().sizeDelta = new Vector2(125, 45);
+
             this.percent = percent;
+            percent.GetComponent<RectTransform>().sizeDelta = new Vector2(45, 45);
+
             this.grade = grade;
+            grade.GetComponent<RectTransform>().sizeDelta = new Vector2(10, 45);
+
             this.maxcombo = maxcombo;
+            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 45);
+
             this.hasBackground = hasBackground;
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
         }
