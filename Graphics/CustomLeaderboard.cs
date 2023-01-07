@@ -164,25 +164,6 @@ namespace TootTally.Graphics
             _diffBar = GameObject.Find(FULLSCREEN_PANEL_PATH + "diff bar").gameObject;
             _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
 
-            //temp
-            GameObjectFactory.CreateCustomButton(_leaderBoard.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton",
-                        delegate
-                        {
-                            if (ReplaySystemJson.LoadReplay("40f4aa3ceefb46259f39dc6d7d3a89ea")) //Try loading replay locally
-                                _levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                            else //Download it first, then try loading again
-                            {
-                                //add some loading indicator here to let user know replay is being downloaded
-                                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay("40f4aa3ceefb46259f39dc6d7d3a89ea", (uuid) =>
-                                {
-                                    if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
-                                        _levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                                }));
-                            }
-
-                        });
-            //EndTemp
-
             _loadingStarList = new List<GameObject>();
 
             for (int i = 0; i < 5; i++)
