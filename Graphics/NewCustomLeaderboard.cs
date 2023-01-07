@@ -24,15 +24,19 @@ namespace TootTally.Graphics
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
+        private const float SWIRLY_SPEED = 0.5f;
 
         private static bool _leaderboardLoaded;
 
         private static LevelSelectController _levelSelectControllerInstance;
         private static List<IEnumerator<UnityWebRequestAsyncOperation>> currentLeaderboardCoroutines;
 
-        private static GameObject _leaderBoard, _leaderboardCanvas, _panelBody, _scoreboard, _loadingSwirly;
+        private static GameObject _leaderboard, _leaderboardCanvas, _panelBody, _scoreboard, _loadingSwirly;
+        private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static LeaderboardManager _leaderboardManager;
         private static LeaderboardRowEntry _singleRowPrefab;
+        private static List<GameObject> _scoreGameObjectList;
+
 
         private static void QuickLog(string message) => Plugin.LogInfo(message);
 
@@ -45,18 +49,28 @@ namespace TootTally.Graphics
             _leaderboardLoaded = false;
 
             Initialize();
-            //UpdateLeaderboard(___alltrackslist, __instance);
+            UpdateLeaderboard(___alltrackslist, __instance);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.populateScores))]
         [HarmonyPrefix]
         static bool DontPopulateBaseGameLeaderboard() => false;
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
+        [HarmonyPostfix]
+        static void UpdateLoadingStarAnimation()
+        {
+            if (!_leaderboardLoaded && _loadingSwirly != null)
+            {
+                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            }
+        }
 
 
         public static void Initialize()
         {
             currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
+            _scoreGameObjectList = new List<GameObject>();
 
             //fuck that useless Dial
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
@@ -68,39 +82,38 @@ namespace TootTally.Graphics
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
             GameObject.Find(FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
 
-            _leaderBoard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
+            _leaderboard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
+
             //clear original Leaderboard from its objects
             QuickLog("Clearing shit from leaderboard");
-            GameObject.DestroyImmediate(_leaderBoard.transform.Find(".......").gameObject);
-            GameObject.DestroyImmediate(_leaderBoard.transform.Find("\"HIGH SCORES\"").gameObject);
-           for(int i = 1; i <= 5; i++)
+            GameObject.DestroyImmediate(_leaderboard.transform.Find(".......").gameObject);
+            GameObject.DestroyImmediate(_leaderboard.transform.Find("\"HIGH SCORES\"").gameObject);
+            for (int i = 1; i <= 5; i++)
             {
-                _leaderBoard.transform.Find(i.ToString()).gameObject.SetActive(false);
-                _leaderBoard.transform.Find("score" + i).gameObject.SetActive(false);
+                _leaderboard.transform.Find(i.ToString()).gameObject.SetActive(false);
+                _leaderboard.transform.Find("score" + i).gameObject.SetActive(false);
             }
-            
+
             QuickLog("Yoink streak time!!");
             QuickLog("Yoink leaderboard canvas");
-            GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject; 
+            GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject;
             GameObject newLeaderboardCanvas = camerapopups.transform.Find("LeaderboardCanvas").gameObject;
 
-            _leaderboardCanvas = GameObject.Instantiate(newLeaderboardCanvas, _leaderBoard.transform);
-            GameObject.DestroyImmediate(_leaderboardCanvas.transform.Find("BG").gameObject);
+            _leaderboardCanvas = GameObject.Instantiate(newLeaderboardCanvas, _leaderboard.transform);
+            _leaderboardManager = _leaderboardCanvas.GetComponent<LeaderboardManager>();
             //Don't think we need these...
+            GameObject.DestroyImmediate(_leaderboardCanvas.transform.Find("BG").gameObject);
             GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<CanvasScaler>());
-            GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<GraphicRaycaster>());
-            _leaderboardCanvas.gameObject.name = "CustomLeaderboarCanvas";
-            _leaderboardCanvas.active = false;
-
+            _leaderboardCanvas.name = "CustomLeaderboarCanvas";
+            _leaderboardCanvas.SetActive(true); // doesn't work and don't know why??
 
             RectTransform lbCanvasRect = _leaderboardCanvas.GetComponent<RectTransform>();
             lbCanvasRect.anchoredPosition = new Vector2(237, -311);
             lbCanvasRect.localScale = Vector2.one * 0.5f;
-                
-            _leaderboardManager = _leaderboardCanvas.GetComponent<LeaderboardManager>();
+
 
             QuickLog("Yoink PanelBody");
-            _panelBody = _leaderboardCanvas.transform.Find("PanelBody").gameObject;            
+            _panelBody = _leaderboardCanvas.transform.Find("PanelBody").gameObject;
             _panelBody.SetActive(true);
             RectTransform panelRectTransform = _panelBody.GetComponent<RectTransform>();
             panelRectTransform.anchoredPosition = Vector2.zero;
@@ -112,6 +125,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(_panelBody.transform.Find("txt_songname").gameObject);
             GameObject.DestroyImmediate(_panelBody.transform.Find("rule").gameObject);
 
+            QuickLog("Yoink tabs");
             GameObject tabs = _panelBody.transform.Find("tabs").gameObject;
             GameObject.DestroyImmediate(tabs.GetComponent<HorizontalLayoutGroup>());
             tabs.AddComponent<VerticalLayoutGroup>();
@@ -119,44 +133,75 @@ namespace TootTally.Graphics
             tabsRectTransform.anchoredPosition = new Vector2(290, -24);
             tabsRectTransform.sizeDelta = new Vector2(-650, 225);
 
+            QuickLog("Yoink errors");
+            GameObject errors = _panelBody.transform.Find("errors").gameObject;
+            RectTransform errorsTransform = errors.GetComponent<RectTransform>();
+            errorsTransform.anchoredPosition = new Vector2(-60, -130);
+            errorsTransform.sizeDelta = new Vector2(-200, -190);
+            errors.SetActive(false);
+
+            QuickLog("Yoink scorebody");
             GameObject scoresbody = _panelBody.transform.Find("scoresbody").gameObject;
             RectTransform scoresbodyRectTransform = scoresbody.GetComponent<RectTransform>();
             scoresbodyRectTransform.anchoredPosition = new Vector2(0, -10);
             scoresbodyRectTransform.sizeDelta = Vector2.one * -20;
 
+            QuickLog("Yoink scoreboard");
             _scoreboard = _panelBody.transform.Find("scoreboard").gameObject; //put SingleScore in there
             RectTransform scoreboardRectTransform = _scoreboard.GetComponent<RectTransform>();
             scoreboardRectTransform.anchoredPosition = new Vector2(-64, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-150, 0);
 
+            QuickLog("Swirly :D");
             _loadingSwirly = _panelBody.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
+            _loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
+            _loadingSwirly.SetActive(true);
 
-            QuickLog("Yoink singleScore");
+            QuickLog("Yoink SingleScore");
             GameObject singleScore = _panelBody.transform.Find("scoreboard/SingleScore").gameObject;
             GameObject mySingleScore = GameObject.Instantiate(singleScore, _leaderboardCanvas.transform);
+            mySingleScore.name = "singleScorePrefab";
+            mySingleScore.gameObject.SetActive(false);
+            //_leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject));
 
-            QuickLog("Yoink Texts");
-            Text rank = mySingleScore.transform.Find("Num").GetComponent<Text>();
-            Text username = mySingleScore.transform.Find("Name").GetComponent<Text>();
-            Text score = mySingleScore.transform.Find("Score").GetComponent<Text>();
+            QuickLog("Make header and text prefab");
+            _leaderboardHeaderPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Num").GetComponent<Text>(), _leaderboardCanvas.transform);
+            _leaderboardTextPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Name").GetComponent<Text>(), _leaderboardCanvas.transform);
+            GameObject.DestroyImmediate(mySingleScore.transform.Find("Num").gameObject);
+            GameObject.DestroyImmediate(mySingleScore.transform.Find("Name").gameObject);
+            GameObject.DestroyImmediate(mySingleScore.transform.Find("Score").gameObject);
 
             QuickLog("Make row prefab");
-            _singleRowPrefab = _leaderboardCanvas.AddComponent<LeaderboardRowEntry>();
-            _singleRowPrefab.ConstructLeaderboardEntry(mySingleScore, rank, username, score, false);
-            _singleRowPrefab.gameObject.SetActive(false);
+            _singleRowPrefab = mySingleScore.AddComponent<LeaderboardRowEntry>();
+            Text rank = GameObject.Instantiate(_leaderboardHeaderPrefab, mySingleScore.transform);
+            rank.name = "rank";
+            Text username = GameObject.Instantiate(_leaderboardTextPrefab, mySingleScore.transform);
+            username.name = "username";
+            Text score = GameObject.Instantiate(_leaderboardTextPrefab, mySingleScore.transform);
+            score.name = "score";
+            Text percent = GameObject.Instantiate(_leaderboardTextPrefab, mySingleScore.transform);
+            percent.name = "percent";
+            Text grade = GameObject.Instantiate(_leaderboardTextPrefab, mySingleScore.transform);
+            grade.name = "grade";
+            Text maxcombo = GameObject.Instantiate(_leaderboardTextPrefab, mySingleScore.transform);
+            maxcombo.name = "maxcombo";
+            _singleRowPrefab.ConstructLeaderboardEntry(mySingleScore, rank, username, score, percent, grade, maxcombo, false);
+            _singleRowPrefab.singleScore.name = "singleRowPrefab";
             GameObject.DontDestroyOnLoad(_singleRowPrefab);
+            QuickLog("Yoinking done!");
         }
         #endregion
 
-        /*#region update
+        #region update
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         static void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
+            _leaderboardCanvas.SetActive(true);
             if (_leaderboardLoaded)
             {
                 _leaderboardLoaded = false;
-                _loadingStarList.ForEach(star => star.gameObject.SetActive(true));
+                _loadingSwirly.SetActive(true);
                 ClearLeaderboard();
             }
 
@@ -184,28 +229,10 @@ namespace TootTally.Graphics
                 if (songHashInDB == 0) return; // Skip if no song found
                 currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
                 {
-                    List<List<string>> scoresMatrix = new List<List<string>>();
 
-                    int count = 1;
-                    foreach (SerializableClass.ScoreDataFromDB scoreData in scoreDataList)
-                    {
-                        List<string> scoreDataText = new List<string>
-                        {
-                                "#" + count,
-                                Truncate(scoreData.player, 8),
-                                string.Format("{0:n0}",scoreData.score),
-                                scoreData.percentage.ToString("0.00") + "%",
-                                scoreData.grade,
-                                scoreData.max_combo + "x",
-                                scoreData.replay_id,
-                        };
-                        scoresMatrix.Add(scoreDataText);
-                        count++;
-                    }
-
-                    RefreshLeaderboard(scoresMatrix);
+                    RefreshLeaderboard(scoreDataList);
                     _leaderboardLoaded = true;
-                    _loadingStarList.ForEach(star => star.gameObject.SetActive(false));
+                    _loadingSwirly.SetActive(false);
                     currentLeaderboardCoroutines.Clear();
                 }));
                 Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
@@ -215,88 +242,83 @@ namespace TootTally.Graphics
 
         public static void ClearLeaderboard()
         {
-
+            _scoreGameObjectList.ForEach(score => GameObject.DestroyImmediate(score));
+            _scoreGameObjectList.Clear();
         }
 
-        public static void RefreshLeaderboard(List<List<string>> scoreDataLists)
+        public static void RefreshLeaderboard(List<SerializableClass.ScoreDataFromDB> scoreDataLists)
         {
-            LeaderBoardContainer lbContainer = CreateContainer(_leaderBoard, _diffBar);
-
-            foreach (List<string> dataList in scoreDataLists)
+            var count = 1;
+            foreach (SerializableClass.ScoreDataFromDB scoreData in scoreDataLists)
             {
-                LeaderBoardRowContainer rowContainer = CreateLeaderboardRow(lbContainer, _diffBar);
+                LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, _scoreboard.transform);
+                rowEntry.username.text = scoreData.player;
+                rowEntry.score.text = string.Format("{0:n0}", scoreData.score);
+                rowEntry.rank.text = "#" + count;
+                rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
+                rowEntry.grade.text = scoreData.grade;
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
+                rowEntry.replayId = scoreData.replay_id;
+                count++;
+                if (count % 2 == 0)
+                    rowEntry.ToggleBackground();
+                rowEntry.singleScore.AddComponent<HorizontalLayoutGroup>();
+                rowEntry.singleScore.SetActive(true);
+                _scoreGameObjectList.Add(rowEntry.singleScore);
 
-                for (int i = 0; i < dataList.Count - 1; i++) //count - 1 because last data is replay uuid
-                {
-                    LeaderBoardColumnContainer colContainer = CreateLeaderboardColumn(rowContainer, _diffBar);
-
-                    LeaderboardText header = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
-                    colContainer.AddGameObjectToList(header.gameObject);
-
-                    if (i == 1 || i == 4)
-                    {
-                        i++;
-
-                        LeaderboardText header2 = CreateLeaderBoardHeader(colContainer.transform, dataList[i], "LeaderboardHeader" + dataList[i]);
-                        colContainer.AddGameObjectToList(header2.gameObject);
-                    }
-
-                }
-                var replayId = dataList.Last();
-                if (replayId != "NA") //if there's a uuid, add a replay button
-                {
-                    LeaderBoardColumnContainer colContainerReplay = CreateLeaderboardColumn(rowContainer, _diffBar);
-                    CustomButton replayButton =
-                        GameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton",
-                        delegate
-                        {
-                            if (ReplaySystemJson.LoadReplay(replayId)) //Try loading replay locally
-                                _levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                            else //Download it first, then try loading again
-                            {
-                                //add some loading indicator here to let user know replay is being downloaded
-                                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
-                                {
-                                    if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
-                                        _levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                                }));
-                            }
-
-                        });
-
-                    colContainerReplay.AddGameObjectToList(replayButton.gameObject);
-                }
             }
-            lbContainer.OrganizeRows();
 
 
-            //Yoink slider and make it vertical
-            Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
-            RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
+            /* var replayId = ;
+             if (replayId != "NA") //if there's a uuid, add a replay button
+             {
+                 CustomButton replayButton =
+                     GameObjectFactory.CreateCustomButton(colContainerReplay.transform, new Vector2(92, 5), new Vector2(14, 14), "►", "ReplayButton",
+                     delegate
+                     {
+                         if (ReplaySystemJson.LoadReplay(replayId)) //Try loading replay locally
+                             _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                         else //Download it first, then try loading again
+                         {
+                             //add some loading indicator here to let user know replay is being downloaded
+                             Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                         {
+                             if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
+                                 _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                         }));
+                         }
 
-            Slider mySlider = GameObject.Instantiate(sliderPrefab, lbContainer.transform);
-            mySlider.direction = Slider.Direction.TopToBottom;
-            RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
-            sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 3.5f);
-            sliderRect.anchoredPosition = new Vector2(lbContainer.rectTransform.sizeDelta.x / 2 + (PADDING_X * 5), (lbContainer.rectTransform.sizeDelta.y / 2) - (sliderRect.sizeDelta.y / 5) - PADDING_Y);
-            mySlider.handleRect = sliderRect;
-            RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
-            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
-            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-            mySlider.minValue = -0.1f;
-            mySlider.maxValue = 1.1f;
-            mySlider.onValueChanged.RemoveAllListeners();
-            mySlider.onValueChanged.AddListener((float _value) =>
-            {
-                if (_value < 0)
-                    mySlider.value = 0;
-                if (_value > 1)
-                    mySlider.value = 1f;
-            });
-            GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
-            lbContainer.AddSliderToContainer(mySlider);
+                     });
+
+
+
+                 //Yoink slider and make it vertical
+                 Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+                 RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
+
+                 Slider mySlider = GameObject.Instantiate(sliderPrefab, lbContainer.transform);
+                 mySlider.direction = Slider.Direction.TopToBottom;
+                 RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
+                 sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 3.5f);
+                 sliderRect.anchoredPosition = new Vector2(lbContainer.rectTransform.sizeDelta.x / 2 + (PADDING_X * 5), (lbContainer.rectTransform.sizeDelta.y / 2) - (sliderRect.sizeDelta.y / 5) - PADDING_Y);
+                 mySlider.handleRect = sliderRect;
+                 RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
+                 backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+                 backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+                 mySlider.minValue = -0.1f;
+                 mySlider.maxValue = 1.1f;
+                 mySlider.onValueChanged.RemoveAllListeners();
+                 mySlider.onValueChanged.AddListener((float _value) =>
+                 {
+                     if (_value < 0)
+                         mySlider.value = 0;
+                     if (_value > 1)
+                         mySlider.value = 1f;
+                 });
+                 GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
+             }*/
+            #endregion
+
         }
-        #endregion
-        */
     }
 }
