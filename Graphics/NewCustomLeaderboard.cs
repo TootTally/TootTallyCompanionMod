@@ -23,7 +23,7 @@ namespace TootTally.Graphics
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
-        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(.2f,.2f,2) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
+        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0,.4f,1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
 
         private const float SWIRLY_SPEED = 0.5f;
 
@@ -36,7 +36,7 @@ namespace TootTally.Graphics
         private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static LeaderboardManager _leaderboardManager;
         private static LeaderboardRowEntry _singleRowPrefab;
-        private static List<GameObject> _scoreGameObjectList;
+        private static List<LeaderboardRowEntry> _scoreGameObjectList;
 
 
         private static void QuickLog(string message) => Plugin.LogInfo(message);
@@ -71,7 +71,7 @@ namespace TootTally.Graphics
         public static void Initialize()
         {
             currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
-            _scoreGameObjectList = new List<GameObject>();
+            _scoreGameObjectList = new List<LeaderboardRowEntry>();
 
             //fuck that useless Dial
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
@@ -236,7 +236,7 @@ namespace TootTally.Graphics
 
         public static void ClearLeaderboard()
         {
-            _scoreGameObjectList.ForEach(score => GameObject.DestroyImmediate(score));
+            _scoreGameObjectList.ForEach(score => GameObject.DestroyImmediate(score.singleScore));
             _scoreGameObjectList.Clear();
         }
 
@@ -263,7 +263,7 @@ namespace TootTally.Graphics
                 layoutGroup.childControlWidth = layoutGroup.childControlHeight = false;
                 layoutGroup.spacing = 38;
                 rowEntry.singleScore.SetActive(true);
-                _scoreGameObjectList.Add(rowEntry.singleScore);
+                _scoreGameObjectList.Add(rowEntry);
 
                 var replayId = rowEntry.replayId;
                 if (replayId != "NA") //if there's a uuid, add a replay button
@@ -282,42 +282,45 @@ namespace TootTally.Graphics
                                         _levelSelectControllerInstance.playbtn.onClick?.Invoke();
                             }));
                         }
-
                     });
                 }
-
-
-
-
-
-
-                /*//Yoink slider and make it vertical
-                Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
-                RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
-
-                Slider mySlider = GameObject.Instantiate(sliderPrefab, lbContainer.transform);
-                mySlider.direction = Slider.Direction.TopToBottom;
-                RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
-                sliderRect.sizeDelta = new Vector2(sliderPrefabRect.sizeDelta.y, sliderPrefabRect.sizeDelta.x * 3.5f);
-                sliderRect.anchoredPosition = new Vector2(lbContainer.rectTransform.sizeDelta.x / 2 + (PADDING_X * 5), (lbContainer.rectTransform.sizeDelta.y / 2) - (sliderRect.sizeDelta.y / 5) - PADDING_Y);
-                mySlider.handleRect = sliderRect;
-                RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
-                backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
-                backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-                mySlider.minValue = -0.1f;
-                mySlider.maxValue = 1.1f;
-                mySlider.onValueChanged.RemoveAllListeners();
-                mySlider.onValueChanged.AddListener((float _value) =>
-                {
-                    if (_value < 0)
-                        mySlider.value = 0;
-                    if (_value > 1)
-                        mySlider.value = 1f;
-                });
-                GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);*/
             }
-            #endregion
 
+            //Yoink slider and make it vertical
+            Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+            RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
+            RectTransform panelRectTransform = _panelBody.GetComponent<RectTransform>();
+
+            Slider mySlider = GameObject.Instantiate(sliderPrefab, _panelBody.transform);
+            mySlider.direction = Slider.Direction.TopToBottom;
+            RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
+            sliderRect.sizeDelta = new Vector2(25, 650);
+            sliderRect.anchoredPosition = new Vector2(345, 0);
+            mySlider.handleRect = sliderRect;
+            RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
+            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+            mySlider.value = 0.02f;
+            mySlider.minValue = 0.02f;
+            mySlider.maxValue = 0.98f;
+            mySlider.onValueChanged.RemoveAllListeners();
+            mySlider.onValueChanged.AddListener((float _value) =>
+            {
+                foreach(LeaderboardRowEntry row in _scoreGameObjectList)
+                {
+                    RectTransform rect = row.singleScore.GetComponent<RectTransform>();
+                    Plugin.LogInfo(row.GetBasePosY() + "");
+                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.GetBasePosY() + (mySlider.value * rect.sizeDelta.y * _scoreGameObjectList.Count));
+                    row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + mySlider.value) / 30), 0);
+                }
+
+                if (_value < 0.01f)
+                    mySlider.value = 0.01f;
+                if (_value > .99f)
+                    mySlider.value = .99f;
+            });
+            GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
+            #endregion
         }
     }
 }

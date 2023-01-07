@@ -12,9 +12,20 @@ namespace TootTally.Graphics
         public Text rank, username, score, percent, grade, maxcombo;
         public bool hasBackground;
         public string replayId;
+        public float basePosY;
+        private bool _isFirstGetBasePosY;
+
+        public float GetBasePosY()
+        {
+            if (_isFirstGetBasePosY)
+                basePosY = singleScore.GetComponent<RectTransform>().anchoredPosition.y;
+            _isFirstGetBasePosY = false;
+            return basePosY;
+        }
 
         public void ConstructLeaderboardEntry(GameObject singleScore, Text rank, Text username, Text score, Text percent, Text grade, Text maxcombo, bool hasBackground = false)
         {
+            _isFirstGetBasePosY = true;
             this.singleScore = singleScore;
             this.rank = rank;
             rank.GetComponent<RectTransform>().sizeDelta = new Vector2(25, 45);
