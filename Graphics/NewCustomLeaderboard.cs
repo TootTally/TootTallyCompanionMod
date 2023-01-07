@@ -23,7 +23,7 @@ namespace TootTally.Graphics
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
-        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", Color.blue }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
+        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(.2f,.2f,2) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
 
         private const float SWIRLY_SPEED = 0.5f;
 
@@ -103,6 +103,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(_leaderboardCanvas.transform.Find("BG").gameObject);
             GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<CanvasScaler>());
             _leaderboardCanvas.name = "CustomLeaderboarCanvas";
+            _leaderboardCanvas.SetActive(true);
 
             RectTransform lbCanvasRect = _leaderboardCanvas.GetComponent<RectTransform>();
             lbCanvasRect.anchoredPosition = new Vector2(237, -311);
@@ -254,6 +255,7 @@ namespace TootTally.Graphics
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
                 rowEntry.replayId = scoreData.replay_id;
                 count++;
+                rowEntry.singleScore.AddComponent<CanvasGroup>();
                 HorizontalLayoutGroup layoutGroup = rowEntry.singleScore.AddComponent<HorizontalLayoutGroup>();
                 layoutGroup.childAlignment = TextAnchor.MiddleLeft;
                 layoutGroup.childForceExpandWidth = layoutGroup.childForceExpandHeight = false;
@@ -289,8 +291,8 @@ namespace TootTally.Graphics
 
 
 
-                //Yoink slider and make it vertical
-                /*Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+                /*//Yoink slider and make it vertical
+                Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
                 RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
 
                 Slider mySlider = GameObject.Instantiate(sliderPrefab, lbContainer.transform);

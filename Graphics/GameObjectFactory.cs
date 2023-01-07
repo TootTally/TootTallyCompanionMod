@@ -97,7 +97,7 @@ namespace TootTally.Graphics
 
             newButton.textHolder.text = text;
             newButton.textHolder.alignment = TextAnchor.MiddleCenter;
-            newButton.textHolder.fontSize = 11;
+            newButton.textHolder.fontSize = 22;
             newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             newButton.textHolder.color = Color.black;
