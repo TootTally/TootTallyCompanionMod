@@ -72,8 +72,8 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            if (_leaderboardLoaded)
-                UpdateLeaderboard(___alltrackslist, __instance);
+            /*if (_leaderboardLoaded)
+                UpdateLeaderboard(___alltrackslist, __instance);*/
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
