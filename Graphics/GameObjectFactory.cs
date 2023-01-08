@@ -34,10 +34,7 @@ namespace TootTally.Graphics
             if (_isInitialized) return;
 
             SetCustomButtonPrefab();
-            SetTextPrefab();
             SetStarPrefab();
-            SetTogglePrefab();
-            SetCustomSliderPrefab();
         }
 
         //yoink the gameobject that contains a button, copy it, yeet its content and add my own custom button instead
@@ -75,20 +72,6 @@ namespace TootTally.Graphics
             UnityEngine.Object.DontDestroyOnLoad(_starPrefab);
         } 
 
-        public static void SetTextPrefab() //Plan on yoinking some other graphics in the future
-        {
-
-        }
-        public static void SetTogglePrefab()
-        {
-
-
-        }
-        public static void SetCustomSliderPrefab()
-        {
-
-        }
-
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
@@ -97,7 +80,7 @@ namespace TootTally.Graphics
 
             newButton.textHolder.text = text;
             newButton.textHolder.alignment = TextAnchor.MiddleCenter;
-            newButton.textHolder.fontSize = 11;
+            newButton.textHolder.fontSize = 22;
             newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             newButton.textHolder.color = Color.black;

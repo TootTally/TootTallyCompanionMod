@@ -259,6 +259,9 @@ namespace TootTally.Replays
 
         private static void SaveAndUploadReplay(PointSceneController __instance)
         {
+            if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
+            if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
+
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);

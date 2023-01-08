@@ -67,7 +67,6 @@ namespace TootTally
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
 
-
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
@@ -87,7 +86,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard));
+            Harmony.CreateAndPatchAll(typeof(NewCustomLeaderboard));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -125,6 +124,7 @@ namespace TootTally
             return tmb.ToString();
         }
 
+        //Would like to rewrite this somewhere else than in plugin
         public static class SongSelect
         {
             public static string songHash { get; private set; }
@@ -133,7 +133,7 @@ namespace TootTally
 
             [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
             [HarmonyPrefix]
-            public static void SetSongHash(LoadController __instance)
+            public static void AddSongToDBIfNotExist(LoadController __instance)
             {
                 string trackRef = GlobalVariables.chosen_track;
                 bool isCustom = Globals.IsCustomTrack(trackRef);
@@ -162,38 +162,6 @@ namespace TootTally
             public static void UpdateCombo(GameController __instance)
             {
                 maxCombo = __instance.highestcombo_level;
-            }
-
-            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-            [HarmonyPostfix]
-            public static void GetPlayInfo(PointSceneController __instance)
-            {
-                if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
-                if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
-                if (ReplaySystemJson.wasPlayingReplay) return; // Don't submit anything if watching a replay.
-                string trackRef = GlobalVariables.chosen_track;
-                LogInfo($"TrackRef: {GlobalVariables.chosen_track}");
-                LogInfo($"Letter Score: {__instance.letterscore}");
-                LogInfo($"Score: {GlobalVariables.gameplay_scoretotal}");
-                LogInfo($"Max Combo: {maxCombo}");
-                LogInfo($"Nasties: {GlobalVariables.gameplay_notescores[0]}");
-                LogInfo($"Mehs: {GlobalVariables.gameplay_notescores[1]}");
-                LogInfo($"Okays: {GlobalVariables.gameplay_notescores[2]}");
-                LogInfo($"Nices: {GlobalVariables.gameplay_notescores[3]}");
-                LogInfo($"Perfects: {GlobalVariables.gameplay_notescores[4]}");
-                LogInfo($"Song Hash: {songHash}");
-
-                SerializableClass.SendableScore score = new();
-                score.apiKey = Instance.APIKey.Value;
-                score.letterScore = __instance.letterscore;
-                score.score = GlobalVariables.gameplay_scoretotal;
-                score.noteTally = GlobalVariables.gameplay_notescores;
-                score.songHash = songHash;
-                score.maxCombo = maxCombo;
-                score.gameVersion = GlobalVariables.version;
-                score.modVersion = BUILDDATE;
-                //Disabled score submission for testing
-                // __instance.StartCoroutine(TootTallyAPIService.SubmitScore(score)); 
             }
 
         }
