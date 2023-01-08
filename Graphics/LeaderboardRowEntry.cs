@@ -12,38 +12,33 @@ namespace TootTally.Graphics
         public Text rank, username, score, percent, grade, maxcombo;
         public bool hasBackground;
         public string replayId;
-        public float basePosY;
-        private bool _isFirstGetBasePosY;
-
-        public float GetBasePosY()
-        {
-            if (_isFirstGetBasePosY)
-                basePosY = singleScore.GetComponent<RectTransform>().anchoredPosition.y;
-            _isFirstGetBasePosY = false;
-            return basePosY;
-        }
+        public int rowId;
 
         public void ConstructLeaderboardEntry(GameObject singleScore, Text rank, Text username, Text score, Text percent, Text grade, Text maxcombo, bool hasBackground = false)
         {
-            _isFirstGetBasePosY = true;
             this.singleScore = singleScore;
             this.rank = rank;
-            rank.GetComponent<RectTransform>().sizeDelta = new Vector2(25, 45);
+            rank.GetComponent<RectTransform>().sizeDelta = new Vector2(35, 35);
+            rank.alignment = TextAnchor.MiddleLeft;
 
             this.username = username;
-            username.GetComponent<RectTransform>().sizeDelta = new Vector2(125, 45);
+            username.GetComponent<RectTransform>().sizeDelta = new Vector2(180, 35);
+            username.alignment = TextAnchor.MiddleLeft;
 
             this.score = score;
-            score.GetComponent<RectTransform>().sizeDelta = new Vector2(125, 45);
+            score.GetComponent<RectTransform>().sizeDelta = new Vector2(175, 35);
+            score.alignment = TextAnchor.MiddleRight;
 
             this.percent = percent;
-            percent.GetComponent<RectTransform>().sizeDelta = new Vector2(45, 45);
+            percent.GetComponent<RectTransform>().sizeDelta = new Vector2(85, 35);
+            percent.alignment = TextAnchor.MiddleRight;
 
             this.grade = grade;
-            grade.GetComponent<RectTransform>().sizeDelta = new Vector2(10, 45);
+            grade.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
 
             this.maxcombo = maxcombo;
-            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 45);
+            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(50, 35);
+            maxcombo.alignment = TextAnchor.MiddleRight;
 
             this.hasBackground = hasBackground;
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯

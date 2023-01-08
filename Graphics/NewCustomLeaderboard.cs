@@ -23,7 +23,7 @@ namespace TootTally.Graphics
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
-        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0,.4f,1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
+        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
 
         private const float SWIRLY_SPEED = 0.5f;
 
@@ -37,6 +37,7 @@ namespace TootTally.Graphics
         private static LeaderboardManager _leaderboardManager;
         private static LeaderboardRowEntry _singleRowPrefab;
         private static List<LeaderboardRowEntry> _scoreGameObjectList;
+        private static Slider _slider;
 
 
         private static void QuickLog(string message) => Plugin.LogInfo(message);
@@ -72,6 +73,9 @@ namespace TootTally.Graphics
         {
             currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
+
+
+
 
             //fuck that useless Dial
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
@@ -143,9 +147,10 @@ namespace TootTally.Graphics
             scoresbodyRectTransform.sizeDelta = Vector2.one * -20;
 
             _scoreboard = _panelBody.transform.Find("scoreboard").gameObject; //put SingleScore in there
+            _scoreboard.AddComponent<RectMask2D>();
             RectTransform scoreboardRectTransform = _scoreboard.GetComponent<RectTransform>();
-            scoreboardRectTransform.anchoredPosition = new Vector2(-60, -10);
-            scoreboardRectTransform.sizeDelta = new Vector2(-150, 0);
+            scoreboardRectTransform.anchoredPosition = new Vector2(-22, -10);
+            scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
 
             _loadingSwirly = _panelBody.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
             _loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
@@ -154,15 +159,18 @@ namespace TootTally.Graphics
             GameObject singleScore = _panelBody.transform.Find("scoreboard/SingleScore").gameObject;
             GameObject mySingleScore = GameObject.Instantiate(singleScore, _leaderboardCanvas.transform);
             mySingleScore.name = "singleScorePrefab";
+            mySingleScore.GetComponent<RectTransform>().sizeDelta = new Vector2(mySingleScore.GetComponent<RectTransform>().sizeDelta.x, 35);
             mySingleScore.gameObject.SetActive(false);
             _leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject));
 
             _leaderboardHeaderPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Num").GetComponent<Text>(), _leaderboardCanvas.transform);
             _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
+            _leaderboardHeaderPrefab.maskable = true;
             _leaderboardTextPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Name").GetComponent<Text>(), _leaderboardCanvas.transform);
             _leaderboardTextPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
+            _leaderboardTextPrefab.maskable = true;
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Num").gameObject);
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Name").gameObject);
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Score").gameObject);
@@ -183,6 +191,26 @@ namespace TootTally.Graphics
             _singleRowPrefab.ConstructLeaderboardEntry(mySingleScore, rank, username, score, percent, grade, maxcombo, false);
             _singleRowPrefab.singleScore.name = "singleRowPrefab";
             GameObject.DontDestroyOnLoad(_singleRowPrefab);
+
+            //Yoink slider and make it vertical
+            Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+            RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
+
+            _slider = GameObject.Instantiate(sliderPrefab, _panelBody.transform);
+            _slider.direction = Slider.Direction.TopToBottom;
+            RectTransform sliderRect = _slider.GetComponent<RectTransform>();
+            sliderRect.sizeDelta = new Vector2(25, 745);
+            sliderRect.anchoredPosition = new Vector2(300, 0);
+            _slider.handleRect = sliderRect;
+            RectTransform backgroundSliderRect = _slider.transform.Find("Background").GetComponent<RectTransform>();
+            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+            _slider.value = 0f;
+            _slider.minValue = 0f;
+            _slider.maxValue = 1f;
+            _slider.gameObject.SetActive(false);
+            GameObject.DestroyImmediate(_slider.transform.Find("Handle Slide Area/Handle").gameObject);
+
         }
         #endregion
 
@@ -196,6 +224,7 @@ namespace TootTally.Graphics
             {
                 _leaderboardLoaded = false;
                 _loadingSwirly.SetActive(true);
+                _slider.gameObject.SetActive(false);
                 ClearLeaderboard();
             }
 
@@ -227,6 +256,7 @@ namespace TootTally.Graphics
                     RefreshLeaderboard(scoreDataList);
                     _leaderboardLoaded = true;
                     _loadingSwirly.SetActive(false);
+                    _slider.gameObject.SetActive(_scoreGameObjectList.Count > 8);
                     currentLeaderboardCoroutines.Clear();
                 }));
                 Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
@@ -254,6 +284,7 @@ namespace TootTally.Graphics
                 rowEntry.grade.color = gradeToColorDict[rowEntry.grade.text];
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
                 rowEntry.replayId = scoreData.replay_id;
+                rowEntry.rowId = count;
                 count++;
                 rowEntry.singleScore.AddComponent<CanvasGroup>();
                 HorizontalLayoutGroup layoutGroup = rowEntry.singleScore.AddComponent<HorizontalLayoutGroup>();
@@ -261,7 +292,7 @@ namespace TootTally.Graphics
                 layoutGroup.childForceExpandWidth = layoutGroup.childForceExpandHeight = false;
                 layoutGroup.childScaleWidth = layoutGroup.childScaleHeight = false;
                 layoutGroup.childControlWidth = layoutGroup.childControlHeight = false;
-                layoutGroup.spacing = 38;
+                layoutGroup.spacing = 8;
                 rowEntry.singleScore.SetActive(true);
                 _scoreGameObjectList.Add(rowEntry);
 
@@ -272,54 +303,41 @@ namespace TootTally.Graphics
                     delegate
                     {
                         if (ReplaySystemJson.LoadReplay(replayId)) //Try loading replay locally
-                                _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                            _levelSelectControllerInstance.playbtn.onClick?.Invoke();
                         else //Download it first, then try loading again
-                            {
-                                //add some loading indicator here to let user know replay is being downloaded
-                                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
-                                   {
-                                if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
-                                        _levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                            }));
+                        {
+                            //add some loading indicator here to let user know replay is being downloaded
+                            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                               {
+                                   if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
+                                       _levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                               }));
                         }
                     });
                 }
             }
 
-            //Yoink slider and make it vertical
-            Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
-            RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
-            RectTransform panelRectTransform = _panelBody.GetComponent<RectTransform>();
-
-            Slider mySlider = GameObject.Instantiate(sliderPrefab, _panelBody.transform);
-            mySlider.direction = Slider.Direction.TopToBottom;
-            RectTransform sliderRect = mySlider.GetComponent<RectTransform>();
-            sliderRect.sizeDelta = new Vector2(25, 650);
-            sliderRect.anchoredPosition = new Vector2(345, 0);
-            mySlider.handleRect = sliderRect;
-            RectTransform backgroundSliderRect = mySlider.transform.Find("Background").GetComponent<RectTransform>();
-            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
-            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-            mySlider.value = 0.02f;
-            mySlider.minValue = 0.02f;
-            mySlider.maxValue = 0.98f;
-            mySlider.onValueChanged.RemoveAllListeners();
-            mySlider.onValueChanged.AddListener((float _value) =>
+            _slider.onValueChanged.RemoveAllListeners();
+            _slider.onValueChanged.AddListener((float _value) =>
             {
-                foreach(LeaderboardRowEntry row in _scoreGameObjectList)
+                foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
                     RectTransform rect = row.singleScore.GetComponent<RectTransform>();
-                    Plugin.LogInfo(row.GetBasePosY() + "");
-                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, row.GetBasePosY() + (mySlider.value * rect.sizeDelta.y * _scoreGameObjectList.Count));
-                    row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + mySlider.value) / 30), 0);
+                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, ((row.rowId - 1) * -35) + (_slider.value * 35 * (_scoreGameObjectList.Count - 8)) - 17);
+                    if (rect.anchoredPosition.y >= -15)
+                        row.GetComponent<CanvasGroup>().alpha = Math.Max(1 - ((rect.anchoredPosition.y + 15) / 35), 0);
+                    else if (rect.anchoredPosition.y - 35 <= 35 * 8 + 15)
+                        row.GetComponent<CanvasGroup>().alpha = Math.Max((rect.anchoredPosition.y + (35 * 8) + 15) / 35, 0);
+                    else
+                        row.GetComponent<CanvasGroup>().alpha = 1;
+
                 }
 
-                if (_value < 0.01f)
-                    mySlider.value = 0.01f;
-                if (_value > .99f)
-                    mySlider.value = .99f;
+                if (_value < 0f)
+                    _slider.value = 0f;
+                if (_value > 1f)
+                    _slider.value = 1f;
             });
-            GameObject.DestroyImmediate(mySlider.transform.Find("Handle Slide Area/Handle").gameObject);
             #endregion
         }
     }
