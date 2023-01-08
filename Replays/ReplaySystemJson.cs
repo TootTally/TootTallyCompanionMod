@@ -48,7 +48,10 @@ namespace TootTally.Replays
         public static void GameControllerPostfixPatch(GameController __instance)
         {
             if (_replayFileName == null)
+            {
+                ClearData();
                 StartReplayRecorder(__instance);
+            }
             __instance.notescoresamples = 0; //Temporary fix for a glitch
         }
 
@@ -58,8 +61,6 @@ namespace TootTally.Replays
         {
             if (_replayFileName != null)
                 StartReplayPlayer(__instance);
-            else
-                ClearData();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -157,18 +158,16 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void PauseCanvasControllerShowPausePanelPostfixPatch(PauseCanvasController __instance)
         {
+            ClearData();
             _isReplayPlaying = _isReplayRecording = false;
-            Plugin.LogInfo("Level paused, stopped " + (_isReplayPlaying ? "replay" : "recording"));
+            Plugin.LogInfo("Level paused, stopped " + (_isReplayPlaying ? "replay" : "recording") + " and cleared replay data");
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
         [HarmonyPostfix]
         static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
         {
-            ClearData();
-            _isReplayPlaying = _isReplayRecording = false;
             _replayFileName = null;
-            Plugin.LogInfo("Level quit, clearing replay data");
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -378,6 +377,14 @@ namespace TootTally.Replays
             {
                 //todo
             }
+        }
+
+        private static bool ValidateData()
+        {
+            bool isValid = true;
+
+
+            return isValid;
         }
         #endregion
 
