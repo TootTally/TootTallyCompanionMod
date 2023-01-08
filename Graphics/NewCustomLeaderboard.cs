@@ -68,14 +68,24 @@ namespace TootTally.Graphics
             }
         }
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
+        [HarmonyPostfix]
+        static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
+        {
+            if (_leaderboardLoaded)
+                UpdateLeaderboard(___alltrackslist, __instance);
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
+        [HarmonyPostfix]
+        static void OnDoneRandomizingReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance) =>
+            UpdateLeaderboard(___alltrackslist, __instance);
+
 
         public static void Initialize()
         {
             currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
-
-
-
 
             //fuck that useless Dial
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
@@ -330,7 +340,6 @@ namespace TootTally.Graphics
                         row.GetComponent<CanvasGroup>().alpha = Math.Max((rect.anchoredPosition.y + (35 * 8) + 15) / 35, 0);
                     else
                         row.GetComponent<CanvasGroup>().alpha = 1;
-
                 }
 
                 if (_value < 0f)
