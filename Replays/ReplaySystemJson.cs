@@ -229,7 +229,6 @@ namespace TootTally.Replays
             var totalScore = __instance.totalscore;
             var multiplier = __instance.multiplier;
             var currentHealth = __instance.currenthealth;
-            _maxCombo = __instance.highestcombo_level;
 
             _scores_A = __instance.scores_A;
             _scores_B = __instance.scores_B;
@@ -249,6 +248,7 @@ namespace TootTally.Replays
 
         private static void RecordNoteData(GameController __instance)
         {
+            _maxCombo = __instance.highestcombo_level;
             var noteLetter = _scores_A != __instance.scores_A ? 4 :
                _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
