@@ -145,7 +145,7 @@ namespace TootTally.Graphics
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
             tabsRectTransform.anchoredPosition = new Vector2(290, -24);
             tabsRectTransform.sizeDelta = new Vector2(-650, 225);
-            tabs.SetActive(false);
+            tabs.SetActive(true);
 
             _errorsHolder = _panelBody.transform.Find("errors").gameObject;
             RectTransform errorsTransform = _errorsHolder.GetComponent<RectTransform>();
@@ -162,7 +162,7 @@ namespace TootTally.Graphics
             _scoreboard = _panelBody.transform.Find("scoreboard").gameObject; //put SingleScore in there
             _scoreboard.AddComponent<RectMask2D>();
             RectTransform scoreboardRectTransform = _scoreboard.GetComponent<RectTransform>();
-            scoreboardRectTransform.anchoredPosition = new Vector2(-22, -10);
+            scoreboardRectTransform.anchoredPosition = new Vector2(-29, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
 
             _loadingSwirly = _panelBody.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
@@ -171,8 +171,20 @@ namespace TootTally.Graphics
 
             GameObject singleScore = _panelBody.transform.Find("scoreboard/SingleScore").gameObject;
             GameObject mySingleScore = GameObject.Instantiate(singleScore, _leaderboardCanvas.transform);
+
             mySingleScore.name = "singleScorePrefab";
             mySingleScore.GetComponent<RectTransform>().sizeDelta = new Vector2(mySingleScore.GetComponent<RectTransform>().sizeDelta.x, 35);
+            //find image. set the size and position and always enable the image
+            GameObject imageGameObject = mySingleScore.transform.Find("Image").gameObject;
+            LayoutElement layoutElement = imageGameObject.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
+            RectTransform imageRectTransform = imageGameObject.GetComponent<RectTransform>();
+            imageRectTransform.sizeDelta = new Vector2(-5, 0);
+            imageRectTransform.anchoredPosition = new Vector2(-10, 0);
+            Image image = imageGameObject.GetComponent<Image>();
+            image.enabled = true;
+            image.maskable = true;
+
             mySingleScore.gameObject.SetActive(false);
             _leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject));
 
@@ -205,6 +217,7 @@ namespace TootTally.Graphics
             maxcombo.name = "maxcombo";
             _singleRowPrefab.ConstructLeaderboardEntry(mySingleScore, rank, username, score, percent, grade, maxcombo, false);
             _singleRowPrefab.singleScore.name = "singleRowPrefab";
+
             GameObject.DontDestroyOnLoad(_singleRowPrefab);
 
             //Yoink slider and make it vertical
@@ -327,6 +340,9 @@ namespace TootTally.Graphics
                 layoutGroup.childControlWidth = layoutGroup.childControlHeight = false;
                 layoutGroup.spacing = 8;
                 rowEntry.singleScore.SetActive(true);
+                rowEntry.singleScore.transform.Find("Image").gameObject.SetActive(count % 2 == 0);
+
+
                 _scoreGameObjectList.Add(rowEntry);
 
                 var replayId = rowEntry.replayId;
