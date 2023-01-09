@@ -39,6 +39,7 @@ namespace TootTally.Graphics
         private static List<LeaderboardRowEntry> _scoreGameObjectList;
         private static Slider _slider;
 
+        private static Text _scrollSliderText;
 
         private static void QuickLog(string message) => Plugin.LogInfo(message);
 
@@ -94,6 +95,7 @@ namespace TootTally.Graphics
             //move random_btn next to capsules
             GameObject.Find(FULLSCREEN_PANEL_PATH + "RANDOM_btn").GetComponent<RectTransform>().anchoredPosition = new Vector2(-123, -7);
             //move slider slightly above RANDOM_btn
+            BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider(); //Make
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
             GameObject.Find(FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
 
