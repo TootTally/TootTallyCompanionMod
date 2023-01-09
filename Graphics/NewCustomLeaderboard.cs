@@ -141,10 +141,30 @@ namespace TootTally.Graphics
             //Hidding it for now, gonna use later
             GameObject tabs = _panelBody.transform.Find("tabs").gameObject;
             GameObject.DestroyImmediate(tabs.GetComponent<HorizontalLayoutGroup>());
-            tabs.AddComponent<VerticalLayoutGroup>();
+            foreach (GameObject tab in _leaderboardManager.tabs)
+            {
+                GameObject.DestroyImmediate(tab.transform.Find("label").gameObject);
+                GameObject.DestroyImmediate(tab.transform.Find("rule").gameObject);
+                RectTransform tabRect = tab.GetComponent<RectTransform>();
+                tabRect.anchoredPosition = new Vector2(15,-40);
+                tabRect.sizeDelta = new Vector2(41, 41);
+                Image icon = tab.AddComponent<Image>();
+                icon.type = Image.Type.Simple;
+                icon.fillAmount = 0;
+                icon.fillCenter = false;
+                QuickLog(BepInEx.Paths.BepInExRootPath + "file:///E:/SteamLibrary/steamapps/common/TromboneChamp/BepInEx/assets/icon.png");
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("file:///E:/SteamLibrary/steamapps/common/TromboneChamp/BepInEx/assets/icon.png", (texture) =>
+                {
+                    icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+                }));
+            }
+            VerticalLayoutGroup verticalLayout = tabs.AddComponent<VerticalLayoutGroup>();
+            verticalLayout.childForceExpandWidth = false;
+            verticalLayout.childScaleWidth = verticalLayout.childScaleHeight = false;
+            verticalLayout.childControlWidth = verticalLayout.childControlHeight = false;
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
-            tabsRectTransform.anchoredPosition = new Vector2(290, -24);
-            tabsRectTransform.sizeDelta = new Vector2(-650, 225);
+            tabsRectTransform.anchoredPosition = new Vector2(328, -10);
+            tabsRectTransform.sizeDelta = new Vector2(-676, 280);
             tabs.SetActive(true);
 
             _errorsHolder = _panelBody.transform.Find("errors").gameObject;
@@ -240,6 +260,14 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(_slider.transform.Find("Handle Slide Area/Handle").gameObject);
 
         }
+
+        [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
+        [HarmonyPrefix]
+        static bool OverwriteClickLeaderboardTabs()
+        {
+            return false;
+        }
+
         #endregion
 
         #region update
@@ -339,6 +367,8 @@ namespace TootTally.Graphics
                 layoutGroup.childScaleWidth = layoutGroup.childScaleHeight = false;
                 layoutGroup.childControlWidth = layoutGroup.childControlHeight = false;
                 layoutGroup.spacing = 8;
+                layoutGroup.padding.left = 8;
+                layoutGroup.padding.top = 2;
                 rowEntry.singleScore.SetActive(true);
                 rowEntry.singleScore.transform.Find("Image").gameObject.SetActive(count % 2 == 0);
 

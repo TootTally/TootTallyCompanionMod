@@ -196,6 +196,15 @@ namespace TootTally
 
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoadLocalIcon(string filePath, Action<Texture2D> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(filePath);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+                callback(DownloadHandlerTexture.GetContent(webRequest));
+        }
+
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")
         {
 

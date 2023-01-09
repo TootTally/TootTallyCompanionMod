@@ -112,14 +112,14 @@ namespace TootTally.Replays
         [HarmonyPrefix]
         public static bool AvoidSaveChange(PointSceneController __instance)
         {
-            return _isReplayRecording; // Don't touch the savefile if we just did a replay
+            return !wasPlayingReplay; // Don't touch the savefile if we just did a replay
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.checkScoreCheevos))]
         [HarmonyPrefix]
         public static bool AvoidAchievementCheck(PointSceneController __instance)
         {
-            return _isReplayRecording; // Don't check for achievements if we just did a replay
+            return !wasPlayingReplay; // Don't check for achievements if we just did a replay
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
