@@ -137,7 +137,7 @@ namespace TootTally.Replays
         public static void GameControllerGetScoreAveragePrefixPatch(GameController __instance)
         {
             if (_isReplayRecording)
-                PrefixNoteTally(__instance);
+                PrefixNoteData(__instance);
             else if (_isReplayPlaying)
                 SetNoteScore(__instance);
 
@@ -216,30 +216,14 @@ namespace TootTally.Replays
             if (_isReplayRecording && _elapsedTime >= 1f / _targetFramerate)
             {
                 _elapsedTime = 0;
-                float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
+                float noteHolderPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed); // the slower the scrollspeed , the better the precision
                 float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
 
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
             }
         }
 
-        private static void PrefixNoteTally(GameController __instance)
-        {
-            _scores_A = __instance.scores_A;
-            _scores_B = __instance.scores_B;
-            _scores_C = __instance.scores_C;
-            _scores_D = __instance.scores_D;
-            _scores_F = __instance.scores_F;
-        }
-
-        private static void RecordToot(GameController __instance)
-        {
-            float noteHolderPosition = __instance.noteholder.transform.position.x * 10; // 1 decimal precision
-
-            _tootData.Add(new int[] { (int)noteHolderPosition});
-        }
-
-        private static void RecordNoteData(GameController __instance)
+        private static void PrefixNoteData(GameController __instance)
         {
             var noteIndex = __instance.currentnoteindex;
             var totalScore = __instance.totalscore;
@@ -247,12 +231,30 @@ namespace TootTally.Replays
             var currentHealth = __instance.currenthealth;
             _maxCombo = __instance.highestcombo_level;
 
+            _scores_A = __instance.scores_A;
+            _scores_B = __instance.scores_B;
+            _scores_C = __instance.scores_C;
+            _scores_D = __instance.scores_D;
+            _scores_F = __instance.scores_F;
+
+            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 });
+        }
+
+        private static void RecordToot(GameController __instance)
+        {
+            float noteHolderPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed); // the slower the scrollspeed , the better the precision
+
+            _tootData.Add(new int[] { (int)noteHolderPosition });
+        }
+
+        private static void RecordNoteData(GameController __instance)
+        {
             var noteLetter = _scores_A != __instance.scores_A ? 4 :
                _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
                _scores_D != __instance.scores_D ? 1 : 0;
-            
-            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, noteLetter });
+
+            _noteData[_noteData.Count - 1][(int)NoteDataStructure.NoteJudgement] = noteLetter;
 
         }
 
@@ -268,7 +270,15 @@ namespace TootTally.Replays
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songHash = isCustom ? GetSongHash(trackRef) : trackRef;
+            string songHash;
+            if (!isCustom)
+            {
+                string songFilePath = Plugin.SongSelect.GetSongFilePath(false, trackRef);
+                string tmb = Plugin.GenerateBaseTmb(songFilePath); 
+                songHash = Plugin.Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+            }
+            else
+                songHash = GetSongHash(trackRef);
 
             string username = _user.username;
 
@@ -383,6 +393,18 @@ namespace TootTally.Replays
         {
             bool isValid = true;
 
+            for (int i = 0; i < _frameData.Count; i++)
+            {
+                if (_frameData.FindAll(frame => frame[(int)FrameDataStructure.NoteHolder] == _frameData[i][(int)FrameDataStructure.NoteHolder]).Count > 1)
+                    isValid = false;
+            }
+            for (int i = 0; i < _noteData.Count; i++)
+            {
+                //if multiple notes has the same index
+                if (_noteData.FindAll(note => note[(int)NoteDataStructure.NoteIndex] == _noteData[i][(int)NoteDataStructure.NoteIndex]).Count > 1)
+                    isValid = false;
+            }
+
 
             return isValid;
         }
@@ -402,6 +424,7 @@ namespace TootTally.Replays
         private static void StopReplayPlayer(PointSceneController __instance)
         {
             _isReplayPlaying = false;
+            _replayFileName = null;
             GlobalVariables.gameplay_notescores = _noteTally;
             Plugin.LogInfo("Replay finished");
         }
@@ -462,7 +485,7 @@ namespace TootTally.Replays
         {
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
-            var currentMapPosition = __instance.noteholder.transform.position.x * 10;
+            var currentMapPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed);
 
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
             {

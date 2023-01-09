@@ -242,14 +242,7 @@ namespace TootTally.Graphics
 
             string trackRef = ___alltrackslist[__instance.songindex].trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songHash;
-            if (isCustom)
-            {
-                string songFilePath = Plugin.SongSelect.GetSongFilePath(isCustom, trackRef);
-                songHash = Plugin.Instance.CalcFileHash(songFilePath);
-            }
-            else
-                songHash = trackRef;
+            string songHash = GetChoosenSongHash(trackRef);
 
             if (currentLeaderboardCoroutines.Count != 0)
             {
@@ -257,7 +250,7 @@ namespace TootTally.Graphics
                 currentLeaderboardCoroutines.Clear();
             }
 
-            currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
+            currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash,isCustom, (songHashInDB) =>
             {
                 if (songHashInDB == 0) return; // Skip if no song found
                 currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
@@ -349,5 +342,12 @@ namespace TootTally.Graphics
             });
             #endregion
         }
+
+        private static string GetChoosenSongHash(string trackRef)
+        {
+            bool isCustom = Globals.IsCustomTrack(trackRef);
+            return isCustom ? GetSongHash(trackRef) : trackRef;
+        }
+        public static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackRef));
     }
 }

@@ -130,7 +130,6 @@ namespace TootTally
             public static string songHash { get; private set; }
             public static int maxCombo;
 
-
             [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
             [HarmonyPrefix]
             public static void AddSongToDBIfNotExist(LoadController __instance)
@@ -139,13 +138,15 @@ namespace TootTally
                 bool isCustom = Globals.IsCustomTrack(trackRef);
                 string songFilePath = GetSongFilePath(isCustom, trackRef);
                 string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
-                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : trackRef;
 
-                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, (songHashInDB) =>
+                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
                 {
-                    SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
                     if (Instance.AllowTMBUploads.Value && songHashInDB == 0)
+                    {
+                        SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
                         __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
+                    }
                 }));
                 maxCombo = 0; // Reset tracked maxCombo
             }

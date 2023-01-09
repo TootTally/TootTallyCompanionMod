@@ -24,12 +24,12 @@ namespace TootTally
         internal static void LogWarning(string msg) => Plugin.LogWarning(msg);
         #endregion
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, Action<int> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
-            UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/");
+            UnityWebRequest webRequest = isCustom ? UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/") : UnityWebRequest.Get($"{APIURL}/api/hashcheck/official/?trackref={songHash}");
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest, false))
+            if (!HasError(webRequest, true))
             {
                 callback(int.Parse(webRequest.downloadHandler.text)); //.text returns the digit of ex: https://toottally.com/api/songs/182/leaderboard/
             }
