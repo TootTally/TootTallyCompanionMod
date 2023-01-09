@@ -485,6 +485,7 @@ namespace TootTally.Replays
         {
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
+
             var currentMapPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed);
 
             if (_frameData.Count > _frameIndex && _lastPosition != 0)

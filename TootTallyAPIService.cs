@@ -191,6 +191,8 @@ namespace TootTally
                 }
                 callback(scoreList);
             }
+            else
+                callback(null);
 
         }
 

@@ -23,6 +23,8 @@ namespace TootTally.Graphics
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
+        private const string NO_SCORE_ERROR_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
+        private const string CANT_LOAD_SONG_ERROR_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
 
         private const float SWIRLY_SPEED = 0.5f;
@@ -32,14 +34,12 @@ namespace TootTally.Graphics
         private static LevelSelectController _levelSelectControllerInstance;
         private static List<IEnumerator<UnityWebRequestAsyncOperation>> currentLeaderboardCoroutines;
 
-        private static GameObject _leaderboard, _leaderboardCanvas, _panelBody, _scoreboard, _loadingSwirly;
-        private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab;
+        private static GameObject _leaderboard, _leaderboardCanvas, _panelBody, _scoreboard, _errorsHolder, _loadingSwirly;
+        private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab, _errorText;
         private static LeaderboardManager _leaderboardManager;
         private static LeaderboardRowEntry _singleRowPrefab;
         private static List<LeaderboardRowEntry> _scoreGameObjectList;
         private static Slider _slider;
-
-        private static Text _scrollSliderText;
 
         private static void QuickLog(string message) => Plugin.LogInfo(message);
 
@@ -73,8 +73,8 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            /*if (_leaderboardLoaded)
-                UpdateLeaderboard(___alltrackslist, __instance);*/
+            if (_leaderboard != null)
+                UpdateLeaderboard(___alltrackslist, __instance);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
@@ -94,8 +94,8 @@ namespace TootTally.Graphics
             GameObject.Find(FULLSCREEN_PANEL_PATH + "capsules").GetComponent<RectTransform>().anchoredPosition = new Vector2(-275, 32);
             //move random_btn next to capsules
             GameObject.Find(FULLSCREEN_PANEL_PATH + "RANDOM_btn").GetComponent<RectTransform>().anchoredPosition = new Vector2(-123, -7);
-            //move slider slightly above RANDOM_btn
-            BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider(); //Make
+            //move slider slightly above RANDOM_btn and make it better B)
+            BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider();
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
             GameObject.Find(FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
 
@@ -119,7 +119,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(_leaderboardCanvas.transform.Find("BG").gameObject);
             GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<CanvasScaler>());
             _leaderboardCanvas.name = "CustomLeaderboarCanvas";
-            _leaderboardCanvas.SetActive(true);
+            _leaderboardCanvas.SetActive(true); //Has to be set to true else it crashes when yoinking other objects?? #UnityStuff
 
             RectTransform lbCanvasRect = _leaderboardCanvas.GetComponent<RectTransform>();
             lbCanvasRect.anchoredPosition = new Vector2(237, -311);
@@ -147,11 +147,12 @@ namespace TootTally.Graphics
             tabsRectTransform.sizeDelta = new Vector2(-650, 225);
             tabs.SetActive(false);
 
-            GameObject errors = _panelBody.transform.Find("errors").gameObject;
-            RectTransform errorsTransform = errors.GetComponent<RectTransform>();
-            errorsTransform.anchoredPosition = new Vector2(-60, -130);
+            _errorsHolder = _panelBody.transform.Find("errors").gameObject;
+            RectTransform errorsTransform = _errorsHolder.GetComponent<RectTransform>();
+            errorsTransform.anchoredPosition = new Vector2(-30, -120);
             errorsTransform.sizeDelta = new Vector2(-200, -190);
-            errors.SetActive(false);
+            _errorsHolder.SetActive(false);
+            _errorText = _errorsHolder.transform.Find("error_noleaderboard").GetComponent<Text>();
 
             GameObject scoresbody = _panelBody.transform.Find("scoresbody").gameObject;
             RectTransform scoresbodyRectTransform = scoresbody.GetComponent<RectTransform>();
@@ -231,12 +232,13 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         static void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
-            _leaderboardCanvas.SetActive(true);
+            _leaderboardCanvas.SetActive(true); //for some reasons its needed to display the leaderboard
             if (_leaderboardLoaded)
             {
                 _leaderboardLoaded = false;
                 _loadingSwirly.SetActive(true);
                 _slider.gameObject.SetActive(false);
+                _errorsHolder.SetActive(false);
                 ClearLeaderboard();
             }
 
@@ -252,20 +254,39 @@ namespace TootTally.Graphics
                 currentLeaderboardCoroutines.Clear();
             }
 
-            currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash,isCustom, (songHashInDB) =>
-            {
-                if (songHashInDB == 0) return; // Skip if no song found
+            currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+             {
+                 if (songHashInDB == 0)
+                 {
+                     _errorsHolder.SetActive(true);
+                     _errorText.text = CANT_LOAD_SONG_ERROR_TEXT;
+                     _loadingSwirly.SetActive(false);
+                     _leaderboardLoaded = true;
+                     return; // Skip if no song found
+                 }
                 currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
-                {
+                 {
+                     if (scoreDataList != null)
+                     {
+                         RefreshLeaderboard(scoreDataList);
+                         _leaderboardLoaded = true;
+                         _loadingSwirly.SetActive(false);
+                         _slider.gameObject.SetActive(_scoreGameObjectList.Count > 8);
+                     }
+                     else
+                     {
+                         _errorsHolder.SetActive(true);
+                         _errorText.text = NO_SCORE_ERROR_TEXT;
+                     }
 
-                    RefreshLeaderboard(scoreDataList);
-                    _leaderboardLoaded = true;
-                    _loadingSwirly.SetActive(false);
-                    _slider.gameObject.SetActive(_scoreGameObjectList.Count > 8);
-                    currentLeaderboardCoroutines.Clear();
-                }));
-                Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
-            }));
+
+                     _leaderboardLoaded = true;
+                     _loadingSwirly.SetActive(false);
+                     currentLeaderboardCoroutines.Clear();
+
+                 }));
+                 Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
+             }));
             Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
         }
 
