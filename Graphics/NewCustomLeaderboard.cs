@@ -180,10 +180,12 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardHeaderPrefab.maskable = true;
+            _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
             _leaderboardTextPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Name").GetComponent<Text>(), _leaderboardCanvas.transform);
             _leaderboardTextPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardTextPrefab.maskable = true;
+            _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Num").gameObject);
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Name").gameObject);
             GameObject.DestroyImmediate(mySingleScore.transform.Find("Score").gameObject);
@@ -264,27 +266,27 @@ namespace TootTally.Graphics
                      _leaderboardLoaded = true;
                      return; // Skip if no song found
                  }
-                currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
-                 {
-                     if (scoreDataList != null)
-                     {
-                         RefreshLeaderboard(scoreDataList);
-                         _leaderboardLoaded = true;
-                         _loadingSwirly.SetActive(false);
-                         _slider.gameObject.SetActive(_scoreGameObjectList.Count > 8);
-                     }
-                     else
-                     {
-                         _errorsHolder.SetActive(true);
-                         _errorText.text = NO_SCORE_ERROR_TEXT;
-                     }
+                 currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                  {
+                      if (scoreDataList != null)
+                      {
+                          RefreshLeaderboard(scoreDataList);
+                          _leaderboardLoaded = true;
+                          _loadingSwirly.SetActive(false);
+                          _slider.gameObject.SetActive(_scoreGameObjectList.Count > 8);
+                      }
+                      else
+                      {
+                          _errorsHolder.SetActive(true);
+                          _errorText.text = NO_SCORE_ERROR_TEXT;
+                      }
 
 
-                     _leaderboardLoaded = true;
-                     _loadingSwirly.SetActive(false);
-                     currentLeaderboardCoroutines.Clear();
+                      _leaderboardLoaded = true;
+                      _loadingSwirly.SetActive(false);
+                      currentLeaderboardCoroutines.Clear();
 
-                 }));
+                  }));
                  Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
              }));
             Plugin.Instance.StartCoroutine(currentLeaderboardCoroutines.Last());
@@ -307,7 +309,12 @@ namespace TootTally.Graphics
                 rowEntry.rank.text = "#" + count;
                 rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
                 rowEntry.grade.text = scoreData.grade;
-                rowEntry.grade.color = gradeToColorDict[rowEntry.grade.text];
+                if (scoreData.grade == "SS")
+                    MakeDoubleSText(rowEntry);
+                else if (scoreData.grade == "SSS")
+                    MakeTripleSText(rowEntry);
+                else
+                    rowEntry.grade.color = gradeToColorDict[rowEntry.grade.text];
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
                 rowEntry.replayId = scoreData.replay_id;
                 rowEntry.rowId = count;
@@ -365,6 +372,31 @@ namespace TootTally.Graphics
             });
             #endregion
         }
+
+        //not working yet
+        public static void MakeDoubleSText(LeaderboardRowEntry rowEntry)
+        {
+            Text text = GameObject.Instantiate(_leaderboardTextPrefab, rowEntry.grade.transform);
+            text.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
+            text.GetComponent<RectTransform>().anchoredPosition = new Vector2(3, 15);
+            text.text = rowEntry.grade.text;
+            text.color = Color.yellow;
+        }
+        public static void MakeTripleSText(LeaderboardRowEntry rowEntry)
+        {
+            Text text = GameObject.Instantiate(_leaderboardTextPrefab, rowEntry.grade.transform);
+            text.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
+            text.GetComponent<RectTransform>().anchoredPosition = new Vector2(3, 15);
+            text.text = rowEntry.grade.text;
+
+
+            Text text2 = GameObject.Instantiate(_leaderboardTextPrefab, rowEntry.grade.transform);
+            text2.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
+            text2.GetComponent<RectTransform>().anchoredPosition = new Vector2(6, 12);
+            text2.text = rowEntry.grade.text;
+            text2.color = Color.yellow;
+        }
+
 
         private static string GetChoosenSongHash(string trackRef)
         {

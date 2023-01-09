@@ -585,7 +585,6 @@ namespace TootTally.Replays
         private enum TootDataStructure
         {
             NoteHolder = 0,
-            IsTooting = 1,
         }
 
         private enum NoteDataStructure
