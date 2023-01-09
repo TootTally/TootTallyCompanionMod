@@ -180,7 +180,7 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardHeaderPrefab.maskable = true;
-            _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
+            _leaderboardHeaderPrefab.gameObject.AddComponent<Outline>();
             _leaderboardTextPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Name").GetComponent<Text>(), _leaderboardCanvas.transform);
             _leaderboardTextPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;

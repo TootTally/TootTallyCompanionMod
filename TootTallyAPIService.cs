@@ -163,7 +163,7 @@ namespace TootTally
 
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest, true))
+            if (!HasError(webRequest, false))
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
