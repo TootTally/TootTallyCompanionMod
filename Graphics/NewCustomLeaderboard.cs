@@ -41,6 +41,8 @@ namespace TootTally.Graphics
         private static List<LeaderboardRowEntry> _scoreGameObjectList;
         private static Slider _slider;
 
+        private static int _currentSelectedSongHash;
+
         private static void QuickLog(string message) => Plugin.LogInfo(message);
 
         #region init
@@ -147,13 +149,12 @@ namespace TootTally.Graphics
                 GameObject.DestroyImmediate(tab.transform.Find("rule").gameObject);
                 RectTransform tabRect = tab.GetComponent<RectTransform>();
                 tabRect.anchoredPosition = new Vector2(15,-40);
-                tabRect.sizeDelta = new Vector2(41, 41);
+                tabRect.sizeDelta = new Vector2(32, 32);
                 Image icon = tab.AddComponent<Image>();
                 icon.type = Image.Type.Simple;
                 icon.fillAmount = 0;
                 icon.fillCenter = false;
-                QuickLog(BepInEx.Paths.BepInExRootPath + "file:///E:/SteamLibrary/steamapps/common/TromboneChamp/BepInEx/assets/icon.png");
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("file:///E:/SteamLibrary/steamapps/common/TromboneChamp/BepInEx/assets/icon.png", (texture) =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("http://cdn.toottally.com/assets/global.png", (texture) =>
                 {
                     icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
                 }));
@@ -162,6 +163,8 @@ namespace TootTally.Graphics
             verticalLayout.childForceExpandWidth = false;
             verticalLayout.childScaleWidth = verticalLayout.childScaleHeight = false;
             verticalLayout.childControlWidth = verticalLayout.childControlHeight = false;
+            verticalLayout.padding.left = 26;
+            verticalLayout.padding.top = 30;
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
             tabsRectTransform.anchoredPosition = new Vector2(328, -10);
             tabsRectTransform.sizeDelta = new Vector2(-676, 280);
@@ -263,8 +266,22 @@ namespace TootTally.Graphics
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
         [HarmonyPrefix]
-        static bool OverwriteClickLeaderboardTabs()
+        static bool OverwriteClickLeaderboardTabs(object[] __args)
         {
+            int tabIndex = (int)__args[0];
+            if (tabIndex == 0)
+            {
+                Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
+            }
+            else if (tabIndex == 1)
+            {
+                Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash );
+            }
+            else if (tabIndex == 2)
+            {
+
+            }
+
             return false;
         }
 
@@ -307,6 +324,8 @@ namespace TootTally.Graphics
                      _leaderboardLoaded = true;
                      return; // Skip if no song found
                  }
+                 else
+                     _currentSelectedSongHash = songHashInDB;
                  currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
                   {
                       if (scoreDataList != null)
@@ -359,7 +378,6 @@ namespace TootTally.Graphics
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
                 rowEntry.replayId = scoreData.replay_id;
                 rowEntry.rowId = count;
-                count++;
                 rowEntry.singleScore.AddComponent<CanvasGroup>();
                 HorizontalLayoutGroup layoutGroup = rowEntry.singleScore.AddComponent<HorizontalLayoutGroup>();
                 layoutGroup.childAlignment = TextAnchor.MiddleLeft;
@@ -371,8 +389,6 @@ namespace TootTally.Graphics
                 layoutGroup.padding.top = 2;
                 rowEntry.singleScore.SetActive(true);
                 rowEntry.singleScore.transform.Find("Image").gameObject.SetActive(count % 2 == 0);
-
-
                 _scoreGameObjectList.Add(rowEntry);
 
                 var replayId = rowEntry.replayId;
@@ -394,11 +410,16 @@ namespace TootTally.Graphics
                         }
                     });
                 }
+                count++;
             }
-
             _slider.onValueChanged.RemoveAllListeners();
             _slider.onValueChanged.AddListener((float _value) =>
             {
+                if (_value < 0f)
+                    _slider.value = 0f;
+                if (_value > 1f)
+                    _slider.value = 1f;
+
                 foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
                     RectTransform rect = row.singleScore.GetComponent<RectTransform>();
@@ -410,11 +431,6 @@ namespace TootTally.Graphics
                     else
                         row.GetComponent<CanvasGroup>().alpha = 1;
                 }
-
-                if (_value < 0f)
-                    _slider.value = 0f;
-                if (_value > 1f)
-                    _slider.value = 1f;
             });
             #endregion
         }

@@ -18,7 +18,7 @@ namespace TootTally.Replays
 {
     public static class ReplaySystemJson
     {
-        private static SerializableClass.User _user;
+        public static SerializableClass.User userInfo; //Temporary public
         private static int _targetFramerate;
         private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
         private static int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
@@ -178,7 +178,7 @@ namespace TootTally.Replays
             {
                 if (user != null)
                 {
-                    _user = user;
+                    userInfo = user;
                 }
             }));
         }
@@ -280,7 +280,7 @@ namespace TootTally.Replays
             else
                 songHash = GetSongHash(trackRef);
 
-            string username = _user.username;
+            string username = userInfo.username;
 
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
