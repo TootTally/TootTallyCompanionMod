@@ -310,7 +310,9 @@ namespace TootTally.Replays
             noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
             replayJson["finalnotetallies"] = noteJudgmentData;
             OptimizeFrameData(ref _frameData);
+            OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
+            ValidateData();
             _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
 
             replayJson["framedata"] = DataListToJson(_frameData);
@@ -389,26 +391,45 @@ namespace TootTally.Replays
         {
             for (int i = 0; i < rawReplayNoteData.Count; i++)
             {
-                //todo
+                if (rawReplayNoteData[i][(int)NoteDataStructure.NoteJudgement] == -1)
+                    rawReplayNoteData.Remove(rawReplayNoteData[i]);
             }
         }
 
         private static bool ValidateData()
         {
             bool isValid = true;
+            List<string> errorList = new List<string>();
+
 
             for (int i = 0; i < _frameData.Count; i++)
             {
                 if (_frameData.FindAll(frame => frame[(int)FrameDataStructure.NoteHolder] == _frameData[i][(int)FrameDataStructure.NoteHolder]).Count > 1)
+                {
                     isValid = false;
+                    errorList.Add("Duplicate frames found, replay validation failed");
+                    break;
+                }
             }
             for (int i = 0; i < _noteData.Count; i++)
             {
                 //if multiple notes has the same index
                 if (_noteData.FindAll(note => note[(int)NoteDataStructure.NoteIndex] == _noteData[i][(int)NoteDataStructure.NoteIndex]).Count > 1)
+                {
                     isValid = false;
+                    errorList.Add("Duplicate note index found, replay validation failed");
+                    break;
+                }
             }
 
+            if (_noteData.FindAll(note => note[(int)NoteDataStructure.NoteJudgement] == -1).Count > 1)
+            {
+                isValid = false;
+                errorList.Add("Note Data is missing note judgement, replay validation failed");
+            }
+
+            if (!isValid)
+                errorList.ForEach(error => Plugin.LogError(error));
 
             return isValid;
         }
@@ -481,6 +502,7 @@ namespace TootTally.Replays
             foreach (JSONArray jsonArray in replayJson["tootdata"])
                 _tootData.Add(new int[] { jsonArray[0] });
             _frameIndex = _tootIndex = 0;
+            ValidateData();
 
             return true;
         }
@@ -542,7 +564,8 @@ namespace TootTally.Replays
                 __instance.totalscore = _totalScore = note[(int)NoteDataStructure.TotalScore]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
                 __instance.multiplier = note[(int)NoteDataStructure.Multiplier];
                 __instance.currenthealth = note[(int)NoteDataStructure.CurrentHealth];
-                _noteTally[note[(int)NoteDataStructure.NoteJudgement]]++;
+                int tallyIndex = Mathf.Clamp(note[(int)NoteDataStructure.NoteJudgement], 0, 4); //Temporary fix for note tally being -1 sometimes?
+                _noteTally[tallyIndex]++;
             }
         }
 

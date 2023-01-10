@@ -26,6 +26,7 @@ namespace TootTally.Graphics
         private const string NO_SCORE_ERROR_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
         private const string CANT_LOAD_SONG_ERROR_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
+        private static string[] tabsImageNames = { "profile.png", "global.png", "local.png" };
 
         private const float SWIRLY_SPEED = 0.5f;
 
@@ -104,13 +105,13 @@ namespace TootTally.Graphics
             _leaderboard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
 
             //clear original Leaderboard from its objects
-            GameObject.DestroyImmediate(_leaderboard.transform.Find(".......").gameObject);
-            GameObject.DestroyImmediate(_leaderboard.transform.Find("\"HIGH SCORES\"").gameObject);
+            foreach (Transform gameObjectTransform in _leaderboard.transform)
+                gameObjectTransform.gameObject.SetActive(false);
+
+            DestroyFromParent(_leaderboard, ".......");
+            DestroyFromParent(_leaderboard, "\"HIGH SCORES\"");
             for (int i = 1; i <= 5; i++)
-            {
-                _leaderboard.transform.Find(i.ToString()).gameObject.SetActive(false);
-                _leaderboard.transform.Find("score" + i).gameObject.SetActive(false);
-            }
+                DestroyFromParent(_leaderboard, i.ToString());
 
             GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject;
             GameObject newLeaderboardCanvas = camerapopups.transform.Find("LeaderboardCanvas").gameObject;
@@ -118,7 +119,7 @@ namespace TootTally.Graphics
             _leaderboardCanvas = GameObject.Instantiate(newLeaderboardCanvas, _leaderboard.transform);
             _leaderboardManager = _leaderboardCanvas.GetComponent<LeaderboardManager>();
             //Don't think we need these...
-            GameObject.DestroyImmediate(_leaderboardCanvas.transform.Find("BG").gameObject);
+            DestroyFromParent(_leaderboardCanvas, "BG");
             GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<CanvasScaler>());
             _leaderboardCanvas.name = "CustomLeaderboarCanvas";
             _leaderboardCanvas.SetActive(true); //Has to be set to true else it crashes when yoinking other objects?? #UnityStuff
@@ -134,30 +135,32 @@ namespace TootTally.Graphics
             panelRectTransform.anchoredPosition = Vector2.zero;
             panelRectTransform.sizeDelta = new Vector2(750, 300);
             //We dont need these right?
-            GameObject.DestroyImmediate(_panelBody.transform.Find("CloseButton").gameObject);
-            GameObject.DestroyImmediate(_panelBody.transform.Find("txt_legal").gameObject);
-            GameObject.DestroyImmediate(_panelBody.transform.Find("txt_leaderboards").gameObject);
-            GameObject.DestroyImmediate(_panelBody.transform.Find("txt_songname").gameObject);
-            GameObject.DestroyImmediate(_panelBody.transform.Find("rule").gameObject);
+            DestroyFromParent(_panelBody, "CloseButton");
+            DestroyFromParent(_panelBody, "txt_legal");
+            DestroyFromParent(_panelBody, "txt_leaderboards");
+            DestroyFromParent(_panelBody, "txt_songname");
+            DestroyFromParent(_panelBody, "rule");
+            DestroyFromParent(_panelBody, "HelpBtn");
 
             //Hidding it for now, gonna use later
             GameObject tabs = _panelBody.transform.Find("tabs").gameObject;
             GameObject.DestroyImmediate(tabs.GetComponent<HorizontalLayoutGroup>());
-            foreach (GameObject tab in _leaderboardManager.tabs)
+            for (int i = 0; i < 3; i++)
             {
-                GameObject.DestroyImmediate(tab.transform.Find("label").gameObject);
-                GameObject.DestroyImmediate(tab.transform.Find("rule").gameObject);
-                RectTransform tabRect = tab.GetComponent<RectTransform>();
-                tabRect.anchoredPosition = new Vector2(15,-40);
+                tabs.SetActive(false);//hide until image is loaded
+                GameObject currentTab = _leaderboardManager.tabs[i];
+                DestroyFromParent(currentTab, "label");
+                DestroyFromParent(currentTab, "rule");
+                RectTransform tabRect = currentTab.GetComponent<RectTransform>();
+                tabRect.anchoredPosition = new Vector2(15, -40);
                 tabRect.sizeDelta = new Vector2(32, 32);
-                Image icon = tab.AddComponent<Image>();
-                icon.type = Image.Type.Simple;
-                icon.fillAmount = 0;
-                icon.fillCenter = false;
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("http://cdn.toottally.com/assets/global.png", (texture) =>
+                Image icon = currentTab.AddComponent<Image>();
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("http://cdn.toottally.com/assets/" + tabsImageNames[i], (texture) =>
                 {
-                    icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+                    icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+                    tabs.SetActive(true);
                 }));
+
             }
             VerticalLayoutGroup verticalLayout = tabs.AddComponent<VerticalLayoutGroup>();
             verticalLayout.childForceExpandWidth = false;
@@ -168,7 +171,6 @@ namespace TootTally.Graphics
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
             tabsRectTransform.anchoredPosition = new Vector2(328, -10);
             tabsRectTransform.sizeDelta = new Vector2(-676, 280);
-            tabs.SetActive(true);
 
             _errorsHolder = _panelBody.transform.Find("errors").gameObject;
             RectTransform errorsTransform = _errorsHolder.GetComponent<RectTransform>();
@@ -221,9 +223,9 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardTextPrefab.maskable = true;
             _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
-            GameObject.DestroyImmediate(mySingleScore.transform.Find("Num").gameObject);
-            GameObject.DestroyImmediate(mySingleScore.transform.Find("Name").gameObject);
-            GameObject.DestroyImmediate(mySingleScore.transform.Find("Score").gameObject);
+            DestroyFromParent(mySingleScore, "Num");
+            DestroyFromParent(mySingleScore, "Name");
+            DestroyFromParent(mySingleScore, "Score");
 
             _singleRowPrefab = mySingleScore.AddComponent<LeaderboardRowEntry>();
             Text rank = GameObject.Instantiate(_leaderboardHeaderPrefab, mySingleScore.transform);
@@ -260,7 +262,7 @@ namespace TootTally.Graphics
             _slider.minValue = 0f;
             _slider.maxValue = 1f;
             _slider.gameObject.SetActive(false);
-            GameObject.DestroyImmediate(_slider.transform.Find("Handle Slide Area/Handle").gameObject);
+            DestroyFromParent(_slider.gameObject, "Handle Slide Area/Handle");
 
         }
 
@@ -275,7 +277,7 @@ namespace TootTally.Graphics
             }
             else if (tabIndex == 1)
             {
-                Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash );
+                Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
             }
             else if (tabIndex == 2)
             {
@@ -459,6 +461,7 @@ namespace TootTally.Graphics
             text2.color = Color.yellow;
         }
 
+        public static void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
 
         private static string GetChoosenSongHash(string trackRef)
         {
