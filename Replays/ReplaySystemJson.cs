@@ -31,7 +31,7 @@ namespace TootTally.Replays
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
         private static bool _wasTouchScreenUsed;
-        private static bool _isTooting, _lastIsTooting;
+        private static bool _isTooting, _lastIsTooting, _hasReleaseToot;
 
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
@@ -67,13 +67,17 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
         {
-            if (_isReplayRecording && _lastIsTooting != __result)
+
+            if (_isReplayRecording && _hasReleaseToot && _lastIsTooting != __result)
             {
                 RecordToot(__instance);
                 _lastIsTooting = __result;
             }
             else if (_isReplayPlaying)
                 __result = _isTooting;
+
+            if (!__result && !_hasReleaseToot) //If joseph is holding the key before the song start
+                _hasReleaseToot = true;
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
@@ -187,7 +191,7 @@ namespace TootTally.Replays
         #region ReplayRecorder
         private static void StartReplayRecorder(GameController __instance)
         {
-            _isReplayRecording = true;
+            _isReplayRecording = _hasReleaseToot = true;
             wasPlayingReplay = false;
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
@@ -216,7 +220,7 @@ namespace TootTally.Replays
             if (_isReplayRecording && _elapsedTime >= 1f / _targetFramerate)
             {
                 _elapsedTime = 0;
-                float noteHolderPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed); // the slower the scrollspeed , the better the precision
+                float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
                 float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
 
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
@@ -241,7 +245,7 @@ namespace TootTally.Replays
 
         private static void RecordToot(GameController __instance)
         {
-            float noteHolderPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed); // the slower the scrollspeed , the better the precision
+            float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
 
             _tootData.Add(new int[] { (int)noteHolderPosition });
         }
@@ -486,7 +490,7 @@ namespace TootTally.Replays
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
 
-            var currentMapPosition = __instance.noteholder.transform.position.x * 10 / (GlobalVariables.gamescrollspeed * GlobalVariables.gamescrollspeed);
+            var currentMapPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier();
 
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
             {
@@ -575,6 +579,8 @@ namespace TootTally.Replays
             return isCustom ? GetSongHash(trackRef) : trackRef;
         }
         public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
+
+        public static float GetNoteHolderPrecisionMultiplier() => 10 / (GlobalVariables.gamescrollspeed <= 1 ? GlobalVariables.gamescrollspeed : 1);
 
         private enum FrameDataStructure
         {
