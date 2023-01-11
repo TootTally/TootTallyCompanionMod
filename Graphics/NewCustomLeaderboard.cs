@@ -178,6 +178,7 @@ namespace TootTally.Graphics
             errorsTransform.sizeDelta = new Vector2(-200, -190);
             _errorsHolder.SetActive(false);
             _errorText = _errorsHolder.transform.Find("error_noleaderboard").GetComponent<Text>();
+            _errorsHolder.transform.Find("error_noleaderboard").gameObject.SetActive(true);
 
             GameObject scoresbody = _panelBody.transform.Find("scoresbody").gameObject;
             RectTransform scoresbodyRectTransform = scoresbody.GetComponent<RectTransform>();
@@ -440,6 +441,7 @@ namespace TootTally.Graphics
         //not working yet
         public static void MakeDoubleSText(LeaderboardRowEntry rowEntry)
         {
+            rowEntry.grade.text = "S";
             Text text = GameObject.Instantiate(_leaderboardTextPrefab, rowEntry.grade.transform);
             text.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
             text.GetComponent<RectTransform>().anchoredPosition = new Vector2(3, 15);
@@ -448,6 +450,7 @@ namespace TootTally.Graphics
         }
         public static void MakeTripleSText(LeaderboardRowEntry rowEntry)
         {
+            rowEntry.grade.text = "S";
             Text text = GameObject.Instantiate(_leaderboardTextPrefab, rowEntry.grade.transform);
             text.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
             text.GetComponent<RectTransform>().anchoredPosition = new Vector2(3, 15);

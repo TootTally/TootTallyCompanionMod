@@ -71,14 +71,15 @@ namespace TootTally.Replays
             if (_isReplayRecording && _hasReleaseToot && _lastIsTooting != __result)
             {
                 RecordToot(__instance);
-                _lastIsTooting = __result;
             }
             else if (_isReplayPlaying)
                 __result = _isTooting;
 
             if (!__result && !_hasReleaseToot) //If joseph is holding the key before the song start
                 _hasReleaseToot = true;
+            _lastIsTooting = __result;
         }
+
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPostfix]
@@ -365,7 +366,7 @@ namespace TootTally.Replays
             //Look for matching position and remove same frames with the same positions
             for (int i = 0; i < rawReplayFrameData.Count - 1; i++)
             {
-                for (int j = i + 1; j < rawReplayFrameData.Count && rawReplayFrameData[i][1] == rawReplayFrameData[j][1];)
+                for (int j = i + 1; j < rawReplayFrameData.Count && rawReplayFrameData[i][(int)FrameDataStructure.PointerPosition] == rawReplayFrameData[j][(int)FrameDataStructure.PointerPosition];)
                 {
                     rawReplayFrameData.Remove(rawReplayFrameData[j]);
                 }
@@ -378,7 +379,7 @@ namespace TootTally.Replays
 
             for (int i = 0; i < rawReplayTootData.Count - 1; i++)
             {
-                //if two toot happens on the same frame, probably is inputFix so swap the frames and unsync the frames
+                //if two toot happens on the same frame, probably is inputFix so unsync the frames
                 if (rawReplayTootData[i][(int)TootDataStructure.NoteHolder] == rawReplayTootData[i + 1][(int)TootDataStructure.NoteHolder])
                 {
                     rawReplayTootData[i][(int)TootDataStructure.NoteHolder]++;
@@ -389,6 +390,7 @@ namespace TootTally.Replays
 
         private static void OptimizeNoteData(ref List<int[]> rawReplayNoteData)
         {
+            Plugin.LogInfo("Optimizing Replay NoteData...");
             for (int i = 0; i < rawReplayNoteData.Count; i++)
             {
                 if (rawReplayNoteData[i][(int)NoteDataStructure.NoteJudgement] == -1)
