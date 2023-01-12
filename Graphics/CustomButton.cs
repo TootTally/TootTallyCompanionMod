@@ -17,6 +17,7 @@ namespace TootTally.Graphics
             this.button = button;
             this.rectTransform = rectTransform;
             this.textHolder = textHolder;
+            textHolder.maskable = true;
             this.name = name;
             RemoveAllOnClickActions();
         }

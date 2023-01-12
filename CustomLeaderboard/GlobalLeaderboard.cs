@@ -18,6 +18,7 @@ using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Utils;
+using UnityEngine.EventSystems;
 
 namespace TootTally.CustomLeaderboard
 {
@@ -41,8 +42,10 @@ namespace TootTally.CustomLeaderboard
         private Text _errorText;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
         private Slider _slider;
+        private GameObject _sliderHandle;
 
         private int _currentSelectedSongHash;
+        public bool HasLeaderboard => _leaderboard != null;
 
         public void Initialize(LevelSelectController __instance)
         {
@@ -74,6 +77,8 @@ namespace TootTally.CustomLeaderboard
             ShowLoadingSwirly();         
 
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
+            _sliderHandle = _slider.transform.Find("Handle").gameObject;
+            SetOnSliderValueChangeEvent();
         }
 
         public void ClearBaseLeaderboard()
@@ -157,25 +162,27 @@ namespace TootTally.CustomLeaderboard
                 count++;
             }
             if (_scoreGameObjectList.Count > 8)
+            {
+                _slider.value = 0f;
                 ShowSlider();
+
+            }
             else
                 HideSlider();
-            UpdateSliderRangeValue();
         }
 
-        public void UpdateSliderRangeValue()
+        public void SetOnSliderValueChangeEvent()
         {
-            _slider.onValueChanged.RemoveAllListeners();
             _slider.onValueChanged.AddListener((float _value) =>
             {
-                //Optional I think?
-                /*if (_value < 0f)
+                if (_value < 0f)
                     _slider.value = 0f;
                 if (_value > 1f)
-                    _slider.value = 1f;*/
+                    _slider.value = 1f;
 
                 foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
+                    _sliderHandle.GetComponent<RectTransform>().anchoredPosition = new Vector2(-_slider.GetComponent<RectTransform>().sizeDelta.x / 2, (_slider.GetComponent<RectTransform>().sizeDelta.y / 1.38f) - _slider.fillRect.rect.height); //Dont even ask why divided by 1.38... I dont understand either
                     RectTransform rect = row.singleScore.GetComponent<RectTransform>();
                     rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, ((row.rowId - 1) * -35) + (_slider.value * 35 * (_scoreGameObjectList.Count - 8)) - 17);
                     if (rect.anchoredPosition.y >= -15)
@@ -227,16 +234,24 @@ namespace TootTally.CustomLeaderboard
             {
                 GameObject currentTab = _globalLeaderboard.GetComponent<LeaderboardManager>().tabs[i];
 
+                Button btn = currentTab.GetComponentInChildren<Button>();
+                ColorBlock btnColorBlock = btn.colors;
+                btnColorBlock.pressedColor = new Color(1, 1, 0, 1);
+                btnColorBlock.highlightedColor = new Color(.75f, .75f, .75f, 1);
+                btn.colors = btnColorBlock;
+
                 Image icon = currentTab.GetComponent<Image>();
 
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadTextureFromServer("http://cdn.toottally.com/assets/" + tabsImageNames[i], (texture) =>
                 {
-
                     icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+                    btn.image.sprite = icon.sprite;
                     count++;
                     Plugin.LogInfo("CurrentTabs loaded:" + count);
                     if (count == 3) //all 3 tabs' loaded
                         _tabs.SetActive(true);
+
+
                 }));
             }
             

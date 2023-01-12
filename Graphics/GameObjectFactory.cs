@@ -294,20 +294,27 @@ namespace TootTally.Graphics
 
             _verticalSliderPrefab = GameObject.Instantiate(defaultSlider);
             _verticalSliderPrefab.direction = Slider.Direction.TopToBottom;
+            _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = Color.white;
 
             RectTransform sliderRect = _verticalSliderPrefab.GetComponent<RectTransform>();
             sliderRect.sizeDelta = new Vector2(25, 745);
             sliderRect.anchoredPosition = new Vector2(300, 0);
-
-            _verticalSliderPrefab.handleRect = sliderRect;
-
+            
+            RectTransform handleSlideAreaRect = _verticalSliderPrefab.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
+            RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(40,40);
+            handleRect.pivot = Vector2.zero;
+            handleRect.anchorMax = Vector2.zero;
+            handleRect.gameObject.GetComponent<Image>().color = Color.white;
+            GameObject handle = GameObject.Instantiate(handleRect.gameObject, _verticalSliderPrefab.transform);
+            handle.name = "Handle";
             RectTransform backgroundSliderRect = _verticalSliderPrefab.transform.Find("Background").GetComponent<RectTransform>();
             backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
             backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
 
             _verticalSliderPrefab.value = 0f;
-            _verticalSliderPrefab.minValue = 0f;
-            _verticalSliderPrefab.maxValue = 1f;
+            _verticalSliderPrefab.minValue = -0.05f;
+            _verticalSliderPrefab.maxValue = 1.04f;
             _verticalSliderPrefab.gameObject.SetActive(false);
 
             DestroyFromParent(_verticalSliderPrefab.gameObject, "Handle Slide Area/Handle");
