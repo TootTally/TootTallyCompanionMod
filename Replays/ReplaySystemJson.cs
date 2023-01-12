@@ -33,7 +33,7 @@ namespace TootTally.Replays
         public static bool wasPlayingReplay;
         private static bool _isReplayPlaying, _isReplayRecording;
         private static bool _wasTouchScreenUsed;
-        private static bool _isTooting, _lastIsTooting, _hasReleaseToot;
+        private static bool _isTooting, _lastIsTooting, _hasReleaseToot, _hasPaused;
 
         private static float _nextPositionTarget, _lastPosition;
         private static float _nextTimingTarget, _lastTiming;
@@ -166,6 +166,7 @@ namespace TootTally.Replays
         static void PauseCanvasControllerShowPausePanelPostfixPatch(PauseCanvasController __instance)
         {
             ClearData();
+            _hasPaused = true;
             _isReplayPlaying = _isReplayRecording = false;
             Plugin.LogInfo("Level paused, stopped " + (_isReplayPlaying ? "replay" : "recording") + " and cleared replay data");
         }
@@ -195,7 +196,7 @@ namespace TootTally.Replays
         private static void StartReplayRecorder(GameController __instance)
         {
             _isReplayRecording = _hasReleaseToot = true;
-            wasPlayingReplay = false;
+            wasPlayingReplay = _hasPaused = false;
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _elapsedTime = 0;
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
@@ -269,6 +270,7 @@ namespace TootTally.Replays
         {
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
+            if (_hasPaused) return; //Don't submit if paused during the play
 
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             // Create Replays directory in case it doesn't exist

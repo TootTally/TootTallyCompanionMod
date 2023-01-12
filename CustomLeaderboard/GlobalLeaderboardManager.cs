@@ -56,7 +56,7 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPostfix]
         static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist)
         {
-            if (globalLeaderboard != null)
+            if (globalLeaderboard != null && globalLeaderboard.HasLeaderboard)
                 globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
         }
 

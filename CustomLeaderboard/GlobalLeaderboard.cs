@@ -164,6 +164,7 @@ namespace TootTally.CustomLeaderboard
             if (_scoreGameObjectList.Count > 8)
             {
                 _slider.value = 0f;
+                _sliderHandle.GetComponent<RectTransform>().anchoredPosition = new Vector2(-12, 522);
                 ShowSlider();
 
             }
