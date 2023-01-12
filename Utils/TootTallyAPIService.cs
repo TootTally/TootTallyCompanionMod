@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace TootTally
+namespace TootTally.Utils
 {
     public static class TootTallyAPIService
     {
@@ -196,12 +196,12 @@ namespace TootTally
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> LoadLocalIcon(string filePath, Action<Texture2D> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoadTextureFromServer(string filePath, Action<Texture2D> callback)
         {
             UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(filePath);
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest, false))
+            if (!HasError(webRequest, true))
                 callback(DownloadHandlerTexture.GetContent(webRequest));
         }
 

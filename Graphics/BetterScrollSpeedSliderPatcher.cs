@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,6 @@ namespace TootTally.Graphics
     {
         private const string CONFIG_NAME = "BetterScrollSpeed.cfg";
         private const string CONFIG_FIELD = "SliderValues";
-        private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const uint DEFAULT_MAX = 250;
         private const uint DEFAULT_MIN = 5;
         private const float DEFAULT_VALUE = 1;
@@ -45,10 +45,10 @@ namespace TootTally.Graphics
             if (option.LastValue.Value < option.Min.Value || option.LastValue.Value > option.Max.Value) //Don't even try...
                 option.LastValue.Value = DEFAULT_VALUE;
 
-            Text yoinkText = GameObject.Find(FULLSCREEN_PANEL_PATH + "100%").GetComponent<Text>();
-            Transform handleTransform = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider/Handle Slide Area/Handle").transform;
+            Text yoinkText = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "100%").GetComponent<Text>();
+            Transform handleTransform = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider/Handle Slide Area/Handle").transform;
 
-            Transform starTransform = GameObject.Find(FULLSCREEN_PANEL_PATH + "difficulty stars/star1").transform;
+            Transform starTransform = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty stars/star1").transform;
             Text scrollSpeedSliderText = GameObject.Instantiate(yoinkText, handleTransform);
 
             scrollSpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
@@ -57,15 +57,15 @@ namespace TootTally.Graphics
             scrollSpeedSliderText.text = ((int)(GlobalVariables.gamescrollspeed * 100)).ToString();
             scrollSpeedSliderText.color = new Color(0, 0, 0, 1);
 
-            Slider slider = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>();
+            Slider slider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>();
             slider.minValue = option.Min.Value / 100f;
             slider.maxValue = option.Max.Value / 100f;
             slider.value = option.LastValue.Value / 100f;
             scrollSpeedSliderText.text = SliderValueToText(slider.value);
             slider.onValueChanged.AddListener((float _value) => { option.LastValue.Value = _value * 100f; scrollSpeedSliderText.text = SliderValueToText(_value); });
 
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "100%").gameObject.SetActive(false);
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "0").gameObject.SetActive(false);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "100%").gameObject.SetActive(false);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "0").gameObject.SetActive(false);
 
         }
 

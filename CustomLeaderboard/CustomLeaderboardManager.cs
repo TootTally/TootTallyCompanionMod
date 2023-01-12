@@ -17,13 +17,12 @@ using UnityEngine.Playables;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using TootTally.Graphics;
+using TootTally.Utils;
 
 namespace TootTally.CustomLeaderboard
 {
     public static class CustomLeaderboardManager
     {
-        private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
-        private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
         private const string NO_SCORE_ERROR_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
         private const string CANT_LOAD_SONG_ERROR_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
@@ -44,8 +43,6 @@ namespace TootTally.CustomLeaderboard
         private static Slider _slider;
 
         private static int _currentSelectedSongHash;
-
-        private static void QuickLog(string message) => Plugin.LogInfo(message);
 
         #region init
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -94,17 +91,17 @@ namespace TootTally.CustomLeaderboard
 
             #region Base Leaderboard Cleanup
             //fuck that useless Dial
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
             //move capsules to the left
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "capsules").GetComponent<RectTransform>().anchoredPosition = new Vector2(-275, 32);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").GetComponent<RectTransform>().anchoredPosition = new Vector2(-275, 32);
             //move random_btn next to capsules
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "RANDOM_btn").GetComponent<RectTransform>().anchoredPosition = new Vector2(-123, -7);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "RANDOM_btn").GetComponent<RectTransform>().anchoredPosition = new Vector2(-123, -7);
             //move slider slightly above RANDOM_btn and make it better B)
             BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider();
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
-            GameObject.Find(FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
 
-            _leaderboard = GameObject.Find(FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
+            _leaderboard = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Leaderboard").gameObject;
 
             //clear original Leaderboard from its objects
             foreach (Transform gameObjectTransform in _leaderboard.transform)
@@ -125,7 +122,7 @@ namespace TootTally.CustomLeaderboard
             //Don't think we need these...
             DestroyFromParent(_leaderboardCanvas, "BG");
             GameObject.DestroyImmediate(_leaderboardCanvas.GetComponent<CanvasScaler>());
-            _leaderboardCanvas.name = "CustomLeaderboarCanvas";
+            _leaderboardCanvas.name = "CustomLeaderboardCanvas";
             _leaderboardCanvas.SetActive(true); //Has to be set to true else it crashes when yoinking other objects?? #UnityStuff
 
             RectTransform lbCanvasRect = _leaderboardCanvas.GetComponent<RectTransform>();
@@ -159,7 +156,7 @@ namespace TootTally.CustomLeaderboard
                 tabRect.anchoredPosition = new Vector2(15, -40);
                 tabRect.sizeDelta = new Vector2(32, 32);
                 Image icon = currentTab.AddComponent<Image>();
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadLocalIcon("http://cdn.toottally.com/assets/" + tabsImageNames[i], (texture) =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadTextureFromServer("http://cdn.toottally.com/assets/" + tabsImageNames[i], (texture) =>
                 {
                     icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
                     tabs.SetActive(true);
@@ -226,6 +223,7 @@ namespace TootTally.CustomLeaderboard
             image.enabled = true;
             image.maskable = true;
             mySingleScore.gameObject.SetActive(false);
+
             _leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject)); 
             
             _leaderboardHeaderPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Num").GetComponent<Text>(), _leaderboardCanvas.transform);
@@ -260,8 +258,7 @@ namespace TootTally.CustomLeaderboard
             #endregion
 
             #region Vertical Slider Setup
-            Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
-            RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
+            Slider sliderPrefab = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
 
             _slider = GameObject.Instantiate(sliderPrefab, _panelBody.transform);
             _slider.direction = Slider.Direction.TopToBottom;

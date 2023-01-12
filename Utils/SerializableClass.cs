@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TootTally
+namespace TootTally.Utils
 {
     public static class SerializableClass
     {

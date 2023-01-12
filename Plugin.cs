@@ -15,6 +15,7 @@ using TrombLoader.Helpers;
 using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Replays;
+using TootTally.Utils;
 
 namespace TootTally
 {
@@ -86,7 +87,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.CustomLeaderboardManager));
+            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.GlobalLeaderboardManager));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
