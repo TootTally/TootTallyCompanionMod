@@ -163,7 +163,7 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
         [HarmonyPostfix]
-        static void PauseCanvasControllerShowPausePanelPostfixPatch(PauseCanvasController __instance)
+        static void PauseCanvasControllerShowPausePanelPostfixPatch()
         {
             ClearData();
             _hasPaused = true;
@@ -276,7 +276,7 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-            string songNameLong = GlobalVariables.chosen_track_data.trackname_long, songNameShort = GlobalVariables.chosen_track_data.trackname_short;
+            string songNameLong = GlobalVariables.chosen_track_data.trackname_long;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songHash;

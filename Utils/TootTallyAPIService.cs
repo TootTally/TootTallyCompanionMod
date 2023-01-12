@@ -16,7 +16,7 @@ namespace TootTally.Utils
     {
         public const string APIURL = "https://toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
-        public const string REPLAYURL = "https://sgp1.digitaloceanspaces.com/toottally/replays/";
+        public const string REPLAYURL = "http://cdn.toottally.com/replays/";
         #region Logs
         internal static void LogDebug(string msg) => Plugin.LogDebug(msg);
         internal static void LogInfo(string msg) => Plugin.LogInfo(msg);

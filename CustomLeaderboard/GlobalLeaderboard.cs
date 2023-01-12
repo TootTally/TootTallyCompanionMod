@@ -28,7 +28,7 @@ namespace TootTally.CustomLeaderboard
         private const string ERROR_NO_LEADERBOARD_FOUND_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
         private const string ERROR_NO_SONGHASH_FOUND_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
         private const float SWIRLY_SPEED = 0.5f;
-        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow },{ "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
+        private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile.png", "global.png", "local.png" };
         #endregion
 
@@ -38,6 +38,9 @@ namespace TootTally.CustomLeaderboard
 
         private List<SerializableClass.ScoreDataFromDB> _scoreDataList;
 
+        private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
+        private List<RaycastResult> _raycastHitList;
+
         private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly;
         private Text _errorText;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
@@ -46,6 +49,8 @@ namespace TootTally.CustomLeaderboard
 
         private int _currentSelectedSongHash;
         public bool HasLeaderboard => _leaderboard != null;
+
+        private float _scrollAcceleration;
 
         public void Initialize(LevelSelectController __instance)
         {
@@ -58,10 +63,12 @@ namespace TootTally.CustomLeaderboard
 
             _globalLeaderboard = GameObjectFactory.CreateSteamLeaderboardFromPrefab(_leaderboard.transform, "GlobalLeaderboard");
             _globalLeaderboard.SetActive(true);
+            _globalLeaderboardGraphicRaycaster = _globalLeaderboard.GetComponent<GraphicRaycaster>();
+            _raycastHitList = new List<RaycastResult>();
+
 
             GameObject panelBody = _globalLeaderboard.transform.Find("PanelBody").gameObject;
             panelBody.SetActive(true);
-
             _scoreboard = panelBody.transform.Find("scoreboard").gameObject;
             _scoreboard.SetActive(true);
 
@@ -74,7 +81,7 @@ namespace TootTally.CustomLeaderboard
             LoadTabsImages();
 
             _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
-            ShowLoadingSwirly();         
+            ShowLoadingSwirly();
 
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
@@ -176,10 +183,10 @@ namespace TootTally.CustomLeaderboard
         {
             _slider.onValueChanged.AddListener((float _value) =>
             {
-                if (_value < 0f)
-                    _slider.value = 0f;
-                if (_value > 1f)
-                    _slider.value = 1f;
+                _slider.value = Mathf.Clamp(_value, 0, 1);
+                if (_value == 0f || _value == 1f)
+                    _scrollAcceleration = 0;
+
 
                 foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
@@ -194,6 +201,30 @@ namespace TootTally.CustomLeaderboard
                         row.GetComponent<CanvasGroup>().alpha = 1;
                 }
             });
+        }
+
+        public void UpdateRaycastHitList()
+        {
+            PointerEventData pointerData = new PointerEventData(null);
+            pointerData.position = Input.mousePosition;
+            _raycastHitList.Clear();
+            _globalLeaderboardGraphicRaycaster.Raycast(pointerData, _raycastHitList);
+        }
+
+        public bool IsMouseOver() => _raycastHitList.Count > 0;
+
+        public bool IsScrollAccelerationNotNull() => _scrollAcceleration != 0;
+
+        public void UpdateScrolling()
+        {
+            _slider.value += _scrollAcceleration;
+            _scrollAcceleration *= 106 * Time.deltaTime;
+        }
+
+        public void AddScrollAcceleration(float value)
+        {
+            if (_scoreGameObjectList.Count > 8)
+                _scrollAcceleration -= value;
         }
 
         public void ClearLeaderboard()
@@ -214,6 +245,8 @@ namespace TootTally.CustomLeaderboard
 
         public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
         public void OpenSongLeaderboard() => Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
+
+
 
         public void UpdateLoadingSwirlyAnimation()
         {
@@ -255,7 +288,7 @@ namespace TootTally.CustomLeaderboard
 
                 }));
             }
-            
+
         }
 
         private static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackRef));

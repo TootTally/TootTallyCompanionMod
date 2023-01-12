@@ -50,6 +50,15 @@ namespace TootTally.CustomLeaderboard
         {
             if (!_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateLoadingSwirlyAnimation();
+
+            globalLeaderboard.UpdateRaycastHitList();
+
+            if (globalLeaderboard.IsMouseOver() && Input.mouseScrollDelta.y != 0)
+                globalLeaderboard.AddScrollAcceleration(Input.mouseScrollDelta.y / 30);
+
+            if (globalLeaderboard.IsScrollAccelerationNotNull())
+                globalLeaderboard.UpdateScrolling();
+
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
@@ -83,6 +92,13 @@ namespace TootTally.CustomLeaderboard
             return false;
         }
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickNext))]
+        [HarmonyPrefix]
+        static bool OnClickNextSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
+        [HarmonyPrefix]
+        static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
+        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver();
         #endregion
 
         #region update
@@ -102,7 +118,7 @@ namespace TootTally.CustomLeaderboard
             if (__instance.randomizing) return; //Do nothing if randomizing
 
             globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
-        }   
+        }
 
         private static void OnUpdateLeaderboardCallback(GlobalLeaderboard.LeaderboardState state)
         {
