@@ -115,6 +115,8 @@ namespace TootTally.CustomLeaderboard
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songHash = GetChoosenSongHash(trackRef);
 
+            if (_currentLeaderboardCoroutines.Count != 0) CancelAndClearAllCoroutineInList();
+
             _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
             {
                 if (songHashInDB == 0)
@@ -138,7 +140,7 @@ namespace TootTally.CustomLeaderboard
                         _errorText.text = ERROR_NO_LEADERBOARD_FOUND_TEXT;
                         callback(LeaderboardState.ErrorNoLeaderboardFound);
                     }
-                    ClearCoroutineList();
+                    CancelAndClearAllCoroutineInList();
                 }));
                 Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
             }));
@@ -192,8 +194,9 @@ namespace TootTally.CustomLeaderboard
             _scoreGameObjectList.Clear();
         }
 
-        public void ClearCoroutineList()
+        public void CancelAndClearAllCoroutineInList()
         {
+            _currentLeaderboardCoroutines.ForEach(routine => Plugin.Instance.StopCoroutine(routine));
             _currentLeaderboardCoroutines.Clear();
         }
 
