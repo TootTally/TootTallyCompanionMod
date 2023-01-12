@@ -16,10 +16,11 @@ using UnityEngine.Networking.Match;
 using UnityEngine.Playables;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
+using TootTally.Graphics;
 
-namespace TootTally.Graphics
+namespace TootTally.CustomLeaderboard
 {
-    public static class NewCustomLeaderboard
+    public static class CustomLeaderboardManager
     {
         private const string FULLSCREEN_PANEL_PATH = "MainCanvas/FullScreenPanel/";
         private const string LEADERBOARD_CANVAS_PATH = "Camera-Popups/LeaderboardCanvas";
@@ -91,6 +92,7 @@ namespace TootTally.Graphics
             currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
 
+            #region Base Leaderboard Cleanup
             //fuck that useless Dial
             GameObject.Find(FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
             //move capsules to the left
@@ -112,7 +114,9 @@ namespace TootTally.Graphics
             DestroyFromParent(_leaderboard, "\"HIGH SCORES\"");
             for (int i = 1; i <= 5; i++)
                 DestroyFromParent(_leaderboard, i.ToString());
+            #endregion
 
+            #region New Leaderboard Setup
             GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject;
             GameObject newLeaderboardCanvas = camerapopups.transform.Find("LeaderboardCanvas").gameObject;
 
@@ -128,7 +132,7 @@ namespace TootTally.Graphics
             lbCanvasRect.anchoredPosition = new Vector2(237, -311);
             lbCanvasRect.localScale = Vector2.one * 0.5f;
 
-
+            #region PanelBody
             _panelBody = _leaderboardCanvas.transform.Find("PanelBody").gameObject;
             _panelBody.SetActive(true);
             RectTransform panelRectTransform = _panelBody.GetComponent<RectTransform>();
@@ -142,7 +146,7 @@ namespace TootTally.Graphics
             DestroyFromParent(_panelBody, "rule");
             DestroyFromParent(_panelBody, "HelpBtn");
 
-            //Hidding it for now, gonna use later
+            #region Tabs
             GameObject tabs = _panelBody.transform.Find("tabs").gameObject;
             GameObject.DestroyImmediate(tabs.GetComponent<HorizontalLayoutGroup>());
             for (int i = 0; i < 3; i++)
@@ -171,7 +175,9 @@ namespace TootTally.Graphics
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
             tabsRectTransform.anchoredPosition = new Vector2(328, -10);
             tabsRectTransform.sizeDelta = new Vector2(-676, 280);
+            #endregion
 
+            #region Errors
             _errorsHolder = _panelBody.transform.Find("errors").gameObject;
             RectTransform errorsTransform = _errorsHolder.GetComponent<RectTransform>();
             errorsTransform.anchoredPosition = new Vector2(-30, -120);
@@ -179,7 +185,9 @@ namespace TootTally.Graphics
             _errorsHolder.SetActive(false);
             _errorText = _errorsHolder.transform.Find("error_noleaderboard").GetComponent<Text>();
             _errorsHolder.transform.Find("error_noleaderboard").gameObject.SetActive(true);
+            #endregion
 
+            #region Scores
             GameObject scoresbody = _panelBody.transform.Find("scoresbody").gameObject;
             RectTransform scoresbodyRectTransform = scoresbody.GetComponent<RectTransform>();
             scoresbodyRectTransform.anchoredPosition = new Vector2(0, -10);
@@ -190,14 +198,21 @@ namespace TootTally.Graphics
             RectTransform scoreboardRectTransform = _scoreboard.GetComponent<RectTransform>();
             scoreboardRectTransform.anchoredPosition = new Vector2(-29, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
+            #endregion
 
+            #region Swirly
             _loadingSwirly = _panelBody.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
             _loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
             _loadingSwirly.SetActive(true);
+            #endregion
 
+            #endregion
+
+            #endregion
+
+            #region Text and Row Prefabs
             GameObject singleScore = _panelBody.transform.Find("scoreboard/SingleScore").gameObject;
             GameObject mySingleScore = GameObject.Instantiate(singleScore, _leaderboardCanvas.transform);
-
             mySingleScore.name = "singleScorePrefab";
             mySingleScore.GetComponent<RectTransform>().sizeDelta = new Vector2(mySingleScore.GetComponent<RectTransform>().sizeDelta.x, 35);
             //find image. set the size and position and always enable the image
@@ -210,10 +225,9 @@ namespace TootTally.Graphics
             Image image = imageGameObject.GetComponent<Image>();
             image.enabled = true;
             image.maskable = true;
-
             mySingleScore.gameObject.SetActive(false);
-            _leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject));
-
+            _leaderboardManager.scores.ToList().ForEach(score => GameObject.DestroyImmediate(score.gameObject)); 
+            
             _leaderboardHeaderPrefab = GameObject.Instantiate(mySingleScore.transform.Find("Num").GetComponent<Text>(), _leaderboardCanvas.transform);
             _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -243,10 +257,9 @@ namespace TootTally.Graphics
             maxcombo.name = "maxcombo";
             _singleRowPrefab.ConstructLeaderboardEntry(mySingleScore, rank, username, score, percent, grade, maxcombo, false);
             _singleRowPrefab.singleScore.name = "singleRowPrefab";
+            #endregion
 
-            GameObject.DontDestroyOnLoad(_singleRowPrefab);
-
-            //Yoink slider and make it vertical
+            #region Vertical Slider Setup
             Slider sliderPrefab = GameObject.Find(FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
             RectTransform sliderPrefabRect = sliderPrefab.GetComponent<RectTransform>();
 
@@ -264,7 +277,7 @@ namespace TootTally.Graphics
             _slider.maxValue = 1f;
             _slider.gameObject.SetActive(false);
             DestroyFromParent(_slider.gameObject, "Handle Slide Area/Handle");
-
+            #endregion
         }
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
@@ -435,10 +448,9 @@ namespace TootTally.Graphics
                         row.GetComponent<CanvasGroup>().alpha = 1;
                 }
             });
-            #endregion
         }
+        #endregion
 
-        //not working yet
         public static void MakeDoubleSText(LeaderboardRowEntry rowEntry)
         {
             rowEntry.grade.text = "S";

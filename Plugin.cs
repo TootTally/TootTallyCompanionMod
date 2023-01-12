@@ -86,7 +86,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(NewCustomLeaderboard));
+            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.CustomLeaderboardManager));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 

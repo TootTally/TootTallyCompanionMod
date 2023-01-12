@@ -4,7 +4,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TootTally.Graphics
+namespace TootTally.CustomLeaderboard
 {
     public class LeaderboardRowEntry : MonoBehaviour
     {
