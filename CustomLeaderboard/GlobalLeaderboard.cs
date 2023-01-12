@@ -78,7 +78,7 @@ namespace TootTally.CustomLeaderboard
             _errorText.gameObject.SetActive(true);
 
             _tabs = panelBody.transform.Find("tabs").gameObject; //Hidden until icons are loaded
-            LoadTabsImages();
+            SetTabsImages();
 
             _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
             ShowLoadingSwirly();
@@ -218,7 +218,7 @@ namespace TootTally.CustomLeaderboard
         public void UpdateScrolling()
         {
             _slider.value += _scrollAcceleration;
-            _scrollAcceleration *= 106 * Time.deltaTime;
+            _scrollAcceleration *= 106 * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
         }
 
         public void AddScrollAcceleration(float value)
@@ -260,10 +260,8 @@ namespace TootTally.CustomLeaderboard
             return isCustom ? GetSongHash(trackRef) : trackRef;
         }
 
-        private void LoadTabsImages()
+        private void SetTabsImages()
         {
-            int count = 0;
-
             for (int i = 0; i < 3; i++)
             {
                 GameObject currentTab = _globalLeaderboard.GetComponent<LeaderboardManager>().tabs[i];
@@ -275,20 +273,15 @@ namespace TootTally.CustomLeaderboard
                 btn.colors = btnColorBlock;
 
                 Image icon = currentTab.GetComponent<Image>();
-
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadTextureFromServer("http://cdn.toottally.com/assets/" + tabsImageNames[i], (texture) =>
+                Texture2D texture = AssetManager.GetTexture(tabsImageNames[i]);
+                if (texture != null)
                 {
                     icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
                     btn.image.sprite = icon.sprite;
-                    count++;
-                    Plugin.LogInfo("CurrentTabs loaded:" + count);
-                    if (count == 3) //all 3 tabs' loaded
-                        _tabs.SetActive(true);
+                }
 
-
-                }));
             }
-
+            _tabs.SetActive(true);
         }
 
         private static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackRef));

@@ -196,13 +196,38 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> LoadTextureFromServer(string filePath, Action<Texture2D> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoadTextureFromServer(string apiLink, Action<Texture2D> callback)
         {
-            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(filePath);
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(apiLink);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
                 callback(DownloadHandlerTexture.GetContent(webRequest));
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadTextureFromServer(string apiLink, string outputPath, Action<bool> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(apiLink);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+            {
+                File.WriteAllBytes(outputPath, webRequest.downloadHandler.data);
+                callback(true);
+            }
+            else
+                callback(false);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> TryLoadingTextureLocal(string filePath, Action<Texture2D> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(filePath);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+                callback(DownloadHandlerTexture.GetContent(webRequest));
+            else
+                callback(null);
         }
 
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")

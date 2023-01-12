@@ -84,6 +84,7 @@ namespace TootTally
             //     LogInfo($"PLUGIN: {plugin.Key} | HASH: {CalcFileHash(plugin.Value.Location)}");
             // }
 
+            AssetManager.LoadAssets();
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
@@ -124,6 +125,8 @@ namespace TootTally
             }
             return tmb.ToString();
         }
+
+
 
         //Would like to rewrite this somewhere else than in plugin
         public static class SongSelect
