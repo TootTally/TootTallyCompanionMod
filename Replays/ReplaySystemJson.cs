@@ -106,7 +106,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void ReplayIndicator(PointSceneController __instance)
         {
-            if (wasPlayingReplay) return; // Replay not running, an actual play happened
+            if (!wasPlayingReplay) return; // Replay not running, an actual play happened
             // This code came from AutoToot (https://github.com/TomDotBat/AutoToot/blob/master/Patches/PointSceneControllerPatch.cs)
             GameObject tootTextObject = GameObject.Find("Canvas/buttons/coingroup/Text");
             if (tootTextObject == null)
