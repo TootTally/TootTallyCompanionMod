@@ -28,6 +28,13 @@ namespace TootTally.CustomLeaderboard
         private static GlobalLeaderboard globalLeaderboard;
 
         #region HarmonyPatches
+        
+        //Hide leaderboar button from PointSceneController
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
+        [HarmonyPostfix]
+        public static void ReplayIndicator(PointSceneController __instance) =>
+            __instance.btn_leaderboard.gameObject.SetActive(false);
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         static void OnLevelSelectControllerStartPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
@@ -63,16 +70,17 @@ namespace TootTally.CustomLeaderboard
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
         [HarmonyPostfix]
-        static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist)
+        static void OnTrackSortReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             if (globalLeaderboard != null && globalLeaderboard.HasLeaderboard)
-                globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
+                UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
+
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
         [HarmonyPostfix]
-        static void OnDoneRandomizingReloadLeaderboard(List<SingleTrackData> ___alltrackslist) =>
-            globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
+        static void OnDoneRandomizingReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance) =>
+            UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
 
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
@@ -85,9 +93,7 @@ namespace TootTally.CustomLeaderboard
             else if (tabIndex == 1)
                 globalLeaderboard.OpenSongLeaderboard();
             else if (tabIndex == 2)
-            {
-
-            }
+                globalLeaderboard.ScrollToLocalScore();
 
             return false;
         }
