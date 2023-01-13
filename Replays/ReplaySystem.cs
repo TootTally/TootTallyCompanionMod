@@ -504,7 +504,7 @@ namespace TootTally.Replays
             var replayJson = JSONObject.Parse(jsonFileFromZip);
             if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
             {
-                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Plugin Build Date is {Plugin.BUILDDATE}");
+                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Build Date is {Plugin.BUILDDATE}", Color.red);
                 Plugin.LogError("Cannot load replay:");
                 Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);

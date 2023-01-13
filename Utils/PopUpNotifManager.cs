@@ -29,10 +29,10 @@ namespace TootTally.Utils
             _toRemoveNotificationList = new List<PopUpNotif>();
         }
 
-        public static void DisplayNotif(string message, float lifespan = 6f)
+        public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)
         {
-            PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message);
-            notif.Initialize(lifespan, new Vector2(695, -400), 1.25f);
+            PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
+            notif.Initialize(lifespan, new Vector2(695, -400), 0.8f);
             _activeNotificationList.Add(notif);
             OnNotifCountChangeSetNewPosition();
         }
@@ -42,7 +42,7 @@ namespace TootTally.Utils
             int count = 0;
             for (int i = _activeNotificationList.Count - 1; i >= 0; i--)
             {
-                _activeNotificationList[i].SetTransitionToNewPosition(new Vector2(695, -400 + (215 * count)), 1.75f);
+                _activeNotificationList[i].SetTransitionToNewPosition(new Vector2(695, -400 + (215 * count)), 1.15f);
                 count++;
             }
         }

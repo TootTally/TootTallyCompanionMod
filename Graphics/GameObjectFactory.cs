@@ -520,7 +520,7 @@ namespace TootTally.Graphics
                     break;
 
                 case ReplaySystem.ReplayState.ReplayLoadNotFound:
-                    PopUpNotifManager.DisplayNotif("Downloading replay...");
+                    PopUpNotifManager.DisplayNotif("Downloading replay...", Color.white);
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
                     {
                         ResolveLoadReplay(uuid, levelSelectControllerInstance);
@@ -536,11 +536,12 @@ namespace TootTally.Graphics
             return replayState;
         }
 
-        public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text)
+        public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text, Color textColor)
         {
             PopUpNotif notif = GameObject.Instantiate(_popUpNotifPrefab, canvasTransform);
 
             notif.name = name;
+            notif.SetTextColor(textColor);
             notif.SetText(text);
             notif.gameObject.SetActive(true);
 

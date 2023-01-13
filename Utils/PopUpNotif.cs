@@ -10,19 +10,21 @@ namespace TootTally.Utils
     {
         private Text _textHolder;
         private string _text;
+        private Color _textColor;
         private RectTransform _rectTransform;
         private Vector2 _startPosition, _endPosition;
         private float _lifespan, _maxLifespan, _transitionTimer, _maxTransitionTimer;
         private CanvasGroup _canvasGroup;
 
         public void SetText(string message) => _text = message;
-
+        public void SetTextColor(Color color) => _textColor = color;
         public void Initialize(float lifespan, Vector2 endPosition, float transitionTime)
         {
             this._rectTransform = gameObject.GetComponent<RectTransform>();
             SetTransitionToNewPosition(endPosition, transitionTime);
             this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<Text>();
             _textHolder.text = _text;
+            _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = _maxLifespan = lifespan;
         }
