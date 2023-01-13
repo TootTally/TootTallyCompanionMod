@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace TootTally
+namespace TootTally.Compatibility
 {
     public static class AutoTootCompatibility
     {
