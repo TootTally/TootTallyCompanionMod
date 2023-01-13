@@ -18,7 +18,7 @@ using UnityEngine.Networking;
 
 namespace TootTally.Replays
 {
-    public static class ReplaySystemJson
+    public static class ReplaySystem
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
@@ -462,18 +462,18 @@ namespace TootTally.Replays
             Plugin.LogInfo("Replay finished");
         }
 
-        public static bool LoadReplay(string replayFileName)
+        public static ReplayState LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
             {
                 Plugin.LogInfo("Replay folder not found");
-                return false;
+                return ReplayState.ReplayLoadError;
             }
             if (!File.Exists(replayDir + replayFileName + ".ttr"))
             {
                 Plugin.LogInfo("Replay File does not exist");
-                return false;
+                return ReplayState.ReplayLoadNotFound;
             }
             _replayFileName = replayFileName;
 
@@ -504,10 +504,11 @@ namespace TootTally.Replays
             var replayJson = JSONObject.Parse(jsonFileFromZip);
             if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
             {
+                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Plugin Build Date is {Plugin.BUILDDATE}");
                 Plugin.LogError("Cannot load replay:");
                 Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
-                return false;
+                return ReplayState.ReplayLoadErrorIncompatible;
             }
             GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
             foreach (JSONArray jsonArray in replayJson["framedata"])
@@ -519,7 +520,7 @@ namespace TootTally.Replays
             _frameIndex = _tootIndex = 0;
             ValidateData();
 
-            return true;
+            return ReplayState.ReplayLoadSuccess;
         }
 
         private static void PlaybackReplay(GameController __instance)
@@ -633,6 +634,15 @@ namespace TootTally.Replays
             Multiplier = 2,
             CurrentHealth = 3,
             NoteJudgement = 4,
+        }
+
+        public enum ReplayState
+        {
+            None,
+            ReplayLoadErrorIncompatible,
+            ReplayLoadError,
+            ReplayLoadSuccess,
+            ReplayLoadNotFound,
         }
 
         #endregion

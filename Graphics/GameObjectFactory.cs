@@ -461,7 +461,7 @@ namespace TootTally.Graphics
             return tripledText;
         }
 
-        public static LeaderboardRowEntry CreateLeaderboardRowEntryFromScore(Transform canvasTransform, string name, SerializableClass.ScoreDataFromDB scoreData, int count, Color gradeColor, LevelSelectController levelSelectControllersInstance)
+        public static LeaderboardRowEntry CreateLeaderboardRowEntryFromScore(Transform canvasTransform, string name, SerializableClass.ScoreDataFromDB scoreData, int count, Color gradeColor, LevelSelectController levelSelectControllerInstance)
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
@@ -504,20 +504,36 @@ namespace TootTally.Graphics
                 CreateCustomButton(rowEntry.singleScore.transform, Vector2.zero, new Vector2(26, 26), "►", "ReplayButton",
                 delegate
                 {
-                    if (ReplaySystemJson.LoadReplay(replayId)) //Try loading replay locally
-                        levelSelectControllersInstance.playbtn.onClick?.Invoke();
-                    else //Download it first, then try loading again
-                    {
-                        PopUpNotifManager.DisplayNotif("Downloading replay...");
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
-                    {
-                        if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
-                            levelSelectControllersInstance.playbtn.onClick?.Invoke();
-                    }));
-                    }
+                    ResolveLoadReplay(replayId, levelSelectControllerInstance);
                 });
             }
             return rowEntry;
+        }
+
+        private static ReplaySystem.ReplayState ResolveLoadReplay(string replayId, LevelSelectController levelSelectControllerInstance)
+        {
+            ReplaySystem.ReplayState replayState = ReplaySystem.LoadReplay(replayId);
+            switch (replayState)
+            {
+                case ReplaySystem.ReplayState.ReplayLoadSuccess:
+                    levelSelectControllerInstance.playbtn.onClick?.Invoke();
+                    break;
+
+                case ReplaySystem.ReplayState.ReplayLoadNotFound:
+                    PopUpNotifManager.DisplayNotif("Downloading replay...");
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                    {
+                        ResolveLoadReplay(uuid, levelSelectControllerInstance);
+                    }));
+                    break;
+
+                case ReplaySystem.ReplayState.ReplayLoadErrorIncompatible:
+                    break;
+                case ReplaySystem.ReplayState.ReplayLoadError:
+                    break;
+
+            }
+            return replayState;
         }
 
         public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text)

@@ -87,7 +87,7 @@ namespace TootTally
 
             AssetManager.LoadAssets();
             Harmony.CreateAndPatchAll(typeof(SongSelect));
-            Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
+            Harmony.CreateAndPatchAll(typeof(ReplaySystem));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
