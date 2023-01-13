@@ -162,7 +162,7 @@ namespace TootTally.Graphics
 
                 RectTransform tabRect = currentTab.GetComponent<RectTransform>();
                 tabRect.anchoredPosition = new Vector2(15, -40);
-                tabRect.sizeDelta = new Vector2(32, 32);
+                tabRect.sizeDelta = new Vector2(40, 40);
 
                 currentTab.AddComponent<Image>();
             }
@@ -170,8 +170,8 @@ namespace TootTally.Graphics
             verticalLayout.childForceExpandWidth = false;
             verticalLayout.childScaleWidth = verticalLayout.childScaleHeight = false;
             verticalLayout.childControlWidth = verticalLayout.childControlHeight = false;
-            verticalLayout.padding.left = 26;
-            verticalLayout.padding.top = 30;
+            verticalLayout.padding.left = 20;
+            verticalLayout.padding.top = 36;
 
             RectTransform tabsRectTransform = tabs.GetComponent<RectTransform>();
             tabsRectTransform.anchoredPosition = new Vector2(328, -10);

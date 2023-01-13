@@ -54,7 +54,7 @@ namespace TootTally.CustomLeaderboard
             globalLeaderboard.UpdateRaycastHitList();
 
             if (globalLeaderboard.IsMouseOver() && Input.mouseScrollDelta.y != 0)
-                globalLeaderboard.AddScrollAcceleration(Input.mouseScrollDelta.y / 30);
+                globalLeaderboard.AddScrollAcceleration(Input.mouseScrollDelta.y);
 
             if (globalLeaderboard.IsScrollAccelerationNotNull())
                 globalLeaderboard.UpdateScrolling();

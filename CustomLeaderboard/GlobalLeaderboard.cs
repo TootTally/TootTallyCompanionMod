@@ -29,7 +29,7 @@ namespace TootTally.CustomLeaderboard
         private const string ERROR_NO_SONGHASH_FOUND_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
         private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
-        private static string[] tabsImageNames = { "profile.png", "global.png", "local.png" };
+        private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
         #endregion
 
         private List<IEnumerator<UnityWebRequestAsyncOperation>> _currentLeaderboardCoroutines;
@@ -217,8 +217,8 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateScrolling()
         {
-            _slider.value += _scrollAcceleration;
-            _scrollAcceleration *= 106 * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
+            _slider.value += _scrollAcceleration * Time.deltaTime;
+            _scrollAcceleration *= 0.91f; //Abitrary value just so it looks nice / feel nice
         }
 
         public void AddScrollAcceleration(float value)

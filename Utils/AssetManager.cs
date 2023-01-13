@@ -15,9 +15,9 @@ namespace TootTally.Utils
         //Assets are attempted to be loaded locally. If the assets aren't found, it downloads them from the server's assets API link into the Bepinex/Assets folder and tries to reload them.
         public static readonly List<string> requiredAssetNames = new List<string>
         {
-            "profile.png",
-            "global.png",
-            "local.png",
+            "profile64.png",
+            "global64.png",
+            "local64.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
