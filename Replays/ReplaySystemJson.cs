@@ -367,8 +367,6 @@ namespace TootTally.Replays
 
         private static void OptimizeFrameData(ref List<int[]> rawReplayFrameData)
         {
-            Plugin.LogInfo("Optimizing Replay FrameData...");
-
             //Look for matching position and remove same frames with the same positions
             for (int i = 0; i < rawReplayFrameData.Count - 1; i++)
             {
@@ -381,8 +379,6 @@ namespace TootTally.Replays
 
         private static void OptimizeTootData(ref List<int[]> rawReplayTootData)
         {
-            Plugin.LogInfo("Optimizing Replay TootData...");
-
             for (int i = 0; i < rawReplayTootData.Count - 1; i++)
             {
                 //if two toot happens on the same frame, probably is inputFix so unsync the frames
@@ -396,7 +392,6 @@ namespace TootTally.Replays
 
         private static void OptimizeNoteData(ref List<int[]> rawReplayNoteData)
         {
-            Plugin.LogInfo("Optimizing Replay NoteData...");
             for (int i = 0; i < rawReplayNoteData.Count; i++)
             {
                 if (rawReplayNoteData[i][(int)NoteDataStructure.NoteJudgement] == -1)
