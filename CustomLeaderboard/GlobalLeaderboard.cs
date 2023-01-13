@@ -250,7 +250,8 @@ namespace TootTally.CustomLeaderboard
         public void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
         public void ShowErrorText() => _errorsHolder.SetActive(true); public void HideErrorText() => _errorsHolder.SetActive(false);
 
-        public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
+        public void OpenUserProfile() =>Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
+        public void OpenLoginPage() => Application.OpenURL("https://toottally.com/login");
         public void OpenSongLeaderboard() => Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
 
         public void ScrollToLocalScore()

@@ -28,7 +28,7 @@ namespace TootTally.CustomLeaderboard
         private static GlobalLeaderboard globalLeaderboard;
 
         #region HarmonyPatches
-        
+
         //Hide leaderboar button from PointSceneController
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
@@ -88,7 +88,10 @@ namespace TootTally.CustomLeaderboard
         {
             int tabIndex = (int)__args[0];
             if (tabIndex == 0)
-                globalLeaderboard.OpenUserProfile();
+                if (ReplaySystemJson.userInfo.id != 0)
+                    globalLeaderboard.OpenUserProfile();
+                else
+                    globalLeaderboard.OpenLoginPage();
             else if (tabIndex == 1)
                 globalLeaderboard.OpenSongLeaderboard();
             else if (tabIndex == 2)
