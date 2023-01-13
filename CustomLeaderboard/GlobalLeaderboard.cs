@@ -164,7 +164,7 @@ namespace TootTally.CustomLeaderboard
             var count = 1;
             foreach (SerializableClass.ScoreDataFromDB scoreData in _scoreDataList)
             {
-                LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, "RowEntry" + scoreData.player, scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
+                LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, $"RowEntry{scoreData.player}", scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
                 _scoreGameObjectList.Add(rowEntry);
                 count++;
             }

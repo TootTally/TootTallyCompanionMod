@@ -508,7 +508,7 @@ namespace TootTally.Graphics
                         levelSelectControllersInstance.playbtn.onClick?.Invoke();
                     else //Download it first, then try loading again
                     {
-                        //add some loading indicator here to let user know replay is being downloaded
+                        PopUpNotifManager.DisplayNotif("Downloading replay...");
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
                     {
                         if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
