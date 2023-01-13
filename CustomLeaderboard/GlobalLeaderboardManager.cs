@@ -86,7 +86,7 @@ namespace TootTally.CustomLeaderboard
                 globalLeaderboard.OpenSongLeaderboard();
             else if (tabIndex == 2)
             {
-
+                PopUpNotifManager.AddNotification("Hello grist have birds! <size=25>bigtext</size> \n Hello emmett have low accuracy! <size=35>bigggertext</size> Hello ara is a god! <size=15>smalltext</size>", 6.5f);
             }
 
             return false;

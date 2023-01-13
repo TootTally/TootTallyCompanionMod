@@ -16,6 +16,7 @@ namespace TootTally.Graphics
         private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static Slider _verticalSliderPrefab;
         private static GameObject _starPrefab;
+        private static PopUpNotif _popUpNotifPrefab;
 
         private static GameObject _settingsGraphics, _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
@@ -43,6 +44,7 @@ namespace TootTally.Graphics
 
             if (_isHomeControllerInitialized) return;
 
+            SetNotificationPrefab();
             SetCustomButtonPrefab();
             SetStarPrefab();
         }
@@ -67,6 +69,25 @@ namespace TootTally.Graphics
         }
 
         #region SetPrefabs
+        public static void SetNotificationPrefab()
+        {
+            GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+            GameObject bufferPanel = mainCanvas.transform.Find("SettingsPanel/buffer_panel/window border").gameObject;
+
+            GameObject gameObjectHolder = GameObject.Instantiate(bufferPanel);
+            GameObject.DestroyImmediate(gameObjectHolder.transform.Find("Window Body/all_settiings").gameObject);
+
+            _popUpNotifPrefab = gameObjectHolder.AddComponent<PopUpNotif>();
+            RectTransform rect = _popUpNotifPrefab.GetComponent<RectTransform>();
+            rect.anchoredPosition = new Vector2(675, -400);
+            rect.sizeDelta = new Vector2(450, 200);
+            _popUpNotifPrefab.GetComponent<Image>().color = new Color(1, .3f, .5f, .75f);
+            _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = new Color(0, 0, 0, .95f);
+
+            gameObjectHolder.SetActive(false);
+
+            GameObject.DontDestroyOnLoad(_popUpNotifPrefab);
+        }
         public static void SetCustomButtonPrefab()
         {
             GameObject settingBtn = _settingsGraphics.transform.Find("GRAPHICS/btn_opengraphicspanel").gameObject;
@@ -299,10 +320,10 @@ namespace TootTally.Graphics
             RectTransform sliderRect = _verticalSliderPrefab.GetComponent<RectTransform>();
             sliderRect.sizeDelta = new Vector2(25, 745);
             sliderRect.anchoredPosition = new Vector2(300, 0);
-            
+
             RectTransform handleSlideAreaRect = _verticalSliderPrefab.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
             RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
-            handleRect.sizeDelta = new Vector2(40,40);
+            handleRect.sizeDelta = new Vector2(40, 40);
             handleRect.pivot = Vector2.zero;
             handleRect.anchorMax = Vector2.zero;
             handleRect.gameObject.GetComponent<Image>().color = Color.white;
@@ -472,12 +493,27 @@ namespace TootTally.Graphics
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
                     {
                         if (ReplaySystemJson.LoadReplay(uuid)) //Replay Successfully downloaded... trying to load again
-                                levelSelectControllersInstance.playbtn.onClick?.Invoke();
+                            levelSelectControllersInstance.playbtn.onClick?.Invoke();
                     }));
                     }
                 });
             }
             return rowEntry;
+        }
+
+        public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text)
+        {
+            PopUpNotif notif = GameObject.Instantiate(_popUpNotifPrefab, canvasTransform);
+            notif.textHolder = GameObject.Instantiate(_leaderboardTextPrefab, notif.transform);
+            notif.textHolder.horizontalOverflow = HorizontalWrapMode.Wrap;
+            notif.textHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(notif.GetComponent<RectTransform>().sizeDelta.x, 0);
+            notif.textHolder.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            notif.textHolder.supportRichText = true;
+            notif.name = name;
+            notif.SetText(text);
+            notif.gameObject.SetActive(true);
+
+            return notif;
         }
 
         #endregion

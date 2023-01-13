@@ -16,6 +16,7 @@ using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Replays;
 using TootTally.Utils;
+using TootTally.CustomLeaderboard;
 
 namespace TootTally
 {
@@ -88,7 +89,8 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.GlobalLeaderboardManager));
+            Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
+            Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -126,6 +128,10 @@ namespace TootTally
             return tmb.ToString();
         }
 
+        public void Update()
+        {
+
+        }
 
 
         //Would like to rewrite this somewhere else than in plugin
