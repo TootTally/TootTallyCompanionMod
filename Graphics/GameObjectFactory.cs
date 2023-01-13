@@ -13,7 +13,7 @@ namespace TootTally.Graphics
     public static class GameObjectFactory
     {
         private static CustomButton _buttonPrefab;
-        private static Text _leaderboardHeaderPrefab, _leaderboardTextPrefab;
+        private static Text _defaultText, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static Slider _verticalSliderPrefab;
         private static GameObject _starPrefab;
         private static PopUpNotif _popUpNotifPrefab;
@@ -44,6 +44,7 @@ namespace TootTally.Graphics
 
             if (_isHomeControllerInitialized) return;
 
+            SetDefaultTextPrefab();
             SetNotificationPrefab();
             SetCustomButtonPrefab();
             SetStarPrefab();
@@ -53,36 +54,54 @@ namespace TootTally.Graphics
         {
             if (_isLevelSelectControllerInitialized) return;
 
-            Plugin.LogInfo("SetVerticalSliderPrefab");
             SetVerticalSliderPrefab();
-            Plugin.LogInfo("SetSteamLeaderboardPrefab");
             SetSteamLeaderboardPrefab();
-            Plugin.LogInfo("SetSingleScorePrefab");
             SetSingleScorePrefab();
-            Plugin.LogInfo("SetLeaderboardHeaderPrefab");
             SetLeaderboardHeaderPrefab();
-            Plugin.LogInfo("SetLeaderboardTextPrefab");
             SetLeaderboardTextPrefab();
-            Plugin.LogInfo("SetSingleRowPrefab");
             SetSingleRowPrefab();
 
         }
 
         #region SetPrefabs
+        public static void SetDefaultTextPrefab()
+        {
+            GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+            GameObject headerCreditText = mainCanvas.transform.Find("FullCreditsPanel/header-credits/Text").gameObject;
+
+            GameObject textHolder = GameObject.Instantiate(headerCreditText);
+            textHolder.name = "defaultTextPrefab";
+            textHolder.AddComponent<Outline>();
+            textHolder.SetActive(false);
+            _defaultText = textHolder.GetComponent<Text>();
+            _defaultText.fontSize = 22;
+            _defaultText.alignment = TextAnchor.MiddleCenter;
+            _defaultText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            _defaultText.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
+            _defaultText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            _defaultText.supportRichText = true;
+            GameObject.DontDestroyOnLoad(_defaultText);
+        }
         public static void SetNotificationPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject bufferPanel = mainCanvas.transform.Find("SettingsPanel/buffer_panel/window border").gameObject;
 
             GameObject gameObjectHolder = GameObject.Instantiate(bufferPanel);
+            gameObjectHolder.name = "NotificationPrefab";
             GameObject.DestroyImmediate(gameObjectHolder.transform.Find("Window Body/all_settiings").gameObject);
 
             _popUpNotifPrefab = gameObjectHolder.AddComponent<PopUpNotif>();
-            RectTransform rect = _popUpNotifPrefab.GetComponent<RectTransform>();
-            rect.anchoredPosition = new Vector2(675, -400);
-            rect.sizeDelta = new Vector2(450, 200);
+            RectTransform popUpNorifRectTransform = _popUpNotifPrefab.GetComponent<RectTransform>();
+            popUpNorifRectTransform.anchoredPosition = new Vector2(695, -700);
+            popUpNorifRectTransform.sizeDelta = new Vector2(450, 200);
             _popUpNotifPrefab.GetComponent<Image>().color = new Color(1, .3f, .5f, .75f);
             _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = new Color(0, 0, 0, .95f);
+
+            Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
+            notifText.name = "NotifText";
+            notifText.gameObject.GetComponent<RectTransform>().sizeDelta = popUpNorifRectTransform.sizeDelta;
+            notifText.gameObject.SetActive(true);
 
             gameObjectHolder.SetActive(false);
 
@@ -204,8 +223,8 @@ namespace TootTally.Graphics
             GameObject errorsHolder = _panelBodyPrefab.transform.Find("errors").gameObject;
 
             RectTransform errorsTransform = errorsHolder.GetComponent<RectTransform>();
-            errorsTransform.anchoredPosition = new Vector2(-30, -120);
-            errorsTransform.sizeDelta = new Vector2(-200, -190);
+            errorsTransform.anchoredPosition = new Vector2(-30, 15);
+            errorsTransform.sizeDelta = new Vector2(-200, 0);
 
             errorsHolder.SetActive(false);
 
@@ -367,8 +386,8 @@ namespace TootTally.Graphics
             newButton.textHolder.color = Color.black;
 
 
-            newButton.rectTransform.sizeDelta = size;
-            newButton.rectTransform.anchoredPosition = anchoredPosition;
+            newButton.GetComponent<RectTransform>().sizeDelta = size;
+            newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
 
             newButton.button.onClick.AddListener(() => onClick?.Invoke());
 
@@ -504,11 +523,7 @@ namespace TootTally.Graphics
         public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text)
         {
             PopUpNotif notif = GameObject.Instantiate(_popUpNotifPrefab, canvasTransform);
-            notif.textHolder = GameObject.Instantiate(_leaderboardTextPrefab, notif.transform);
-            notif.textHolder.horizontalOverflow = HorizontalWrapMode.Wrap;
-            notif.textHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(notif.GetComponent<RectTransform>().sizeDelta.x, 0);
-            notif.textHolder.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            notif.textHolder.supportRichText = true;
+
             notif.name = name;
             notif.SetText(text);
             notif.gameObject.SetActive(true);

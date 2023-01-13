@@ -531,7 +531,7 @@ namespace TootTally.Replays
 
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
             {
-                var newCursorPosition = Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
+                var newCursorPosition = EasingHelper.Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
                 SetCursorPosition(__instance, newCursorPosition);
                 __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450 
             }
@@ -592,11 +592,6 @@ namespace TootTally.Replays
         #endregion
 
         #region Utils
-        private static float Lerp(float firstFloat, float secondFloat, float by) //Linear easing
-        {
-            return firstFloat + (secondFloat - firstFloat) * by;
-        }
-
         private static void SetCursorPosition(GameController __instance, float newPosition)
         {
             Vector3 pointerPosition = __instance.pointer.transform.localPosition;

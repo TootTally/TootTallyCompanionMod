@@ -55,6 +55,7 @@ namespace TootTally.Utils
                     username = jsonData["username"],
                     id = jsonData["id"],
                 };
+                PopUpNotifManager.DisplayNotif($"Welcome, {user.username}!", 9f);
                 LogInfo($"Welcome, {user.username}!");
             }
             else
@@ -81,7 +82,14 @@ namespace TootTally.Utils
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
+            {
                 LogInfo($"Chart Sent.");
+                PopUpNotifManager.DisplayNotif("New chart sent to TootTally");
+            }
+            else
+            {
+                PopUpNotifManager.DisplayNotif("Error in sending chart");
+            }
 
 
         }

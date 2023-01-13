@@ -29,12 +29,25 @@ namespace TootTally.Utils
             _toRemoveNotificationList = new List<PopUpNotif>();
         }
 
-        public static void AddNotification(string message, float lifespan)
+        public static void DisplayNotif(string message, float lifespan = 6f)
         {
             PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message);
-            notif.Initialize(lifespan);
+            notif.Initialize(lifespan, new Vector2(695, -400), 1.25f);
             _activeNotificationList.Add(notif);
+            OnNotifCountChangeSetNewPosition();
         }
+
+        private static void OnNotifCountChangeSetNewPosition()
+        {
+            int count = 0;
+            for (int i = _activeNotificationList.Count - 1; i >= 0; i--)
+            {
+                _activeNotificationList[i].SetTransitionToNewPosition(new Vector2(695, -400 + (215 * count)), 1.75f);
+                count++;
+            }
+        }
+
+
 
         [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
         [HarmonyPostfix]
@@ -49,6 +62,7 @@ namespace TootTally.Utils
                     _activeNotificationList.Remove(notif);
                     GameObject.Destroy(notif.gameObject);
                 }
+                OnNotifCountChangeSetNewPosition();
                 _toRemoveNotificationList.Clear();
             }
               
