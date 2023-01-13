@@ -177,7 +177,6 @@ namespace TootTally.CustomLeaderboard
                 _slider.value = 0f;
                 _sliderHandle.GetComponent<RectTransform>().anchoredPosition = new Vector2(-12, 522);
                 ShowSlider();
-
             }
             else
                 HideSlider();
@@ -252,7 +251,7 @@ namespace TootTally.CustomLeaderboard
 
         public void ScrollToLocalScore()
         {
-            if (_scoreGameObjectList.Count > 8)
+            if (_scoreGameObjectList.Count > 8 && _localScoreId != 0)
             {
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
