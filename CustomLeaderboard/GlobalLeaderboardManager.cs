@@ -74,7 +74,6 @@ namespace TootTally.CustomLeaderboard
         {
             if (globalLeaderboard != null && globalLeaderboard.HasLeaderboard)
                 UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
-
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]

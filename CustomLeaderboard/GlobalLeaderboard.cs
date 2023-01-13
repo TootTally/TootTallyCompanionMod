@@ -169,7 +169,11 @@ namespace TootTally.CustomLeaderboard
                 LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, "RowEntry" + scoreData.player, scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
                 _scoreGameObjectList.Add(rowEntry);
                 if (scoreData.player == ReplaySystemJson.userInfo.username)
+                {
+                    rowEntry.imageStrip.color = new Color(.65f, .65f, .65f, .25f);
+                    rowEntry.imageStrip.gameObject.SetActive(true);
                     _localScoreId = count - 1;
+                }
                 count++;
             }
             if (_scoreGameObjectList.Count > 8)
