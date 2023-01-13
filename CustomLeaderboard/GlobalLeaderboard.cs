@@ -47,7 +47,7 @@ namespace TootTally.CustomLeaderboard
         private Slider _slider;
         private GameObject _sliderHandle;
 
-        private int _currentSelectedSongHash;
+        private int _currentSelectedSongHash, _localScoreId;
         public bool HasLeaderboard => _leaderboard != null;
 
         private float _scrollAcceleration;
@@ -99,7 +99,7 @@ namespace TootTally.CustomLeaderboard
             DestroyFromParent(_leaderboard, ".......");
             DestroyFromParent(_leaderboard, "\"HIGH SCORES\"");
             for (int i = 1; i <= 5; i++)
-                DestroyFromParent(_leaderboard, i.ToString());
+                _leaderboard.transform.Find(i.ToString()).gameObject.SetActive(false);
         }
 
         public void CustomizeGameMenuUI()
@@ -122,6 +122,7 @@ namespace TootTally.CustomLeaderboard
         public void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
         {
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
+            _scrollAcceleration = 0;
 
             string trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
@@ -162,10 +163,17 @@ namespace TootTally.CustomLeaderboard
         public void RefreshLeaderboard()
         {
             var count = 1;
+            _localScoreId = 0;
             foreach (SerializableClass.ScoreDataFromDB scoreData in _scoreDataList)
             {
                 LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, "RowEntry" + scoreData.player, scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
                 _scoreGameObjectList.Add(rowEntry);
+                if (scoreData.player == ReplaySystemJson.userInfo.username)
+                {
+                    rowEntry.imageStrip.color = new Color(.65f, .65f, .65f, .25f);
+                    rowEntry.imageStrip.gameObject.SetActive(true);
+                    _localScoreId = count - 1;
+                }
                 count++;
             }
             if (_scoreGameObjectList.Count > 8)
@@ -173,7 +181,6 @@ namespace TootTally.CustomLeaderboard
                 _slider.value = 0f;
                 _sliderHandle.GetComponent<RectTransform>().anchoredPosition = new Vector2(-12, 522);
                 ShowSlider();
-
             }
             else
                 HideSlider();
@@ -246,6 +253,15 @@ namespace TootTally.CustomLeaderboard
         public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
         public void OpenSongLeaderboard() => Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
 
+        public void ScrollToLocalScore()
+        {
+            if (_scoreGameObjectList.Count > 8 && _localScoreId != 0)
+            {
+                _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
+                _slider.onValueChanged.Invoke(_slider.value);
+            }
+
+        }
 
 
         public void UpdateLoadingSwirlyAnimation()

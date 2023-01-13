@@ -205,7 +205,7 @@ namespace TootTally.Graphics
 
             scoreboard.AddComponent<RectMask2D>();
             RectTransform scoreboardRectTransform = scoreboard.GetComponent<RectTransform>();
-            scoreboardRectTransform.anchoredPosition = new Vector2(-29, -10);
+            scoreboardRectTransform.anchoredPosition = new Vector2(-30, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
         }
 

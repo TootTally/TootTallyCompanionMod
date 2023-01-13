@@ -15,6 +15,7 @@ using TootTally.Utils;
 using TrombLoader.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Scripting;
 
 namespace TootTally.Replays
 {
@@ -57,6 +58,8 @@ namespace TootTally.Replays
                 StartReplayRecorder(__instance);
             }
             __instance.notescoresamples = 0; //Temporary fix for a glitch
+            GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
+
         }
 
         [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
@@ -96,14 +99,14 @@ namespace TootTally.Replays
                 StopReplayPlayer(__instance);
                 GlobalVariables.localsave.tracks_played--;
             }
-
+            GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
         public static void ReplayIndicator(PointSceneController __instance)
         {
-            if (_isReplayRecording) return; // Replay not running, an actual play happened
+            if (wasPlayingReplay) return; // Replay not running, an actual play happened
             // This code came from AutoToot (https://github.com/TomDotBat/AutoToot/blob/master/Patches/PointSceneControllerPatch.cs)
             GameObject tootTextObject = GameObject.Find("Canvas/buttons/coingroup/Text");
             if (tootTextObject == null)
@@ -171,6 +174,7 @@ namespace TootTally.Replays
             _hasPaused = true;
             _isReplayPlaying = _isReplayRecording = false;
             Plugin.LogInfo("Level paused, stopped " + (_isReplayPlaying ? "replay" : "recording") + " and cleared replay data");
+            GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]

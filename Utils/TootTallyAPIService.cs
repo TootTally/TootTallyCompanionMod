@@ -64,6 +64,7 @@ namespace TootTally.Utils
                     username = "Guest",
                     id = 0,
                 };
+                LogInfo($"Logged in with Guest Account");
             }
             callback(user);
 
