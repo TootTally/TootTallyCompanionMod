@@ -33,7 +33,7 @@ namespace TootTally
 
         public static Plugin Instance;
         private Dictionary<string, string> plugins = new();
-        public const int BUILDDATE = 20230106;
+        public const int BUILDDATE = 20230112;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
 

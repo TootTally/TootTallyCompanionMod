@@ -20,6 +20,8 @@ namespace TootTally.Replays
 {
     public static class ReplaySystemJson
     {
+        public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
+
         public static SerializableClass.User userInfo; //Temporary public
         private static int _targetFramerate;
         private static int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
@@ -500,6 +502,13 @@ namespace TootTally.Replays
 
             ClearData();
             var replayJson = JSONObject.Parse(jsonFileFromZip);
+            if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
+            {
+                Plugin.LogError("Cannot load replay:");
+                Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
+                Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
+                return false;
+            }
             GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
             foreach (JSONArray jsonArray in replayJson["framedata"])
                 _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
