@@ -46,25 +46,20 @@ namespace TootTally.Graphics
 
             SetCustomButtonPrefab();
             SetStarPrefab();
+            _isHomeControllerInitialized = true;
         }
 
         public static void OnLevelSelectControllerInitialize()
         {
             if (_isLevelSelectControllerInitialized) return;
 
-            Plugin.LogInfo("SetVerticalSliderPrefab");
             SetVerticalSliderPrefab();
-            Plugin.LogInfo("SetSteamLeaderboardPrefab");
             SetSteamLeaderboardPrefab();
-            Plugin.LogInfo("SetSingleScorePrefab");
             SetSingleScorePrefab();
-            Plugin.LogInfo("SetLeaderboardHeaderPrefab");
             SetLeaderboardHeaderPrefab();
-            Plugin.LogInfo("SetLeaderboardTextPrefab");
             SetLeaderboardTextPrefab();
-            Plugin.LogInfo("SetSingleRowPrefab");
             SetSingleRowPrefab();
-
+            _isLevelSelectControllerInitialized = true;
         }
 
         #region SetPrefabs
