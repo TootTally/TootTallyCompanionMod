@@ -78,18 +78,13 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, APIKey);
             }
 
-            // Read every plugin being loaded by BepInEx and hash it
-            // foreach (KeyValuePair<string, BepInEx.PluginInfo> plugin in Chainloader.PluginInfos)
-            // {
-            //     LogInfo($"PLUGIN: {plugin.Key} | HASH: {CalcFileHash(plugin.Value.Location)}");
-            // }
-
             AssetManager.LoadAssets();
             Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.GlobalLeaderboardManager));
-            LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
+            LogInfo($"Game Version: {GlobalVariables.version}");
         }
 
         public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
