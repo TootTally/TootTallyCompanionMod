@@ -31,6 +31,7 @@ namespace TootTally.Graphics
             _settingsGraphics = __instance.fullsettingspanel.transform.Find("Settings").gameObject;
             OnHomeControllerInitialize();
         }
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         static void YoinkSettingsGraphicsLevelSelectController()

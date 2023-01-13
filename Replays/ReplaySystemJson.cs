@@ -502,6 +502,7 @@ namespace TootTally.Replays
                 Plugin.LogError("Cannot load replay:");
                 Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
+                _replayFileName = null;
                 return false;
             }
             GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
