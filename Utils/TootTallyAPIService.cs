@@ -70,7 +70,7 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart)
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart, Action callback)
         {
 
             string apiLink = $"{APIURL}/api/upload/";
@@ -87,11 +87,8 @@ namespace TootTally.Utils
                 PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
             }
             else
-            {
                 PopUpNotifManager.DisplayNotif("Error in sending chart", Color.red);
-            }
-
-
+            callback();
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SubmitScore(SerializableClass.SendableScore score)

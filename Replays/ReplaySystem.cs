@@ -8,6 +8,7 @@ using System.Data.SqlTypes;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using TootTally.Compatibility;
 using TootTally.Graphics;
@@ -65,6 +66,30 @@ namespace TootTally.Replays
         {
             if (_replayFileName != null)
                 StartReplayPlayer(__instance);
+            else
+            {
+                _replayUUID = null;
+                string trackRef = GlobalVariables.chosen_track;
+                bool isCustom = Globals.IsCustomTrack(trackRef);
+                string songFilePath = GetSongFilePath(isCustom, trackRef);
+                string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
+                string songHash = isCustom ? Plugin.Instance.CalcFileHash(songFilePath) : trackRef;
+
+                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+                {
+                    if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
+                    {
+                        SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
+                        __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
+                        {
+                            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+                        }));
+                    }
+                    else
+                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+
+                }));
+            }
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -205,8 +230,6 @@ namespace TootTally.Replays
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
-
             Plugin.LogInfo("Started recording replay");
         }
 
@@ -273,6 +296,11 @@ namespace TootTally.Replays
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
             if (_hasPaused) return; //Don't submit if paused during the play
+            if (_replayUUID == null)
+            {
+                PopUpNotifManager.DisplayNotif("Leaderboard doesn't exist\n Replay failed to upload", Color.red, 9f);
+                return;
+            }
 
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             // Create Replays directory in case it doesn't exist
@@ -284,8 +312,8 @@ namespace TootTally.Replays
             string songHash;
             if (!isCustom)
             {
-                string songFilePath = Plugin.SongSelect.GetSongFilePath(false, trackRef);
-                string tmb = Plugin.GenerateBaseTmb(songFilePath); 
+                string songFilePath = GetSongFilePath(false, trackRef);
+                string tmb = GenerateBaseTmb(songFilePath);
                 songHash = Plugin.Instance.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
             else
@@ -606,13 +634,54 @@ namespace TootTally.Replays
             _tootData.Clear();
         }
 
+        private static string GetSongFilePath(bool isCustom, string trackRef)
+        {
+            return isCustom ?
+                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
+                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
+        }
+
         private static string GetChoosenSongHash()
         {
             string trackRef = GlobalVariables.chosen_track_data.trackref;
             bool isCustom = Globals.IsCustomTrack(trackRef);
             return isCustom ? GetSongHash(trackRef) : trackRef;
         }
-        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackref));
+        public static string GetSongHash(string trackref) => Plugin.Instance.CalcFileHash(GetSongFilePath(true, trackref));
+
+        public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
+        {
+            if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
+            var tmb = new JSONObject();
+            tmb["name"] = singleTrackData.trackname_long;
+            tmb["shortName"] = singleTrackData.trackname_short;
+            tmb["trackRef"] = singleTrackData.trackref;
+            int year = 0;
+            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
+            tmb["year"] = year;
+            tmb["author"] = singleTrackData.artist;
+            tmb["genre"] = singleTrackData.genre;
+            tmb["description"] = singleTrackData.desc;
+            tmb["difficulty"] = singleTrackData.difficulty;
+            using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
+            {
+                var binaryFormatter = new BinaryFormatter();
+                var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
+                var levelData = new JSONArray();
+                savedLevel.savedleveldata.ForEach(arr =>
+                {
+                    var noteData = new JSONArray();
+                    foreach (var note in arr) noteData.Add(note);
+                    levelData.Add(noteData);
+                });
+                tmb["savednotespacing"] = savedLevel.savednotespacing;
+                tmb["endpoint"] = savedLevel.endpoint;
+                tmb["timesig"] = savedLevel.timesig;
+                tmb["tempo"] = savedLevel.tempo;
+                tmb["notes"] = levelData;
+            }
+            return tmb.ToString();
+        }
 
         public static float GetNoteHolderPrecisionMultiplier() => 10 / (GlobalVariables.gamescrollspeed <= 1 ? GlobalVariables.gamescrollspeed : 1);
 

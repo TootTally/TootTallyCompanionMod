@@ -86,7 +86,6 @@ namespace TootTally
             // }
 
             AssetManager.LoadAssets();
-            Harmony.CreateAndPatchAll(typeof(SongSelect));
             Harmony.CreateAndPatchAll(typeof(ReplaySystem));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
@@ -94,87 +93,10 @@ namespace TootTally
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
-        public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
-        {
-            if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-            var tmb = new JSONObject();
-            tmb["name"] = singleTrackData.trackname_long;
-            tmb["shortName"] = singleTrackData.trackname_short;
-            tmb["trackRef"] = singleTrackData.trackref;
-            int year = 0;
-            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-            tmb["year"] = year;
-            tmb["author"] = singleTrackData.artist;
-            tmb["genre"] = singleTrackData.genre;
-            tmb["description"] = singleTrackData.desc;
-            tmb["difficulty"] = singleTrackData.difficulty;
-            using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
-            {
-                var binaryFormatter = new BinaryFormatter();
-                var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new JSONArray();
-                savedLevel.savedleveldata.ForEach(arr =>
-                {
-                    var noteData = new JSONArray();
-                    foreach (var note in arr) noteData.Add(note);
-                    levelData.Add(noteData);
-                });
-                tmb["savednotespacing"] = savedLevel.savednotespacing;
-                tmb["endpoint"] = savedLevel.endpoint;
-                tmb["timesig"] = savedLevel.timesig;
-                tmb["tempo"] = savedLevel.tempo;
-                tmb["notes"] = levelData;
-            }
-            return tmb.ToString();
-        }
-
         public void Update()
         {
 
         }
 
-
-        //Would like to rewrite this somewhere else than in plugin
-        public static class SongSelect
-        {
-            public static string songHash { get; private set; }
-            public static int maxCombo;
-
-            [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
-            [HarmonyPrefix]
-            public static void AddSongToDBIfNotExist(LoadController __instance)
-            {
-                string trackRef = GlobalVariables.chosen_track;
-                bool isCustom = Globals.IsCustomTrack(trackRef);
-                string songFilePath = GetSongFilePath(isCustom, trackRef);
-                string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
-                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : trackRef;
-
-                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
-                {
-                    if (Instance.AllowTMBUploads.Value && songHashInDB == 0)
-                    {
-                        SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
-                        __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
-                    }
-                }));
-                maxCombo = 0; // Reset tracked maxCombo
-            }
-
-            public static string GetSongFilePath(bool isCustom, string trackRef)
-            {
-                return isCustom ?
-                    Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
-                    $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
-            }
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.updateHighestCombo))]
-            [HarmonyPostfix]
-            public static void UpdateCombo(GameController __instance)
-            {
-                maxCombo = __instance.highestcombo_level;
-            }
-
-        }
     }
 }

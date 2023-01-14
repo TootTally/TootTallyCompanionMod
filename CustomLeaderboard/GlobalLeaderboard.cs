@@ -284,7 +284,13 @@ namespace TootTally.CustomLeaderboard
             _tabs.SetActive(true);
         }
 
-        private static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackRef));
+        private static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(GetSongFilePath(true, trackRef));
+        private static string GetSongFilePath(bool isCustom, string trackRef)
+        {
+            return isCustom ?
+                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
+                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
+        }
 
         public enum LeaderboardState
         {

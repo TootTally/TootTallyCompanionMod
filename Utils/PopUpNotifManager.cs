@@ -47,8 +47,6 @@ namespace TootTally.Utils
             }
         }
 
-
-
         [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
         [HarmonyPostfix]
         public static void Update()
