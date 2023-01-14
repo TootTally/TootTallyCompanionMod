@@ -32,6 +32,7 @@ namespace TootTally.Graphics
             _settingsGraphics = __instance.fullsettingspanel.transform.Find("Settings").gameObject;
             OnHomeControllerInitialize();
         }
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         static void YoinkSettingsGraphicsLevelSelectController()
@@ -48,6 +49,7 @@ namespace TootTally.Graphics
             SetNotificationPrefab();
             SetCustomButtonPrefab();
             SetStarPrefab();
+            _isHomeControllerInitialized = true;
         }
 
         public static void OnLevelSelectControllerInitialize()
@@ -60,7 +62,7 @@ namespace TootTally.Graphics
             SetLeaderboardHeaderPrefab();
             SetLeaderboardTextPrefab();
             SetSingleRowPrefab();
-
+            _isLevelSelectControllerInitialized = true;
         }
 
         #region SetPrefabs
@@ -244,7 +246,7 @@ namespace TootTally.Graphics
 
             scoreboard.AddComponent<RectMask2D>();
             RectTransform scoreboardRectTransform = scoreboard.GetComponent<RectTransform>();
-            scoreboardRectTransform.anchoredPosition = new Vector2(-29, -10);
+            scoreboardRectTransform.anchoredPosition = new Vector2(-30, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
         }
 

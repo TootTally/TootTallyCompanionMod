@@ -10,6 +10,7 @@ namespace TootTally.CustomLeaderboard
     {
         public GameObject singleScore;
         public Text rank, username, score, percent, grade, maxcombo;
+        public Image imageStrip;
         public bool hasBackground;
         public string replayId;
         public int rowId;
@@ -41,6 +42,7 @@ namespace TootTally.CustomLeaderboard
             maxcombo.alignment = TextAnchor.MiddleRight;
 
             this.hasBackground = hasBackground;
+            imageStrip = this.singleScore.transform.Find("Image").gameObject.GetComponent<Image>();
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
         }
 

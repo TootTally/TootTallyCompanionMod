@@ -79,18 +79,13 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, APIKey);
             }
 
-            // Read every plugin being loaded by BepInEx and hash it
-            // foreach (KeyValuePair<string, BepInEx.PluginInfo> plugin in Chainloader.PluginInfos)
-            // {
-            //     LogInfo($"PLUGIN: {plugin.Key} | HASH: {CalcFileHash(plugin.Value.Location)}");
-            // }
-
             AssetManager.LoadAssets();
             Harmony.CreateAndPatchAll(typeof(ReplaySystem));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
-            LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
+            LogInfo($"Game Version: {GlobalVariables.version}");
         }
 
         public void Update()
