@@ -213,13 +213,14 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GetUserProfile(LevelSelectController __instance)
         {
-            __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
-            {
-                if (user != null)
+            if (userInfo == null)
+                __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                 {
-                    userInfo = user;
-                }
-            }));
+                    if (user != null)
+                    {
+                        userInfo = user;
+                    }
+                }));
         }
         #endregion
 
@@ -436,8 +437,8 @@ namespace TootTally.Replays
             bool isValid = true;
             List<string> errorList = new List<string>();
 
-
-            for (int i = 0; i < _frameData.Count; i++)
+            //Turning it off until fixed FrameDataOptimization
+            /*for (int i = 0; i < _frameData.Count; i++)
             {
                 if (_frameData.FindAll(frame => frame[(int)FrameDataStructure.NoteHolder] == _frameData[i][(int)FrameDataStructure.NoteHolder]).Count > 1)
                 {
@@ -445,7 +446,7 @@ namespace TootTally.Replays
                     errorList.Add("Duplicate frames found, replay validation failed");
                     break;
                 }
-            }
+            }*/
             for (int i = 0; i < _noteData.Count; i++)
             {
                 //if multiple notes has the same index

@@ -163,7 +163,7 @@ namespace TootTally.CustomLeaderboard
         public void RefreshLeaderboard()
         {
             var count = 1;
-            _localScoreId = 0;
+            _localScoreId = -1;
             foreach (SerializableClass.ScoreDataFromDB scoreData in _scoreDataList)
             {
                 LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, $"RowEntry{scoreData.player}", scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
@@ -256,7 +256,9 @@ namespace TootTally.CustomLeaderboard
 
         public void ScrollToLocalScore()
         {
-            if (_scoreGameObjectList.Count > 8 && _localScoreId != 0)
+            if (_localScoreId == -1)
+                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", Color.white);
+            else if (_scoreGameObjectList.Count > 8)
             {
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
