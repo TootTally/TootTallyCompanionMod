@@ -138,7 +138,6 @@ namespace TootTally.Replays
             OptimizeFrameData(ref _frameData);
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
-            ValidateData();
             _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
 
             replayJson["framedata"] = DataListToJson(_frameData);
@@ -199,44 +198,6 @@ namespace TootTally.Replays
             }
         }
 
-        public bool ValidateData()
-        {
-            bool isValid = true;
-            List<string> errorList = new List<string>();
-
-            //Turning it off until fixed FrameDataOptimization
-            for (int i = 0; i < _frameData.Count; i++)
-            {
-                if (GetDuplicatesFromDataList(_frameData[i][(int)FrameDataStructure.NoteHolder], (int)FrameDataStructure.NoteHolder, _frameData).Count > 1)
-                {
-                    isValid = false;
-                    errorList.Add("Duplicate frames found, replay validation failed");
-                    break;
-                }
-            }
-            for (int i = 0; i < _noteData.Count; i++)
-            {
-                //if multiple notes has the same index
-                if (GetDuplicatesFromDataList(_noteData[i][(int)NoteDataStructure.NoteIndex], (int)NoteDataStructure.NoteIndex, _noteData).Count > 1)
-                {
-                    isValid = false;
-                    errorList.Add("Duplicate note index found, replay validation failed");
-                    break;
-                }
-            }
-
-            if (GetDuplicatesFromDataList(-1, (int)NoteDataStructure.NoteJudgement, _noteData).Count > 1)
-            {
-                isValid = false;
-                errorList.Add("Note Data is missing note judgement, replay validation failed");
-            }
-
-            if (!isValid)
-                errorList.ForEach(error => Plugin.LogError(error));
-
-            return isValid;
-        }
-
         private static List<int[]> GetDuplicatesFromDataList(float valueToFind, int dataIndex, List<int[]> dataList) => dataList.FindAll(data => data[dataIndex] == valueToFind);
         #endregion
 
@@ -287,7 +248,6 @@ namespace TootTally.Replays
             foreach (JSONArray jsonArray in replayJson["tootdata"])
                 _tootData.Add(new int[] { jsonArray[0] });
             _frameIndex = _tootIndex = 0;
-            ValidateData();//Validation Doesnt do anything except return a log, but we can use this to change the ReplayState to something like "ReplayValidationFailed" and use ReplaySystemManager to handle it.
 
             return ReplayState.ReplayLoadSuccess;
         }
