@@ -187,12 +187,18 @@ namespace TootTally.Replays
         public static void OnLevelselectControllerStartInstantiateReplay(LevelSelectController __instance)
         {
             if (_replay == null)
+            {
+                _replayManagerState = ReplayManagerState.None;
                 _replay = new NewReplaySystem();
+            }
 
             if (!_hasGreetedUser)
             {
                 _hasGreetedUser = true;
-                PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", Color.white, 9f);
+                if (Plugin.userInfo.username != "Guest")
+                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", Color.white, 9f);
+                else
+                    PopUpNotifManager.DisplayNotif($"Login on TootTally\n<size=16>Put the APIKey in your config file\nto be able to submit scores</size>", Color.red, 9f);
             }
         }
         #endregion
@@ -284,6 +290,7 @@ namespace TootTally.Replays
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
             if (_hasPaused) return; //Don't submit if paused during the play
+            if (_replayUUID == null) return; //Dont save or upload if no UUID
 
             SaveReplayToFile();
             SendReplayFileToServer();
@@ -296,8 +303,8 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-            FileHelper.WriteJsonToFile(replayDir, _replayUUID, _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
 
+            FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate).ToString());
         }
 
         private static void SendReplayFileToServer()

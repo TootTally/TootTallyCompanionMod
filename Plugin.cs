@@ -34,8 +34,7 @@ namespace TootTally
 
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        private Dictionary<string, string> plugins = new();
-        public const int BUILDDATE = 20230112;
+        public const int BUILDDATE = 20230115;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; } 
 

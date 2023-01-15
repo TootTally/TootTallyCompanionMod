@@ -111,7 +111,7 @@ namespace TootTally.Replays
             else
                 songHash = SongDataHelper.GetSongHash(trackRef);
 
-            string username = "todo";
+            string username = Plugin.userInfo.username;
 
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
