@@ -46,12 +46,12 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
         [HarmonyPrefix]
-        public static void LoadControllerPrefixPatch(LoadController __instance)
+        public static void LoadControllerPrefixPatch()
         {
             if (_replayFileName != null)
                 OnReplayingStart();
             else
-                OnLoadGamePlayAsyncSetupRecording(__instance);
+                OnLoadGamePlayAsyncSetupRecording();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -168,6 +168,7 @@ namespace TootTally.Replays
         {
             _replay.ClearData();
             _hasPaused = true;
+            _replayUUID = null;
             _replayManagerState = ReplayManagerState.Paused;
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
             Plugin.LogInfo("Level paused, cleared replay data");
@@ -179,7 +180,14 @@ namespace TootTally.Replays
         {
             _replayManagerState = ReplayManagerState.None;
             _replayFileName = null;
-            _replayUUID = null;
+        }
+
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
+        [HarmonyPostfix]
+        static void GameControllerPauseRetryLevelPostfixPatch()
+        {
+            LoadControllerPrefixPatch();
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -232,7 +240,7 @@ namespace TootTally.Replays
         }
 
 
-        public static void OnLoadGamePlayAsyncSetupRecording(LoadController __instance)
+        public static void OnLoadGamePlayAsyncSetupRecording()
         {
             _replayUUID = null;
             string trackRef = GlobalVariables.chosen_track;
@@ -240,18 +248,18 @@ namespace TootTally.Replays
             string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
             string songHash = isCustom ? SongDataHelper.CalcFileHash(songFilePath) : trackRef;
 
-            StartAPICallCoroutine(__instance, songHash, songFilePath, isCustom);
+            StartAPICallCoroutine(songHash, songFilePath, isCustom);
         }
 
-        public static void StartAPICallCoroutine(LoadController __instance, string songHash, string songFilePath, bool isCustom)
+        public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
         {
-            __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
                 {
                     string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
                     SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
-                    __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
                     }));
