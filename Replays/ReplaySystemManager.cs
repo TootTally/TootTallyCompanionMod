@@ -293,7 +293,8 @@ namespace TootTally.Replays
             if (_replayUUID == null) return; //Dont save or upload if no UUID
 
             SaveReplayToFile();
-            SendReplayFileToServer();
+            if (Plugin.userInfo.username != "Guest") //Don't upload if logged in as a Guest
+                SendReplayFileToServer();
         }
 
         private static void SaveReplayToFile()
