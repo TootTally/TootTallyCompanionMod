@@ -169,7 +169,7 @@ namespace TootTally.CustomLeaderboard
             {
                 LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, $"RowEntry{scoreData.player}", scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
                 _scoreGameObjectList.Add(rowEntry);
-                if (scoreData.player == ReplaySystemManager.userInfo.username)
+                if (scoreData.player == Plugin.userInfo.username)
                 {
                     rowEntry.imageStrip.color = new Color(.65f, .65f, .65f, .25f);
                     rowEntry.imageStrip.gameObject.SetActive(true);
@@ -251,7 +251,7 @@ namespace TootTally.CustomLeaderboard
         public void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
         public void ShowErrorText() => _errorsHolder.SetActive(true); public void HideErrorText() => _errorsHolder.SetActive(false);
 
-        public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + ReplaySystemManager.userInfo.id);
+        public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + Plugin.userInfo.id);
         public void OpenLoginPage() => Application.OpenURL("https://toottally.com/login");
         public void OpenSongLeaderboard() => Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
 

@@ -60,6 +60,7 @@ namespace TootTally
             }
 
             AssetManager.LoadAssets();
+            Harmony.CreateAndPatchAll(typeof(UserLogin));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
@@ -77,7 +78,7 @@ namespace TootTally
         {
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
-            public static void OnLevelselectControllerStartInstantiateReplay(HomeController __instance)
+            public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
                 if (userInfo == null)
                 {

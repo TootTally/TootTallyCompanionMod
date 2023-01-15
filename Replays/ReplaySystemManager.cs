@@ -17,7 +17,6 @@ namespace TootTally.Replays
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
-        public static SerializableClass.User userInfo; //Temporary public
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused;
