@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace TootTally.Utils
+namespace TootTally.Utils.Helpers
 {
     public static class EasingHelper
     {

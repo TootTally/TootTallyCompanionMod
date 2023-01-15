@@ -5,6 +5,7 @@ using System.Text;
 using TootTally.CustomLeaderboard;
 using TootTally.Replays;
 using TootTally.Utils;
+using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -506,36 +507,10 @@ namespace TootTally.Graphics
                 CreateCustomButton(rowEntry.singleScore.transform, Vector2.zero, new Vector2(26, 26), "►", "ReplayButton",
                 delegate
                 {
-                    ResolveLoadReplay(replayId, levelSelectControllerInstance);
+                    ReplaySystemManager.ResolveLoadReplay(replayId, levelSelectControllerInstance);
                 });
             }
             return rowEntry;
-        }
-
-        private static ReplaySystem.ReplayState ResolveLoadReplay(string replayId, LevelSelectController levelSelectControllerInstance)
-        {
-            ReplaySystem.ReplayState replayState = ReplaySystem.LoadReplay(replayId);
-            switch (replayState)
-            {
-                case ReplaySystem.ReplayState.ReplayLoadSuccess:
-                    levelSelectControllerInstance.playbtn.onClick?.Invoke();
-                    break;
-
-                case ReplaySystem.ReplayState.ReplayLoadNotFound:
-                    PopUpNotifManager.DisplayNotif("Downloading replay...", Color.white);
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
-                    {
-                        ResolveLoadReplay(uuid, levelSelectControllerInstance);
-                    }));
-                    break;
-
-                case ReplaySystem.ReplayState.ReplayLoadErrorIncompatible:
-                    break;
-                case ReplaySystem.ReplayState.ReplayLoadError:
-                    break;
-
-            }
-            return replayState;
         }
 
         public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text, Color textColor)

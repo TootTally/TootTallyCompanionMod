@@ -88,7 +88,7 @@ namespace TootTally.CustomLeaderboard
         {
             int tabIndex = (int)__args[0];
             if (tabIndex == 0)
-                if (ReplaySystem.userInfo.id != 0)
+                if (ReplaySystemManager.userInfo.id != 0)
                     globalLeaderboard.OpenUserProfile();
                 else
                     globalLeaderboard.OpenLoginPage();

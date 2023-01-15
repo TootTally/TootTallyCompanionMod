@@ -36,32 +36,11 @@ namespace TootTally
         private Dictionary<string, string> plugins = new();
         public const int BUILDDATE = 20230112;
         public ConfigEntry<string> APIKey { get; private set; }
-        public ConfigEntry<bool> AllowTMBUploads { get; private set; }
-
-        public string CalcSHA256Hash(byte[] data)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                string ret = "";
-                byte[] hashArray = sha256.ComputeHash(data);
-                foreach (byte b in hashArray)
-                {
-                    ret += $"{b:x2}";
-                }
-                return ret;
-            }
-        }
+        public ConfigEntry<bool> AllowTMBUploads { get; private set; } 
 
         public void Log(string msg)
         {
             LogInfo(msg);
-        }
-
-        public string CalcFileHash(string fileLocation)
-        {
-            if (!File.Exists(fileLocation))
-                return "";
-            return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
         }
 
         private void Awake()
@@ -80,7 +59,7 @@ namespace TootTally
             }
 
             AssetManager.LoadAssets();
-            Harmony.CreateAndPatchAll(typeof(ReplaySystem));
+            Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
