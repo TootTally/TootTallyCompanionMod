@@ -33,6 +33,7 @@ namespace TootTally
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
         public static Plugin Instance;
+        public static SerializableClass.User userInfo; //Temporary public
         private Dictionary<string, string> plugins = new();
         public const int BUILDDATE = 20230112;
         public ConfigEntry<string> APIKey { get; private set; }
@@ -70,6 +71,25 @@ namespace TootTally
         public void Update()
         {
 
+        }
+
+        private class UserLogin
+        {
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+            public static void OnLevelselectControllerStartInstantiateReplay(HomeController __instance)
+            {
+                if (userInfo == null)
+                {
+                    __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    {
+                        if (user != null)
+                        {
+                            userInfo = user;
+                        }
+                    }));
+                }
+            }
         }
 
     }

@@ -21,7 +21,7 @@ namespace TootTally.Replays
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused;
-        private static bool _hasReleaseToot, _lastIsTooting;
+        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
 
@@ -187,18 +187,14 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnLevelselectControllerStartInstantiateReplay(LevelSelectController __instance)
         {
-            if (userInfo == null)
-            {
+            if (_replay == null)
                 _replay = new NewReplaySystem();
-                __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
-                {
-                    if (user != null)
-                    {
-                        userInfo = user;
-                    }
-                }));
-            }
 
+            if (!_hasGreetedUser)
+            {
+                _hasGreetedUser = true;
+                PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", Color.white, 9f);
+            }
         }
         #endregion
 

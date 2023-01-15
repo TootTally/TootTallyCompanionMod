@@ -55,7 +55,6 @@ namespace TootTally.Utils
                     username = jsonData["username"],
                     id = jsonData["id"],
                 };
-                PopUpNotifManager.DisplayNotif($"Welcome, {user.username}!", Color.white, 9f);
                 LogInfo($"Welcome, {user.username}!");
             }
             else
