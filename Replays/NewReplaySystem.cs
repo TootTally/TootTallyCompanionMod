@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using TootTally.Compatibility;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.Helpers;
@@ -25,6 +24,7 @@ namespace TootTally.Replays
         private DateTimeOffset _startTime, _endTime;
 
         private bool _wasTouchScreenUsed;
+        private bool _wasTabletUsed;
         private bool _isTooting;
         public bool GetIsTooting { get => _isTooting; }
 

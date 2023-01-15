@@ -76,12 +76,12 @@ namespace TootTally
         private class UserLogin
         {
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-            [HarmonyPostfix]
-            public static void OnHomeControllerStartLoginUser(HomeController __instance)
+            [HarmonyPrefix]
+            public static void OnHomeControllerStartLoginUser()
             {
                 if (userInfo == null)
                 {
-                    __instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
                         if (user != null)
                         {
