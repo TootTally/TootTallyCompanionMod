@@ -44,6 +44,9 @@ namespace TootTally.Replays
 
         }
 
+
+
+
         [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
         [HarmonyPrefix]
         public static void LoadControllerPrefixPatch()
@@ -53,6 +56,14 @@ namespace TootTally.Replays
             else
                 OnLoadGamePlayAsyncSetupRecording();
         }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
+        [HarmonyPostfix]
+        static void GameControllerPauseRetryLevelPostfixPatch() => LoadControllerPrefixPatch();
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.clickRetry))]
+        [HarmonyPostfix]
+        static void PointSceneControllerclickRetryPostfixPatch() => LoadControllerPrefixPatch();
+
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
         [HarmonyPostfix]
@@ -183,12 +194,7 @@ namespace TootTally.Replays
         }
 
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
-        [HarmonyPostfix]
-        static void GameControllerPauseRetryLevelPostfixPatch()
-        {
-            LoadControllerPrefixPatch();
-        }
+
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
@@ -257,7 +263,7 @@ namespace TootTally.Replays
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
                 {
-                    string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
+                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(songFilePath);
                     SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {

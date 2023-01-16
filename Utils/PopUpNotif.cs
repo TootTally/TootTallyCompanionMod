@@ -13,16 +13,18 @@ namespace TootTally.Utils
         private string _text;
         private Color _textColor;
         private RectTransform _rectTransform;
-        private Vector2 _startPosition, _endPosition;
-        private float _lifespan, _maxLifespan, _transitionTimer, _maxTransitionTimer;
+        private Vector2 _endPosition;
+        private float _lifespan, _maxLifespan;
         private CanvasGroup _canvasGroup;
+        EasingHelper.SecondOrderDynamics _secondOrderDynamic;
 
         public void SetText(string message) => _text = message;
         public void SetTextColor(Color color) => _textColor = color;
-        public void Initialize(float lifespan, Vector2 endPosition, float transitionTime)
+        public void Initialize(float lifespan, Vector2 endPosition)
         {
             this._rectTransform = gameObject.GetComponent<RectTransform>();
-            SetTransitionToNewPosition(endPosition, transitionTime);
+            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.3f, 0.75f, 0.75f);
+            SetTransitionToNewPosition(endPosition);
             this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<Text>();
             _textHolder.text = _text;
             _textHolder.color = _textColor;
@@ -30,21 +32,18 @@ namespace TootTally.Utils
             _lifespan = _maxLifespan = lifespan;
         }
 
-        public void SetTransitionToNewPosition(Vector2 endPosition, float transitionTime)
+        public void SetTransitionConstants(float f, float z, float r) => _secondOrderDynamic.SetConstants(f, z, r);
+
+        public void SetTransitionToNewPosition(Vector2 endPosition)
         {
-            _transitionTimer = _maxTransitionTimer = transitionTime;
-            _startPosition = _rectTransform.anchoredPosition;
+            _secondOrderDynamic.SetStartPosition(_rectTransform.anchoredPosition);
             _endPosition = endPosition;
         }
 
         public void Update()
         {
-            if (_transitionTimer > 0)
-            {
-                _transitionTimer -= Time.deltaTime;
-                float by = 1 - (_transitionTimer / _maxTransitionTimer);
-                _rectTransform.anchoredPosition = EasingHelper.Lerp(_startPosition, _endPosition, EasingHelper.EaseOut(by));
-            }
+            if (_secondOrderDynamic != null && _rectTransform.anchoredPosition != _endPosition)
+                _rectTransform.anchoredPosition = _secondOrderDynamic.GetNewPosition(_endPosition, Time.deltaTime);
 
             _lifespan -= Time.deltaTime;
             if (_lifespan / 1.75f <= 1)
