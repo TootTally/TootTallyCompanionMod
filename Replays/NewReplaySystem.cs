@@ -34,9 +34,6 @@ namespace TootTally.Replays
 
 
         #region ReplayRecorder
-        public NewReplaySystem()
-        {
-        }
 
         public void SetupRecording(GameController __instance)
         {

@@ -17,6 +17,8 @@ using TootTally.Graphics;
 using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.CustomLeaderboard;
+using TootTally.Utils.Helpers;
+using BepInEx.Bootstrap;
 
 namespace TootTally
 {
@@ -48,6 +50,10 @@ namespace TootTally
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
+
+            
+
+
 
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
@@ -89,9 +95,14 @@ namespace TootTally
                         if (user != null)
                         {
                             userInfo = user;
+                            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
                         }
                     }));
+                    
                 }
+
+
+
             }
         }
 

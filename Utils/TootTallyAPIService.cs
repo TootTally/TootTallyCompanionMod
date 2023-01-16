@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -83,28 +84,17 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                LogInfo($"Chart Sent.");
-                PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
+                if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
+                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Color.yellow);
+                else
+                {
+                    LogInfo($"Chart Sent.");
+                    PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
+                }
             }
             else
                 PopUpNotifManager.DisplayNotif("Error in sending chart", Color.red);
             callback();
-        }
-
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitScore(SerializableClass.SendableScore score)
-        {
-            string apiLink = $"{APIURL}/api/submitscore/";
-            string jsonified = JsonUtility.ToJson(score);
-            var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
-
-            DownloadHandler dlHandler = new DownloadHandler();
-            UploadHandler ulHandler = new UploadHandlerRaw(jsonbin);
-            ulHandler.contentType = "application/json";
-
-            UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
-            yield return webRequest.SendWebRequest();
-            if (!HasError(webRequest, true))
-                LogInfo($"Score Sent.");
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
@@ -154,7 +144,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 File.WriteAllBytes(replayDir + uuid + ".ttr", webRequest.downloadHandler.data);
-                
+
                 LogInfo("Replay Downloaded.");
                 callback(uuid);
             }
@@ -233,6 +223,34 @@ namespace TootTally.Utils
                 callback(DownloadHandlerTexture.GetContent(webRequest));
             else
                 callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendModInfo(Dictionary<string, BepInEx.PluginInfo> modsDict)
+        {
+            JSONObject json = new JSONObject();
+            JSONArray jsonMods = new JSONArray();
+
+            foreach (string key in modsDict.Keys)
+            {
+                JSONObject jsonobj = new JSONObject();
+                jsonobj["name"] = modsDict[key].Metadata.Name;
+                jsonobj["version"] = modsDict[key].Metadata.Version.ToString();
+                jsonobj["hash"] = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location));
+                jsonMods.Add(jsonobj);
+            }
+
+            json["apiKey"] = Plugin.Instance.APIKey.Value;
+            json["mods"] = jsonMods;
+            string apiLink = $"{APIURL}/api/mods/submit/";
+            var jsonbin = System.Text.Encoding.UTF8.GetBytes(json.ToString());
+
+            UnityWebRequest webRequest = PostUploadRequest(apiLink, jsonbin);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                LogInfo("Request successful");
+            }
         }
 
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")
