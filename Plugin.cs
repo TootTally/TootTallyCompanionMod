@@ -36,7 +36,8 @@ namespace TootTally
         public static SerializableClass.User userInfo; //Temporary public
         public const int BUILDDATE = 20230116;
         public ConfigEntry<string> APIKey { get; private set; }
-        public ConfigEntry<bool> AllowTMBUploads { get; private set; } 
+        public ConfigEntry<bool> AllowTMBUploads { get; private set; }
+        public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public void Log(string msg)
         {
@@ -51,11 +52,13 @@ namespace TootTally
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
+            ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             object settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
             {
                 OptionalTrombSettings.Add(settings, AllowTMBUploads);
                 OptionalTrombSettings.Add(settings, APIKey);
+                OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
 
             AssetManager.LoadAssets();

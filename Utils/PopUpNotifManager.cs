@@ -31,10 +31,13 @@ namespace TootTally.Utils
 
         public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)
         {
-            PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
-            notif.Initialize(lifespan, new Vector2(695, -400));
-            _activeNotificationList.Add(notif);
-            OnNotifCountChangeSetNewPosition();
+            if (Plugin.Instance.ShouldDisplayToasts.Value)
+            {
+                PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
+                notif.Initialize(lifespan, new Vector2(695, -400));
+                _activeNotificationList.Add(notif);
+                OnNotifCountChangeSetNewPosition();
+            }
         }
 
         private static void OnNotifCountChangeSetNewPosition()
