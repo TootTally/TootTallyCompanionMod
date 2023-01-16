@@ -25,7 +25,22 @@ namespace TootTally.Utils.Helpers
             return 1 - EaseIn((1 - by) * 2) / 2;
         }
 
-        //Taken from https://www.youtube.com/watch?v=KPoeNZZ6H4s and modified to my liking
+        /// Taken from https://www.youtube.com/watch?v=KPoeNZZ6H4s and modified to my liking
+        /// --------------
+        /// Thanks to @TheWhiteShadow#6615 for the detailed explanation
+        /// --------------
+        /// [Damping]
+        /// z = 0 no damping -> vibrates forever
+        /// 0 < z < 1 vibrates but settles at target
+        /// z >= 1 settles at target slower the higher the value (over z amount of Hz(?))
+        /// -------------
+        /// [Initial Response]
+        /// r < 0 "anticipates" the motion (moves in opposite direction for a bit before going to target)
+        /// r = 0 takes time to accelerate
+        /// 0 < r < 1 still takes time to accelerate but less the higher the value
+        /// r = 1 takes no time to accelerate
+        /// r > 1 takes no time to accelerate and overshoots target
+        /// -------------
         public class SecondOrderDynamics
         {
             public Vector2 startPosition;
@@ -38,16 +53,16 @@ namespace TootTally.Utils.Helpers
                 startPosition = newPosition = speed = Vector2.zero;
             }
 
+
             /// <summary>
             /// Constants affect the behavior of the animation in 3 different ways: Frequency, Damping, Initial Response.
-            /// 
             /// </summary>
-            /// <param name="f">f is frequency</param>
-            /// <param name="z">z is damping</param>
-            /// <param name="r">r is initial response</param>
+            /// <param name="f">Frequency</param>
+            /// <param name="z">Damping</param>
+            /// <param name="r">Initial Response</param>
             public void SetConstants(float f, float z, float r)
             {
-                var PI = (float)Math.PI;
+                var PI = Mathf.PI;
                 var PI2f = 2f * PI * f;
 
                 this.f = z / (PI * f);

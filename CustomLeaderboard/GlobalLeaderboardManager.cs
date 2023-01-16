@@ -29,12 +29,6 @@ namespace TootTally.CustomLeaderboard
 
         #region HarmonyPatches
 
-        //Hide leaderboar button from PointSceneController
-        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
-        [HarmonyPostfix]
-        public static void ReplayIndicator(PointSceneController __instance) =>
-            __instance.btn_leaderboard.gameObject.SetActive(false);
-
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         static void OnLevelSelectControllerStartPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
@@ -86,18 +80,22 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPrefix]
         static bool OverwriteClickLeaderboardTabs(object[] __args)
         {
-            int tabIndex = (int)__args[0];
-            if (tabIndex == 0)
-                if (Plugin.userInfo.id != 0)
-                    globalLeaderboard.OpenUserProfile();
-                else
-                    globalLeaderboard.OpenLoginPage();
-            else if (tabIndex == 1)
-                globalLeaderboard.OpenSongLeaderboard();
-            else if (tabIndex == 2)
-                globalLeaderboard.ScrollToLocalScore();
+            if (globalLeaderboard != null && globalLeaderboard.HasLeaderboard)
+            {
+                int tabIndex = (int)__args[0];
+                if (tabIndex == 0)
+                    if (Plugin.userInfo.id != 0)
+                        globalLeaderboard.OpenUserProfile();
+                    else
+                        globalLeaderboard.OpenLoginPage();
+                else if (tabIndex == 1)
+                    globalLeaderboard.OpenSongLeaderboard();
+                else if (tabIndex == 2)
+                    globalLeaderboard.ScrollToLocalScore();
+                return false;
+            }
 
-            return false;
+            return true;
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickNext))]

@@ -197,9 +197,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(tabs.GetComponent<HorizontalLayoutGroup>());
             for (int i = 0; i < 3; i++)
             {
-
                 GameObject currentTab = _steamLeaderboardPrefab.GetComponent<LeaderboardManager>().tabs[i];
-
                 DestroyFromParent(currentTab, "label");
                 DestroyFromParent(currentTab, "rule");
 

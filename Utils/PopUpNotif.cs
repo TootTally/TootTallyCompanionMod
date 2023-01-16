@@ -14,7 +14,7 @@ namespace TootTally.Utils
         private Color _textColor;
         private RectTransform _rectTransform;
         private Vector2 _endPosition;
-        private float _lifespan, _maxLifespan;
+        private float _lifespan;
         private CanvasGroup _canvasGroup;
         EasingHelper.SecondOrderDynamics _secondOrderDynamic;
 
@@ -29,7 +29,7 @@ namespace TootTally.Utils
             _textHolder.text = _text;
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
-            _lifespan = _maxLifespan = lifespan;
+            _lifespan = lifespan;
         }
 
         public void SetTransitionConstants(float f, float z, float r) => _secondOrderDynamic.SetConstants(f, z, r);
@@ -47,7 +47,9 @@ namespace TootTally.Utils
 
             _lifespan -= Time.deltaTime;
             if (_lifespan / 1.75f <= 1)
+            {
                 _canvasGroup.alpha = EasingHelper.EaseIn(_lifespan / 1.25f);
+            }
             if (_lifespan < 0)
                 PopUpNotifManager.QueueToRemovedFromList(this);
         }
