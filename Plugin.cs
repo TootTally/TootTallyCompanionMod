@@ -16,6 +16,9 @@ using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Replays;
 using TootTally.Utils;
+using TootTally.CustomLeaderboard;
+using TootTally.Utils.Helpers;
+using BepInEx.Bootstrap;
 
 namespace TootTally
 {
@@ -32,35 +35,15 @@ namespace TootTally
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
         public static Plugin Instance;
-        private Dictionary<string, string> plugins = new();
-        public const int BUILDDATE = 20230112;
+        public static SerializableClass.User userInfo; //Temporary public
+        public const int BUILDDATE = 20230117;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
-
-        public string CalcSHA256Hash(byte[] data)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                string ret = "";
-                byte[] hashArray = sha256.ComputeHash(data);
-                foreach (byte b in hashArray)
-                {
-                    ret += $"{b:x2}";
-                }
-                return ret;
-            }
-        }
+        public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public void Log(string msg)
         {
             LogInfo(msg);
-        }
-
-        public string CalcFileHash(string fileLocation)
-        {
-            if (!File.Exists(fileLocation))
-                return "";
-            return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
         }
 
         private void Awake()
@@ -68,102 +51,60 @@ namespace TootTally
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
 
+            
+
+
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
+            ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             object settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
             {
                 OptionalTrombSettings.Add(settings, AllowTMBUploads);
                 OptionalTrombSettings.Add(settings, APIKey);
+                OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
 
             AssetManager.LoadAssets();
-            Harmony.CreateAndPatchAll(typeof(SongSelect));
-            Harmony.CreateAndPatchAll(typeof(ReplaySystemJson));
+            Harmony.CreateAndPatchAll(typeof(UserLogin));
+            Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(CustomLeaderboard.GlobalLeaderboardManager));
+            Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
+            Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             LogInfo($"Game Version: {GlobalVariables.version}");
         }
 
-        public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
+        public void Update()
         {
-            if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-            var tmb = new JSONObject();
-            tmb["name"] = singleTrackData.trackname_long;
-            tmb["shortName"] = singleTrackData.trackname_short;
-            tmb["trackRef"] = singleTrackData.trackref;
-            int year = 0;
-            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-            tmb["year"] = year;
-            tmb["author"] = singleTrackData.artist;
-            tmb["genre"] = singleTrackData.genre;
-            tmb["description"] = singleTrackData.desc;
-            tmb["difficulty"] = singleTrackData.difficulty;
-            using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
-            {
-                var binaryFormatter = new BinaryFormatter();
-                var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new JSONArray();
-                savedLevel.savedleveldata.ForEach(arr =>
-                {
-                    var noteData = new JSONArray();
-                    foreach (var note in arr) noteData.Add(note);
-                    levelData.Add(noteData);
-                });
-                tmb["savednotespacing"] = savedLevel.savednotespacing;
-                tmb["endpoint"] = savedLevel.endpoint;
-                tmb["timesig"] = savedLevel.timesig;
-                tmb["tempo"] = savedLevel.tempo;
-                tmb["notes"] = levelData;
-            }
-            return tmb.ToString();
+
         }
 
-
-
-        //Would like to rewrite this somewhere else than in plugin
-        public static class SongSelect
+        private class UserLogin
         {
-            public static string songHash { get; private set; }
-            public static int maxCombo;
-
-            [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPrefix]
-            public static void AddSongToDBIfNotExist(LoadController __instance)
+            public static void OnHomeControllerStartLoginUser()
             {
-                string trackRef = GlobalVariables.chosen_track;
-                bool isCustom = Globals.IsCustomTrack(trackRef);
-                string songFilePath = GetSongFilePath(isCustom, trackRef);
-                string tmb = File.ReadAllText(songFilePath, Encoding.UTF8);
-                songHash = isCustom ? Instance.CalcFileHash(songFilePath) : trackRef;
-
-                __instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+                if (userInfo == null)
                 {
-                    if (Instance.AllowTMBUploads.Value && songHashInDB == 0)
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
-                        SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
-                        __instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart));
-                    }
-                }));
-                maxCombo = 0; // Reset tracked maxCombo
-            }
+                        if (user != null)
+                        {
+                            userInfo = user;
+                            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
+                        }
+                    }));
+                    
+                }
 
-            public static string GetSongFilePath(bool isCustom, string trackRef)
-            {
-                return isCustom ?
-                    Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
-                    $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
-            }
 
-            [HarmonyPatch(typeof(GameController), nameof(GameController.updateHighestCombo))]
-            [HarmonyPostfix]
-            public static void UpdateCombo(GameController __instance)
-            {
-                maxCombo = __instance.highestcombo_level;
-            }
 
+            }
         }
+
     }
 }

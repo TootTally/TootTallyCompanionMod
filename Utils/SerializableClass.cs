@@ -40,6 +40,16 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public class SendableModInfo
+        {
+            public string name;
+            public string version;
+            public string hash;
+
+        }
+
+
+        [Serializable]
         public class APISubmission
         {
             public string apiKey;

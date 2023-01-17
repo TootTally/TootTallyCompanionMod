@@ -19,6 +19,7 @@ using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Utils;
 using UnityEngine.EventSystems;
+using TootTally.Utils.Helpers;
 
 namespace TootTally.CustomLeaderboard
 {
@@ -26,7 +27,7 @@ namespace TootTally.CustomLeaderboard
     {
         #region constants
         private const string ERROR_NO_LEADERBOARD_FOUND_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
-        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "Error loading this track's leaderboard...\n <size=15>If you see this error, please contact TootTally's devs on discord</size>";
+        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Clicking Play should automatically upload the chart\n if you have it turned on in your TootTally.cfg file</size>";
         private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
@@ -163,12 +164,12 @@ namespace TootTally.CustomLeaderboard
         public void RefreshLeaderboard()
         {
             var count = 1;
-            _localScoreId = 0;
+            _localScoreId = -1;
             foreach (SerializableClass.ScoreDataFromDB scoreData in _scoreDataList)
             {
-                LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, "RowEntry" + scoreData.player, scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
+                LeaderboardRowEntry rowEntry = GameObjectFactory.CreateLeaderboardRowEntryFromScore(_scoreboard.transform, $"RowEntry{scoreData.player}", scoreData, count, gradeToColorDict[scoreData.grade], _levelSelectControllerInstance);
                 _scoreGameObjectList.Add(rowEntry);
-                if (scoreData.player == ReplaySystemJson.userInfo.username)
+                if (scoreData.player == Plugin.userInfo.username)
                 {
                     rowEntry.imageStrip.color = new Color(.65f, .65f, .65f, .25f);
                     rowEntry.imageStrip.gameObject.SetActive(true);
@@ -250,13 +251,15 @@ namespace TootTally.CustomLeaderboard
         public void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
         public void ShowErrorText() => _errorsHolder.SetActive(true); public void HideErrorText() => _errorsHolder.SetActive(false);
 
-        public void OpenUserProfile() =>Application.OpenURL("https://toottally.com/profile/" + ReplaySystemJson.userInfo.id);
+        public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + Plugin.userInfo.id);
         public void OpenLoginPage() => Application.OpenURL("https://toottally.com/login");
         public void OpenSongLeaderboard() => Application.OpenURL("https://toottally.com/song/" + _currentSelectedSongHash);
 
         public void ScrollToLocalScore()
         {
-            if (_scoreGameObjectList.Count > 8 && _localScoreId != 0)
+            if (_localScoreId == -1)
+                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", Color.white);
+            else if (_scoreGameObjectList.Count > 8)
             {
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
@@ -301,7 +304,13 @@ namespace TootTally.CustomLeaderboard
             _tabs.SetActive(true);
         }
 
-        private static string GetSongHash(string trackRef) => Plugin.Instance.CalcFileHash(Plugin.SongSelect.GetSongFilePath(true, trackRef));
+        private static string GetSongHash(string trackRef) => SongDataHelper.CalcFileHash(GetSongFilePath(true, trackRef));
+        private static string GetSongFilePath(bool isCustom, string trackRef)
+        {
+            return isCustom ?
+                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
+                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
+        }
 
         public enum LeaderboardState
         {
