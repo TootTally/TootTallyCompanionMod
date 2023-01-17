@@ -143,7 +143,7 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
         [HarmonyPrefix]
-        public static bool GameControllerGetScoreAveragePrefixPatch(GameController __instance)
+        public static void GameControllerGetScoreAveragePrefixPatch(GameController __instance)
         {
             switch (_replayManagerState)
             {
@@ -152,9 +152,8 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     _replay.SetNoteScore(__instance);
-                    return false;
+                    break;
             }
-            return true;
         }
 
 
