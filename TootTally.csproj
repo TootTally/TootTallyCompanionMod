@@ -7,7 +7,7 @@
     <Version>0.2.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
+    <TromboneChampDir>C:\Users\Sabz\AppData\Roaming\Thunderstore Mod Manager\DataFolder\TromboneChamp\profiles\Trombone Champ</TromboneChampDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -55,6 +55,6 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneChampDir)/BepInEx/plugins" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneChampDir)/BepInEx/plugins/TootTally-TootTally" />
   </Target>
 </Project>
