@@ -277,7 +277,7 @@ namespace TootTally.Replays
         {
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
-            _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
+            _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _replay.ClearData();
             _replay.SetupRecording(__instance);
             _replayManagerState = ReplayManagerState.Recording;

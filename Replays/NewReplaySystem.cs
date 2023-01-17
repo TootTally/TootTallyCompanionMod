@@ -293,7 +293,7 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            while (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            if(_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
