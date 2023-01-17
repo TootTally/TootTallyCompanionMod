@@ -65,12 +65,6 @@ namespace TootTally.Replays
             var multiplier = __instance.multiplier;
             var currentHealth = __instance.currenthealth;
 
-            _scores_A = __instance.scores_A;
-            _scores_B = __instance.scores_B;
-            _scores_C = __instance.scores_C;
-            _scores_D = __instance.scores_D;
-            _scores_F = __instance.scores_F;
-
             _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 });
         }
 
@@ -88,8 +82,14 @@ namespace TootTally.Replays
                _scores_B != __instance.scores_B ? 3 :
                _scores_C != __instance.scores_C ? 2 :
                _scores_D != __instance.scores_D ? 1 : 0;
-
             _noteData[_noteData.Count - 1][(int)NoteDataStructure.NoteJudgement] = noteLetter;
+
+            _scores_A = __instance.scores_A;
+            _scores_B = __instance.scores_B;
+            _scores_C = __instance.scores_C;
+            _scores_D = __instance.scores_D;
+            _scores_F = __instance.scores_F;
+
 
         }
 
@@ -254,7 +254,7 @@ namespace TootTally.Replays
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
             var currentMapPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier();
-
+            __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
 
@@ -314,11 +314,6 @@ namespace TootTally.Replays
                 int tallyIndex = Mathf.Clamp(note[(int)NoteDataStructure.NoteJudgement], 0, 4); //Temporary fix for note tally being -1 sometimes?
                 _noteTally[tallyIndex]++;
             }
-        }
-
-        public void UpdateInstanceTotalScore(GameController __instance)
-        {
-            __instance.totalscore = _totalScore;
         }
 
         #endregion
