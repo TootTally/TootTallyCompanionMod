@@ -98,7 +98,14 @@ namespace TootTally
                             Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
                         }
                     }));
-                    
+
+                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
+                    {
+                        if (version.CompareTo(PluginInfo.PLUGIN_VERSION) < 0)
+                        {
+                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", Color.red, 8.5f);
+                        }
+                    }));
                 }
 
 

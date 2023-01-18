@@ -18,12 +18,6 @@ namespace TootTally.Utils
         public const string APIURL = "https://toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
-        #region Logs
-        internal static void LogDebug(string msg) => Plugin.LogDebug(msg);
-        internal static void LogInfo(string msg) => Plugin.LogInfo(msg);
-        internal static void LogError(string msg) => Plugin.LogError(msg);
-        internal static void LogWarning(string msg) => Plugin.LogWarning(msg);
-        #endregion
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
@@ -56,7 +50,7 @@ namespace TootTally.Utils
                     username = jsonData["username"],
                     id = jsonData["id"],
                 };
-                LogInfo($"Welcome, {user.username}!");
+                Plugin.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
@@ -65,10 +59,9 @@ namespace TootTally.Utils
                     username = "Guest",
                     id = 0,
                 };
-                LogInfo($"Logged in with Guest Account");
+                Plugin.LogInfo($"Logged in with Guest Account");
             }
             callback(user);
-
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart, Action callback)
@@ -76,7 +69,6 @@ namespace TootTally.Utils
 
             string apiLink = $"{APIURL}/api/upload/";
             string jsonified = JsonUtility.ToJson(chart);
-            LogDebug($"Chart JSON: {jsonified}");
             var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
 
             UnityWebRequest webRequest = PostUploadRequest(apiLink, jsonbin);
@@ -88,7 +80,7 @@ namespace TootTally.Utils
                     PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Color.yellow);
                 else
                 {
-                    LogInfo($"Chart Sent.");
+                    Plugin.LogInfo($"Chart Sent.");
                     PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
                 }
             }
@@ -130,7 +122,7 @@ namespace TootTally.Utils
 
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, true))
-                LogInfo($"Replay Sent.");
+                Plugin.LogInfo($"Replay Sent.");
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
@@ -145,7 +137,7 @@ namespace TootTally.Utils
             {
                 File.WriteAllBytes(replayDir + uuid + ".ttr", webRequest.downloadHandler.data);
 
-                LogInfo("Replay Downloaded.");
+                Plugin.LogInfo("Replay Downloaded.");
                 callback(uuid);
             }
         }
@@ -200,6 +192,7 @@ namespace TootTally.Utils
                 callback(DownloadHandlerTexture.GetContent(webRequest));
         }
 
+
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadTextureFromServer(string apiLink, string outputPath, Action<bool> callback)
         {
             UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(apiLink);
@@ -249,7 +242,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                LogInfo("Request successful");
+                Plugin.LogInfo("Request successful");
             }
         }
 
@@ -268,9 +261,9 @@ namespace TootTally.Utils
         {
             if (isLoggingErrors)
                 if (webRequest.isNetworkError)
-                    LogError($"NETWORK ERROR: {webRequest.error}");
+                    Plugin.LogError($"NETWORK ERROR: {webRequest.error}");
                 else if (webRequest.isHttpError)
-                    LogError($"HTTP ERROR {webRequest.error}");
+                    Plugin.LogError($"HTTP ERROR {webRequest.error}");
             return webRequest.isNetworkError || webRequest.isHttpError;
         }
     }

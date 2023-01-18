@@ -466,7 +466,7 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player;
+            rowEntry.username.text = scoreData.player.Length > 21 ? scoreData.player.Substring(0, 21) : scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score);
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
@@ -474,7 +474,7 @@ namespace TootTally.Graphics
             if (scoreData.grade == "SS")
             {
                 rowEntry.grade.text = "S";
-                GameObjectFactory.CreateDoubleText(rowEntry.grade.transform, "DoubleS" + scoreData.player + "Text", "S", Color.yellow); ;
+                GameObjectFactory.CreateDoubleText(rowEntry.grade.transform, "DoubleS" + scoreData.player + "Text", "S", Color.yellow);
 
             }
             else if (scoreData.grade == "SSS")
