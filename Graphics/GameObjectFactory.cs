@@ -15,7 +15,7 @@ namespace TootTally.Graphics
     {
         private static CustomButton _buttonPrefab;
         private static Text _defaultText, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
-        private static Slider _verticalSliderPrefab;
+        private static Slider _verticalSliderPrefab, _sliderPrefab;
         private static GameObject _starPrefab;
         private static PopUpNotif _popUpNotifPrefab;
 
@@ -57,6 +57,7 @@ namespace TootTally.Graphics
         {
             if (_isLevelSelectControllerInitialized) return;
 
+            SetSliderPrefab();
             SetVerticalSliderPrefab();
             SetSteamLeaderboardPrefab();
             SetSingleScorePrefab();
@@ -258,7 +259,7 @@ namespace TootTally.Graphics
 
         public static void AddSliderInPanelBody()
         {
-            CreateSliderFromPrefab(_panelBodyPrefab.transform, "LeaderboardVerticalSlider");
+            CreateVerticalSliderFromPrefab(_panelBodyPrefab.transform, "LeaderboardVerticalSlider");
         }
 
         public static void SetSingleScorePrefab()
@@ -362,6 +363,28 @@ namespace TootTally.Graphics
 
             GameObject.DontDestroyOnLoad(_verticalSliderPrefab);
         }
+        public static void SetSliderPrefab()
+        {
+            Slider defaultSlider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+
+            _sliderPrefab = GameObject.Instantiate(defaultSlider);
+            _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = Color.white;
+
+            RectTransform sliderRect = _sliderPrefab.GetComponent<RectTransform>();
+            sliderRect.anchoredPosition = new Vector2(-200, 0);
+
+            RectTransform backgroundSliderRect = _sliderPrefab.transform.Find("Background").GetComponent<RectTransform>();
+            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+
+            _sliderPrefab.value = 1f;
+            _sliderPrefab.minValue = 0f;
+            _sliderPrefab.maxValue = 2f;
+            _sliderPrefab.gameObject.SetActive(false);
+
+
+            GameObject.DontDestroyOnLoad(_sliderPrefab);
+        }
 
         public static void DestroyNumNameScoreFromSingleScorePrefab()
         {
@@ -421,12 +444,19 @@ namespace TootTally.Graphics
             return steamLeaderboard;
         }
 
-        public static Slider CreateSliderFromPrefab(Transform canvasTransform, string name)
+        public static Slider CreateVerticalSliderFromPrefab(Transform canvasTransform, string name)
         {
             Slider slider = GameObject.Instantiate(_verticalSliderPrefab, canvasTransform);
             slider.name = name;
             return slider;
         }
+        public static Slider CreateSliderFromPrefab(Transform canvasTransform, string name)
+        {
+            Slider slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
+            slider.name = name;
+            return slider;
+        }
+
 
         public static Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
         {

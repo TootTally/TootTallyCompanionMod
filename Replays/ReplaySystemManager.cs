@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using TootTally.Compatibility;
+using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.Helpers;
 using UnityEngine;
 using UnityEngine.Scripting;
+using UnityEngine.UI;
 
 namespace TootTally.Replays
 {
@@ -38,6 +40,21 @@ namespace TootTally.Replays
         {
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
+            else
+            {
+                //Playback speed slider
+                GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
+                GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
+                Slider slider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "SpeedSlider");
+                slider.gameObject.AddComponent<GraphicRaycaster>();
+                slider.onValueChanged.AddListener((float value) =>
+                {
+                    __instance.musictrack.pitch = slider.value;
+                    Time.timeScale = slider.value;
+                });
+                slider.gameObject.SetActive(true);
+                slider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-100, 200);
+            }
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
             GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
@@ -174,6 +191,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void PauseCanvasControllerShowPausePanelPostfixPatch()
         {
+            Time.timeScale = 1;
             _replay.ClearData();
             _hasPaused = true;
             _replayUUID = null;
@@ -275,6 +293,7 @@ namespace TootTally.Replays
 
         public static void OnRecordingStart(GameController __instance)
         {
+
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server

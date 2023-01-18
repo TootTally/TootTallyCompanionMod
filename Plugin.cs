@@ -103,7 +103,7 @@ namespace TootTally
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) < 0)
                         {
-                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", Color.red, 8.5f);
+                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", Color.yellow, 8.5f);
                         }
                     }));
                 }

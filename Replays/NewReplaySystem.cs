@@ -64,8 +64,9 @@ namespace TootTally.Replays
             var totalScore = __instance.totalscore;
             var multiplier = __instance.multiplier;
             var currentHealth = __instance.currenthealth;
+            var noteScoreAverage = __instance.notescoreaverage * 1000;
 
-            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 });
+            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 , (int)noteScoreAverage });
         }
 
         public void RecordToot(GameController __instance)
@@ -352,6 +353,7 @@ namespace TootTally.Replays
             Multiplier = 2,
             CurrentHealth = 3,
             NoteJudgement = 4,
+            NoteScore = 5,
         }
 
         public enum ReplayState
