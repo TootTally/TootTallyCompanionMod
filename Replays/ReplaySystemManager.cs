@@ -23,7 +23,7 @@ namespace TootTally.Replays
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused;
-        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser, _isSliderCallBackEnabled;
+        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
 
@@ -79,12 +79,16 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void Test(BGController __instance)
         {
-            GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-            _videoPlayer = canBG.GetComponent<VideoPlayer>();
-            _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+            if (_replayManagerState == ReplayManagerState.Replaying)
             {
-                _videoPlayer.playbackSpeed = value;
-            });
+                GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                if (_videoPlayer != null)
+                    _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+                    {
+                        _videoPlayer.playbackSpeed = value;
+                    });
+            }
         }
 
 
@@ -178,7 +182,6 @@ namespace TootTally.Replays
             switch (_replayManagerState)
             {
                 case ReplayManagerState.Replaying:
-                    _isSliderCallBackEnabled = false;
                     _replayTimestampSlider.value = __instance.musictrack.time / __instance.musictrack.clip.length;
                     __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
                     break;

@@ -259,7 +259,6 @@ namespace TootTally.Replays
             __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
-            Plugin.LogInfo("index: " + _frameIndex + " | " + _tootIndex);
             PlaybackFrameData(currentMapPosition, __instance);
             PlaybackTootData(currentMapPosition);
         }
