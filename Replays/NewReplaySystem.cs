@@ -204,6 +204,8 @@ namespace TootTally.Replays
         {
             _lastTiming = 0;
             _totalScore = 0;
+            _frameIndex = 0;
+            _tootIndex = 0;
             _noteTally = new int[5];
             _isTooting  = false;
         }
@@ -245,7 +247,6 @@ namespace TootTally.Replays
                 _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
             foreach (JSONArray jsonArray in replayJson["tootdata"])
                 _tootData.Add(new int[] { jsonArray[0] });
-            _frameIndex = _tootIndex = 0;
 
             return ReplayState.ReplayLoadSuccess;
         }
@@ -258,7 +259,7 @@ namespace TootTally.Replays
             __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
-
+            Plugin.LogInfo("index: " + _frameIndex + " | " + _tootIndex);
             PlaybackFrameData(currentMapPosition, __instance);
             PlaybackTootData(currentMapPosition);
         }

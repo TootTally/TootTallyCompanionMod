@@ -12,6 +12,7 @@ using TrombLoader.Helpers;
 using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace TootTally.Replays
 {
@@ -22,7 +23,7 @@ namespace TootTally.Replays
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused;
-        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
+        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser, _isSliderCallBackEnabled;
 
         private static float _elapsedTime;
 
@@ -31,6 +32,8 @@ namespace TootTally.Replays
 
         private static NewReplaySystem _replay;
         private static ReplayManagerState _replayManagerState;
+        private static Slider _replaySpeedSlider, _replayTimestampSlider;
+        private static VideoPlayer _videoPlayer;
 
         #region GameControllerPatches
 
@@ -42,18 +45,28 @@ namespace TootTally.Replays
                 OnRecordingStart(__instance);
             else
             {
-                //Playback speed slider
+                OnReplayingStart();
                 GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
                 GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
-                Slider slider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "SpeedSlider");
-                slider.gameObject.AddComponent<GraphicRaycaster>();
-                slider.onValueChanged.AddListener((float value) =>
+                _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "SpeedSlider");
+                _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
+                _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                 {
-                    __instance.musictrack.pitch = slider.value;
-                    Time.timeScale = slider.value;
+                    __instance.musictrack.pitch = value;
+                    Time.timeScale = value;
                 });
-                slider.gameObject.SetActive(true);
-                slider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-100, 200);
+                _replaySpeedSlider.gameObject.SetActive(true);
+                _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 200);
+
+                _replayTimestampSlider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "TimestampSlider");
+                _replayTimestampSlider.gameObject.AddComponent<GraphicRaycaster>();
+                _replayTimestampSlider.value = 0f;
+                _replayTimestampSlider.maxValue = 1f;
+                _replayTimestampSlider.minValue = 0f;
+                RectTransform rectTransform = _replayTimestampSlider.gameObject.GetComponent<RectTransform>();
+                rectTransform.sizeDelta = new Vector2(800, 20);
+                rectTransform.anchoredPosition = new Vector2(-0, -195);
+                _replayTimestampSlider.gameObject.SetActive(true);
             }
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
@@ -61,26 +74,27 @@ namespace TootTally.Replays
 
         }
 
-
+        //This is when the video player is created.
+        [HarmonyPatch(typeof(BGController), nameof(BGController.setUpBGControllerRefsDelayed))]
+        [HarmonyPostfix]
+        public static void Test(BGController __instance)
+        {
+            GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+            _videoPlayer = canBG.GetComponent<VideoPlayer>();
+            _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+            {
+                _videoPlayer.playbackSpeed = value;
+            });
+        }
 
 
         [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
         [HarmonyPrefix]
         public static void LoadControllerPrefixPatch()
         {
-            if (_replayFileName != null)
-                OnReplayingStart();
-            else
+            if (_replayFileName == null)
                 OnLoadGamePlayAsyncSetupRecording();
         }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
-        [HarmonyPostfix]
-        static void GameControllerPauseRetryLevelPostfixPatch() => LoadControllerPrefixPatch();
-        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.clickRetry))]
-        [HarmonyPostfix]
-        static void PointSceneControllerclickRetryPostfixPatch() => LoadControllerPrefixPatch();
-
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
         [HarmonyPostfix]
@@ -157,6 +171,19 @@ namespace TootTally.Replays
                     break;
             }
         }
+        [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
+        [HarmonyPostfix]
+        public static void GameControllerUpdatePostfixPatch(GameController __instance)
+        {
+            switch (_replayManagerState)
+            {
+                case ReplayManagerState.Replaying:
+                    _isSliderCallBackEnabled = false;
+                    _replayTimestampSlider.value = __instance.musictrack.time / __instance.musictrack.clip.length;
+                    __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
+                    break;
+            }
+        }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
         [HarmonyPrefix]
@@ -191,8 +218,9 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void PauseCanvasControllerShowPausePanelPostfixPatch()
         {
+            if (_replayManagerState == ReplayManagerState.Recording)
+                _replay.ClearData();
             Time.timeScale = 1;
-            _replay.ClearData();
             _hasPaused = true;
             _replayUUID = null;
             _replayManagerState = ReplayManagerState.Paused;
