@@ -457,6 +457,16 @@ namespace TootTally.Graphics
             return slider;
         }
 
+        public static Text CreateSingleText(Transform canvasTransform, string name, string text, Color color)
+        {
+            Text marqueeText = GameObject.Instantiate(_defaultText, canvasTransform);
+            marqueeText.name = name;
+
+            marqueeText.text = text;
+            marqueeText.color = color;
+
+            return marqueeText;
+        }
 
         public static Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
         {

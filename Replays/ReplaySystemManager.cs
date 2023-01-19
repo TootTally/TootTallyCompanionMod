@@ -29,11 +29,13 @@ namespace TootTally.Replays
 
         private static string _replayUUID;
         private static string _replayFileName;
+        private static float _marqueeScrollSpeed;
 
         private static NewReplaySystem _replay;
         private static ReplayManagerState _replayManagerState;
         private static Slider _replaySpeedSlider, _replayTimestampSlider;
         private static VideoPlayer _videoPlayer;
+        private static Text _replayIndicatorMarquee;
 
         #region GameControllerPatches
 
@@ -67,6 +69,12 @@ namespace TootTally.Replays
                 rectTransform.sizeDelta = new Vector2(800, 20);
                 rectTransform.anchoredPosition = new Vector2(-0, -195);
                 _replayTimestampSlider.gameObject.SetActive(true);
+                
+                _marqueeScrollSpeed = 0.5f;
+                _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(UIHolder.transform, "ReplayMarquee", "", Color.gray);
+                _replayIndicatorMarquee.fontSize = 14;
+                _replayIndicatorMarquee.transform.localPosition = new Vector3(200, -100, 100);
+                _replayIndicatorMarquee.gameObject.SetActive(true);
             }
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
@@ -133,6 +141,7 @@ namespace TootTally.Replays
                 case ReplayManagerState.Replaying:
                     OnReplayingStop();
                     GlobalVariables.localsave.tracks_played--;
+                    Time.timeScale = 1f;
                     break;
             }
 
@@ -184,6 +193,15 @@ namespace TootTally.Replays
                 case ReplayManagerState.Replaying:
                     _replayTimestampSlider.value = __instance.musictrack.time / __instance.musictrack.clip.length;
                     __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
+                    if (_replayIndicatorMarquee.text.Equals(""))
+                    {
+                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}";
+                    }
+                    _replayIndicatorMarquee.transform.localPosition -= new Vector3((_marqueeScrollSpeed), 0, 0);
+                    if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
+                    {
+                        _replayIndicatorMarquee.transform.localPosition = new Vector3(500, -100, 100);
+                    }
                     break;
             }
         }

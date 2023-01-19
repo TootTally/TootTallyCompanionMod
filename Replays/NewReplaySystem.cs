@@ -30,6 +30,9 @@ namespace TootTally.Replays
 
         private float _nextPositionTarget, _lastPosition;
         private float _nextTimingTarget, _lastTiming;
+        private string _replayUsername, _replaySong;
+        public string GetUsername { get => _replayUsername; }
+        public string GetSongName { get => _replaySong; }
 
 
 
@@ -247,6 +250,9 @@ namespace TootTally.Replays
                 _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
             foreach (JSONArray jsonArray in replayJson["tootdata"])
                 _tootData.Add(new int[] { jsonArray[0] });
+
+            _replayUsername = replayJson["username"];
+            _replaySong = replayJson["song"];
 
             return ReplayState.ReplayLoadSuccess;
         }
