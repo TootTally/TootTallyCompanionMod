@@ -18,7 +18,7 @@ namespace TootTally.Graphics
         private const string CONFIG_FIELD = "SliderValues";
         private const uint DEFAULT_MAX = 250;
         private const uint DEFAULT_MIN = 5;
-        private const float DEFAULT_VALUE = 1;
+        private const float DEFAULT_VALUE = 100;
 
         public static void PatchScrollSpeedSlider()
         {
