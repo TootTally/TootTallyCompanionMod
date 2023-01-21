@@ -49,24 +49,9 @@ namespace TootTally.Replays
             else
             {
                 OnReplayingStart();
-                GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
-                GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
-                SetReplaySpeedSlider(UIHolder.transform, __instance);
+                SetReplayUI(__instance);
 
-                _replayTimestampSlider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "TimestampSlider");
-                _replayTimestampSlider.gameObject.AddComponent<GraphicRaycaster>();
-                _replayTimestampSlider.value = 0f;
-                _replayTimestampSlider.maxValue = 1f;
-                _replayTimestampSlider.minValue = 0f;
-                RectTransform rectTransform = _replayTimestampSlider.gameObject.GetComponent<RectTransform>();
-                rectTransform.sizeDelta = new Vector2(800, 20);
-                rectTransform.anchoredPosition = new Vector2(-0, -195);
-                //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
-                
-                _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(UIHolder.transform, "ReplayMarquee", "", Color.gray);
-                _replayIndicatorMarquee.fontSize = 14;
-                _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
-                _replayIndicatorMarquee.gameObject.SetActive(true);
+               
             }
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
@@ -379,6 +364,15 @@ namespace TootTally.Replays
             FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate).ToString());
         }
 
+        private static void SetReplayUI(GameController __instance)
+        {
+            GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
+            GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
+            SetReplaySpeedSlider(UIHolder.transform, __instance);
+            SetReplayTimestampSlider(UIHolder.transform);
+        }
+
+
         private static void SetReplaySpeedSlider(Transform canvasTransform,GameController __instance)
         {
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
@@ -405,6 +399,29 @@ namespace TootTally.Replays
             });
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 200);
+        }
+
+        private static void SetReplayTimestampSlider(Transform canvasTransform)
+        {
+            _replayTimestampSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "TimestampSlider");
+            _replayTimestampSlider.gameObject.AddComponent<GraphicRaycaster>();
+            _replayTimestampSlider.value = 0f;
+            _replayTimestampSlider.maxValue = 1f;
+            _replayTimestampSlider.minValue = 0f;
+            RectTransform rectTransform = _replayTimestampSlider.gameObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(800, 20);
+            rectTransform.anchoredPosition = new Vector2(-0, -195);
+            //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
+        }
+
+        private static void SetReplayMarquees(Transform canvasTransform)
+        {
+            _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(canvasTransform, "ReplayMarquee", "", new Color(1f, 1f, 1f, 0.75f));
+            Outline textOutline = _replayIndicatorMarquee.GetComponent<Outline>();
+            textOutline.effectDistance = Vector2.one / 2;
+            _replayIndicatorMarquee.fontSize = 14;
+            _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
+            _replayIndicatorMarquee.gameObject.SetActive(true);
         }
 
         private static void SendReplayFileToServer()
