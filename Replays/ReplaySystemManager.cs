@@ -378,6 +378,16 @@ namespace TootTally.Replays
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
 
+            //Text above the slider
+            Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1,1,1,1));
+            floatingSpeedText.fontSize = 14;
+            floatingSpeedText.alignment = TextAnchor.MiddleCenter;
+            floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
+            floatingSpeedText.GetComponent<RectTransform>().sizeDelta = _replaySpeedSlider.GetComponent<RectTransform>().sizeDelta;
+            floatingSpeedText.GetComponent<Outline>().effectDistance = Vector2.one / 3f;
+            floatingSpeedText.gameObject.SetActive(true);
+
+            //Text inside the slider
             Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
             replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
@@ -397,7 +407,7 @@ namespace TootTally.Replays
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(value);
             });
             _replaySpeedSlider.gameObject.SetActive(true);
-            _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 200);
+            _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);
         }
 
         private static void SetReplayTimestampSlider(Transform canvasTransform)
