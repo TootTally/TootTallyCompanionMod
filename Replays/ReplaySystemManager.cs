@@ -35,7 +35,7 @@ namespace TootTally.Replays
         private static Slider _replaySpeedSlider, _replayTimestampSlider;
         private static VideoPlayer _videoPlayer;
         private static Text _replayIndicatorMarquee;
-        private static Vector3 _marqueeScroll = new Vector3((60 * Time.deltaTime), 0, 0);
+        private static Vector3 _marqueeScroll = new Vector3(60, 0, 0);
         private static Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
 
         #region GameControllerPatches
@@ -69,7 +69,7 @@ namespace TootTally.Replays
                 RectTransform rectTransform = _replayTimestampSlider.gameObject.GetComponent<RectTransform>();
                 rectTransform.sizeDelta = new Vector2(800, 20);
                 rectTransform.anchoredPosition = new Vector2(-0, -195);
-                _replayTimestampSlider.gameObject.SetActive(true);
+                //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
                 
                 _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(UIHolder.transform, "ReplayMarquee", "", Color.gray);
                 _replayIndicatorMarquee.fontSize = 14;
@@ -197,7 +197,7 @@ namespace TootTally.Replays
                     {
                         _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}";
                     }
-                    _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll;
+                    _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll * Time.deltaTime;
                     if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
                     {
                         _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;

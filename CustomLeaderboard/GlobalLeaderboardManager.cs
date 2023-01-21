@@ -34,7 +34,6 @@ namespace TootTally.CustomLeaderboard
         static void OnLevelSelectControllerStartPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             _hasLeaderboardFinishedLoading = false;
-
             globalLeaderboard = new GlobalLeaderboard();
             globalLeaderboard.Initialize(__instance);
 

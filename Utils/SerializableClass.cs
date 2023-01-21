@@ -12,18 +12,6 @@ namespace TootTally.Utils
             public string tmb;
         }
 
-        [Serializable]
-        public class SendableScore
-        {
-            public string apiKey;
-            public string letterScore;
-            public int score;
-            public int[] noteTally; // [nasties, mehs, okays, nices, perfects]
-            public string songHash;
-            public int maxCombo;
-            public string gameVersion;
-            public int modVersion;
-        }
 
         [Serializable]
         public class ScoreDataFromDB
@@ -62,13 +50,6 @@ namespace TootTally.Utils
             public string songHash;
         }
 
-        [Serializable]
-        public class ReplayJsonSubmission
-        {
-            public string apiKey;
-            public string replayData;
-            public string uuid;
-        }
 
         [Serializable]
         public class User
