@@ -210,7 +210,7 @@ namespace TootTally.Replays
                 case ReplayManagerState.Recording:
                     _replay.ClearData();
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
-                    Plugin.LogInfo($"Local UUID {_replayUUID} deleted.");
+                    Plugin.LogInfo($"UUID deleted: {_replayUUID}");
                     _replayUUID = null;
                     break;
                 case ReplayManagerState.Replaying:
@@ -297,7 +297,7 @@ namespace TootTally.Replays
 
         public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
         {
-            Plugin.LogInfo($"Requesting UUID for {songHash} deleted.");
+            Plugin.LogInfo($"Requesting UUID for {songHash}");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
@@ -341,14 +341,10 @@ namespace TootTally.Replays
             _replay.FinalizedRecording();
             _replayManagerState = ReplayManagerState.None;
 
-            if (_replayUUID != null)
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
-            else
-                return;//Dont save or upload if no UUID
-
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
             if (_hasPaused) return; //Don't submit if paused during the play
+            if (_replayUUID == null) return;//Dont save or upload if no UUID
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest") //Don't upload if logged in as a Guest

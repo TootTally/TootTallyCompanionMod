@@ -133,6 +133,7 @@ namespace TootTally.Utils
             form.AddField("replayId", uuid);
             form.AddBinaryData("replayFile", replayFile);
 
+            Plugin.LogInfo($"Sending Replay for {uuid}.");
             var webRequest = UnityWebRequest.Post(apiLink, form);
 
             yield return webRequest.SendWebRequest();
