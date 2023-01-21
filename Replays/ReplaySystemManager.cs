@@ -50,8 +50,6 @@ namespace TootTally.Replays
             {
                 OnReplayingStart();
                 SetReplayUI(__instance);
-
-               
             }
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
@@ -370,6 +368,7 @@ namespace TootTally.Replays
             GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
             SetReplaySpeedSlider(UIHolder.transform, __instance);
             SetReplayTimestampSlider(UIHolder.transform);
+            SetReplayMarquees(UIHolder.transform);
         }
 
 
