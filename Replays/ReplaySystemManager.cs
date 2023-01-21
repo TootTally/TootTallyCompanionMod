@@ -79,8 +79,8 @@ namespace TootTally.Replays
         [HarmonyPrefix]
         public static void LoadControllerPrefixPatch()
         {
-            if (_replayFileName == null)
-                OnLoadGamePlayAsyncSetupRecording();
+            if (_replayFileName == null && _replayUUID == null)
+                SetReplayUUID();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -285,7 +285,7 @@ namespace TootTally.Replays
         }
 
 
-        public static void OnLoadGamePlayAsyncSetupRecording()
+        public static void SetReplayUUID()
         {
             _replayUUID = null;
             string trackRef = GlobalVariables.chosen_track;
@@ -317,7 +317,8 @@ namespace TootTally.Replays
 
         public static void OnRecordingStart(GameController __instance)
         {
-
+            if (_replayUUID == null)
+                SetReplayUUID();
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
