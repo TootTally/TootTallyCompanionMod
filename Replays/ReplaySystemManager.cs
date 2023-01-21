@@ -51,15 +51,7 @@ namespace TootTally.Replays
                 OnReplayingStart();
                 GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
                 GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
-                _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "SpeedSlider");
-                _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
-                _replaySpeedSlider.onValueChanged.AddListener((float value) =>
-                {
-                    __instance.musictrack.pitch = value;
-                    Time.timeScale = value;
-                });
-                _replaySpeedSlider.gameObject.SetActive(true);
-                _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 200);
+                SetReplaySpeedSlider(UIHolder.transform, __instance);
 
                 _replayTimestampSlider = GameObjectFactory.CreateSliderFromPrefab(UIHolder.transform, "TimestampSlider");
                 _replayTimestampSlider.gameObject.AddComponent<GraphicRaycaster>();
@@ -385,6 +377,34 @@ namespace TootTally.Replays
 
 
             FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate).ToString());
+        }
+
+        private static void SetReplaySpeedSlider(Transform canvasTransform,GameController __instance)
+        {
+            _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
+            _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
+            GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
+
+            Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
+            replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
+            GameObject.Destroy(replaySpeedSliderText.GetComponent<Outline>());
+            replaySpeedSliderText.alignment = TextAnchor.MiddleCenter;
+            replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
+            replaySpeedSliderText.fontSize = 8;
+            replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
+            replaySpeedSliderText.color = new Color(0, 0, 0, 1);
+            replaySpeedSliderText.gameObject.SetActive(true);
+
+            _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+            {
+                __instance.musictrack.pitch = value;
+                Time.timeScale = value;
+                replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(value);
+            });
+            _replaySpeedSlider.gameObject.SetActive(true);
+            _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 200);
         }
 
         private static void SendReplayFileToServer()

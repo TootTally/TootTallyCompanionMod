@@ -70,7 +70,7 @@ namespace TootTally.Graphics
 
         }
 
-        private static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
+        public static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
     }
     public class Options
     {
