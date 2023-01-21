@@ -226,13 +226,13 @@ namespace TootTally.CustomLeaderboard
         public void UpdateScrolling()
         {
             _slider.value += _scrollAcceleration * Time.deltaTime;
-            _scrollAcceleration *= 124 * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
+            _scrollAcceleration *= 130f * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
         }
 
         public void AddScrollAcceleration(float value)
         {
             if (_scoreGameObjectList.Count > 8)
-                _scrollAcceleration -= value;
+                _scrollAcceleration -= (value * 0.01f) / Time.deltaTime;
         }
 
         public void ClearLeaderboard()
