@@ -60,7 +60,7 @@ namespace TootTally.Replays
         //This is when the video player is created.
         [HarmonyPatch(typeof(BGController), nameof(BGController.setUpBGControllerRefsDelayed))]
         [HarmonyPostfix]
-        public static void Test(BGController __instance)
+        public static void OnSetUpBGControllerRefsDelayedPostFix(BGController __instance)
         {
             if (_replayManagerState == ReplayManagerState.Replaying)
             {
@@ -72,15 +72,6 @@ namespace TootTally.Replays
                         _videoPlayer.playbackSpeed = value;
                     });
             }
-        }
-
-
-        [HarmonyPatch(typeof(LoadController), nameof(LoadController.LoadGameplayAsync))]
-        [HarmonyPrefix]
-        public static void LoadControllerPrefixPatch()
-        {
-            if (_replayFileName == null && _replayUUID == null)
-                SetReplayUUID();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -214,11 +205,20 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void PauseCanvasControllerShowPausePanelPostfixPatch()
         {
-            if (_replayManagerState == ReplayManagerState.Recording)
-                _replay.ClearData();
-            Time.timeScale = 1;
+            switch (_replayManagerState)
+            {
+                case ReplayManagerState.Recording:
+                    _replay.ClearData();
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
+                    Plugin.LogInfo($"Local UUID {_replayUUID} deleted.");
+                    _replayUUID = null;
+                    break;
+                case ReplayManagerState.Replaying:
+                    Time.timeScale = 1;
+                    break;
+
+            }
             _hasPaused = true;
-            _replayUUID = null;
             _replayManagerState = ReplayManagerState.Paused;
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
             Plugin.LogInfo("Level paused, cleared replay data");
@@ -287,7 +287,6 @@ namespace TootTally.Replays
 
         public static void SetReplayUUID()
         {
-            _replayUUID = null;
             string trackRef = GlobalVariables.chosen_track;
             bool isCustom = Globals.IsCustomTrack(trackRef);
             string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
@@ -298,6 +297,7 @@ namespace TootTally.Replays
 
         public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
         {
+            Plugin.LogInfo($"Requesting UUID for {songHash} deleted.");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
@@ -312,13 +312,13 @@ namespace TootTally.Replays
                 else
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
 
+
             }));
         }
 
         public static void OnRecordingStart(GameController __instance)
         {
-            if (_replayUUID == null)
-                SetReplayUUID();
+            SetReplayUUID();
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
@@ -341,11 +341,14 @@ namespace TootTally.Replays
             _replay.FinalizedRecording();
             _replayManagerState = ReplayManagerState.None;
 
+            if (_replayUUID != null)
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
+            else
+                return;//Dont save or upload if no UUID
 
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
             if (_hasPaused) return; //Don't submit if paused during the play
-            if (_replayUUID == null) return; //Dont save or upload if no UUID
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest") //Don't upload if logged in as a Guest
@@ -373,14 +376,14 @@ namespace TootTally.Replays
         }
 
 
-        private static void SetReplaySpeedSlider(Transform canvasTransform,GameController __instance)
+        private static void SetReplaySpeedSlider(Transform canvasTransform, GameController __instance)
         {
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
 
             //Text above the slider
-            Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1,1,1,1));
+            Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
             floatingSpeedText.fontSize = 14;
             floatingSpeedText.alignment = TextAnchor.MiddleCenter;
             floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);

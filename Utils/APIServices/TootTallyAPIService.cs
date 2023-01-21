@@ -97,7 +97,22 @@ namespace TootTally.Utils
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
-                callback(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
+            {
+                string replayUUID = JSONObject.Parse(webRequest.downloadHandler.text)["id"];
+                Plugin.LogInfo("Current Replay UUID: " + replayUUID);
+                callback(replayUUID);
+            }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> OnReplayStopUUID(string songHash, string replayUUID)
+        {
+            var apiObj = new SerializableClass.ReplayStopSubmission() { apiKey = Plugin.Instance.APIKey.Value, replayId = replayUUID };
+            var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/replay/stop/", apiKeyAndSongHash);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+                Plugin.LogInfo("Stopped UUID: " + replayUUID);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid)

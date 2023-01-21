@@ -50,6 +50,13 @@ namespace TootTally.Utils
             public string songHash;
         }
 
+        [Serializable]
+        public class ReplayStopSubmission
+        {
+            public string apiKey;
+            public string replayId;
+        }
+
 
         [Serializable]
         public class User
