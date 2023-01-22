@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,6 +44,7 @@ namespace TootTally.CustomLeaderboard
 
             this.hasBackground = hasBackground;
             imageStrip = this.singleScore.transform.Find("Image").gameObject.GetComponent<Image>();
+            imageStrip.color = Theme.rowEntryImageColor;
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
         }
 

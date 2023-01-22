@@ -249,7 +249,7 @@ namespace TootTally.Replays
             {
                 _hasGreetedUser = true;
                 if (Plugin.userInfo.username != "Guest")
-                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", Color.white, 9f);
+                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", Theme.notificationTextColor, 9f);
                 else
                     PopUpNotifManager.DisplayNotif($"Login on TootTally\n<size=16>Put the APIKey in your config file\nto be able to submit scores</size>", Color.red, 9f);
             }
@@ -268,7 +268,7 @@ namespace TootTally.Replays
                     break;
 
                 case NewReplaySystem.ReplayState.ReplayLoadNotFound:
-                    PopUpNotifManager.DisplayNotif("Downloading replay...", Color.white);
+                    PopUpNotifManager.DisplayNotif("Downloading replay...", Theme.notificationTextColor);
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
                     {
                         ResolveLoadReplay(uuid, levelSelectControllerInstance);
