@@ -63,7 +63,7 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
 
-            Theme.SetDefaultTheme();
+            Theme.SetNightTheme();
             AssetManager.LoadAssets();
             Harmony.CreateAndPatchAll(typeof(UserLogin));
             Harmony.CreateAndPatchAll(typeof(GameTheme));
@@ -144,7 +144,26 @@ namespace TootTally
                     yellowLine.endColor = Theme.panelBodyColor;
                 }
 
-                GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").GetComponent<Image>().color = Theme.panelBodyColor;
+                GameObject capsules = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").gameObject;
+                GameObject capsulesPrefab = GameObject.Instantiate(capsules);
+
+                foreach (Transform t in capsulesPrefab.transform) GameObject.Destroy(t.gameObject);
+                RectTransform rectTrans = capsulesPrefab.GetComponent<RectTransform>();
+                rectTrans.localScale = Vector3.one;
+                rectTrans.anchoredPosition = Vector2.zero;
+
+                GameObject capsulesYear = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                capsulesYear.GetComponent<Image>().sprite = AssetManager.GetSprite("YearCapsule.png");
+                GameObject capsulesGenre = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                capsulesGenre.GetComponent<Image>().sprite = AssetManager.GetSprite("GenreCapsule.png");
+                GameObject capsulesComposer = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                capsulesComposer.GetComponent<Image>().sprite = AssetManager.GetSprite("ComposerCapsule.png");
+                GameObject capsulesTempo = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                capsulesTempo.GetComponent<Image>().sprite = AssetManager.GetSprite("BPMTimeCapsule.png");
+                GameObject capsulesDescText = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                capsulesDescText.GetComponent<Image>().sprite = AssetManager.GetSprite("DescCapsule.png");
+                GameObject.DestroyImmediate(capsules.GetComponent<Image>());
+                GameObject.DestroyImmediate(capsulesPrefab);
 
                 __instance.backbutton.transform.Find("BG").GetComponent<Image>().color = Theme.panelBodyColor;
                 __instance.playbtn.transform.Find("BG").GetComponent<Image>().color = Theme.panelBodyColor;

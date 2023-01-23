@@ -197,5 +197,7 @@ namespace TootTally.Graphics
             return new Color((float)rdm.NextDouble()*2, (float)rdm.NextDouble()*2, (float)rdm.NextDouble()*2, alpha);
         }
 
+
+
     }
 }

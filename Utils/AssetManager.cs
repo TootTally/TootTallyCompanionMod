@@ -18,6 +18,17 @@ namespace TootTally.Utils
             "profile64.png",
             "global64.png",
             "local64.png",
+            "DescCapsule.png",
+            "GenreCapsule.png",
+            "YearCapsule.png",
+            "BPMTimeCapsule.png",
+            "BackOutline.png",
+            "BackText.png",
+            "PlayText.png",
+            "PlayOutline.png",
+            "RandomOutline.png",
+            "RandomIcon.png",
+            "ComposerCapsule.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
@@ -36,7 +47,6 @@ namespace TootTally.Utils
                 {
                     if (texture != null)
                     {
-                        Plugin.LogInfo("Asset " + assetName + " Loaded");
                         textureDictionary.Add(assetName, texture);
                     }
                     else
@@ -90,5 +100,10 @@ namespace TootTally.Utils
         }
 
         public static Texture2D GetTexture(string assetKey) => textureDictionary[assetKey];
+        public static Sprite GetSprite(string assetKey)
+        {
+            Texture2D texture = textureDictionary[assetKey];
+            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+        }
     }
 }
