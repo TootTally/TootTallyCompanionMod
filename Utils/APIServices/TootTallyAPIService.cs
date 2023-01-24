@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using TootTally.Graphics;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -77,7 +78,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
-                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Color.yellow);
+                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Theme.warningNotifColor);
                 else
                 {
                     Plugin.LogInfo($"Chart Sent.");
@@ -85,7 +86,7 @@ namespace TootTally.Utils
                 }
             }
             else
-                PopUpNotifManager.DisplayNotif("Error in sending chart", Color.red);
+                PopUpNotifManager.DisplayNotif("Error in sending chart", Theme.errorNotifColor);
             callback();
         }
 

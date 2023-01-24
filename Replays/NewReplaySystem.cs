@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.Helpers;
@@ -237,7 +238,7 @@ namespace TootTally.Replays
             var replayJson = JSONObject.Parse(jsonFileFromZip);
             if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
             {
-                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Build Date is {Plugin.BUILDDATE}", Color.red);
+                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Build Date is {Plugin.BUILDDATE}", Theme.errorNotifColor);
                 Plugin.LogError("Cannot load replay:");
                 Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);

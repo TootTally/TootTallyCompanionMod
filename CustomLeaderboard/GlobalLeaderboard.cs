@@ -258,7 +258,7 @@ namespace TootTally.CustomLeaderboard
         public void ScrollToLocalScore()
         {
             if (_localScoreId == -1)
-                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", Theme.notificationTextColor);
+                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", Theme.defaultNotifColor);
             else if (_scoreGameObjectList.Count > 8)
             {
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);

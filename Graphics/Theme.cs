@@ -1,6 +1,9 @@
-﻿using System;
+﻿using BepInEx;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +11,7 @@ namespace TootTally.Graphics
 {
     public static class Theme
     {
+        public const string version = "0.0.1";
         public static bool isDefault;
 
         public static Color panelBodyColor, scoresbodyColor, rowEntryImageColor, rowEntryImageYouColor;
@@ -17,7 +21,7 @@ namespace TootTally.Graphics
 
         public static Color scrollSpeedSliderTextColor, scrollSpeedSliderBackgroundColor, scrollSpeedSliderFillColor, scrollSpeedSliderHandleColor;
 
-        public static Color notificationBorderColor, notificationBackgroundColor, notificationTextColor, notificationTextOutlineColor;
+        public static Color notificationBorderColor, notificationBackgroundColor, notificationTextOutlineColor;
         public static Color defaultNotifColor, warningNotifColor, errorNotifColor;
 
         public static Color replayButtonTextColor;
@@ -31,7 +35,7 @@ namespace TootTally.Graphics
         public static Color backBtnOutlineColor, backBtnBackgroundColor, backBtnTextColor, backBtnShadowColor;
         public static Color playBtnOutlineColor, playBtnBackgroundColor, playBtnTextColor, playBtnShadowColor;
 
-        public static Color songButtonBackgroundColor, songButtonTextColor, songButtonTextOverColor, songButtonOutlineColor, songButtonShadowColor, songButtonOutlineOverColor, songButtonImageColor;
+        public static Color songButtonBackgroundColor, songButtonTextColor, songButtonTextOverColor, songButtonOutlineColor, songButtonShadowColor, songButtonOutlineOverColor, songButtonSquareColor;
 
         public static Color diffStarStartColor, diffStarEndColor;
 
@@ -54,15 +58,13 @@ namespace TootTally.Graphics
             tabsColors.normalColor = new Color(1, 1, 1);
             tabsColors.pressedColor = new Color(1, 1, 0);
             tabsColors.highlightedColor = new Color(.75f, .75f, .75f);
-            tabsColors.normalColor = new Color(1, 1, 1);
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
             notificationBorderColor = new Color(1, 0.3f, 0.5f, 0.75f);
             notificationBackgroundColor = new Color(0, 0, 0, .95f);
-            notificationTextColor = new Color(1, 1, 1);
-            notificationTextOutlineColor = new Color(0, 0, 0);
             defaultNotifColor = new Color(1, 1, 1);
+            notificationTextOutlineColor = new Color(0, 0, 0);
             warningNotifColor = new Color(1, 1, 0);
             errorNotifColor = new Color(1, 0, 0);
 
@@ -107,7 +109,7 @@ namespace TootTally.Graphics
 
             notificationBorderColor = new Color(0.2f, 0.2f, 0.2f, 0.75f);
             notificationBackgroundColor = new Color(0, 0, 0, .95f);
-            notificationTextColor = new Color(1, 1, 1);
+            defaultNotifColor = new Color(1, 1, 1);
             notificationTextOutlineColor = new Color(0.2f, 0.2f, 0.2f);
 
             replayButtonTextColor = new Color(1, 1, 1);
@@ -144,7 +146,7 @@ namespace TootTally.Graphics
             songButtonShadowColor = Color.gray;
             songButtonTextOverColor = new Color(.92f, .92f, .92f);
             songButtonTextColor = new Color(.35f, .35f, .35f);
-            songButtonImageColor = new Color(0, 0, 0);
+            songButtonSquareColor = new Color(0, 0, 0);
 
             diffStarStartColor = new Color(.2f, .2f, .2f);
             diffStarEndColor = new Color(.7f, .7f, .7f);
@@ -174,7 +176,7 @@ namespace TootTally.Graphics
 
             notificationBorderColor = new Color(1, 1f, 1f, 0.75f);
             notificationBackgroundColor = new Color(0.9f, 0.9f, 0.9f, .95f);
-            notificationTextColor = new Color(0, 0, 0);
+            defaultNotifColor = new Color(0, 0, 0);
             notificationTextOutlineColor = new Color(0.85f, 0.85f, 0.85f, .84f);
 
             replayButtonTextColor = new Color(0, 0, 0);
@@ -193,38 +195,110 @@ namespace TootTally.Graphics
 
         public static void SetCustomTheme()
         {
-            panelBodyColor = new Color(1, 1, 1);
-            scoresbodyColor = new Color(0.9f, 0.9f, 0.9f);
-            rowEntryImageColor = new Color(1, 1, 1);
-            rowEntryImageYouColor = new Color(0.95f, 0.22f, 0.35f, 0.35f);
+            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/ElectroTheme.json");
+            Plugin.LogInfo(jsonFile);
+            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonUtility.FromJson<SerializableClass.JsonThemeDeserializer>(jsonFile);
+            Plugin.LogInfo(deserializedTheme.theme.ToString());
+            Color normalColor, pressedColor, highlightedColor, selectedColor;
 
-            leaderboardVerticalSliderBackgroundColor = new Color(1, 1, 1);
-            leaderboardVerticalSliderFillColor = new Color(0.95f, 0.22f, 0.35f);
-            leaderboardVerticalSliderHandleColor = new Color(0.95f, 0.22f, 0.35f);
+            Plugin.LogInfo("123");
+            Plugin.LogInfo(deserializedTheme.theme.leaderboard.panelBody);
 
-            leaderboardHeaderTextColor = new Color(0, 0, 0);
-            leaderboardTextColor = new Color(0, 0, 0);
-            leaderboardTextOutlineColor = new Color(0.85f, 0.85f, 0.85f, .84f);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.panelBody, out panelBodyColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.scoresBody, out scoresbodyColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.rowEntry, out rowEntryImageColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.yourRowEntry, out rowEntryImageYouColor);
 
-            tabsColors.normalColor = new Color(0, 0, 0);
-            tabsColors.pressedColor = new Color(.2f, .2f, .2f);
-            tabsColors.highlightedColor = new Color(.1f, .1f, .1f);
-            tabsColors.selectedColor = new Color(0, 0, 0);
+            Plugin.LogInfo("A");
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.background, out scrollSpeedSliderBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.text, out scrollSpeedSliderTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.handle, out scrollSpeedSliderHandleColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.fill, out scrollSpeedSliderFillColor);
+
+            Plugin.LogInfo("B");
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.background, out leaderboardVerticalSliderBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.fill, out leaderboardVerticalSliderFillColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.handle, out leaderboardVerticalSliderHandleColor);
+
+            Plugin.LogInfo("C");
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.headerText, out leaderboardHeaderTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.text, out leaderboardTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.textOutline, out leaderboardTextOutlineColor);
+
+            Plugin.LogInfo("D");
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.normal, out normalColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.pressed, out pressedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.highlighted, out highlightedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.selected, out selectedColor);
+
+            tabsColors.normalColor = normalColor;
+            tabsColors.pressedColor = pressedColor;
+            tabsColors.highlightedColor = highlightedColor;
+            tabsColors.selectedColor = selectedColor;
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
-            notificationBorderColor = new Color(1, 1f, 1f, 0.75f);
-            notificationBackgroundColor = new Color(0.9f, 0.9f, 0.9f, .95f);
-            notificationTextColor = new Color(0, 0, 0);
-            notificationTextOutlineColor = new Color(0.85f, 0.85f, 0.85f, .84f);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.border, out notificationBorderColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.background, out notificationBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.defaultText, out defaultNotifColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.defaultText, out warningNotifColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.defaultText, out errorNotifColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.notification.textOutline, out notificationTextOutlineColor);
 
-            replayButtonTextColor = new Color(0, 0, 0);
-            replayButtonColors.normalColor = new Color(1, 1, 1);
-            replayButtonColors.highlightedColor = new Color(.7f, .7f, .7f);
-            replayButtonColors.pressedColor = new Color(.42f, .42f, .42f);
-            replayButtonColors.selectedColor = new Color(1, 1, 1);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.text, out replayButtonTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.normal, out normalColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.pressed, out pressedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.highlighted, out highlightedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.selected, out selectedColor);
 
+            replayButtonColors.normalColor = normalColor;
+            replayButtonColors.pressedColor = pressedColor;
+            replayButtonColors.highlightedColor = highlightedColor;
+            replayButtonColors.selectedColor = selectedColor;
 
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.year, out capsuleYearColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.yearShadow, out capsuleYearShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.composer, out capsuleComposerColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.composerShadow, out capsuleComposerShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.genre, out capsuleGenreColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.genreShadow, out capsuleGenreShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.description, out capsuleDescColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.descriptionShadow, out capsuleDescShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.tempo, out capsuleTempoColor);
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.background, out randomBtnBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.outline, out randomBtnOutlineColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.text, out randomBtnTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.normal, out normalColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.pressed, out pressedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.highlighted, out highlightedColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.selected, out selectedColor);
+
+            randomBtnIconColors.normalColor = normalColor;
+            randomBtnIconColors.pressedColor = pressedColor;
+            randomBtnIconColors.highlightedColor = highlightedColor;
+            randomBtnIconColors.selectedColor = selectedColor;
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.background, out backBtnBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.outline, out backBtnOutlineColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.text, out backBtnTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.shadow, out backBtnShadowColor);
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.playButton.background, out playBtnBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.playButton.outline, out playBtnOutlineColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.playButton.text, out playBtnTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.playButton.shadow, out playBtnShadowColor);
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.background, out songButtonBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.outline, out songButtonOutlineColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.outlineOver, out songButtonOutlineOverColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.shadow, out songButtonShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.text, out songButtonTextColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.textOver, out songButtonTextOverColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.songButton.square, out songButtonSquareColor);
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.diffStar.gradientStart, out diffStarStartColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.diffStar.gradientEnd, out diffStarEndColor);
         }
 
         public static void SetRandomTheme()
@@ -258,7 +332,7 @@ namespace TootTally.Graphics
 
             notificationBorderColor = GetRandomColor(rdm, 0.75f);
             notificationBackgroundColor = GetRandomColor(rdm, 0.95f);
-            notificationTextColor = GetRandomColor(rdm, 1);
+            defaultNotifColor = GetRandomColor(rdm, 1);
             notificationTextOutlineColor = GetRandomColor(rdm, 0.84f);
 
             replayButtonTextColor = GetRandomColor(rdm, 1);
@@ -295,7 +369,7 @@ namespace TootTally.Graphics
             songButtonShadowColor = GetRandomColor(rdm, 1);
             songButtonTextColor = GetRandomColor(rdm, 1);
             songButtonTextOverColor = GetRandomColor(rdm, 1);
-            songButtonImageColor = GetRandomColor(rdm, 1);
+            songButtonSquareColor = GetRandomColor(rdm, 1);
 
             diffStarStartColor = GetRandomColor(rdm, 1);
             diffStarEndColor = GetRandomColor(rdm, 1);

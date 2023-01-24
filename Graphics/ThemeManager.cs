@@ -42,7 +42,7 @@ namespace TootTally.Graphics
                 btnBGOutline.name = "Outline";
                 OverwriteGameObjectSpriteAndColor(btnBGOutline, "SongButtonOutline.png", Theme.songButtonOutlineColor);
 
-                img.transform.Find("Image").GetComponent<Image>().color = Theme.songButtonImageColor;
+                img.transform.Find("Image").GetComponent<Image>().color = Theme.songButtonSquareColor;
                 img.color = Theme.songButtonBackgroundColor;
 
             }

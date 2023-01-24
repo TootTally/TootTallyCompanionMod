@@ -104,7 +104,7 @@ namespace TootTally.Graphics
 
             Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
             notifText.name = "NotifText";
-            notifText.color = Theme.notificationTextColor;
+            notifText.color = Theme.defaultNotifColor;
             notifText.GetComponent<Outline>().effectColor = Theme.notificationTextOutlineColor;
             notifText.gameObject.GetComponent<RectTransform>().sizeDelta = popUpNorifRectTransform.sizeDelta;
             notifText.gameObject.SetActive(true);
