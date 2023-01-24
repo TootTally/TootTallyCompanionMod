@@ -195,37 +195,33 @@ namespace TootTally.Graphics
 
         public static void SetCustomTheme()
         {
-            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/ElectroTheme.json");
-            Plugin.LogInfo(jsonFile);
-            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonUtility.FromJson<SerializableClass.JsonThemeDeserializer>(jsonFile);
-            Plugin.LogInfo(deserializedTheme.theme.ToString());
+            
             Color normalColor, pressedColor, highlightedColor, selectedColor;
 
-            Plugin.LogInfo("123");
-            Plugin.LogInfo(deserializedTheme.theme.leaderboard.panelBody);
+            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/ElectroTheme.json");
+            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonUtility.FromJson<SerializableClass.JsonThemeDeserializer>(jsonFile);
+            Plugin.LogInfo("panelBody: " + deserializedTheme.theme.leaderboard.panelBody);
+            Plugin.LogInfo("version: " + deserializedTheme.version);
 
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.panelBody, out panelBodyColor);
+            Plugin.LogInfo("panelColor " + panelBodyColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.scoresBody, out scoresbodyColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.rowEntry, out rowEntryImageColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.yourRowEntry, out rowEntryImageYouColor);
 
-            Plugin.LogInfo("A");
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.background, out scrollSpeedSliderBackgroundColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.text, out scrollSpeedSliderTextColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.handle, out scrollSpeedSliderHandleColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.scrollSpeedSlider.fill, out scrollSpeedSliderFillColor);
 
-            Plugin.LogInfo("B");
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.background, out leaderboardVerticalSliderBackgroundColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.fill, out leaderboardVerticalSliderFillColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.slider.handle, out leaderboardVerticalSliderHandleColor);
 
-            Plugin.LogInfo("C");
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.headerText, out leaderboardHeaderTextColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.text, out leaderboardTextColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.textOutline, out leaderboardTextOutlineColor);
 
-            Plugin.LogInfo("D");
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.normal, out normalColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.pressed, out pressedColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.highlighted, out highlightedColor);

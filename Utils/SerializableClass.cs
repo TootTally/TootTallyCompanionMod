@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
 namespace TootTally.Utils
 {
@@ -65,156 +66,9 @@ namespace TootTally.Utils
             public int id;
         }
 
-        /*[Serializable]
-        public class JsonThemeDeserializer
-        {
-            public string version { get; set; }
-
-            public JsonTheme theme { get; set; }
-
-            [Serializable]
-            public class JsonTheme
-            {
-                public LeaderboardJson leaderboard;
-
-                public ScrollSpeedSliderJson scrollSpeedSlider;
-                public NotificationJson notification;
-                public ReplayButtonJson replayButton;
-                public CapsulesJson capsules;
-
-                public RandomButtonJson randomButton;
-                public BackButtonJson backButton;
-                public PlayButtonJson playButton;
-                public SongButtonJson songButton;
-                public DiffStarJson diffStar;
-
-                [Serializable]
-                public class LeaderboardJson
-                {
-                    public string panelBody;
-                    public string scoresBody;
-                    public string rowEntry;
-                    public string yourRowEntry;
-                    public string headerText;
-                    public string text;
-                    public string textOutline;
-
-                    public SliderJson slider;
-                    public TabsJson tabs;
-
-                    [Serializable]
-                    public class SliderJson
-                    {
-                        public string handle;
-                        public string background;
-                        public string fill;
-
-                    }
-                    [Serializable]
-                    public class TabsJson
-                    {
-                        public string normal;
-                        public string pressed;
-                        public string highlighted;
-                        public string selected;
-
-                    }
-                }
-                [Serializable]
-                public class ScrollSpeedSliderJson
-                {
-                    public string handle;
-                    public string text;
-                    public string background;
-                    public string fill;
-
-                }
-                [Serializable]
-                public class NotificationJson
-                {
-                    public string border;
-                    public string background;
-                    public string defaultText;
-                    public string warningText;
-                    public string errorText;
-                    public string textOutline;
-
-                }
-                [Serializable]
-                public class ReplayButtonJson
-                {
-                    public string text;
-                    public string normal;
-                    public string pressed;
-                    public string highlighted;
-                    public string selected;
-
-                }
-                [Serializable]
-                public class CapsulesJson
-                {
-                    public string year;
-                    public string yearShadow;
-                    public string composer;
-                    public string composerShadow ;
-                    public string genre;
-                    public string genreShadow;
-                    public string description;
-                    public string descriptionShadow;
-                    public string tempo;
-
-                }
-                [Serializable]
-                public class RandomButtonJson
-                {
-                    public string background;
-                    public string outline;
-                    public string text;
-                    public string normal;
-                    public string pressed;
-                    public string highlighted;
-                    public string selected;
-                }
-                [Serializable]
-                public class BackButtonJson
-                {
-                    public string background;
-                    public string outline;
-                    public string text;
-                    public string shadow;
-                }
-                [Serializable]
-                public class PlayButtonJson
-                {
-                    public string background;
-                    public string outline;
-                    public string text;
-                    public string shadow;
-                }
-                [Serializable]
-                public class SongButtonJson
-                {
-                    public string background;
-                    public string text;
-                    public string textOver;
-                    public string outline;
-                    public string outlineOver;
-                    public string shadow;
-                    public string square;
-                }
-                [Serializable]
-                public class DiffStarJson
-                {
-                    public string gradientStart;
-                    public string gradientEnd;
-
-                }
-
-            }
-        }*/
-
+        #region Theme
         [Serializable]
-        public class BackButtonJson
+        public struct BackButtonJson
         {
             public string background;
             public string outline;
@@ -223,7 +77,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class CapsulesJson
+        public struct CapsulesJson
         {
             public string year;
             public string yearShadow;
@@ -237,14 +91,14 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class DiffStarJson
+        public struct DiffStarJson
         {
             public string gradientStart;
             public string gradientEnd;
         }
 
         [Serializable]
-        public class LeaderboardJson
+        public struct LeaderboardJson
         {
             public string panelBody;
             public string scoresBody;
@@ -258,7 +112,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class NotificationJson
+        public struct NotificationJson
         {
             public string border;
             public string background;
@@ -269,7 +123,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class PlayButtonJson
+        public struct PlayButtonJson
         {
             public string background;
             public string outline;
@@ -278,7 +132,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class RandomButtonJson
+        public struct RandomButtonJson
         {
             public string background;
             public string outline;
@@ -290,7 +144,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class ReplayButtonJson
+        public struct ReplayButtonJson
         {
             public string text;
             public string normal;
@@ -303,11 +157,12 @@ namespace TootTally.Utils
         public class JsonThemeDeserializer
         {
             public string version;
+            [SerializeField]
             public ThemeJson theme;
         }
 
         [Serializable]
-        public class ScrollSpeedSliderJson
+        public struct ScrollSpeedSliderJson
         {
             public string handle;
             public string text;
@@ -316,7 +171,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class SliderJson
+        public struct SliderJson
         {
             public string handle;
             public string background;
@@ -324,7 +179,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class SongButtonJson
+        public struct SongButtonJson
         {
             public string background;
             public string text;
@@ -336,7 +191,7 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class TabsJson
+        public struct TabsJson
         {
             public string normal;
             public string pressed;
@@ -345,8 +200,9 @@ namespace TootTally.Utils
         }
 
         [Serializable]
-        public class ThemeJson
+        public struct ThemeJson
         {
+            [SerializeField]
             public LeaderboardJson leaderboard;
             public ScrollSpeedSliderJson scrollSpeedSlider;
             public NotificationJson notification;
@@ -358,5 +214,6 @@ namespace TootTally.Utils
             public SongButtonJson songButton;
             public DiffStarJson diffStar;
         }
+        #endregion
     }
 }
