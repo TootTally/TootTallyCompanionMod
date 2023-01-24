@@ -6,6 +6,7 @@ using System.Text;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 namespace TootTally.Graphics
 {
@@ -199,7 +200,7 @@ namespace TootTally.Graphics
             Color normalColor, pressedColor, highlightedColor, selectedColor;
 
             string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/ElectroTheme.json");
-            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonUtility.FromJson<SerializableClass.JsonThemeDeserializer>(jsonFile);
+            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFile);
             Plugin.LogInfo("panelBody: " + deserializedTheme.theme.leaderboard.panelBody);
             Plugin.LogInfo("version: " + deserializedTheme.version);
 

@@ -41,6 +41,9 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="TrombLoader">
       <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombLoader.dll</HintPath>
     </Reference>

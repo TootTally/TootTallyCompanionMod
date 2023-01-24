@@ -157,7 +157,6 @@ namespace TootTally.Utils
         public class JsonThemeDeserializer
         {
             public string version;
-            [SerializeField]
             public ThemeJson theme;
         }
 
@@ -202,7 +201,6 @@ namespace TootTally.Utils
         [Serializable]
         public struct ThemeJson
         {
-            [SerializeField]
             public LeaderboardJson leaderboard;
             public ScrollSpeedSliderJson scrollSpeedSlider;
             public NotificationJson notification;
