@@ -416,7 +416,6 @@ namespace TootTally.Graphics
             btnColors.normalColor = Theme.replayButtonColors.normalColor;
             btnColors.highlightedColor = Theme.replayButtonColors.highlightedColor;
             btnColors.pressedColor = Theme.replayButtonColors.pressedColor;
-            btnColors.selectedColor = Theme.replayButtonColors.selectedColor;
             newButton.button.colors = btnColors;
 
             newButton.textHolder.text = text;

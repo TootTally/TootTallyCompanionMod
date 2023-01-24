@@ -140,7 +140,6 @@ namespace TootTally.Utils
             public string normal;
             public string pressed;
             public string highlighted;
-            public string selected;
         }
 
         [Serializable]
@@ -150,7 +149,6 @@ namespace TootTally.Utils
             public string normal;
             public string pressed;
             public string highlighted;
-            public string selected;
         }
 
         [Serializable]
@@ -195,7 +193,13 @@ namespace TootTally.Utils
             public string normal;
             public string pressed;
             public string highlighted;
-            public string selected;
+        }
+        [Serializable]
+        public struct PointerJson
+        {
+            public string background;
+            public string shadow;
+            public string outline;
         }
 
         [Serializable]
@@ -211,6 +215,7 @@ namespace TootTally.Utils
             public PlayButtonJson playButton;
             public SongButtonJson songButton;
             public DiffStarJson diffStar;
+            public PointerJson pointer;
         }
         #endregion
     }

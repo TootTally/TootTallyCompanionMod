@@ -201,6 +201,20 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(randomButtonPrefab);
             #endregion
 
+            GameObject arrowPointerPrefab = GameObject.Instantiate(__instance.pointerarrow.gameObject);
+            OverwriteGameObjectSpriteAndColor(__instance.pointerarrow.gameObject, "pointerBG.png", Theme.pointerBackgroundColor);
+
+            GameObject arrowPointerShadow = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
+            arrowPointerShadow.name = "Shadow";
+            arrowPointerShadow.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            OverwriteGameObjectSpriteAndColor(arrowPointerShadow, "pointerShadow.png", Theme.pointerShadowColor);
+
+            GameObject arrowPointerPointerOutline = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
+            arrowPointerPointerOutline.name = "Outline";
+            arrowPointerPointerOutline.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            OverwriteGameObjectSpriteAndColor(arrowPointerPointerOutline, "pointerOutline.png", Theme.pointerOutlineColor);
+
+            
             //CapsulesTextColor
             songyear.color = Theme.leaderboardTextColor;
             songgenre.color = Theme.leaderboardTextColor;

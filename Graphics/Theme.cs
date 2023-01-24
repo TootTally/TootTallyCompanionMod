@@ -40,6 +40,8 @@ namespace TootTally.Graphics
 
         public static Color diffStarStartColor, diffStarEndColor;
 
+        public static Color pointerBackgroundColor, pointerShadowColor, pointerOutlineColor;
+
         public static void SetDefaultTheme()
         {
             isDefault = true;
@@ -73,7 +75,6 @@ namespace TootTally.Graphics
             replayButtonColors.normalColor = new Color(0.95f, 0.22f, 0.35f);
             replayButtonColors.highlightedColor = new Color(0.77f, 0.18f, 0.29f);
             replayButtonColors.pressedColor = new Color(1, 1, 0);
-            replayButtonColors.selectedColor = new Color(0.95f, 0.22f, 0.35f);
 
             scrollSpeedSliderBackgroundColor = new Color(0, 0, 0);
             scrollSpeedSliderTextColor = new Color(0, 0, 0);
@@ -104,7 +105,6 @@ namespace TootTally.Graphics
             tabsColors.normalColor = new Color(1, 1, 1);
             tabsColors.pressedColor = new Color(1, 1, 0);
             tabsColors.highlightedColor = new Color(.75f, .75f, .75f);
-            tabsColors.selectedColor = new Color(1, 1, 1);
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
@@ -117,7 +117,6 @@ namespace TootTally.Graphics
             replayButtonColors.normalColor = new Color(0f, 0f, 0f);
             replayButtonColors.highlightedColor = new Color(.2f, .2f, .2f);
             replayButtonColors.pressedColor = new Color(.1f, .1f, .1f);
-            replayButtonColors.selectedColor = new Color(0f, 0f, 0f);
 
             capsuleYearColor = new Color(0, 0, 0);
             capsuleTempoColor = new Color(0.2f, 0.2f, 0.2f, 0.45f);
@@ -171,7 +170,6 @@ namespace TootTally.Graphics
             tabsColors.normalColor = new Color(0, 0, 0);
             tabsColors.pressedColor = new Color(.2f, .2f, .2f);
             tabsColors.highlightedColor = new Color(.1f, .1f, .1f);
-            tabsColors.selectedColor = new Color(0, 0, 0);
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
@@ -184,7 +182,6 @@ namespace TootTally.Graphics
             replayButtonColors.normalColor = new Color(1, 1, 1);
             replayButtonColors.highlightedColor = new Color(.7f, .7f, .7f);
             replayButtonColors.pressedColor = new Color(.42f, .42f, .42f);
-            replayButtonColors.selectedColor = new Color(1, 1, 1);
 
             capsuleYearColor = new Color(.95f, .22f, .35f);
             capsuleTempoColor = new Color(.074f, .188f, .203f);
@@ -196,16 +193,13 @@ namespace TootTally.Graphics
 
         public static void SetCustomTheme()
         {
-            
-            Color normalColor, pressedColor, highlightedColor, selectedColor;
 
-            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/ElectroTheme.json");
+            Color normalColor, pressedColor, highlightedColor;
+
+            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + "/Themes/CustomTheme.json");
             SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFile);
-            Plugin.LogInfo("panelBody: " + deserializedTheme.theme.leaderboard.panelBody);
-            Plugin.LogInfo("version: " + deserializedTheme.version);
 
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.panelBody, out panelBodyColor);
-            Plugin.LogInfo("panelColor " + panelBodyColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.scoresBody, out scoresbodyColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.rowEntry, out rowEntryImageColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.yourRowEntry, out rowEntryImageYouColor);
@@ -226,12 +220,10 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.normal, out normalColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.pressed, out pressedColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.highlighted, out highlightedColor);
-            ColorUtility.TryParseHtmlString(deserializedTheme.theme.leaderboard.tabs.selected, out selectedColor);
 
             tabsColors.normalColor = normalColor;
             tabsColors.pressedColor = pressedColor;
             tabsColors.highlightedColor = highlightedColor;
-            tabsColors.selectedColor = selectedColor;
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
@@ -246,12 +238,10 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.normal, out normalColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.pressed, out pressedColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.highlighted, out highlightedColor);
-            ColorUtility.TryParseHtmlString(deserializedTheme.theme.replayButton.selected, out selectedColor);
 
             replayButtonColors.normalColor = normalColor;
             replayButtonColors.pressedColor = pressedColor;
             replayButtonColors.highlightedColor = highlightedColor;
-            replayButtonColors.selectedColor = selectedColor;
 
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.year, out capsuleYearColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.capsules.yearShadow, out capsuleYearShadowColor);
@@ -269,12 +259,10 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.normal, out normalColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.pressed, out pressedColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.highlighted, out highlightedColor);
-            ColorUtility.TryParseHtmlString(deserializedTheme.theme.randomButton.selected, out selectedColor);
 
             randomBtnIconColors.normalColor = normalColor;
             randomBtnIconColors.pressedColor = pressedColor;
             randomBtnIconColors.highlightedColor = highlightedColor;
-            randomBtnIconColors.selectedColor = selectedColor;
 
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.background, out backBtnBackgroundColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.backButton.outline, out backBtnOutlineColor);
@@ -296,6 +284,11 @@ namespace TootTally.Graphics
 
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.diffStar.gradientStart, out diffStarStartColor);
             ColorUtility.TryParseHtmlString(deserializedTheme.theme.diffStar.gradientEnd, out diffStarEndColor);
+
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.pointer.background, out pointerBackgroundColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.pointer.shadow, out pointerShadowColor);
+            ColorUtility.TryParseHtmlString(deserializedTheme.theme.pointer.outline, out pointerOutlineColor);
+
         }
 
         public static void SetRandomTheme()
@@ -323,7 +316,6 @@ namespace TootTally.Graphics
             tabsColors.normalColor = GetRandomColor(rdm, 1);
             tabsColors.pressedColor = GetRandomColor(rdm, 1);
             tabsColors.highlightedColor = GetRandomColor(rdm, 1);
-            tabsColors.selectedColor = GetRandomColor(rdm, 1);
             tabsColors.colorMultiplier = 1f;
             tabsColors.fadeDuration = 0.1f;
 
@@ -336,7 +328,6 @@ namespace TootTally.Graphics
             replayButtonColors.normalColor = GetRandomColor(rdm, 1);
             replayButtonColors.highlightedColor = GetRandomColor(rdm, 1);
             replayButtonColors.pressedColor = GetRandomColor(rdm, 1);
-            replayButtonColors.selectedColor = GetRandomColor(rdm, 1);
 
             capsuleYearColor = GetRandomColor(rdm, 1);
             capsuleTempoColor = GetRandomColor(rdm, 1);
