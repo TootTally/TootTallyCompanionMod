@@ -22,13 +22,21 @@ namespace TootTally.Utils
             "GenreCapsule.png",
             "YearCapsule.png",
             "BPMTimeCapsule.png",
-            "BackOutline.png",
             "BackText.png",
+            "BackBackground.png",
+            "BackOutline.png",
+            "BackShadow.png",
             "PlayText.png",
+            "PlayBackground.png",
             "PlayOutline.png",
+            "PlayShadow.png",
             "RandomOutline.png",
             "RandomIcon.png",
+            "RandomBackground.png",
             "ComposerCapsule.png",
+            "SongButtonBackground.png",
+            "SongButtonOutline.png",
+            "SongButtonShadow.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;

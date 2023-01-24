@@ -36,7 +36,7 @@ namespace TootTally
 
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230121;
+        public const int BUILDDATE = 20230124;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -63,14 +63,16 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
 
-            Theme.SetNightTheme();
+            Theme.SetDefaultTheme();
             AssetManager.LoadAssets();
+
             Harmony.CreateAndPatchAll(typeof(UserLogin));
-            Harmony.CreateAndPatchAll(typeof(GameTheme));
+            Harmony.CreateAndPatchAll(typeof(ThemeManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
+
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             LogInfo($"Game Version: {GlobalVariables.version}");
         }
@@ -99,104 +101,14 @@ namespace TootTally
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
                     {
-                        if (version.CompareTo(PluginInfo.PLUGIN_VERSION) < 0)
+                        if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
                         {
                             PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", Color.yellow, 8.5f);
                         }
                     }));
                 }
-
-
-
             }
-        }
-
-        private class GameTheme
-        {
-
-            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
-            [HarmonyPostfix]
-            public static void ChangeThemeOnLevelSelectControllerStartPostFix(LevelSelectController __instance)
-            {
-                if (Theme.isDefault) return;
-
-                foreach (GameObject btn in __instance.btns)
-                {
-                    btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = Theme.leaderboardTextColor;
-                }
-                foreach (Image img in __instance.btnbgs)
-                {
-                    img.color = Theme.panelBodyColor;
-                }
-                __instance.songtitlebar.GetComponent<Image>().color = Theme.panelBodyColor;
-                __instance.scenetitle.GetComponent<Text>().color = Theme.panelBodyColor;
-                __instance.songtitle.GetComponent<Text>().color = Theme.leaderboardTextColor;
-                GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = Theme.leaderboardTextColor;
-                __instance.longsongtitle.color = Theme.leaderboardTextColor;
-                GameObject lines = __instance.btnspanel.transform.Find("RightLines").gameObject;
-                LineRenderer redLine = lines.transform.Find("Red").GetComponent<LineRenderer>();
-                redLine.startColor = Theme.panelBodyColor;
-                redLine.endColor = Theme.scoresbodyColor;
-                for (int i = 1; i < 8; i++)
-                {
-                    LineRenderer yellowLine = lines.transform.Find("Yellow" + i).GetComponent<LineRenderer>();
-                    yellowLine.startColor = Theme.scoresbodyColor;
-                    yellowLine.endColor = Theme.panelBodyColor;
-                }
-
-                GameObject capsules = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").gameObject;
-                GameObject capsulesPrefab = GameObject.Instantiate(capsules);
-
-                foreach (Transform t in capsulesPrefab.transform) GameObject.Destroy(t.gameObject);
-                RectTransform rectTrans = capsulesPrefab.GetComponent<RectTransform>();
-                rectTrans.localScale = Vector3.one;
-                rectTrans.anchoredPosition = Vector2.zero;
-
-                GameObject capsulesYear = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-                capsulesYear.GetComponent<Image>().sprite = AssetManager.GetSprite("YearCapsule.png");
-                GameObject capsulesGenre = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-                capsulesGenre.GetComponent<Image>().sprite = AssetManager.GetSprite("GenreCapsule.png");
-                GameObject capsulesComposer = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-                capsulesComposer.GetComponent<Image>().sprite = AssetManager.GetSprite("ComposerCapsule.png");
-                GameObject capsulesTempo = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-                capsulesTempo.GetComponent<Image>().sprite = AssetManager.GetSprite("BPMTimeCapsule.png");
-                GameObject capsulesDescText = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-                capsulesDescText.GetComponent<Image>().sprite = AssetManager.GetSprite("DescCapsule.png");
-                GameObject.DestroyImmediate(capsules.GetComponent<Image>());
-                GameObject.DestroyImmediate(capsulesPrefab);
-
-                __instance.backbutton.transform.Find("BG").GetComponent<Image>().color = Theme.panelBodyColor;
-                __instance.playbtn.transform.Find("BG").GetComponent<Image>().color = Theme.panelBodyColor;
-                __instance.btnrandom.GetComponent<Image>().color = Theme.panelBodyColor;
-
-                __instance.songyear.color = Theme.leaderboardTextColor;
-                __instance.songgenre.color = Theme.leaderboardTextColor;
-                __instance.songduration.color = Theme.leaderboardTextColor;
-                __instance.songcomposer.color = Theme.leaderboardTextColor;
-                __instance.songtempo.color = Theme.leaderboardTextColor;
-                __instance.songdesctext.color = Theme.leaderboardTextColor;
-            }
-
-            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.hoverBtn))]
-            [HarmonyPrefix]
-            public static bool OnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
-            {
-                if (Theme.isDefault) return true;
-
-                __instance.btnbgs[(int)__args[0]].color = Theme.scoresbodyColor;
-                return false;
-            }
-
-            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.unHoverBtn))]
-            [HarmonyPrefix]
-            public static bool OnUnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
-            {
-                if (Theme.isDefault) return true;
-
-                __instance.btnbgs[(int)__args[0]].color = Theme.panelBodyColor;
-                return false;
-            }
-        }
+        } 
 
     }
 }

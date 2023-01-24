@@ -48,6 +48,8 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPostfix]
         static void UpdateLoadingSwirlyAnimationOnLevelSelectControllerUpdatePostfix()
         {
+            if (globalLeaderboard == null) return;
+
             if (!_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateLoadingSwirlyAnimation();
 

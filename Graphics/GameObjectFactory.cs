@@ -347,6 +347,7 @@ namespace TootTally.Graphics
             _verticalSliderPrefab = GameObject.Instantiate(defaultSlider);
             _verticalSliderPrefab.direction = Slider.Direction.TopToBottom;
             _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = Theme.leaderboardVerticalSliderFillColor;
+            _verticalSliderPrefab.transform.Find("Background").GetComponent<Image>().color = Theme.leaderboardVerticalSliderBackgroundColor;
 
             RectTransform sliderRect = _verticalSliderPrefab.GetComponent<RectTransform>();
             sliderRect.sizeDelta = new Vector2(25, 745);
