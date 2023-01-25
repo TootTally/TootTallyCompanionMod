@@ -192,8 +192,6 @@ namespace TootTally.Graphics
                 RectTransform tabRect = currentTab.GetComponent<RectTransform>();
                 tabRect.anchoredPosition = new Vector2(15, -40);
                 tabRect.sizeDelta = new Vector2(40, 40);
-
-                currentTab.AddComponent<Image>();
             }
             VerticalLayoutGroup verticalLayout = tabs.AddComponent<VerticalLayoutGroup>();
             verticalLayout.childForceExpandWidth = false;
@@ -428,10 +426,14 @@ namespace TootTally.Graphics
                 for (int i = 0; i < 3; i++)
                 {
                     GameObject currentTab = _steamLeaderboardPrefab.GetComponent<LeaderboardManager>().tabs[i];
-                    currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors = GameTheme.themeColors.leaderboard.tabs;
+                    ColorBlock colors = currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors;
+                    colors.normalColor = GameTheme.themeColors.leaderboard.tabs.normalColor;
+                    colors.pressedColor = GameTheme.themeColors.leaderboard.tabs.pressedColor;
+                    colors.highlightedColor = GameTheme.themeColors.leaderboard.tabs.highlightedColor;
+                    currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors = colors;
                 }
                 _panelBodyPrefab.transform.Find("scoresbody").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.scoresBody;
-                _singleRowPrefab.imageStrip.color = GameTheme.themeColors.leaderboard.rowEntry;
+                _singleRowPrefab.UpdateTheme();
 
                 Outline outline = _leaderboardTextPrefab.gameObject.GetComponent<Outline>();
                 outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;

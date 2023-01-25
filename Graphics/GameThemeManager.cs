@@ -31,15 +31,18 @@ namespace TootTally.Graphics
                 case ThemeTypes.Day:
                     GameTheme.SetDayTheme();
                     break;
-
                 case ThemeTypes.Night:
                     GameTheme.SetNightTheme();
                     break;
-
                 case ThemeTypes.Custom:
-                    GameTheme.SetCustomTheme();
+                    GameTheme.SetCustomTheme("CustomTheme");
                     break;
-
+                case ThemeTypes.Electro:
+                    GameTheme.SetCustomTheme("ElectroTheme");
+                    break;
+                case ThemeTypes.Guardie:
+                    GameTheme.SetCustomTheme("GuardieTheme");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -455,6 +458,8 @@ namespace TootTally.Graphics
             Default,
             Day,
             Night,
+            Electro,
+            Guardie,
             Custom,
             Random,
         }

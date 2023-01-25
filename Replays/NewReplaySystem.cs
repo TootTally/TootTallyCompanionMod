@@ -173,7 +173,7 @@ namespace TootTally.Replays
                 framesToRemove.Clear();
                 for(int j = i+1; j < rawReplayFrameData.Count && (CheckIfSameValue(i, j, (int)FrameDataStructure.PointerPosition, rawReplayFrameData) || CheckIfSameValue(i, j, (int)FrameDataStructure.NoteHolder, rawReplayFrameData)); j++)
                     framesToRemove.Add(rawReplayFrameData[j]);
-                rawReplayFrameData = rawReplayFrameData.Except(framesToRemove).ToList();
+                foreach(var frame in framesToRemove) rawReplayFrameData.Remove(frame);
             }
         }
 

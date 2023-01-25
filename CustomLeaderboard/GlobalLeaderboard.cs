@@ -291,18 +291,9 @@ namespace TootTally.CustomLeaderboard
                 GameObject currentTab = _globalLeaderboard.GetComponent<LeaderboardManager>().tabs[i];
 
                 Button btn = currentTab.GetComponentInChildren<Button>();
-                ColorBlock btnColorBlock = btn.colors;
-                btnColorBlock.pressedColor = new Color(1, 1, 0, 1);
-                btnColorBlock.highlightedColor = new Color(.75f, .75f, .75f, 1);
-                btn.colors = btnColorBlock;
-
-                Image icon = currentTab.GetComponent<Image>();
                 Texture2D texture = AssetManager.GetTexture(tabsImageNames[i]);
                 if (texture != null)
-                {
-                    icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
-                    btn.image.sprite = icon.sprite;
-                }
+                    btn.image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
 
             }
             _tabs.SetActive(true);

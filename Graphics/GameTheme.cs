@@ -203,9 +203,9 @@ namespace TootTally.Graphics
                 },
                 pointer = new PointerColors()
                 {
-                    background = new Color(),
-                    outline = new Color(),
-                    shadow = new Color()
+                    background = new Color(0, 0, 0),
+                    outline = new Color(0.2f, 0.2f, 0.2f),
+                    shadow = new Color(0.2f, 0.2f, 0.2f)
                 }
             };
         }
@@ -340,11 +340,18 @@ namespace TootTally.Graphics
 
         }
 
-        public static void SetCustomTheme()
+        public static void SetCustomTheme(string themeFileName)
         {
-            string jsonFile = File.ReadAllText(Paths.BepInExRootPath + $"/Themes/CustomTheme.json");
-            SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFile);
-            LoadTheme(deserializedTheme);
+            if (!Directory.Exists(Paths.BepInExRootPath + "/Themes")) Directory.CreateDirectory(Paths.BepInExRootPath + "/Themes");
+            if (File.Exists(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json"))
+            {
+                string jsonFilePath = File.ReadAllText(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json");
+                SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFilePath);
+                LoadTheme(deserializedTheme);
+            }
+            else
+                SetDefaultTheme();
+
         }
 
         public static void LoadTheme(SerializableClass.JsonThemeDeserializer themeConfig)
@@ -533,16 +540,24 @@ namespace TootTally.Graphics
                 backButton = new PlayBackButtonColors()
                 {
                     background = GetRandomColor(rdm, 1),
+                    backgroundOver = GetRandomColor(rdm, 1),
                     outline = GetRandomColor(rdm, 1),
+                    outlineOver = GetRandomColor(rdm, 1),
                     text = GetRandomColor(rdm, 1),
-                    shadow = GetRandomColor(rdm, 1)
+                    textOver = GetRandomColor(rdm, 1),
+                    shadow = GetRandomColor(rdm, 1),
+                    shadowOver = GetRandomColor(rdm, 1)
                 },
                 playButton = new PlayBackButtonColors()
                 {
                     background = GetRandomColor(rdm, 1),
+                    backgroundOver = GetRandomColor(rdm, 1),
                     outline = GetRandomColor(rdm, 1),
+                    outlineOver = GetRandomColor(rdm, 1),
                     text = GetRandomColor(rdm, 1),
-                    shadow = GetRandomColor(rdm, 1)
+                    textOver = GetRandomColor(rdm, 1),
+                    shadow = GetRandomColor(rdm, 1),
+                    shadowOver = GetRandomColor(rdm, 1)
                 },
                 songButton = new SongButtonColors()
                 {
@@ -575,6 +590,82 @@ namespace TootTally.Graphics
                 }
             };
         }
+
+        /*public static void SetElectroTheme()
+        {
+            SerializableClass.JsonThemeDeserializer themejson = new SerializableClass.JsonThemeDeserializer();
+            themejson.theme.leaderboard.panelBody = "#FA1A8EFF";
+            themejson.theme.leaderboard.scoresBody = "#DC0071FF";
+            themejson.theme.leaderboard.rowEntry = "#FF61B1FF";
+            themejson.theme.leaderboard.yourRowEntry = "#1732A1FF";
+            themejson.theme.leaderboard.headerText = "#FFFFFFFF";
+            themejson.theme.leaderboard.text = "#FFFFFFFF";
+            themejson.theme.leaderboard.textOutline = "#000000FF";
+            themejson.theme.leaderboard.slider.handle = "#DC0071FF";
+            themejson.theme.leaderboard.slider.background = "#FFFFFFFF";
+            themejson.theme.leaderboard.slider.fill = "#FFA6D3FF";
+            themejson.theme.leaderboard.tabs.normal = "#FFFFFFFF";
+            themejson.theme.leaderboard.tabs.pressed = "#1732A1FF";
+            themejson.theme.leaderboard.tabs.highlighted = "#FF61B1FF";
+            themejson.theme.scrollSpeedSlider.handle = "#DC0071FF";
+            themejson.theme.scrollSpeedSlider.text = "#FFFFFFFF";
+            themejson.theme.scrollSpeedSlider.background = "#FFFFFFFF";
+            themejson.theme.scrollSpeedSlider.fill = "#FFA6D3FF";
+            themejson.theme.notification.border = "#FA1A8EFF";
+            themejson.theme.notification.background = "#000000FF";
+            themejson.theme.notification.defaultText = "#FFFFFFFF";
+            themejson.theme.notification.warningText = "#FFFFFFFF";
+            themejson.theme.notification.errorText = "#FF0000FF";
+            themejson.theme.notification.textOutline = "#000000FF";
+            themejson.theme.replayButton.text = "#FFFFFFFF";
+            themejson.theme.replayButton.normal = "#FA1A8EFF";
+            themejson.theme.replayButton.pressed = "#FFFFFFFF";
+            themejson.theme.replayButton.highlighted = "#FFFFFFFF";
+            themejson.theme.capsules.year = "#FF61B1FF";
+            themejson.theme.capsules.yearShadow = "#73003b";
+            themejson.theme.capsules.composer = "#DC0071FF";
+            themejson.theme.capsules.composerShadow = "#73003b";
+            themejson.theme.capsules.genre = "#DC0071FF";
+            themejson.theme.capsules.genreShadow = "#73003b";
+            themejson.theme.capsules.description = "#FF61B1FF";
+            themejson.theme.capsules.descriptionShadow = "#73003b";
+            themejson.theme.capsules.tempo = "#1732A199";
+            themejson.theme.randomButton.background = "#1732A1FF";
+            themejson.theme.randomButton.backgroundOver = "#1732A1FF";
+            themejson.theme.randomButton.outline = "#FA1A8EFF";
+            themejson.theme.randomButton.outlineOver = "#000000FF";
+            themejson.theme.randomButton.text = "#FFFFFFFF";
+            themejson.theme.randomButton.textOver = "#FFFFFFFF";
+            themejson.theme.backButton.background = "#1732A1FF";
+            themejson.theme.backButton.backgroundOver = "#1732A1FF";
+            themejson.theme.backButton.outline = "#FA1A8EFF";
+            themejson.theme.backButton.outlineOver = "#000000FF";
+            themejson.theme.backButton.text = "#FFFFFFFF";
+            themejson.theme.backButton.textOver = "#FFFFFFFF";
+            themejson.theme.backButton.shadow = "#1732A1FF";
+            themejson.theme.backButton.shadowOver = "#1732A1FF";
+            themejson.theme.playButton.background = "#1732A1FF";
+            themejson.theme.playButton.backgroundOver = "#1732A1FF";
+            themejson.theme.playButton.outline = "#FA1A8EFF";
+            themejson.theme.playButton.outlineOver = "#000000FF";
+            themejson.theme.playButton.text = "#FFFFFFFF";
+            themejson.theme.playButton.textOver = "#FFFFFFFF";
+            themejson.theme.playButton.shadow = "#1732A1FF";
+            themejson.theme.playButton.shadowOver = "#1732A1FF";
+            themejson.theme.songButton.background = "#1732A1FF";
+            themejson.theme.songButton.text = "#FFFFFFFF";
+            themejson.theme.songButton.textOver = "#FFFFFFFF";
+            themejson.theme.songButton.outline = "#FA1A8EFF";
+            themejson.theme.songButton.outlineOver = "#000000FF";
+            themejson.theme.songButton.shadow = "#73003b";
+            themejson.theme.songButton.square = "#FA1A8EFF";
+            themejson.theme.diffStar.gradientStart = "#FFFFFFFF";
+            themejson.theme.diffStar.gradientEnd = "#FA1A8EFF";
+            themejson.theme.pointer.background = "#FFFFFFFF";
+            themejson.theme.pointer.shadow = "#73003b";
+            themejson.theme.pointer.outline = "#FA1A8EFF";
+            LoadTheme(themejson);
+        }*/
 
         private static Color GetRandomColor(System.Random rdm, float alpha)
         {
@@ -721,6 +812,7 @@ namespace TootTally.Graphics
 
             }
         }
+
         #endregion
     }
 }
