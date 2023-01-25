@@ -56,6 +56,9 @@
     <Reference Include="TrombSettings">
       <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombSettings.dll</HintPath>
     </Reference>
+    <Reference Include="DiscordSDK">
+      <HintPath>$(TromboneChampDir)\BepInEx\plugins\discord_game_sdk.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

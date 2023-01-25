@@ -18,6 +18,7 @@ using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
+using TootTally.Discord;
 using BepInEx.Bootstrap;
 
 namespace TootTally
@@ -73,6 +74,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
+            Harmony.CreateAndPatchAll(typeof(DiscordRPC));
 
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             LogInfo($"Game Version: {GlobalVariables.version}");
