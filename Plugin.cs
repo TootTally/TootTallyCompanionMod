@@ -34,9 +34,10 @@ namespace TootTally
         public static void LogError(string msg) => Instance.Logger.LogError(msg);
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
+        public const string CONFIG_NAME = "TootTally.cfg";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230124;
+        public const int BUILDDATE = 20230125;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -63,11 +64,10 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
 
-            Theme.SetCustomTheme();
             AssetManager.LoadAssets();
 
             Harmony.CreateAndPatchAll(typeof(UserLogin));
-            Harmony.CreateAndPatchAll(typeof(ThemeManager));
+            Harmony.CreateAndPatchAll(typeof(GameThemeManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
@@ -103,7 +103,7 @@ namespace TootTally
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
                         {
-                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", Theme.warningNotifColor, 8.5f);
+                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", GameTheme.themeColors.notification.warningText, 8.5f);
                         }
                     }));
                 }

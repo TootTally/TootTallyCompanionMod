@@ -171,7 +171,7 @@ namespace TootTally.CustomLeaderboard
                 _scoreGameObjectList.Add(rowEntry);
                 if (scoreData.player == Plugin.userInfo.username)
                 {
-                    rowEntry.imageStrip.color = Theme.rowEntryImageYouColor;
+                    rowEntry.imageStrip.color = GameTheme.themeColors.leaderboard.yourRowEntry;
                     rowEntry.imageStrip.gameObject.SetActive(true);
                     _localScoreId = count - 1;
                 }
@@ -258,7 +258,7 @@ namespace TootTally.CustomLeaderboard
         public void ScrollToLocalScore()
         {
             if (_localScoreId == -1)
-                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", Theme.defaultNotifColor);
+                PopUpNotifManager.DisplayNotif("You don't have a score on that leaderboard yet", GameTheme.themeColors.notification.defaultText);
             else if (_scoreGameObjectList.Count > 8)
             {
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);

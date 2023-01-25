@@ -78,7 +78,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
-                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Theme.warningNotifColor);
+                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, GameTheme.themeColors.notification.warningText);
                 else
                 {
                     Plugin.LogInfo($"Chart Sent.");
@@ -86,7 +86,7 @@ namespace TootTally.Utils
                 }
             }
             else
-                PopUpNotifManager.DisplayNotif("Error in sending chart", Theme.errorNotifColor);
+                PopUpNotifManager.DisplayNotif("Error in sending chart", GameTheme.themeColors.notification.errorText);
             callback();
         }
 

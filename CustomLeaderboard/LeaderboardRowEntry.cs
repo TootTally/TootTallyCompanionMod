@@ -44,7 +44,7 @@ namespace TootTally.CustomLeaderboard
 
             this.hasBackground = hasBackground;
             imageStrip = this.singleScore.transform.Find("Image").gameObject.GetComponent<Image>();
-            imageStrip.color = Theme.rowEntryImageColor;
+            imageStrip.color = GameTheme.themeColors.leaderboard.rowEntry;
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
         }
 

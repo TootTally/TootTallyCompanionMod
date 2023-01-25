@@ -1,6 +1,9 @@
-﻿using HarmonyLib;
+﻿using BepInEx;
+using BepInEx.Configuration;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
@@ -9,19 +12,69 @@ using UnityEngine.UI;
 
 namespace TootTally.Graphics
 {
-    public static class ThemeManager
+    public static class GameThemeManager
     {
+        private const string CONFIG_FIELD = "Themes";
+        private const ThemeTypes DEFAULT_THEME = ThemeTypes.Default;
         public static Text songyear, songgenre, songcomposer, songtempo, songduration, songdesctext;
+
+        public static void SetTheme(ThemeTypes themeType)
+        {
+            switch(themeType)
+            {
+                case ThemeTypes.Default:
+                    GameTheme.SetDefaultTheme();
+                    break;
+
+                case ThemeTypes.Day:
+                    GameTheme.SetDayTheme();
+                    break;
+
+                case ThemeTypes.Night:
+                    GameTheme.SetNightTheme();
+                    break;
+
+                case ThemeTypes.Custom:
+                    GameTheme.SetCustomTheme();
+                    break;
+
+                case ThemeTypes.Random:
+                    GameTheme.SetRandomTheme();
+                    break;
+
+            }
+        }
+
+
+        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+        [HarmonyPostfix]
+        public static void Initialize(HomeController __instance)
+        {
+            string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
+            ConfigFile config = new ConfigFile(configPath + Plugin.CONFIG_NAME, true);
+            Options option = new Options()
+            {
+                Theme = config.Bind(CONFIG_FIELD, nameof(option.Theme), DEFAULT_THEME),
+            };
+
+            object settings = OptionalTrombSettings.GetConfigPage("TootTally");
+            if (settings != null)
+            {
+                OptionalTrombSettings.Add(settings, option.Theme);
+            }
+
+            SetTheme(option.Theme.Value);
+        }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         public static void ChangeThemeOnLevelSelectControllerStartPostFix(LevelSelectController __instance)
         {
-            if (Theme.isDefault) return;
+            if (GameTheme.isDefault) return;
 
             foreach (GameObject btn in __instance.btns)
             {
-                btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = Theme.leaderboardTextColor;
+                btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
             }
 
             #region SongButton
@@ -32,43 +85,43 @@ namespace TootTally.Graphics
             {
                 Image img = __instance.btnbgs[i];
                 img.sprite = AssetManager.GetSprite("SongButtonBackground.png");
-                img.transform.parent.Find("Text").GetComponent<Text>().color = i == 0 ? Theme.songButtonTextOverColor : Theme.songButtonTextColor;
+                img.transform.parent.Find("Text").GetComponent<Text>().color = i == 0 ? GameTheme.themeColors.songButton.textOver : GameTheme.themeColors.songButton.text;
 
                 GameObject btnBGShadow = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform.parent);
                 btnBGShadow.name = "Shadow";
-                OverwriteGameObjectSpriteAndColor(btnBGShadow, "SongButtonShadow.png", Theme.songButtonShadowColor);
+                OverwriteGameObjectSpriteAndColor(btnBGShadow, "SongButtonShadow.png", GameTheme.themeColors.songButton.shadow);
 
                 GameObject btnBGOutline = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform);
                 btnBGOutline.name = "Outline";
-                OverwriteGameObjectSpriteAndColor(btnBGOutline, "SongButtonOutline.png", Theme.songButtonOutlineColor);
+                OverwriteGameObjectSpriteAndColor(btnBGOutline, "SongButtonOutline.png", GameTheme.themeColors.songButton.outline);
 
-                img.transform.Find("Image").GetComponent<Image>().color = Theme.songButtonSquareColor;
-                img.color = Theme.songButtonBackgroundColor;
+                img.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.songButton.square;
+                img.color = GameTheme.themeColors.songButton.background;
 
             }
 
             for (int i = 7; i < __instance.btnbgs.Length; i++)
-                __instance.btnbgs[i].color = Theme.songButtonOutlineColor;
+                __instance.btnbgs[i].color = GameTheme.themeColors.songButton.outline;
             #endregion
 
             #region SongTitle
-            __instance.songtitlebar.GetComponent<Image>().color = Theme.panelBodyColor;
-            __instance.scenetitle.GetComponent<Text>().color = Theme.panelBodyColor;
-            __instance.songtitle.GetComponent<Text>().color = Theme.leaderboardTextColor;
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = Theme.leaderboardTextColor;
-            __instance.longsongtitle.color = Theme.leaderboardTextColor;
+            __instance.songtitlebar.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.panelBody;
+            __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.panelBody;
+            __instance.songtitle.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
+            __instance.longsongtitle.color = GameTheme.themeColors.leaderboard.text;
             #endregion
 
             #region Lines
             GameObject lines = __instance.btnspanel.transform.Find("RightLines").gameObject;
             LineRenderer redLine = lines.transform.Find("Red").GetComponent<LineRenderer>();
-            redLine.startColor = Theme.panelBodyColor;
-            redLine.endColor = Theme.scoresbodyColor;
+            redLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
+            redLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
             for (int i = 1; i < 8; i++)
             {
                 LineRenderer yellowLine = lines.transform.Find("Yellow" + i).GetComponent<LineRenderer>();
-                yellowLine.startColor = Theme.scoresbodyColor;
-                yellowLine.endColor = Theme.panelBodyColor;
+                yellowLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
+                yellowLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
             }
             #endregion
 
@@ -83,41 +136,41 @@ namespace TootTally.Graphics
 
 
             GameObject capsulesYearShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesYearShadow, "YearCapsule.png", Theme.capsuleYearShadowColor);
+            OverwriteGameObjectSpriteAndColor(capsulesYearShadow, "YearCapsule.png", GameTheme.themeColors.capsules.yearShadow);
             capsulesYearShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
             GameObject capsulesYear = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesYear, "YearCapsule.png", Theme.capsuleYearColor);
+            OverwriteGameObjectSpriteAndColor(capsulesYear, "YearCapsule.png", GameTheme.themeColors.capsules.year);
 
             songyear = GameObject.Instantiate(__instance.songyear, capsulesYear.transform);
 
             GameObject capsulesGenreShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesGenreShadow, "GenreCapsule.png", Theme.capsuleGenreShadowColor);
+            OverwriteGameObjectSpriteAndColor(capsulesGenreShadow, "GenreCapsule.png", GameTheme.themeColors.capsules.genreShadow);
             capsulesGenreShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
             GameObject capsulesGenre = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesGenre, "GenreCapsule.png", Theme.capsuleGenreColor);
+            OverwriteGameObjectSpriteAndColor(capsulesGenre, "GenreCapsule.png", GameTheme.themeColors.capsules.genre);
             songgenre = GameObject.Instantiate(__instance.songgenre, capsulesGenre.transform);
 
             GameObject capsulesComposerShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesComposerShadow, "ComposerCapsule.png", Theme.capsuleComposerShadowColor);
+            OverwriteGameObjectSpriteAndColor(capsulesComposerShadow, "ComposerCapsule.png", GameTheme.themeColors.capsules.composerShadow);
             capsulesComposerShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
             GameObject capsulesComposer = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesComposer, "ComposerCapsule.png", Theme.capsuleComposerColor);
+            OverwriteGameObjectSpriteAndColor(capsulesComposer, "ComposerCapsule.png", GameTheme.themeColors.capsules.composer);
             songcomposer = GameObject.Instantiate(__instance.songcomposer, capsulesComposer.transform);
 
             GameObject capsulesTempo = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesTempo, "BPMTimeCapsule.png", Theme.capsuleTempoColor);
+            OverwriteGameObjectSpriteAndColor(capsulesTempo, "BPMTimeCapsule.png", GameTheme.themeColors.capsules.tempo);
             songtempo = GameObject.Instantiate(__instance.songtempo, capsulesTempo.transform);
             songduration = GameObject.Instantiate(__instance.songduration, capsulesTempo.transform);
 
             GameObject capsulesDescTextShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesDescTextShadow, "DescCapsule.png", Theme.capsuleDescShadowColor);
+            OverwriteGameObjectSpriteAndColor(capsulesDescTextShadow, "DescCapsule.png", GameTheme.themeColors.capsules.descriptionShadow);
             capsulesDescTextShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
             GameObject capsulesDescText = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesDescText, "DescCapsule.png", Theme.capsuleDescColor);
+            OverwriteGameObjectSpriteAndColor(capsulesDescText, "DescCapsule.png", GameTheme.themeColors.capsules.description);
             songdesctext = GameObject.Instantiate(__instance.songdesctext, capsulesDescText.transform);
 
             GameObject.DestroyImmediate(capsules.GetComponent<Image>());
@@ -131,19 +184,19 @@ namespace TootTally.Graphics
 
             GameObject playBackgroundImg = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
             playBackgroundImg.name = "playBackground";
-            OverwriteGameObjectSpriteAndColor(playBackgroundImg, "PlayBackground.png", Theme.playBtnBackgroundColor);
+            OverwriteGameObjectSpriteAndColor(playBackgroundImg, "PlayBackground.png", GameTheme.themeColors.playButton.background);
 
             GameObject playOutline = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
             playOutline.name = "playOutline";
-            OverwriteGameObjectSpriteAndColor(playOutline, "PlayOutline.png", Theme.playBtnOutlineColor);
+            OverwriteGameObjectSpriteAndColor(playOutline, "PlayOutline.png", GameTheme.themeColors.playButton.outline);
 
             GameObject playText = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
             playText.name = "playText";
-            OverwriteGameObjectSpriteAndColor(playText, "PlayText.png", Theme.playBtnTextColor);
+            OverwriteGameObjectSpriteAndColor(playText, "PlayText.png", GameTheme.themeColors.playButton.text);
 
             GameObject playShadow = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
             playShadow.name = "playShadow";
-            OverwriteGameObjectSpriteAndColor(playShadow, "PlayShadow.png", Theme.playBtnShadowColor);
+            OverwriteGameObjectSpriteAndColor(playShadow, "PlayShadow.png", GameTheme.themeColors.playButton.shadow);
 
             GameObject.DestroyImmediate(playButtonBG);
             GameObject.DestroyImmediate(playBGPrefab);
@@ -156,26 +209,26 @@ namespace TootTally.Graphics
 
             GameObject backBackgroundImg = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
             backBackgroundImg.name = "backBackgroundImg";
-            OverwriteGameObjectSpriteAndColor(backBackgroundImg, "BackBackground.png", Theme.backBtnBackgroundColor);
+            OverwriteGameObjectSpriteAndColor(backBackgroundImg, "BackBackground.png", GameTheme.themeColors.backButton.background);
 
             GameObject backOutline = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
             backOutline.name = "backOutline";
-            OverwriteGameObjectSpriteAndColor(backOutline, "BackOutline.png", Theme.backBtnOutlineColor);
+            OverwriteGameObjectSpriteAndColor(backOutline, "BackOutline.png", GameTheme.themeColors.backButton.outline);
 
             GameObject backText = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
             backText.name = "backText";
-            OverwriteGameObjectSpriteAndColor(backText, "BackText.png", Theme.backBtnTextColor);
+            OverwriteGameObjectSpriteAndColor(backText, "BackText.png", GameTheme.themeColors.backButton.text);
 
             GameObject backShadow = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
             backShadow.name = "backShadow";
-            OverwriteGameObjectSpriteAndColor(backShadow, "BackShadow.png", Theme.backBtnShadowColor);
+            OverwriteGameObjectSpriteAndColor(backShadow, "BackShadow.png", GameTheme.themeColors.backButton.shadow);
 
             GameObject.DestroyImmediate(backButtonBG);
             GameObject.DestroyImmediate(backBGPrefab);
             #endregion
 
             #region RandomButton
-            __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = Theme.randomBtnTextColor;
+            __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
 
             GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom);
             RectTransform randomRectTransform = randomButtonPrefab.GetComponent<RectTransform>();
@@ -184,44 +237,45 @@ namespace TootTally.Graphics
 
             GameObject randomButtonBackground = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
             randomButtonBackground.name = "RandomBackground";
-            OverwriteGameObjectSpriteAndColor(randomButtonBackground, "RandomBackground.png", Theme.randomBtnBackgroundColor);
+            OverwriteGameObjectSpriteAndColor(randomButtonBackground, "RandomBackground.png", GameTheme.themeColors.randomButton.background);
 
             foreach (Transform t in randomButtonPrefab.transform) GameObject.DestroyImmediate(t.gameObject); // destroying text only after making our background object
 
             GameObject randomButtonOutline = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
             randomButtonOutline.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1);
             randomButtonOutline.name = "RandomOutline";
-            OverwriteGameObjectSpriteAndColor(randomButtonOutline, "RandomOutline.png", Theme.randomBtnOutlineColor);
+            OverwriteGameObjectSpriteAndColor(randomButtonOutline, "RandomOutline.png", GameTheme.themeColors.randomButton.outline);
 
             GameObject randomButtonIcon = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
             randomButtonIcon.name = "RandomIcon";
-            OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", Theme.randomBtnTextColor);
+            OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", GameTheme.themeColors.randomButton.text);
 
             GameObject.DestroyImmediate(__instance.btnrandom.GetComponent<Image>());
             GameObject.DestroyImmediate(randomButtonPrefab);
             #endregion
 
+            #region PointerArrow
             GameObject arrowPointerPrefab = GameObject.Instantiate(__instance.pointerarrow.gameObject);
-            OverwriteGameObjectSpriteAndColor(__instance.pointerarrow.gameObject, "pointerBG.png", Theme.pointerBackgroundColor);
+            OverwriteGameObjectSpriteAndColor(__instance.pointerarrow.gameObject, "pointerBG.png", GameTheme.themeColors.pointer.background);
 
             GameObject arrowPointerShadow = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
             arrowPointerShadow.name = "Shadow";
             arrowPointerShadow.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            OverwriteGameObjectSpriteAndColor(arrowPointerShadow, "pointerShadow.png", Theme.pointerShadowColor);
+            OverwriteGameObjectSpriteAndColor(arrowPointerShadow, "pointerShadow.png", GameTheme.themeColors.pointer.shadow);
 
             GameObject arrowPointerPointerOutline = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
             arrowPointerPointerOutline.name = "Outline";
             arrowPointerPointerOutline.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            OverwriteGameObjectSpriteAndColor(arrowPointerPointerOutline, "pointerOutline.png", Theme.pointerOutlineColor);
+            OverwriteGameObjectSpriteAndColor(arrowPointerPointerOutline, "pointerOutline.png", GameTheme.themeColors.pointer.outline);
+            #endregion
 
-            
             //CapsulesTextColor
-            songyear.color = Theme.leaderboardTextColor;
-            songgenre.color = Theme.leaderboardTextColor;
-            songduration.color = Theme.leaderboardTextColor;
-            songcomposer.color = Theme.leaderboardTextColor;
-            songtempo.color = Theme.leaderboardTextColor;
-            songdesctext.color = Theme.leaderboardTextColor;
+            songyear.color = GameTheme.themeColors.leaderboard.text;
+            songgenre.color = GameTheme.themeColors.leaderboard.text;
+            songduration.color = GameTheme.themeColors.leaderboard.text;
+            songcomposer.color = GameTheme.themeColors.leaderboard.text;
+            songtempo.color = GameTheme.themeColors.leaderboard.text;
+            songdesctext.color = GameTheme.themeColors.leaderboard.text;
             OnPopulateSongNamesPostFix(__instance);
         }
 
@@ -230,58 +284,58 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void OnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
         {
-            if (Theme.isDefault) return;
+            if (GameTheme.isDefault) return;
             if ((int)__args[0] >= 7)
             {
-                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = Theme.songButtonOutlineOverColor;
+                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.outline;
                 return;
             }
-            __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = Theme.songButtonBackgroundColor;
-            __instance.btnbgs[(int)__args[0]].transform.Find("Outline").GetComponent<Image>().color = Theme.songButtonOutlineOverColor;
-            __instance.btnbgs[(int)__args[0]].transform.parent.Find("Text").GetComponent<Text>().color = Theme.songButtonTextOverColor;
+            __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.background;
+            __instance.btnbgs[(int)__args[0]].transform.Find("Outline").GetComponent<Image>().color = GameTheme.themeColors.songButton.outlineOver;
+            __instance.btnbgs[(int)__args[0]].transform.parent.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.songButton.textOver;
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.unHoverBtn))]
         [HarmonyPostfix]
         public static void OnUnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
         {
-            if (Theme.isDefault) return;
+            if (GameTheme.isDefault) return;
             if ((int)__args[0] >= 7)
             {
-                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = Theme.songButtonOutlineColor;
+                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.outline;
                 return;
             }
-            __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = Theme.songButtonBackgroundColor;
-            __instance.btnbgs[(int)__args[0]].transform.Find("Outline").GetComponent<Image>().color = Theme.songButtonOutlineColor;
-            __instance.btnbgs[(int)__args[0]].transform.parent.Find("Text").GetComponent<Text>().color = Theme.songButtonTextColor;
+            __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.background;
+            __instance.btnbgs[(int)__args[0]].transform.Find("Outline").GetComponent<Image>().color = GameTheme.themeColors.songButton.outline;
+            __instance.btnbgs[(int)__args[0]].transform.parent.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.songButton.text;
         }
         #endregion
 
         #region PlayAndBackEvents
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.hoverPlay))]
         [HarmonyPrefix]
-        public static bool OnHoverPlayBypassIfThemeNotDefault() => Theme.isDefault;
+        public static bool OnHoverPlayBypassIfThemeNotDefault() => GameTheme.isDefault;
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.unHoverPlay))]
         [HarmonyPrefix]
-        public static bool OnUnHoverPlayBypassIfThemeNotDefault() => Theme.isDefault;
+        public static bool OnUnHoverPlayBypassIfThemeNotDefault() => GameTheme.isDefault;
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.hoverBack))]
         [HarmonyPrefix]
-        public static bool OnHoverBackBypassIfThemeNotDefault() => Theme.isDefault;
+        public static bool OnHoverBackBypassIfThemeNotDefault() => GameTheme.isDefault;
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.hoverOutBack))]
         [HarmonyPrefix]
-        public static bool OnHoverOutBackBypassIfThemeNotDefault() => Theme.isDefault;
+        public static bool OnHoverOutBackBypassIfThemeNotDefault() => GameTheme.isDefault;
         #endregion
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         public static void OnPopulateSongNamesPostFix(LevelSelectController __instance)
         {
-            if (Theme.isDefault) return;
+            if (GameTheme.isDefault) return;
 
             for (int i = 0; i < 10; i++)
             {
                 if (__instance.diffstars[i].color.a == 1)
-                    __instance.diffstars[i].color = Color.Lerp(Theme.diffStarStartColor, Theme.diffStarEndColor, i / 9f);
+                    __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
             }
 
             songyear.text = __instance.songyear.text;
@@ -298,6 +352,21 @@ namespace TootTally.Graphics
             gameObject.GetComponent<Image>().color = spriteColor;
         }
 
+        public class Options
+        {
+            public ConfigEntry<ThemeTypes> Theme { get; set; }
 
+        }
+
+        public enum ThemeTypes
+        {
+            Default,
+            Day,
+            Night,
+            Custom,
+            Electro,
+            Guardie,
+            Random,
+        }
     }
 }
