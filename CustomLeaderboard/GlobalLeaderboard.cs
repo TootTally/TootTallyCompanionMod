@@ -85,7 +85,11 @@ namespace TootTally.CustomLeaderboard
             ShowLoadingSwirly();
 
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
+            _slider.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+            _slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
+            _sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
+          
             SetOnSliderValueChangeEvent();
         }
 

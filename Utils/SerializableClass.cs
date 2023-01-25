@@ -71,9 +71,13 @@ namespace TootTally.Utils
         public struct BackButtonJson
         {
             public string background;
+            public string backgroundOver;
             public string outline;
+            public string outlineOver;
             public string text;
+            public string textOver;
             public string shadow;
+            public string shadowOver;
         }
 
         [Serializable]
@@ -126,20 +130,24 @@ namespace TootTally.Utils
         public struct PlayButtonJson
         {
             public string background;
+            public string backgroundOver;
             public string outline;
+            public string outlineOver;
             public string text;
+            public string textOver;
             public string shadow;
+            public string shadowOver;
         }
 
         [Serializable]
         public struct RandomButtonJson
         {
             public string background;
+            public string backgroundOver;
             public string outline;
+            public string outlineOver;
             public string text;
-            public string normal;
-            public string pressed;
-            public string highlighted;
+            public string textOver;
         }
 
         [Serializable]

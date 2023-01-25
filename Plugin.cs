@@ -65,6 +65,7 @@ namespace TootTally
             }
 
             AssetManager.LoadAssets();
+            GameThemeManager.Initialize();
 
             Harmony.CreateAndPatchAll(typeof(UserLogin));
             Harmony.CreateAndPatchAll(typeof(GameThemeManager));

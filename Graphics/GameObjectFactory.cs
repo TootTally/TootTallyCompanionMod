@@ -16,13 +16,12 @@ namespace TootTally.Graphics
         private static CustomButton _buttonPrefab;
         private static Text _defaultText, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static Slider _verticalSliderPrefab, _sliderPrefab;
-        private static GameObject _starPrefab;
         private static PopUpNotif _popUpNotifPrefab;
 
         private static GameObject _settingsGraphics, _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
-        private static bool _isHomeControllerInitialized = false;
-        private static bool _isLevelSelectControllerInitialized = false;
+        private static bool _isHomeControllerInitialized;
+        private static bool _isLevelSelectControllerInitialized;
 
 
 
@@ -49,8 +48,8 @@ namespace TootTally.Graphics
             SetDefaultTextPrefab();
             SetNotificationPrefab();
             SetCustomButtonPrefab();
-            SetStarPrefab();
             _isHomeControllerInitialized = true;
+            UpdatePrefabTheme();
         }
 
         public static void OnLevelSelectControllerInitialize()
@@ -65,6 +64,7 @@ namespace TootTally.Graphics
             SetLeaderboardTextPrefab();
             SetSingleRowPrefab();
             _isLevelSelectControllerInitialized = true;
+            UpdatePrefabTheme();
         }
 
         #region SetPrefabs
@@ -99,13 +99,9 @@ namespace TootTally.Graphics
             RectTransform popUpNorifRectTransform = _popUpNotifPrefab.GetComponent<RectTransform>();
             popUpNorifRectTransform.anchoredPosition = new Vector2(695, -700);
             popUpNorifRectTransform.sizeDelta = new Vector2(450, 200);
-            _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
-            _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
 
             Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
             notifText.name = "NotifText";
-            notifText.color = GameTheme.themeColors.notification.defaultText;
-            notifText.GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
             notifText.gameObject.GetComponent<RectTransform>().sizeDelta = popUpNorifRectTransform.sizeDelta;
             notifText.gameObject.SetActive(true);
 
@@ -136,17 +132,6 @@ namespace TootTally.Graphics
             UnityEngine.Object.DontDestroyOnLoad(gameObjectHolder);
         }
 
-        public static void SetStarPrefab()
-        {
-            GameObject star = _settingsGraphics.transform.Find("ALLEGIANCE/star (back)").gameObject;
-
-            _starPrefab = UnityEngine.Object.Instantiate(star);
-
-            _starPrefab.SetActive(false);
-
-            UnityEngine.Object.DontDestroyOnLoad(_starPrefab);
-        }
-
         public static void SetSteamLeaderboardPrefab()
         {
             GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject;
@@ -172,7 +157,6 @@ namespace TootTally.Graphics
         public static void SetPanelBodyInSteamLeaderboard()
         {
             _panelBodyPrefab = _steamLeaderboardPrefab.transform.Find("PanelBody").gameObject;
-            _panelBodyPrefab.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.panelBody;
             _panelBodyPrefab.SetActive(true);
 
             RectTransform panelRectTransform = _panelBodyPrefab.GetComponent<RectTransform>();
@@ -209,8 +193,6 @@ namespace TootTally.Graphics
                 tabRect.anchoredPosition = new Vector2(15, -40);
                 tabRect.sizeDelta = new Vector2(40, 40);
 
-                currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors = GameTheme.themeColors.leaderboard.tabs;
-
                 currentTab.AddComponent<Image>();
             }
             VerticalLayoutGroup verticalLayout = tabs.AddComponent<VerticalLayoutGroup>();
@@ -242,7 +224,6 @@ namespace TootTally.Graphics
         public static void SetScoreboardInPanelBody()
         {
             GameObject scoresbody = _panelBodyPrefab.transform.Find("scoresbody").gameObject;
-            scoresbody.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.scoresBody;
 
             RectTransform scoresbodyRectTransform = scoresbody.GetComponent<RectTransform>();
             scoresbodyRectTransform.anchoredPosition = new Vector2(0, -10);
@@ -300,8 +281,6 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardHeaderPrefab.maskable = true;
             Outline outline = _leaderboardHeaderPrefab.gameObject.AddComponent<Outline>();
-            outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
-            _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
 
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
         }
@@ -313,8 +292,6 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardTextPrefab.maskable = true;
             Outline outline = _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
-            outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
-            _leaderboardTextPrefab.color = GameTheme.themeColors.leaderboard.text;
 
             DestroyNumNameScoreFromSingleScorePrefab();
 
@@ -346,8 +323,6 @@ namespace TootTally.Graphics
 
             _verticalSliderPrefab = GameObject.Instantiate(defaultSlider);
             _verticalSliderPrefab.direction = Slider.Direction.TopToBottom;
-            _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
-            _verticalSliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
 
             RectTransform sliderRect = _verticalSliderPrefab.GetComponent<RectTransform>();
             sliderRect.sizeDelta = new Vector2(25, 745);
@@ -358,7 +333,6 @@ namespace TootTally.Graphics
             handleRect.sizeDelta = new Vector2(40, 40);
             handleRect.pivot = Vector2.zero;
             handleRect.anchorMax = Vector2.zero;
-            handleRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
             GameObject handle = GameObject.Instantiate(handleRect.gameObject, _verticalSliderPrefab.transform);
             handle.name = "Handle";
             RectTransform backgroundSliderRect = _verticalSliderPrefab.transform.Find("Background").GetComponent<RectTransform>();
@@ -379,7 +353,7 @@ namespace TootTally.Graphics
             Slider defaultSlider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
 
             _sliderPrefab = GameObject.Instantiate(defaultSlider);
-            _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+            //_sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
 
             RectTransform sliderRect = _sliderPrefab.GetComponent<RectTransform>();
             sliderRect.anchoredPosition = new Vector2(-200, 0);
@@ -416,6 +390,7 @@ namespace TootTally.Graphics
             btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
             btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
             btnColors.pressedColor = GameTheme.themeColors.replayButton.colors.pressedColor;
+            btnColors.selectedColor = GameTheme.themeColors.replayButton.colors.normalColor;
             newButton.button.colors = btnColors;
 
             newButton.textHolder.text = text;
@@ -434,23 +409,43 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        //Keeping this just in case I wanna use it somewhere
-        public static GameObject CreateLoadingScreenStar(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, float eulerRotationY, string name)
+        public static void UpdatePrefabTheme()
         {
-            GameObject myStar = UnityEngine.Object.Instantiate(_starPrefab, canvasTransform);
-            myStar.name = name;
-            myStar.gameObject.SetActive(true);
+            if (_isHomeControllerInitialized)
+            {
+                _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
 
-            RectTransform rectBack = myStar.GetComponent<RectTransform>();
-            rectBack.anchoredPosition = anchoredPosition;
-            rectBack.eulerAngles = new Vector3(0, eulerRotationY, 0);
-            rectBack.sizeDelta = size;
+                Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
+                notifText.name = "NotifText";
+                notifText.color = GameTheme.themeColors.notification.defaultText;
+                notifText.GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
+            }
 
-            RectTransform rectFront = myStar.transform.Find("star (front)").GetComponent<RectTransform>();
-            rectFront.anchoredPosition = new Vector2(-1, 1);
-            rectFront.sizeDelta = size;
+            if (_isLevelSelectControllerInitialized)
+            {
+                _panelBodyPrefab.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.panelBody;
+                for (int i = 0; i < 3; i++)
+                {
+                    GameObject currentTab = _steamLeaderboardPrefab.GetComponent<LeaderboardManager>().tabs[i];
+                    currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors = GameTheme.themeColors.leaderboard.tabs;
+                }
+                _panelBodyPrefab.transform.Find("scoresbody").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.scoresBody;
+                _singleRowPrefab.imageStrip.color = GameTheme.themeColors.leaderboard.rowEntry;
 
-            return myStar;
+                Outline outline = _leaderboardTextPrefab.gameObject.GetComponent<Outline>();
+                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
+                _leaderboardTextPrefab.color = GameTheme.themeColors.leaderboard.text;
+                outline = _leaderboardHeaderPrefab.gameObject.GetComponent<Outline>();
+                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
+                _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
+
+                
+                _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+                _verticalSliderPrefab.transform.Find("Handle").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
+                _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+                _verticalSliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
+            }
         }
 
         public static GameObject CreateSteamLeaderboardFromPrefab(Transform canvasTransform, string name)

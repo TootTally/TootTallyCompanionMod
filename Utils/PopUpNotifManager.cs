@@ -13,12 +13,15 @@ namespace TootTally.Utils
         private static List<PopUpNotif> _activeNotificationList;
         private static List<PopUpNotif> _toRemoveNotificationList;
         private static GameObject _notifCanvas;
+        private static bool IsInitialized;
 
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
         public static void Initialize(HomeController __instance)
         {
+            if (IsInitialized) return;
+
             _notifCanvas = new GameObject("NotifCanvas");
             Canvas canvas = _notifCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -27,6 +30,7 @@ namespace TootTally.Utils
             GameObject.DontDestroyOnLoad(_notifCanvas);
             _activeNotificationList = new List<PopUpNotif>();
             _toRemoveNotificationList = new List<PopUpNotif>();
+            IsInitialized = true;
         }
 
         public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)

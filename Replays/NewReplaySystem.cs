@@ -3,6 +3,7 @@ using SimpleJSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using TootTally.Graphics;
 using TootTally.Utils;
@@ -165,13 +166,14 @@ namespace TootTally.Replays
 
         private static void OptimizeFrameData(ref List<int[]> rawReplayFrameData)
         {
-            //Look for matching position and remove same frames with the same positions
+            //Look for matching position and remove frames with the same positions or same timing
+            List<int[]> framesToRemove = new List<int[]>();
             for (int i = 0; i < rawReplayFrameData.Count - 1; i++)
             {
-                for (int j = i + 1; j < rawReplayFrameData.Count && (CheckIfSameValue(i, j, (int)FrameDataStructure.PointerPosition, rawReplayFrameData) || CheckIfSameValue(i, j, (int)FrameDataStructure.NoteHolder, rawReplayFrameData));)
-                {
-                    rawReplayFrameData.Remove(rawReplayFrameData[j]);
-                }
+                framesToRemove.Clear();
+                for(int j = i+1; j < rawReplayFrameData.Count && (CheckIfSameValue(i, j, (int)FrameDataStructure.PointerPosition, rawReplayFrameData) || CheckIfSameValue(i, j, (int)FrameDataStructure.NoteHolder, rawReplayFrameData)); j++)
+                    framesToRemove.Add(rawReplayFrameData[j]);
+                rawReplayFrameData = rawReplayFrameData.Except(framesToRemove).ToList();
             }
         }
 

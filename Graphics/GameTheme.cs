@@ -149,36 +149,41 @@ namespace TootTally.Graphics
                 randomButton = new RandomButtonColors()
                 {
                     background = new Color(0.2f, 0.2f, 0.2f),
+                    backgroundOver = new Color(0.2f, 0.2f, 0.2f),
                     outline = new Color(0, 0, 0),
+                    outlineOver = new Color(0, 0, 0),
                     text = new Color(1, 1, 1),
-                    colors = new ColorBlock()
-                    {
-                        normalColor = new Color(1, 1, 1),
-                        pressedColor = new Color(1, 1, 0),
-                        highlightedColor = new Color(.75f, .75f, .75f),
-                        colorMultiplier = 1f,
-                        fadeDuration = 0.2f
-                    }
+                    textOver = new Color(1, 1, 1),
+
                 },
                 backButton = new PlayBackButtonColors()
                 {
                     background = new Color(0.2f, 0.2f, 0.2f),
+                    backgroundOver = new Color(0.2f, 0.2f, 0.2f),
                     outline = new Color(0, 0, 0),
+                    outlineOver = new Color(0, 0, 0),
                     text = new Color(1, 1, 1),
-                    shadow = Color.gray
+                    textOver = new Color(1, 1, 1),
+                    shadow = Color.gray,
+                    shadowOver = Color.gray
                 },
                 playButton = new PlayBackButtonColors()
                 {
                     background = new Color(0.2f, 0.2f, 0.2f),
+                    backgroundOver = new Color(0.2f, 0.2f, 0.2f),
                     outline = new Color(0, 0, 0),
+                    outlineOver = new Color(0, 0, 0),
                     text = new Color(1, 1, 1),
-                    shadow = Color.gray
+                    textOver = new Color(1, 1, 1),
+                    shadow = Color.gray,
+                    shadowOver = Color.gray
                 },
                 songButton = new SongButtonColors()
                 {
                     background = new Color(0, 0, 0),
                     outline = new Color(0.12f, 0.12f, 0.12f),
                     outlineOver = new Color(0.2f, 0.2f, 0.2f),
+                    selectedText = new Color(.35f, .35f, .35f),
                     shadow = Color.gray,
                     textOver = new Color(.92f, .92f, .92f),
                     text = new Color(.35f, .35f, .35f),
@@ -273,30 +278,33 @@ namespace TootTally.Graphics
                 randomButton = new RandomButtonColors()
                 {
                     background = new Color(),
+                    backgroundOver = new Color(),
                     outline = new Color(),
+                    outlineOver = new Color(),
                     text = new Color(),
-                    colors = new ColorBlock()
-                    {
-                        normalColor = new Color(0, 0, 0),
-                        pressedColor = new Color(.2f, .2f, .2f),
-                        highlightedColor = new Color(.1f, .1f, .1f),
-                        colorMultiplier = 1f,
-                        fadeDuration = 0.2f
-                    }
+                    textOver = new Color()
                 },
                 backButton = new PlayBackButtonColors()
                 {
                     background = new Color(),
+                    backgroundOver = new Color(),
                     outline = new Color(),
+                    outlineOver = new Color(),
                     text = new Color(),
-                    shadow = new Color()
+                    textOver = new Color(),
+                    shadow = new Color(),
+                    shadowOver = new Color()
                 },
                 playButton = new PlayBackButtonColors()
                 {
                     background = new Color(),
+                    backgroundOver = new Color(),
                     outline = new Color(),
+                    outlineOver = new Color(),
                     text = new Color(),
-                    shadow = new Color()
+                    textOver = new Color(),
+                    shadow = new Color(),
+                    shadowOver = new Color()
                 },
                 songButton = new SongButtonColors()
                 {
@@ -306,6 +314,7 @@ namespace TootTally.Graphics
                     shadow = new Color(),
                     textOver = new Color(),
                     text = new Color(),
+                    selectedText = new Color(),
                     square = new Color()
                 },
                 scrollSpeedSlider = new ScrollSpeedSliderColors()
@@ -376,8 +385,6 @@ namespace TootTally.Graphics
                 fadeDuration = 0.1f
             };
 
-
-
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.border, out themeColors.notification.border);
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.background, out themeColors.notification.background);
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.defaultText, out themeColors.notification.defaultText);
@@ -410,30 +417,29 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(themeConfig.theme.capsules.tempo, out themeColors.capsules.tempo);
 
             ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.background, out themeColors.randomButton.background);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.backgroundOver, out themeColors.randomButton.backgroundOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.outline, out themeColors.randomButton.outline);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.outlineOver, out themeColors.randomButton.outlineOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.text, out themeColors.randomButton.text);
-            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.normal, out normalColor);
-            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.pressed, out pressedColor);
-            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.highlighted, out highlightedColor);
-
-            themeColors.randomButton.colors = new ColorBlock()
-            {
-                normalColor = normalColor,
-                pressedColor = pressedColor,
-                highlightedColor = highlightedColor,
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
-            };
+            ColorUtility.TryParseHtmlString(themeConfig.theme.randomButton.textOver, out themeColors.randomButton.textOver);
 
             ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.background, out themeColors.backButton.background);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.backgroundOver, out themeColors.backButton.backgroundOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.outline, out themeColors.backButton.outline);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.outlineOver, out themeColors.backButton.outlineOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.text, out themeColors.backButton.text);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.textOver, out themeColors.backButton.textOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.shadow, out themeColors.backButton.shadow);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.backButton.shadowOver, out themeColors.backButton.shadowOver);
 
             ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.background, out themeColors.playButton.background);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.backgroundOver, out themeColors.playButton.backgroundOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.outline, out themeColors.playButton.outline);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.outlineOver, out themeColors.playButton.outlineOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.text, out themeColors.playButton.text);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.textOver, out themeColors.playButton.textOver);
             ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.shadow, out themeColors.playButton.shadow);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.playButton.shadowOver, out themeColors.playButton.shadowOver);
 
             ColorUtility.TryParseHtmlString(themeConfig.theme.songButton.background, out themeColors.songButton.background);
             ColorUtility.TryParseHtmlString(themeConfig.theme.songButton.outline, out themeColors.songButton.outline);
@@ -518,16 +524,11 @@ namespace TootTally.Graphics
                 randomButton = new RandomButtonColors()
                 {
                     background = GetRandomColor(rdm, 1),
+                    backgroundOver = GetRandomColor(rdm, 1),
                     outline = GetRandomColor(rdm, 1),
+                    outlineOver = GetRandomColor(rdm, 1),
                     text = GetRandomColor(rdm, 1),
-                    colors = new ColorBlock()
-                    {
-                        normalColor = GetRandomColor(rdm, 1),
-                        pressedColor = GetRandomColor(rdm, 1),
-                        highlightedColor = GetRandomColor(rdm, 1),
-                        colorMultiplier = 1f,
-                        fadeDuration = 0.2f
-                    }
+                    textOver = GetRandomColor(rdm, 1),
                 },
                 backButton = new PlayBackButtonColors()
                 {
@@ -551,6 +552,7 @@ namespace TootTally.Graphics
                     shadow = GetRandomColor(rdm, 1),
                     textOver = GetRandomColor(rdm, 1),
                     text = GetRandomColor(rdm, 1),
+                    selectedText = GetRandomColor(rdm, 1),
                     square = GetRandomColor(rdm, 1)
                 },
                 scrollSpeedSlider = new ScrollSpeedSliderColors()
@@ -626,17 +628,23 @@ namespace TootTally.Graphics
         public class PlayBackButtonColors
         {
             public Color background;
+            public Color backgroundOver;
             public Color outline;
+            public Color outlineOver;
             public Color text;
+            public Color textOver;
             public Color shadow;
+            public Color shadowOver;
         }
 
         public class RandomButtonColors
         {
             public Color background;
+            public Color backgroundOver;
             public Color outline;
+            public Color outlineOver;
             public Color text;
-            public ColorBlock colors;
+            public Color textOver;
         }
 
         public class ReplayButtonColors
@@ -665,6 +673,7 @@ namespace TootTally.Graphics
             public Color background;
             public Color text;
             public Color textOver;
+            public Color selectedText;
             public Color outline;
             public Color outlineOver;
             public Color shadow;
