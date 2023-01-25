@@ -35,13 +35,22 @@ namespace TootTally.Graphics
                     GameTheme.SetNightTheme();
                     break;
                 case ThemeTypes.Custom:
-                    GameTheme.SetCustomTheme("CustomTheme");
+                    GameTheme.SetCustomTheme("Custom");
                     break;
                 case ThemeTypes.Electro:
-                    GameTheme.SetCustomTheme("ElectroTheme");
+                    GameTheme.SetCustomTheme("Electro");
                     break;
                 case ThemeTypes.Guardie:
-                    GameTheme.SetCustomTheme("GuardieTheme");
+                    GameTheme.SetCustomTheme("Guardie");
+                    break;
+                case ThemeTypes.Gloomhonk:
+                    GameTheme.SetCustomTheme("Gloomhonk");
+                    break;
+                case ThemeTypes.Jeff:
+                    GameTheme.SetCustomTheme("Jeff (Lumpy)");
+                    break;
+                case ThemeTypes.Samuran:
+                    GameTheme.SetCustomTheme("Samuran");
                     break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
@@ -460,6 +469,9 @@ namespace TootTally.Graphics
             Night,
             Electro,
             Guardie,
+            Gloomhonk,
+            Jeff,
+            Samuran,
             Custom,
             Random,
         }
