@@ -468,8 +468,11 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void WaveControllerFuckeryOverwrite(WaveController __instance)
         {
+            if (!GameTheme.isDefault)
+            {
                 foreach (SpriteRenderer sr in __instance.wavesprites)
                     sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
+            }
         }
 
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
