@@ -52,6 +52,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.Samuran:
                     GameTheme.SetCustomTheme("Samuran");
                     break;
+                case ThemeTypes.Katiny:
+                    GameTheme.SetCustomTheme("Katiny");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -144,6 +147,7 @@ namespace TootTally.Graphics
 
             #region Lines
             GameObject lines = __instance.btnspanel.transform.Find("RightLines").gameObject;
+            lines.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
             LineRenderer redLine = lines.transform.Find("Red").GetComponent<LineRenderer>();
             redLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
             redLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
@@ -314,6 +318,17 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(arrowPointerPrefab);
             #endregion
 
+            #region Background
+            __instance.bgdots.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 165.5f);
+            __instance.bgdots.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+            __instance.bgdots.transform.Find("Image (1)").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+            __instance.bgdots2.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+            GameObject.Find("bgcamera").GetComponent<Camera>().backgroundColor = GameTheme.themeColors.background.background;
+            GameObject.Find("BG Shape").GetComponent<Image>().color = GameTheme.themeColors.background.shape;
+            GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
+            MainCanvas.transform.Find("FullScreenPanel/diamond").GetComponent<Image>().color = GameTheme.themeColors.background.diamond;
+            #endregion
+
             //CapsulesTextColor
             songyear.color = GameTheme.themeColors.leaderboard.text;
             songgenre.color = GameTheme.themeColors.leaderboard.text;
@@ -438,7 +453,6 @@ namespace TootTally.Graphics
                 if (__instance.diffstars[i].color.a == 1)
                     __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
             }
-
             songyear.text = __instance.songyear.text;
             songgenre.text = __instance.songgenre.text;
             songduration.text = __instance.songduration.text;
@@ -449,6 +463,14 @@ namespace TootTally.Graphics
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
         [HarmonyPostfix]
         public static void OnSortTracksPostFix(LevelSelectController __instance) => OnAdvanceSongsPostFix(__instance);
+
+        [HarmonyPatch(typeof(WaveController), nameof(WaveController.Start))]
+        [HarmonyPostfix]
+        public static void WaveControllerFuckeryOverwrite(WaveController __instance)
+        {
+                foreach (SpriteRenderer sr in __instance.wavesprites)
+                    sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
+        }
 
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
         {
@@ -472,6 +494,7 @@ namespace TootTally.Graphics
             Gloomhonk,
             Jeff,
             Samuran,
+            Katiny,
             Custom,
             Random,
         }

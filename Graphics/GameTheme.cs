@@ -84,7 +84,7 @@ namespace TootTally.Graphics
         {
             themeColors = new ThemeColors()
             {
-                
+
                 leaderboard = new LeaderboardColors()
                 {
                     panelBody = new Color(0.2f, 0.2f, 0.2f),
@@ -206,6 +206,16 @@ namespace TootTally.Graphics
                     background = new Color(0, 0, 0),
                     outline = new Color(0.2f, 0.2f, 0.2f),
                     shadow = new Color(0.2f, 0.2f, 0.2f)
+                },
+                background = new BackgroundColors()
+                {
+                    waves = new Color(.2f, .2f, .2f, .9f),
+                    waves2 = new Color(.2f, .2f, .2f, .9f),
+                    dots = new Color(0f, 0f, 0f, 1f),
+                    dots2 = new Color(0f, 0f, 0f, 1f),
+                    diamond = new Color(0f, 0f, 0f, .6f),
+                    shape = new Color(0f, 0f, 0f, .75f),
+                    background = new Color(.12f, .12f, .12f, .1f),
                 }
             };
         }
@@ -462,6 +472,14 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(themeConfig.theme.pointer.background, out themeColors.pointer.background);
             ColorUtility.TryParseHtmlString(themeConfig.theme.pointer.shadow, out themeColors.pointer.shadow);
             ColorUtility.TryParseHtmlString(themeConfig.theme.pointer.outline, out themeColors.pointer.outline);
+
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.waves, out themeColors.background.waves);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.waves2, out themeColors.background.waves2);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.dots, out themeColors.background.dots);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.dots2, out themeColors.background.dots2);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.shape, out themeColors.background.shape);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.diamond, out themeColors.background.diamond);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.background.background, out themeColors.background.background);
         }
 
         public static void SetRandomTheme()
@@ -587,6 +605,16 @@ namespace TootTally.Graphics
                     background = GetRandomColor(rdm, 1),
                     shadow = GetRandomColor(rdm, 1),
                     outline = GetRandomColor(rdm, 1)
+                },
+                background = new BackgroundColors()
+                {
+                    waves = GetRandomColor(rdm, .5f),
+                    waves2 = GetRandomColor(rdm, .5f),
+                    dots = GetRandomColor(rdm, .5f),
+                    dots2 = GetRandomColor(rdm, .5f),
+                    shape = GetRandomColor(rdm, .5f),
+                    diamond = GetRandomColor(rdm, .5f), 
+                    background = GetRandomColor(rdm, .5f)
                 }
             };
         }
@@ -779,6 +807,17 @@ namespace TootTally.Graphics
 
         }
 
+        public class BackgroundColors
+        {
+            public Color waves;
+            public Color waves2;
+            public Color dots;
+            public Color dots2;
+            public Color shape;
+            public Color diamond;
+            public Color background;
+        }
+
         public class ThemeColors
         {
             public LeaderboardColors leaderboard;
@@ -792,6 +831,7 @@ namespace TootTally.Graphics
             public SongButtonColors songButton;
             public DiffStarColors diffStar;
             public PointerColors pointer;
+            public BackgroundColors background;
 
             public void InitializeEmpty()
             {
@@ -809,7 +849,8 @@ namespace TootTally.Graphics
                 songButton = new SongButtonColors();
                 diffStar = new DiffStarColors();
                 pointer = new PointerColors();
-
+                backButton = new PlayBackButtonColors();
+                background = new BackgroundColors();
             }
         }
 

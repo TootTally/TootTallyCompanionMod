@@ -211,6 +211,19 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public struct BackgroundJson
+        {
+            public string waves;
+            public string waves2;
+            public string dots;
+            public string dots2;
+            public string shape;
+            public string diamond;
+            public string background;
+        }
+
+
+        [Serializable]
         public struct ThemeJson
         {
             public LeaderboardJson leaderboard;
@@ -224,6 +237,7 @@ namespace TootTally.Utils
             public SongButtonJson songButton;
             public DiffStarJson diffStar;
             public PointerJson pointer;
+            public BackgroundJson background;
         }
         #endregion
     }
