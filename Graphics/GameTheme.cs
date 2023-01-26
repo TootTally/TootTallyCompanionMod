@@ -88,9 +88,9 @@ namespace TootTally.Graphics
                 leaderboard = new LeaderboardColors()
                 {
                     panelBody = new Color(0.2f, 0.2f, 0.2f),
-                    scoresBody = new Color(0, 0, 0),
-                    rowEntry = new Color(0.12f, 0.12f, 0.12f),
-                    yourRowEntry = new Color(0.35f, 0.35f, 0.35f, 0.65f),
+                    scoresBody = new Color(0.1f, 0.1f, 0.1f, 0.65f),
+                    rowEntry = new Color(0.17f, 0.17f, 0.17f),
+                    yourRowEntry = new Color(0f, 0f, 0f, 0.65f),
 
                     headerText = new Color(1, 1, 1),
                     text = new Color(1, 1, 1),
@@ -148,35 +148,35 @@ namespace TootTally.Graphics
                 },
                 randomButton = new RandomButtonColors()
                 {
-                    background = new Color(0.2f, 0.2f, 0.2f),
+                    background = new Color(0f, 0f, 0f),
                     backgroundOver = new Color(0.2f, 0.2f, 0.2f),
-                    outline = new Color(0, 0, 0),
+                    outline = new Color(0.2f, 0.2f, 0.2f),
                     outlineOver = new Color(0, 0, 0),
-                    text = new Color(1, 1, 1),
-                    textOver = new Color(1, 1, 1),
+                    text = new Color(.92f, .92f, .92f),
+                    textOver = new Color(0.8f, .8f, .8f),
 
                 },
                 backButton = new PlayBackButtonColors()
                 {
-                    background = new Color(0.2f, 0.2f, 0.2f),
+                    background = new Color(0f, 0f, 0f),
                     backgroundOver = new Color(0.2f, 0.2f, 0.2f),
-                    outline = new Color(0, 0, 0),
+                    outline = new Color(0.2f, 0.2f, 0.2f),
                     outlineOver = new Color(0, 0, 0),
-                    text = new Color(1, 1, 1),
-                    textOver = new Color(1, 1, 1),
+                    text = new Color(.92f, .92f, .92f),
+                    textOver = new Color(0.8f, .8f, .8f),
                     shadow = Color.gray,
-                    shadowOver = Color.gray
+                    shadowOver = Color.black
                 },
                 playButton = new PlayBackButtonColors()
                 {
-                    background = new Color(0.2f, 0.2f, 0.2f),
+                    background = new Color(0f, 0f, 0f),
                     backgroundOver = new Color(0.2f, 0.2f, 0.2f),
-                    outline = new Color(0, 0, 0),
+                    outline = new Color(0.2f, 0.2f, 0.2f),
                     outlineOver = new Color(0, 0, 0),
-                    text = new Color(1, 1, 1),
-                    textOver = new Color(1, 1, 1),
+                    text = new Color(.92f, .92f, .92f),
+                    textOver = new Color(0.8f, .8f, .8f),
                     shadow = Color.gray,
-                    shadowOver = Color.gray
+                    shadowOver = Color.black
                 },
                 songButton = new SongButtonColors()
                 {
@@ -203,9 +203,9 @@ namespace TootTally.Graphics
                 },
                 pointer = new PointerColors()
                 {
-                    background = new Color(0, 0, 0),
-                    outline = new Color(0.2f, 0.2f, 0.2f),
-                    shadow = new Color(0.2f, 0.2f, 0.2f)
+                    background = new Color(.92f, .92f, .92f),
+                    outline = new Color(0.12f, 0.12f, 0.12f),
+                    shadow = new Color(0f, 0f, 0f)
                 },
                 background = new BackgroundColors()
                 {
@@ -222,24 +222,24 @@ namespace TootTally.Graphics
 
         public static void SetDayTheme()
         {
-            themeColors = new ThemeColors()
+            /*themeColors = new ThemeColors()
             {
                 leaderboard = new LeaderboardColors()
                 {
                     panelBody = new Color(1, 1, 1),
                     scoresBody = new Color(0.9f, 0.9f, 0.9f),
                     rowEntry = new Color(1, 1, 1),
-                    yourRowEntry = new Color(0.95f, 0.22f, 0.35f, 0.35f),
+                    yourRowEntry = new Color(0.55f, 0.55f, 0.55f, 0.45f),
                     
                     headerText = new Color(0, 0, 0),
                     text = new Color(0, 0, 0),
-                    textOutline = new Color(0.85f, 0.85f, 0.85f, .84f),
+                    textOutline = new Color(0.95f, 0.95f, 0.95f, .65f),
 
                     slider = new SliderColors()
                     {
                         background = new Color(1, 1, 1),
-                        fill = new Color(0.95f, 0.22f, 0.35f),
-                        handle = new Color(0.95f, 0.22f, 0.35f)
+                        fill = new Color(0, 0, 0),
+                        handle = new Color(0f, 0f, 0f)
                         
                     },
                     
@@ -257,9 +257,9 @@ namespace TootTally.Graphics
                     border = new Color(1, 1f, 1f, 0.75f),
                     background = new Color(0.9f, 0.9f, 0.9f, .95f),
                     defaultText = new Color(0, 0, 0),
-                    textOutline = new Color(0.85f, 0.85f, 0.85f, .84f),
-                    warningText = new Color(),
-                    errorText = new Color()
+                    textOutline = new Color(0.95f, 0.95f, 0.95f, .65f),
+                    warningText = new Color(0.85f, 0.5f, 0f),
+                    errorText = new Color(0.85f, 0f, 0f)
                 },
                 replayButton = new ReplayButtonColors()
                 {
@@ -275,11 +275,11 @@ namespace TootTally.Graphics
                 },
                 capsules = new CapsulesColors()
                 {
-                    year = new Color(.95f, .22f, .35f),
-                    tempo = new Color(.074f, .188f, .203f),
-                    genre = new Color(.22f, .69f, .75f),
-                    composer = new Color(.95f, .65f, 0f),
-                    description = new Color(.22f, .69f, .75f),
+                    year = new Color(1, 1, 1),
+                    tempo = new Color(0.8f, 0.8f, 0.8f, 0.45f),
+                    genre = new Color(0.88f, 0.88f, 0.88f),
+                    composer = new Color(0.88f, 0.88f, 0.88f),
+                    description = new Color(1, 1, 1),
                     yearShadow = Color.black,
                     genreShadow = Color.black,
                     composerShadow = Color.black,
@@ -318,14 +318,14 @@ namespace TootTally.Graphics
                 },
                 songButton = new SongButtonColors()
                 {
-                    background = new Color(),
-                    outline = new Color(),
-                    outlineOver = new Color(),
-                    shadow = new Color(),
+                    background = new Color(0.9f, 0.9f, 0.9f),
+                    outline = new Color(1f,1f,1f),
+                    outlineOver = new Color(0,0,0,0.5f),
+                    shadow = new Color(0,0,0),
                     textOver = new Color(),
-                    text = new Color(),
-                    selectedText = new Color(),
-                    square = new Color()
+                    text = new Color(0,0,0),
+                    selectedText = new Color(.12f,.12f,.12f),
+                    square = new Color(0,0,0)
                 },
                 scrollSpeedSlider = new ScrollSpeedSliderColors()
                 {
@@ -344,9 +344,154 @@ namespace TootTally.Graphics
                     background = new Color(),
                     outline = new Color(),
                     shadow = new Color()
+                },
+                background = new BackgroundColors()
+                {
+                    waves = new Color(.8f, .8f, .8f, .9f),
+                    waves2 = new Color(.8f, .8f, .8f, .9f),
+                    dots = new Color(1f, 1f, 1f, 1f),
+                    dots2 = new Color(1f, 1f, 1f, 1f),
+                    diamond = new Color(1f, 1f, 1f, .6f),
+                    shape = new Color(1f, 1f, 1f, .75f),
+                    background = new Color(.88f, .88f, .88f, .1f),
+                }
+            };*/
+            themeColors = new ThemeColors()
+            {
+
+                leaderboard = new LeaderboardColors()
+                {
+                    panelBody = new Color(0.8f, 0.8f, 0.8f),
+                    scoresBody = new Color(0.9f, 0.9f, 0.9f, 0.65f),
+                    rowEntry = new Color(0.83f, 0.83f, 0.83f),
+                    yourRowEntry = new Color(1f, 1f, 1f, 0.65f),
+
+                    headerText = new Color(0, 0, 0),
+                    text = new Color(0, 0, 0),
+                    textOutline = new Color(1, 1, 1),
+
+                    slider = new SliderColors()
+                    {
+                        background = new Color(0.85f, 0.85f, 0.85f),
+                        fill = new Color(0.65f, 0.65f, 0.65f),
+                        handle = new Color(0.65f, 0.65f, 0.65f)
+                    },
+
+                    tabs = new ColorBlock()
+                    {
+                        normalColor = new Color(0, 0, 0),
+                        pressedColor = new Color(1, 1, 0),
+                        highlightedColor = new Color(.25f, .25f, .25f),
+                        colorMultiplier = 1f,
+                        fadeDuration = 0.2f
+                    }
+                },
+                notification = new NotificationColors()
+                {
+                    border = new Color(0.8f, 0.8f, 0.8f, 0.75f),
+                    background = new Color(1, 1, 1, .95f),
+                    defaultText = new Color(0, 0, 0),
+                    textOutline = new Color(0.8f, 0.8f, 0.8f),
+                    warningText = new Color(.6f, .6f, 0),
+                    errorText = new Color(.6f, 0, 0)
+                },
+                replayButton = new ReplayButtonColors()
+                {
+                    text = new Color(0, 0, 0),
+                    colors = new ColorBlock()
+                    {
+                        normalColor = new Color(1f, 1f, 1f),
+                        highlightedColor = new Color(.8f, .8f, .8f),
+                        pressedColor = new Color(.9f, .9f, .9f),
+                        colorMultiplier = 1f,
+                        fadeDuration = 0.2f
+                    }
+
+                },
+                capsules = new CapsulesColors()
+                {
+                    year = new Color(1, 1, 1),
+                    tempo = new Color(0.8f, 0.8f, 0.8f, 0.45f),
+                    genre = new Color(0.88f, 0.88f, 0.88f),
+                    composer = new Color(0.88f, 0.88f, 0.88f),
+                    description = new Color(1, 1, 1),
+                    yearShadow = Color.black,
+                    genreShadow = Color.black,
+                    composerShadow = Color.black,
+                    descriptionShadow = Color.black
+                },
+                randomButton = new RandomButtonColors()
+                {
+                    background = new Color(1f, 1f, 1f),
+                    backgroundOver = new Color(0.8f, 0.8f, 0.8f),
+                    outline = new Color(0.8f, 0.8f, 0.8f),
+                    outlineOver = new Color(1, 1, 1),
+                    text = new Color(.08f, .08f, .08f),
+                    textOver = new Color(.2f, .2f, .2f),
+
+                },
+                backButton = new PlayBackButtonColors()
+                {
+                    background = new Color(1f, 1f, 1f),
+                    backgroundOver = new Color(0.8f, 0.8f, 0.8f),
+                    outline = new Color(0.8f, 0.8f, 0.8f),
+                    outlineOver = new Color(1, 1, 1),
+                    text = new Color(.08f, .08f, .08f),
+                    textOver = new Color(.2f, .2f, .2f),
+                    shadow = Color.gray,
+                    shadowOver = Color.black
+                },
+                playButton = new PlayBackButtonColors()
+                {
+                    background = new Color(1f, 1f, 1f),
+                    backgroundOver = new Color(0.8f, 0.8f, 0.8f),
+                    outline = new Color(0.8f, 0.8f, 0.8f),
+                    outlineOver = new Color(1, 1, 1),
+                    text = new Color(.08f, .08f, .08f),
+                    textOver = new Color(.2f, .2f, .2f),
+                    shadow = Color.gray,
+                    shadowOver = Color.black
+                },
+                songButton = new SongButtonColors()
+                {
+                    background = new Color(1, 1, 1),
+                    outline = new Color(0.88f, 0.88f, 0.88f),
+                    outlineOver = new Color(0.8f, 0.8f, 0.8f),
+                    selectedText = new Color(.65f, .65f, .65f),
+                    shadow = Color.gray,
+                    textOver = new Color(.08f, .08f, .08f),
+                    text = new Color(.65f, .65f, .65f),
+                    square = new Color(1, 1, 1)
+                },
+                scrollSpeedSlider = new ScrollSpeedSliderColors()
+                {
+                    background = new Color(0.85f, 0.85f, 0.85f),
+                    text = new Color(0, 0, 0),
+                    handle = new Color(0.65f, 0.65f, 0.65f),
+                    fill = new Color(0.65f, 0.65f, 0.65f)
+                },
+                diffStar = new DiffStarColors()
+                {
+                    gradientStart = new Color(.8f, .8f, .8f),
+                    gradientEnd = new Color(.3f, .3f, .3f)
+                },
+                pointer = new PointerColors()
+                {
+                    background = new Color(.08f, .08f, .08f),
+                    outline = new Color(0.88f, 0.88f, 0.88f),
+                    shadow = new Color(1f, 1f, 1f)
+                },
+                background = new BackgroundColors()
+                {
+                    waves = new Color(.8f, .8f, .8f, .9f),
+                    waves2 = new Color(.8f, .8f, .8f, .9f),
+                    dots = new Color(1f, 1f, 1f, 1f),
+                    dots2 = new Color(1f, 1f, 1f, 1f),
+                    diamond = new Color(1f, 1f, 1f, .6f),
+                    shape = new Color(1f, 1f, 1f, .75f),
+                    background = new Color(.88f, .88f, .88f, .1f),
                 }
             };
-
 
         }
 
