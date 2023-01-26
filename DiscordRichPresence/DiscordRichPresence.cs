@@ -7,7 +7,7 @@ namespace TootTally.Discord
 {
     public static class DiscordRPC
     {
-        public static string[] Statuses = {"Main Menu", "Choosing a song", "Tooting up a storm", "Celebrating a successful play"};
+        public static string[] Statuses = {"Main Menu", "Choosing a song", "Tooting up a storm", "Watching a replay", "Celebrating a successful play"};
         private const long clientId = 1067808791330029589;
         private static long _startTime;
         private static ActivityManager _actMan;
@@ -66,6 +66,13 @@ namespace TootTally.Discord
             SetActivity(GameStatus.MainMenu);
         }
 
+        [HarmonyPatch(typeof(CharSelectController), nameof(CharSelectController.Start))]
+        [HarmonyPostfix]
+        public static void SetCharScreenRP()
+        {
+            SetActivity(GameStatus.MainMenu);
+        }
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         public static void SetLevelSelectRP()
@@ -77,7 +84,9 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetPlayingRP()
         {
-            SetActivity(GameStatus.InGame, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), GlobalVariables.chosen_track_data.trackname_long, GlobalVariables.chosen_track_data.artist);
+            GameStatus status = GameStatus.InGame;
+            if (Replays.ReplaySystemManager.wasPlayingReplay) status = GameStatus.InReplay;
+            SetActivity(status, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), GlobalVariables.chosen_track_data.trackname_long, GlobalVariables.chosen_track_data.artist);
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
