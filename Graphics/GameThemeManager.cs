@@ -55,6 +55,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.Katiny:
                     GameTheme.SetCustomTheme("Katiny");
                     break;
+                case ThemeTypes.WhiteShadow:
+                    GameTheme.SetCustomTheme("WhiteShadow");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -323,6 +326,8 @@ namespace TootTally.Graphics
             __instance.bgdots.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
             __instance.bgdots.transform.Find("Image (1)").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
             __instance.bgdots2.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+            GameObject extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix = GameObject.Instantiate(__instance.bgdots.transform.Find("Image").gameObject, __instance.bgdots.transform.Find("Image").transform);
+            extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1010);
             GameObject.Find("bgcamera").GetComponent<Camera>().backgroundColor = GameTheme.themeColors.background.background;
             GameObject.Find("BG Shape").GetComponent<Image>().color = GameTheme.themeColors.background.shape;
             GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
@@ -468,11 +473,10 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void WaveControllerFuckeryOverwrite(WaveController __instance)
         {
-            if (!GameTheme.isDefault)
-            {
-                foreach (SpriteRenderer sr in __instance.wavesprites)
-                    sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
-            }
+            if (GameTheme.isDefault) return;
+
+            foreach (SpriteRenderer sr in __instance.wavesprites)
+                sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
         }
 
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
@@ -498,6 +502,7 @@ namespace TootTally.Graphics
             Jeff,
             Samuran,
             Katiny,
+            WhiteShadow,
             Custom,
             Random,
         }
