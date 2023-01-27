@@ -222,6 +222,14 @@ namespace TootTally.Utils
             public string background;
         }
 
+        [Serializable]
+        public struct TitleJson
+        {
+            public string songName;
+            public string titleBar;
+            public string title;
+            public string titleShadow;
+        }
 
         [Serializable]
         public struct ThemeJson
@@ -238,6 +246,7 @@ namespace TootTally.Utils
             public DiffStarJson diffStar;
             public PointerJson pointer;
             public BackgroundJson background;
+            public TitleJson title;
         }
         #endregion
     }

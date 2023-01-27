@@ -413,11 +413,8 @@ namespace TootTally.Graphics
             {
                 _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
-
-                Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
-                notifText.name = "NotifText";
-                notifText.color = GameTheme.themeColors.notification.defaultText;
-                notifText.GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Text>().color = GameTheme.themeColors.notification.defaultText;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
             }
 
             if (_isLevelSelectControllerInitialized)

@@ -58,6 +58,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.WhiteShadow:
                     GameTheme.SetCustomTheme("WhiteShadow");
                     break;
+                case ThemeTypes.Perandus:
+                    GameTheme.SetCustomTheme("Perandus");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -113,6 +116,7 @@ namespace TootTally.Graphics
                 btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
             }
 
+
             #region SongButton
             GameObject btnBGPrefab = GameObject.Instantiate(__instance.btnbgs[0].gameObject);
             GameObject.DestroyImmediate(btnBGPrefab.transform.Find("Image").gameObject);
@@ -135,17 +139,16 @@ namespace TootTally.Graphics
                 img.color = GameTheme.themeColors.songButton.background;
             }
 
-            for (int i = 7; i < __instance.btnbgs.Length; i++)
-                __instance.btnbgs[i].color = GameTheme.themeColors.songButton.outline;
+            for (int i = 7; i < __instance.btnbgs.Length; i++) //these are the arrow ones :}
+                __instance.btnbgs[i].color = GameTheme.themeColors.songButton.background;
             GameObject.DestroyImmediate(btnBGPrefab);
             #endregion
 
             #region SongTitle
-            __instance.songtitlebar.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.panelBody;
-            __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.panelBody;
-            __instance.songtitle.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
-            __instance.longsongtitle.color = GameTheme.themeColors.leaderboard.text;
+            __instance.songtitlebar.GetComponent<Image>().color = GameTheme.themeColors.title.titleBar;
+            __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.title.titleShadow;
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.title.title;
+            __instance.longsongtitle.color = GameTheme.themeColors.title.songName;
             #endregion
 
             #region Lines
@@ -347,7 +350,7 @@ namespace TootTally.Graphics
         #region hoverAndUnHoverSongButtons
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.hoverBtn))]
         [HarmonyPostfix]
-        public static void OnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
+        public static void OnHoverBtnPostfix(LevelSelectController __instance, object[] __args)
         {
             if (GameTheme.isDefault) return;
             if ((int)__args[0] >= 7)
@@ -362,12 +365,12 @@ namespace TootTally.Graphics
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.unHoverBtn))]
         [HarmonyPostfix]
-        public static void OnUnHoverBtnPrefix(LevelSelectController __instance, object[] __args)
+        public static void OnUnHoverBtnPostfix(LevelSelectController __instance, object[] __args)
         {
             if (GameTheme.isDefault) return;
             if ((int)__args[0] >= 7)
             {
-                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.outline;
+                __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.background;
                 return;
             }
             __instance.btnbgs[(int)__args[0]].GetComponent<Image>().color = GameTheme.themeColors.songButton.background;
@@ -503,6 +506,7 @@ namespace TootTally.Graphics
             Samuran,
             Katiny,
             WhiteShadow,
+            Perandus,
             Custom,
             Random,
         }
