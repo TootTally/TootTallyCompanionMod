@@ -66,7 +66,7 @@ namespace TootTally.Replays
             _lastFrameData[(int)FrameDataStructure.NoteHolder] = (int)noteHolderPosition;
             _lastFrameData[(int)FrameDataStructure.PointerPosition] = (int)pointerPos;
 
-            if (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition] && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder])
+            if (_frameData.Count < 1 || (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition] && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]))
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
         }
 
@@ -321,9 +321,16 @@ namespace TootTally.Replays
         }
         public void ClearData()
         {
+            Plugin.LogInfo("Replay data cleared");
             _frameData.Clear();
             _noteData.Clear();
             _tootData.Clear();
+        }
+
+        public void SetUsernameAndSongName(string username, string songname)
+        {
+            _replayUsername = username;
+            _replaySong = songname;
         }
 
         public static float GetNoteHolderPrecisionMultiplier() => 10 / (GlobalVariables.gamescrollspeed <= 1 ? GlobalVariables.gamescrollspeed : 1);

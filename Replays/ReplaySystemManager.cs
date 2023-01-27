@@ -37,6 +37,7 @@ namespace TootTally.Replays
         private static Text _replayIndicatorMarquee;
         private static Vector3 _marqueeScroll = new Vector3(60, 0, 0);
         private static Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
+        private static GameController _currentGCInstance;
 
         #region GameControllerPatches
 
@@ -44,6 +45,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
+            _currentGCInstance = __instance;
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
             else
@@ -64,13 +66,23 @@ namespace TootTally.Replays
         {
             if (_replayManagerState == ReplayManagerState.Replaying)
             {
-                GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                _videoPlayer = canBG.GetComponent<VideoPlayer>();
-                if (_videoPlayer != null)
-                    _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+                if (__instance.bgobjects != null)
+                {
+                    foreach (GameObject bgobj in __instance.bgobjects)
                     {
-                        _videoPlayer.playbackSpeed = value;
-                    });
+                        _videoPlayer = bgobj.GetComponentInChildren<VideoPlayer>();
+                        if (_videoPlayer != null) break;
+                    }
+                    //GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                    //_videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    if (_videoPlayer != null)
+                        _replaySpeedSlider.onValueChanged.AddListener((float value) =>
+                        {
+                            _videoPlayer.playbackSpeed = value;
+                        });
+                }
+                    
+                
             }
         }
 
@@ -203,15 +215,16 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
         [HarmonyPostfix]
-        static void PauseCanvasControllerShowPausePanelPostfixPatch()
+        static void PauseCanvasControllerShowPausePanelPostfixPatch(PauseCanvasController __instance)
         {
             switch (_replayManagerState)
             {
                 case ReplayManagerState.Recording:
-                    _replay.ClearData();
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
                     Plugin.LogInfo($"UUID deleted: {_replayUUID}");
                     _replayUUID = null;
+                    if (_replayFileName == null)
+                        OnPauseAddReplayButton(__instance);
                     break;
                 case ReplayManagerState.Replaying:
                     Time.timeScale = 1;
@@ -221,18 +234,24 @@ namespace TootTally.Replays
             _hasPaused = true;
             _replayManagerState = ReplayManagerState.Paused;
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
-            Plugin.LogInfo("Level paused, cleared replay data");
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
         [HarmonyPostfix]
         static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
         {
+            _replay.ClearData();
             _replayManagerState = ReplayManagerState.None;
             _replayFileName = null;
         }
 
-
+        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
+        [HarmonyPostfix]
+        static void GameControllerPauseRetryLevelPostfixPatch(GameController __instance)
+        {
+            if (_replayFileName == null)
+                _replay.ClearData();
+        }
 
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -445,6 +464,30 @@ namespace TootTally.Replays
             _replayFileName = null;
             _replayManagerState = ReplayManagerState.None;
             Plugin.LogInfo("Replay finished");
+        }
+
+        public static void OnPauseAddReplayButton(PauseCanvasController __instance)
+        {
+            __instance.panelrect.sizeDelta = new Vector2(290, 198);
+            GameObject exitbtn = __instance.panelobj.transform.Find("ButtonRetry").gameObject;
+            GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform);
+
+            replayBtn.name = "ButtonReplay";
+            replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -125);
+            replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+            replayBtn.GetComponent<Button>().onClick.m_PersistentCalls.Clear();
+            replayBtn.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                _replayFileName = "TempReplay";
+                _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
+                _currentGCInstance.pauseRetryLevel();
+            });
+            GameObject replayText = GameObject.Instantiate(__instance.panelobj.transform.Find("REST").gameObject, replayBtn.transform);
+            replayText.name = "ReplayText";
+            replayText.GetComponent<Text>().text = "View Replay";
+            replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+            replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
         }
 
 
