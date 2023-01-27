@@ -23,6 +23,7 @@ namespace TootTally.Replays
         private int _maxCombo;
 
         private List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>(), _tootData = new List<int[]>();
+        private int[] _lastFrameData;
         private DateTimeOffset _startTime, _endTime;
 
         private bool _wasTouchScreenUsed;
@@ -45,6 +46,7 @@ namespace TootTally.Replays
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
+            _lastFrameData = new int[2];
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -60,7 +62,12 @@ namespace TootTally.Replays
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
             float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
             float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
-            _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
+
+            _lastFrameData[(int)FrameDataStructure.NoteHolder] = (int)noteHolderPosition;
+            _lastFrameData[(int)FrameDataStructure.PointerPosition] = (int)pointerPos;
+
+            if (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition] && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder])
+                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -71,7 +78,7 @@ namespace TootTally.Replays
             var currentHealth = __instance.currenthealth;
             var noteScoreAverage = __instance.notescoreaverage * 1000;
 
-            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1 , (int)noteScoreAverage });
+            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1, (int)noteScoreAverage });
         }
 
         public void RecordToot(GameController __instance)
@@ -138,7 +145,6 @@ namespace TootTally.Replays
             var noteJudgmentData = new JSONArray();
             noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
             replayJson["finalnotetallies"] = noteJudgmentData;
-            OptimizeFrameData(ref _frameData);
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
             _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
@@ -163,43 +169,21 @@ namespace TootTally.Replays
             return jsonArrayData;
         }
 
-
-        private static void OptimizeFrameData(ref List<int[]> rawReplayFrameData)
-        {
-            //Look for matching position and remove frames with the same positions or same timing
-            List<int[]> framesToRemove = new List<int[]>();
-            for (int i = 0; i < rawReplayFrameData.Count - 1; i++)
-            {
-                framesToRemove.Clear();
-                for(int j = i+1; j < rawReplayFrameData.Count && (CheckIfSameValue(i, j, (int)FrameDataStructure.PointerPosition, rawReplayFrameData) || CheckIfSameValue(i, j, (int)FrameDataStructure.NoteHolder, rawReplayFrameData)); j++)
-                    framesToRemove.Add(rawReplayFrameData[j]);
-                foreach(var frame in framesToRemove) rawReplayFrameData.Remove(frame);
-            }
-        }
-
         private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
 
         private static void OptimizeTootData(ref List<int[]> rawReplayTootData)
         {
             for (int i = 0; i < rawReplayTootData.Count - 1; i++)
-            {
                 //if two toot happens on the same frame, probably is inputFix so unsync the frames
-                if (CheckIfSameValue(i, i+1, (int)TootDataStructure.NoteHolder, rawReplayTootData))
-                {
+                if (CheckIfSameValue(i, i + 1, (int)TootDataStructure.NoteHolder, rawReplayTootData))
                     rawReplayTootData[i][(int)TootDataStructure.NoteHolder]++;
-                }
 
-            }
         }
 
         private static void OptimizeNoteData(ref List<int[]> rawReplayNoteData)
         {
             //Current glitch in the game that duplicate a note score but doesn't have any judgement.
-            for (int i = 0; i < rawReplayNoteData.Count; i++)
-            {
-                if (rawReplayNoteData[i][(int)NoteDataStructure.NoteJudgement] == -1)
-                    rawReplayNoteData.Remove(rawReplayNoteData[i]);
-            }
+            rawReplayNoteData.RemoveAll(x => x[(int)NoteDataStructure.NoteJudgement] == -1);
         }
 
         private static List<int[]> GetDuplicatesFromDataList(float valueToFind, int dataIndex, List<int[]> dataList) => dataList.FindAll(data => data[dataIndex] == valueToFind);
@@ -213,7 +197,7 @@ namespace TootTally.Replays
             _frameIndex = 0;
             _tootIndex = 0;
             _noteTally = new int[5];
-            _isTooting  = false;
+            _isTooting = false;
         }
 
         public void OnReplayPlayerStop()
@@ -303,7 +287,7 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            if(_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
