@@ -81,8 +81,8 @@ namespace TootTally.Replays
                             _videoPlayer.playbackSpeed = value;
                         });
                 }
-                    
-                
+
+
             }
         }
 
@@ -228,6 +228,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     Time.timeScale = 1;
+                    OnPauseChangeButtonText(__instance);
                     break;
 
             }
@@ -488,6 +489,16 @@ namespace TootTally.Replays
             replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
             replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+        }
+
+        public static void OnPauseChangeButtonText(PauseCanvasController __instance)
+        {
+
+            __instance.panelobj.transform.Find("ButtonExit").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(8, 0);
+            __instance.panelobj.transform.Find("REST").gameObject.GetComponent<Text>().text = "Exit Replay";
+
+            __instance.panelobj.transform.Find("ButtonRetry").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(38, 0); ;
+            __instance.panelobj.transform.Find("CONT").gameObject.GetComponent<Text>().text = "Restart Replay";
         }
 
 

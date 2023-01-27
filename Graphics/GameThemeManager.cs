@@ -19,12 +19,12 @@ namespace TootTally.Graphics
         private const ThemeTypes DEFAULT_THEME = ThemeTypes.Default;
         public static Text songyear, songgenre, songcomposer, songtempo, songduration, songdesctext;
         public static Options option;
-        public static ThemeTypes currentTheme;
+        private static ThemeTypes _currentTheme;
         private static bool _isInitialized;
 
         public static void SetTheme(ThemeTypes themeType)
         {
-            currentTheme = themeType;
+            _currentTheme = themeType;
             GameTheme.isDefault = false;
             switch (themeType)
             {
@@ -76,7 +76,7 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void OnSaveSettingsPostFix()
         {
-            if (option != null && currentTheme != option.Theme.Value)
+            if (option != null && _currentTheme != option.Theme.Value)
             {
                 SetTheme(option.Theme.Value);
                 PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
@@ -93,12 +93,20 @@ namespace TootTally.Graphics
             option = new Options()
             {
                 Theme = config.Bind(CONFIG_FIELD, nameof(option.Theme), DEFAULT_THEME),
+                CustomTrombColor = config.Bind(CONFIG_FIELD, "Custom Tromb Color", false),
+                TrombRed = config.Bind(CONFIG_FIELD, "Tromb Red", 1f),
+                TrombGreen = config.Bind(CONFIG_FIELD, "Tromb Green", 1f),
+                TrombBlue = config.Bind(CONFIG_FIELD, "Tromb Blue", 1f),
             };
 
             object settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
             {
                 OptionalTrombSettings.Add(settings, option.Theme);
+                OptionalTrombSettings.Add(settings, option.CustomTrombColor);
+                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombRed);
+                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombGreen);
+                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
             }
 
             SetTheme(option.Theme.Value);
@@ -482,6 +490,14 @@ namespace TootTally.Graphics
                 sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
         }
 
+        [HarmonyPatch(typeof(HumanPuppetController), nameof(HumanPuppetController.setTextures))]
+        [HarmonyPostfix]
+        public static void Test(HumanPuppetController __instance)
+        {
+            if (option.CustomTrombColor.Value)
+                __instance.trombmaterials[__instance.trombone_texture_index].SetColor("_Color", new Color(option.TrombRed.Value, option.TrombGreen.Value, option.TrombBlue.Value));
+        }
+
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
         {
             gameObject.GetComponent<Image>().sprite = AssetManager.GetSprite(spriteName);
@@ -491,7 +507,10 @@ namespace TootTally.Graphics
         public class Options
         {
             public ConfigEntry<ThemeTypes> Theme { get; set; }
-
+            public ConfigEntry<bool> CustomTrombColor { get; set; }
+            public ConfigEntry<float> TrombRed { get; set; }
+            public ConfigEntry<float> TrombGreen { get; set; }
+            public ConfigEntry<float> TrombBlue { get; set; }
         }
 
         public enum ThemeTypes
