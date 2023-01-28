@@ -431,8 +431,8 @@ namespace TootTally.Graphics
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.border, out themeColors.notification.border);
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.background, out themeColors.notification.background);
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.defaultText, out themeColors.notification.defaultText);
-            ColorUtility.TryParseHtmlString(themeConfig.theme.notification.defaultText, out themeColors.notification.defaultText);
-            ColorUtility.TryParseHtmlString(themeConfig.theme.notification.defaultText, out themeColors.notification.defaultText);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.notification.warningText, out themeColors.notification.warningText);
+            ColorUtility.TryParseHtmlString(themeConfig.theme.notification.errorText, out themeColors.notification.errorText);
             ColorUtility.TryParseHtmlString(themeConfig.theme.notification.textOutline, out themeColors.notification.textOutline);
 
             ColorUtility.TryParseHtmlString(themeConfig.theme.replayButton.text, out themeColors.replayButton.text);

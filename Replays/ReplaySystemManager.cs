@@ -10,6 +10,7 @@ using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.Helpers;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Scripting;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -38,6 +39,9 @@ namespace TootTally.Replays
         private static Vector3 _marqueeScroll = new Vector3(60, 0, 0);
         private static Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
         private static GameController _currentGCInstance;
+        private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
+        private static GameObject _pauseArrow;
+        private static Vector2 _pauseArrowDestination;
 
         #region GameControllerPatches
 
@@ -56,6 +60,7 @@ namespace TootTally.Replays
 
             __instance.notescoresamples = 0; //Temporary fix for a glitch
             GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
+            _pausePointerAnimation = new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0.85f);
 
         }
 
@@ -181,6 +186,10 @@ namespace TootTally.Replays
                         _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
                     }
                     break;
+                case ReplayManagerState.Paused:
+                    if (_pauseArrowDestination != null)
+                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewPosition(_pauseArrowDestination, Time.deltaTime);
+                    break;
             }
         }
 
@@ -232,6 +241,7 @@ namespace TootTally.Replays
                     break;
 
             }
+            _pauseArrow = __instance.pausearrow;
             _hasPaused = true;
             _replayManagerState = ReplayManagerState.Paused;
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
@@ -329,7 +339,7 @@ namespace TootTally.Replays
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
                     }));
                 }
-                else
+                else if (songHashInDB != 0)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
 
 
@@ -474,7 +484,7 @@ namespace TootTally.Replays
             GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform);
 
             replayBtn.name = "ButtonReplay";
-            replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -125);
+            replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
             replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
             replayBtn.GetComponent<Button>().onClick.m_PersistentCalls.Clear();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
@@ -489,6 +499,22 @@ namespace TootTally.Replays
             replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
             replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+
+            EventTrigger replayBtnEvent = replayBtn.AddComponent<EventTrigger>();
+            EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+            pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+            pointerEnterEvent.callback.AddListener((data) => OnPauseMenuButtonOver(__instance, new object[] { 3 }));
+            replayBtnEvent.triggers.Add(pointerEnterEvent);
+        }
+
+        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverPauseBtn))]
+        [HarmonyPrefix]
+        public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
+        {
+            _pausePointerAnimation.SetStartPosition(__instance.pausearrowr.anchoredPosition);
+            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
+
+            return false;
         }
 
         public static void OnPauseChangeButtonText(PauseCanvasController __instance)
