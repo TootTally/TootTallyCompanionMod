@@ -1,68 +1,71 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>TootTally</AssemblyName>
-    <Description>Companion mod for TootTally.com</Description>
-    <Version>0.2.4</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
-    <TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
-    <TromboneTootDir>C:\Users\Sabz\AppData\Roaming\r2modmanPlus-local\TromboneChamp\profiles\Default</TromboneTootDir>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<AssemblyName>TootTally</AssemblyName>
+		<Description>Companion mod for TootTally.com</Description>
+		<Version>0.2.4</Version>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
+		<TromboneTootDir>C:\Users\Sabz\AppData\Roaming\r2modmanPlus-local\TromboneChamp\profiles\Default</TromboneTootDir>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
-    <PackageReference Include="BepInEx.Core" Version="5.*" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <PackageReference Include="UnityEngine.Modules" Version="2019.3.11" IncludeAssets="compile" />
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+		<PackageReference Include="BepInEx.Core" Version="5.*" />
+		<PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+		<PackageReference Include="UnityEngine.Modules" Version="2019.3.11" IncludeAssets="compile" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>$(TromboneChampDir)\BepInEx\core\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Assembly-CSharp-nstrip.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="TrombLoader">
-      <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombLoader.dll</HintPath>
-    </Reference>
-    <Reference Include="AutoToot">
-      <HintPath>$(TromboneChampDir)\BepInEx\plugins\AutoToot.dll</HintPath>
-    </Reference>
-    <Reference Include="HoverToot">
-      <HintPath>$(TromboneChampDir)\BepInEx\plugins\HoverToot.dll</HintPath>
-    </Reference>
-    <Reference Include="TrombSettings">
-      <HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombSettings.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscordSDK">
-      <HintPath>$(TromboneChampDir)\BepInEx\plugins\discord_game_sdk.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+	</ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)/BepInEx/plugins/TootTally-TootTally" />
-	  <!-- <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneChampDir)/BepInEx/plugins/" /> -->
-  </Target>
+	<ItemGroup>
+		<Reference Include="0Harmony">
+			<HintPath>$(TromboneChampDir)\BepInEx\core\0Harmony.dll</HintPath>
+		</Reference>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Assembly-CSharp-nstrip.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.InputLegacyModule">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\UnityEngine.UI.dll</HintPath>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(TromboneChampDir)\TromboneChamp_Data\Managed\Newtonsoft.Json.dll</HintPath>
+		</Reference>
+		<Reference Include="TrombLoader">
+			<HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombLoader.dll</HintPath>
+		</Reference>
+		<Reference Include="AutoToot">
+			<HintPath>$(TromboneChampDir)\BepInEx\plugins\AutoToot.dll</HintPath>
+		</Reference>
+		<Reference Include="HoverToot">
+			<HintPath>$(TromboneChampDir)\BepInEx\plugins\HoverToot.dll</HintPath>
+		</Reference>
+		<Reference Include="TrombSettings">
+			<HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombSettings.dll</HintPath>
+		</Reference>
+		<Reference Include="DiscordSDK">
+			<HintPath>$(TromboneChampDir)\BepInEx\plugins\discord_game_sdk.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)/BepInEx/plugins/TootTally-TootTally" />
+		<!-- <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneChampDir)/BepInEx/plugins/" /> -->
+	</Target>
 </Project>
