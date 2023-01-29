@@ -7,7 +7,7 @@ namespace TootTally.Discord
 {
     public static class DiscordRPC
     {
-        public static string[] Statuses = {"Main Menu", "Choosing a song", "Tooting up a storm", "Watching a replay", "Celebrating a successful play"};
+        public static string[] Statuses = { "Main Menu", "Choosing a song", "Tooting up a storm", "Watching a replay", "Celebrating a successful play" };
         private const long clientId = 1067808791330029589;
         private static ActivityManager _actMan;
         private static Core.Discord _discord;
@@ -16,9 +16,14 @@ namespace TootTally.Discord
 
         private static void InitRPC()
         {
-            _discord = new Core.Discord(clientId, (ulong) CreateFlags.NoRequireDiscord);
-            _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
-            _actMan = _discord.GetActivityManager();
+            try
+            {
+                _discord = new Core.Discord(clientId, (ulong)CreateFlags.NoRequireDiscord);
+                _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
+                _actMan = _discord.GetActivityManager();
+            }
+            catch (Exception) { }
+
         }
 
         private static void SetActivity(GameStatus status)
@@ -61,7 +66,7 @@ namespace TootTally.Discord
                 InitRPC();
                 _username = "Picking a save...";
             }
-            
+
             SetActivity(GameStatus.MainMenu);
         }
 
@@ -115,14 +120,17 @@ namespace TootTally.Discord
         {
             if (_discord != null)
             {
-                _actMan.UpdateActivity(_act, _ => {});
+                _actMan.UpdateActivity(_act, (result) =>
+                {
+                    if (result != Result.Ok)
+                        Plugin.LogInfo("Discord: Something went wrong: " + result.ToString());
+                });
                 try
                 {
                     _discord.RunCallbacks();
                 }
-                catch
+                catch (Exception)
                 {
-                    // Discord RPC failed in one way or another. Kill it and reinitialize somewhere else
                     _discord.Dispose();
                     _discord = null;
                 }
