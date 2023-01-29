@@ -333,7 +333,7 @@ namespace TootTally.Replays
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
                 {
                     string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(songFilePath);
-                    SerializableClass.Chart chart = new SerializableClass.Chart { tmb = tmb };
+                    SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
@@ -498,13 +498,14 @@ namespace TootTally.Replays
             replayText.GetComponent<Text>().text = "View Replay";
             replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
             replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 44);
 
             EventTrigger replayBtnEvent = replayBtn.AddComponent<EventTrigger>();
             EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
             pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
             pointerEnterEvent.callback.AddListener((data) => OnPauseMenuButtonOver(__instance, new object[] { 3 }));
             replayBtnEvent.triggers.Add(pointerEnterEvent);
+            _pauseArrowDestination = new Vector2(28, -37);
         }
 
         [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverPauseBtn))]
@@ -525,6 +526,7 @@ namespace TootTally.Replays
 
             __instance.panelobj.transform.Find("ButtonRetry").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(38, 0); ;
             __instance.panelobj.transform.Find("CONT").gameObject.GetComponent<Text>().text = "Restart Replay";
+            _pauseArrowDestination = new Vector2(28, -37);
         }
 
 

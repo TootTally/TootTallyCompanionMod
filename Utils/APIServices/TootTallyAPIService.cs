@@ -65,7 +65,7 @@ namespace TootTally.Utils
             callback(user);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart, Action callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
         {
 
             string apiLink = $"{APIURL}/api/upload/";

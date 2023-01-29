@@ -8,7 +8,7 @@ namespace TootTally.Utils
     public static class SerializableClass
     {
         [Serializable]
-        public class Chart
+        public class TMBFile
         {
             public string tmb;
         }
