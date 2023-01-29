@@ -9,17 +9,24 @@ namespace TootTally.Discord
     {
         public static string[] Statuses = {"Main Menu", "Choosing a song", "Tooting up a storm", "Watching a replay", "Celebrating a successful play"};
         private const long clientId = 1067808791330029589;
-        private static long _startTime;
         private static ActivityManager _actMan;
         private static Core.Discord _discord;
         private static Activity _act;
+        private static string _username;
+
+        private static void InitRPC()
+        {
+            _discord = new Core.Discord(clientId, (ulong) CreateFlags.NoRequireDiscord);
+            _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
+            _actMan = _discord.GetActivityManager();
+        }
 
         private static void SetActivity(GameStatus status)
         {
             _act = new Activity
             {
                 Details = Statuses[((int)status)],
-                Assets = { LargeImage = "toottallylogo" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
             };
             return;
         }
@@ -30,7 +37,7 @@ namespace TootTally.Discord
             {
                 State = message,
                 Details = Statuses[((int)status)],
-                Assets = { LargeImage = "toottallylogo" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
             };
         }
 
@@ -41,19 +48,18 @@ namespace TootTally.Discord
                 State = $"{artist} - {songName}",
                 Details = Statuses[((int)status)],
                 Timestamps = { Start = startTime },
-                Assets = { LargeImage = "toottallylogo" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
             };
         }
 
         [HarmonyPatch(typeof(SaveSlotController), nameof(SaveSlotController.Start))]
         [HarmonyPostfix]
-        public static void InitializeRPC()
+        public static void InitializeOnStartup()
         {
             if (_discord == null)
             {
-                _discord = new Core.Discord(clientId, (ulong) CreateFlags.Default);
-                _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
-                _actMan = _discord.GetActivityManager();
+                InitRPC();
+                _username = "Picking a save...";
             }
             
             SetActivity(GameStatus.MainMenu);
@@ -63,6 +69,7 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetHomeScreenRP()
         {
+            if (_discord == null) InitRPC();
             SetActivity(GameStatus.MainMenu);
         }
 
@@ -70,6 +77,8 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetCharScreenRP()
         {
+            if (_discord == null) InitRPC();
+            _username = Plugin.userInfo.username;
             SetActivity(GameStatus.MainMenu);
         }
 
@@ -77,6 +86,8 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetLevelSelectRP()
         {
+            if (_discord == null) InitRPC();
+            _username = Plugin.userInfo.username;
             SetActivity(GameStatus.LevelSelect);
         }
 
@@ -84,6 +95,7 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetPlayingRP()
         {
+            if (_discord == null) InitRPC();
             GameStatus status = GameStatus.InGame;
             if (Replays.ReplaySystemManager.wasPlayingReplay) status = GameStatus.InReplay;
             SetActivity(status, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), GlobalVariables.chosen_track_data.trackname_long, GlobalVariables.chosen_track_data.artist);
@@ -93,6 +105,7 @@ namespace TootTally.Discord
         [HarmonyPostfix]
         public static void SetPointScreenRP()
         {
+            if (_discord == null) InitRPC();
             SetActivity(GameStatus.PointScreen);
         }
 
@@ -103,7 +116,16 @@ namespace TootTally.Discord
             if (_discord != null)
             {
                 _actMan.UpdateActivity(_act, _ => {});
-                _discord.RunCallbacks();
+                try
+                {
+                    _discord.RunCallbacks();
+                }
+                catch
+                {
+                    // Discord RPC failed in one way or another. Kill it and reinitialize somewhere else
+                    _discord.Dispose();
+                    _discord = null;
+                }
             }
         }
     }
