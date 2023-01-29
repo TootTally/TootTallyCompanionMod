@@ -71,11 +71,6 @@ namespace TootTally.CustomLeaderboard
                 UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
         }
 
-        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
-        [HarmonyPostfix]
-        static void OnDoneRandomizingReloadLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance) =>
-            UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
-
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
         [HarmonyPrefix]
