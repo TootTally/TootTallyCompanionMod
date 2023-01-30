@@ -275,7 +275,7 @@ namespace TootTally.Replays
                 _replay = new NewReplaySystem();
             }
 
-            if (!_hasGreetedUser)
+            if (Plugin.userInfo != null && !_hasGreetedUser)
             {
                 _hasGreetedUser = true;
                 if (Plugin.userInfo.username != "Guest")
