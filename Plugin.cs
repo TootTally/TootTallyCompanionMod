@@ -38,7 +38,7 @@ namespace TootTally
         public const string CONFIG_NAME = "TootTally.cfg";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230127;
+        public const int BUILDDATE = 20230130;
         public ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -110,6 +110,77 @@ namespace TootTally
                         }
                     }));
                 }
+            }
+
+
+
+
+
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+            public static void OnHomeControllerStartPostFixAddMultiplayerButton(HomeController __instance)
+            {
+                #region graphics
+                GameObject PlayBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Play];
+                RectTransform PlayFGRectTransform = PlayBtnContainer.GetComponent<RectTransform>();
+                PlayFGRectTransform.anchoredPosition += new Vector2(0, 100);
+                PlayFGRectTransform.sizeDelta += new Vector2(0, -100);
+                GameObject PlayOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Play];
+                RectTransform PlayOutlineRectTransform = PlayOutline.GetComponent<RectTransform>();
+                PlayOutlineRectTransform.sizeDelta += new Vector2(-5, -100); //I believe the base game made the sizeX 5 pixels too large, removing 5 makes it look a lot nicer
+
+
+                //Play and collect buttons are programmed differently... for some reasons
+                GameObject CollectBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Collect];
+                GameObject CollectFG = CollectBtnContainer.transform.Find("FG").gameObject;
+                RectTransform CollectFGRectTransform = CollectFG.GetComponent<RectTransform>();
+                CollectBtnContainer.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -50);
+                CollectFGRectTransform.sizeDelta += new Vector2(0, -100);
+                GameObject CollectOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Collect];
+                RectTransform CollectOutlineRectTransform = CollectOutline.GetComponent<RectTransform>();
+                CollectOutlineRectTransform.sizeDelta += new Vector2(-5, -100); //dito here
+
+                GameObject QuitBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Quit];
+                QuitBtnContainer.GetComponent<RectTransform>().anchoredPosition += new Vector2(-415, 0);
+                __instance.allpaneltxt.transform.Find("imgQuit").GetComponent<RectTransform>().anchoredPosition += new Vector2(-415, 0);
+                #endregion
+
+                #region hitboxes
+                GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
+                GameObject MainMenu = MainCanvas.transform.Find("MainMenu").gameObject;
+
+                GameObject ButtonPlay = MainMenu.transform.Find("Button1").gameObject;
+                RectTransform ButtonPlayTransform = ButtonPlay.GetComponent<RectTransform>();
+                ButtonPlayTransform.anchoredPosition += new Vector2(12, 10);
+                ButtonPlayTransform.sizeDelta += new Vector2(0, -130);
+                ButtonPlayTransform.Rotate(0, 0, -12f);
+
+                GameObject ButtonCollect = MainMenu.transform.Find("Button2").gameObject;
+                RectTransform ButtonCollectTransform = ButtonCollect.GetComponent<RectTransform>();
+                ButtonCollectTransform.anchoredPosition += new Vector2(0, -20);
+                ButtonCollectTransform.sizeDelta += new Vector2(0, -80);
+                ButtonCollectTransform.Rotate(0, 0, 10f);
+
+                GameObject ButtonQuit = MainMenu.transform.Find("Button3").gameObject;
+                RectTransform ButtonQuitTransform = ButtonQuit.GetComponent<RectTransform>();
+                ButtonQuitTransform.anchoredPosition += new Vector2(-400, 0);
+                #endregion
+            }
+
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
+            [HarmonyPrefix]
+            public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD
+
+            public enum HomeScreenButtonIndexes
+            {
+                Play = 0,
+                Collect = 1,
+                Quit = 2,
+                Improv = 3,
+                Baboon = 4,
+                Credit = 5,
+                Settings = 6,
+                Advanced = 7
             }
         }
     }
