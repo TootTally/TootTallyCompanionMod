@@ -120,51 +120,63 @@ namespace TootTally
             [HarmonyPostfix]
             public static void OnHomeControllerStartPostFixAddMultiplayerButton(HomeController __instance)
             {
-                #region graphics
-                GameObject PlayBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Play];
-                RectTransform PlayFGRectTransform = PlayBtnContainer.GetComponent<RectTransform>();
-                PlayFGRectTransform.anchoredPosition += new Vector2(0, 100);
-                PlayFGRectTransform.sizeDelta += new Vector2(0, -100);
-                GameObject PlayOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Play];
-                RectTransform PlayOutlineRectTransform = PlayOutline.GetComponent<RectTransform>();
-                PlayOutlineRectTransform.sizeDelta += new Vector2(-5, -100); //I believe the base game made the sizeX 5 pixels too large, removing 5 makes it look a lot nicer
+                GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+                GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
 
+                #region MultiplayerButton
+                GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
+                GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
+                multiplayerButton.name = "MULTIContainer";
+                multiplayerHitbox.name = "MULTIButton";
+                GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerButton.transform.Find("FG").gameObject, "MultiplayerButtonV2.png", Color.white);
+                multiplayerButton.transform.SetSiblingIndex(0);
+
+                #endregion
+                #region graphics
 
                 //Play and collect buttons are programmed differently... for some reasons
-                GameObject CollectBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Collect];
-                GameObject CollectFG = CollectBtnContainer.transform.Find("FG").gameObject;
-                RectTransform CollectFGRectTransform = CollectFG.GetComponent<RectTransform>();
-                CollectBtnContainer.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -50);
-                CollectFGRectTransform.sizeDelta += new Vector2(0, -100);
-                GameObject CollectOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Collect];
-                RectTransform CollectOutlineRectTransform = CollectOutline.GetComponent<RectTransform>();
-                CollectOutlineRectTransform.sizeDelta += new Vector2(-5, -100); //dito here
+                GameObject collectBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Collect];
+                GameThemeManager.OverwriteGameObjectSpriteAndColor(collectBtnContainer.transform.Find("FG").gameObject, "CollectButtonV2.png", Color.white);
+                GameObject collectFG = collectBtnContainer.transform.Find("FG").gameObject;
+                RectTransform collectFGRectTransform = collectFG.GetComponent<RectTransform>();
+                collectBtnContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(900, 475);
+                collectBtnContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(320, 190);
+                collectFGRectTransform.sizeDelta = new Vector2(320, 190);
+                GameObject collectOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Collect];
+                RectTransform collectOutlineRectTransform = collectOutline.GetComponent<RectTransform>();
+                collectOutlineRectTransform.sizeDelta = new Vector2(470, 230);
+                GameObject textCollect = __instance.allpaneltxt.transform.Find("imgCOLLECT").gameObject;
+                textCollect.GetComponent<RectTransform>().anchoredPosition = new Vector2(680, 410);
+                textCollect.GetComponent<RectTransform>().sizeDelta = new Vector2(285, 48);
 
-                GameObject QuitBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Quit];
-                QuitBtnContainer.GetComponent<RectTransform>().anchoredPosition += new Vector2(-415, 0);
-                __instance.allpaneltxt.transform.Find("imgQuit").GetComponent<RectTransform>().anchoredPosition += new Vector2(-415, 0);
+                GameObject improvBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Improv];
+                //GameThemeManager.OverwriteGameObjectSpriteAndColor(ImprovBtnContainer.transform.Find("FG").gameObject, "ImprovButtonV2.png", Color.white);
+                GameObject improvFG = improvBtnContainer.transform.Find("FG").gameObject;
+                RectTransform improvFGRectTransform = improvFG.GetComponent<RectTransform>();
+                improvBtnContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 156);
+                improvFGRectTransform.sizeDelta = new Vector2(450, 195);
+                GameObject improvOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Improv];
+                RectTransform improvOutlineRectTransform = improvOutline.GetComponent<RectTransform>();
+                improvOutlineRectTransform.sizeDelta = new Vector2(470, 230);
+                GameObject textImprov = __instance.allpaneltxt.transform.Find("imgImprov").gameObject;
+                textImprov.GetComponent<RectTransform>().anchoredPosition = new Vector2(305, 385);
+                textImprov.GetComponent<RectTransform>().sizeDelta = new Vector2(426, 54);
                 #endregion
 
                 #region hitboxes
-                GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
-                GameObject MainMenu = MainCanvas.transform.Find("MainMenu").gameObject;
+                GameObject buttonCollect = mainMenu.transform.Find("Button2").gameObject;
+                RectTransform buttonCollectTransform = buttonCollect.GetComponent<RectTransform>();
+                buttonCollectTransform.anchoredPosition = new Vector2(739, 380);
+                buttonCollectTransform.sizeDelta = new Vector2(320, 190);
+                buttonCollectTransform.Rotate(0, 0, 15f);
 
-                GameObject ButtonPlay = MainMenu.transform.Find("Button1").gameObject;
-                RectTransform ButtonPlayTransform = ButtonPlay.GetComponent<RectTransform>();
-                ButtonPlayTransform.anchoredPosition += new Vector2(12, 10);
-                ButtonPlayTransform.sizeDelta += new Vector2(0, -130);
-                ButtonPlayTransform.Rotate(0, 0, -12f);
-
-                GameObject ButtonCollect = MainMenu.transform.Find("Button2").gameObject;
-                RectTransform ButtonCollectTransform = ButtonCollect.GetComponent<RectTransform>();
-                ButtonCollectTransform.anchoredPosition += new Vector2(0, -20);
-                ButtonCollectTransform.sizeDelta += new Vector2(0, -80);
-                ButtonCollectTransform.Rotate(0, 0, 10f);
-
-                GameObject ButtonQuit = MainMenu.transform.Find("Button3").gameObject;
-                RectTransform ButtonQuitTransform = ButtonQuit.GetComponent<RectTransform>();
-                ButtonQuitTransform.anchoredPosition += new Vector2(-400, 0);
+                GameObject buttonImprov = mainMenu.transform.Find("Button4").gameObject;
+                RectTransform buttonImprovTransform = buttonImprov.GetComponent<RectTransform>();
+                buttonImprovTransform.anchoredPosition = new Vector2(310, 383);
+                buttonImprovTransform.sizeDelta = new Vector2(450, 195);
                 #endregion
+
+
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]

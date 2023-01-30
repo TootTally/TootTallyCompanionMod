@@ -40,6 +40,8 @@ namespace TootTally.Utils
             "pointerBG.png",
             "pointerShadow.png",
             "pointerOutline.png",
+            "MultiplayerButtonV2.png",
+            "CollectButtonV2.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
