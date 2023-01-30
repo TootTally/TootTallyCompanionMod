@@ -73,21 +73,14 @@ namespace TootTally.Replays
             {
                 if (__instance.bgobjects != null)
                 {
-                    foreach (GameObject bgobj in __instance.bgobjects)
-                    {
-                        _videoPlayer = bgobj.GetComponentInChildren<VideoPlayer>();
-                        if (_videoPlayer != null) break;
-                    }
-                    //GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                    //_videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                    _videoPlayer = canBG.GetComponent<VideoPlayer>();
                     if (_videoPlayer != null)
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
                 }
-
-
             }
         }
 
@@ -236,7 +229,8 @@ namespace TootTally.Replays
                         OnPauseAddReplayButton(__instance);
                     break;
                 case ReplayManagerState.Replaying:
-                    Time.timeScale = 1;
+                    _replaySpeedSlider.onValueChanged.RemoveAllListeners();
+                    Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
                     break;
 
