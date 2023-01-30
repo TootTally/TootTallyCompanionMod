@@ -39,7 +39,7 @@ namespace TootTally
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
         public const int BUILDDATE = 20230127;
-        public ConfigEntry<string> APIKey { get; private set; }
+        internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
