@@ -55,11 +55,14 @@ namespace TootTally.Graphics
                 case ThemeTypes.Katiny:
                     GameTheme.SetCustomTheme("Katiny");
                     break;
-                case ThemeTypes.WhiteShadow:
-                    GameTheme.SetCustomTheme("WhiteShadow");
+                case ThemeTypes.Citrus:
+                    GameTheme.SetCustomTheme("Citrus");
                     break;
                 case ThemeTypes.Perandus:
                     GameTheme.SetCustomTheme("Perandus");
+                    break;
+                case ThemeTypes.JoeSickPack:
+                    GameTheme.SetCustomTheme("Joes Sick pack");
                     break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
@@ -524,8 +527,9 @@ namespace TootTally.Graphics
             Jeff,
             Samuran,
             Katiny,
-            WhiteShadow,
+            Citrus,
             Perandus,
+            JoeSickPack,
             Custom,
             Random,
         }
