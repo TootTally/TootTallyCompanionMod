@@ -64,6 +64,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.JoeSickPack:
                     GameTheme.SetCustomTheme("Joes Sick pack");
                     break;
+                case ThemeTypes.Lavender:
+                    GameTheme.SetCustomTheme("Lavender");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -530,6 +533,7 @@ namespace TootTally.Graphics
             Citrus,
             Perandus,
             JoeSickPack,
+            Lavender,
             Custom,
             Random,
         }
