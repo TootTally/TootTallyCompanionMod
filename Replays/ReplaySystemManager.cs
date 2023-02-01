@@ -73,21 +73,14 @@ namespace TootTally.Replays
             {
                 if (__instance.bgobjects != null)
                 {
-                    foreach (GameObject bgobj in __instance.bgobjects)
-                    {
-                        _videoPlayer = bgobj.GetComponentInChildren<VideoPlayer>();
-                        if (_videoPlayer != null) break;
-                    }
-                    //GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                    //_videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                    _videoPlayer = canBG.GetComponent<VideoPlayer>();
                     if (_videoPlayer != null)
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
                 }
-
-
             }
         }
 
@@ -236,7 +229,8 @@ namespace TootTally.Replays
                         OnPauseAddReplayButton(__instance);
                     break;
                 case ReplayManagerState.Replaying:
-                    Time.timeScale = 1;
+                    _replaySpeedSlider.onValueChanged.RemoveAllListeners();
+                    Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
                     break;
 
@@ -275,7 +269,7 @@ namespace TootTally.Replays
                 _replay = new NewReplaySystem();
             }
 
-            if (!_hasGreetedUser)
+            if (Plugin.userInfo != null && !_hasGreetedUser)
             {
                 _hasGreetedUser = true;
                 if (Plugin.userInfo.username != "Guest")
@@ -406,7 +400,9 @@ namespace TootTally.Replays
         {
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
+            _replaySpeedSlider.transform.SetSiblingIndex(0);
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
+            sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 
             //Text above the slider
             Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
@@ -427,14 +423,16 @@ namespace TootTally.Replays
             replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
             replaySpeedSliderText.fontSize = 8;
             replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
-            replaySpeedSliderText.color = new Color(0, 0, 0, 1);
+            replaySpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
             replaySpeedSliderText.gameObject.SetActive(true);
+            _replaySpeedSlider.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
+            _replaySpeedSlider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
 
             _replaySpeedSlider.onValueChanged.AddListener((float value) =>
             {
-                __instance.musictrack.pitch = value;
-                Time.timeScale = value;
-                replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(value);
+                __instance.musictrack.pitch = _replaySpeedSlider.value;
+                Time.timeScale = _replaySpeedSlider.value;
+                replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             });
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);

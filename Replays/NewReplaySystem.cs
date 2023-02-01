@@ -246,6 +246,7 @@ namespace TootTally.Replays
 
         public void PlaybackReplay(GameController __instance)
         {
+            Cursor.visible = true;
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
             var currentMapPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier();
