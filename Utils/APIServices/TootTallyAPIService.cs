@@ -22,7 +22,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
-            UnityWebRequest webRequest = isCustom ? UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/") : UnityWebRequest.Get($"{APIURL}/api/hashcheck/official/?trackref={songHash}");
+            UnityWebRequest webRequest = isCustom ? UnityWebRequest.Get($"{APIURL}/api/hashcheck/custom/?songHash={songHash}") : UnityWebRequest.Get($"{APIURL}/api/hashcheck/official/?trackref={songHash}");
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
