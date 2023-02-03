@@ -20,6 +20,7 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using BepInEx.Bootstrap;
+using UnityEngine.EventSystems;
 
 namespace TootTally
 {
@@ -114,7 +115,10 @@ namespace TootTally
 
 
 
-
+            private static bool _isPointerOver;
+            private static EasingHelper.SecondOrderDynamics _multiButtonAnimation;
+            private static RectTransform _multiButtonOutlineRectTransform;
+            private static Vector2 _targetSize;
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
@@ -122,6 +126,7 @@ namespace TootTally
             {
                 GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
                 GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
+                _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(1.75f, 0.95f, 1.75f);
 
                 #region MultiplayerButton
                 GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
@@ -130,8 +135,32 @@ namespace TootTally
                 multiplayerHitbox.name = "MULTIButton";
                 GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerButton.transform.Find("FG").gameObject, "MultiplayerButtonV2.png", Color.white);
                 multiplayerButton.transform.SetSiblingIndex(0);
+                _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
+
+                EventTrigger multiBtnEvents = multiplayerHitbox.GetComponent<EventTrigger>();
+                multiBtnEvents.triggers.Clear();
+
+                EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+                pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+                pointerEnterEvent.callback.AddListener((data) =>
+                {
+                    _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
+                    _targetSize = new Vector2(1, 1);
+                });
+                multiBtnEvents.triggers.Add(pointerEnterEvent);
+
+                EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
+                pointerExitEvent.eventID = EventTriggerType.PointerExit;
+                pointerExitEvent.callback.AddListener((data) =>
+                {
+                    _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
+                    _targetSize = new Vector2(.2f, .2f);
+                });
+                multiBtnEvents.triggers.Add(pointerExitEvent);
+
 
                 #endregion
+
                 #region graphics
 
                 //Play and collect buttons are programmed differently... for some reasons
@@ -176,12 +205,19 @@ namespace TootTally
                 buttonImprovTransform.sizeDelta = new Vector2(450, 195);
                 #endregion
 
-
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
             public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD
+
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Update))]
+            [HarmonyPostfix]
+            public static void AnimateMultiButton(HomeController __instance)
+            {
+                _multiButtonOutlineRectTransform.localScale = _multiButtonAnimation.GetNewPosition(_targetSize, Time.deltaTime);
+                _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 0.8f;
+            }
 
             public enum HomeScreenButtonIndexes
             {
