@@ -116,7 +116,7 @@ namespace TootTally
 
 
 
-            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            /*[HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
             public static void OnHomeControllerStartPostFixAddMultiplayerButton(HomeController __instance)
             {
@@ -193,7 +193,7 @@ namespace TootTally
                 Credit = 5,
                 Settings = 6,
                 Advanced = 7
-            }
+            }*/
         }
     }
 }

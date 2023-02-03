@@ -190,6 +190,7 @@ namespace TootTally.Utils
                         max_combo = scoreJson["max_combo"],
                         percentage = scoreJson["percentage"],
                         game_version = scoreJson["game_version"],
+                        tt = scoreJson["tt"]
                     };
                     scoreList.Add(score);
                 }

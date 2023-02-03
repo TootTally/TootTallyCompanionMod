@@ -67,6 +67,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.Lavender:
                     GameTheme.SetCustomTheme("Lavender");
                     break;
+                case ThemeTypes.NightRider:
+                    GameTheme.SetCustomTheme("Knight Rider");
+                    break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
                     break;
@@ -534,6 +537,7 @@ namespace TootTally.Graphics
             Perandus,
             JoeSickPack,
             Lavender,
+            NightRider,
             Custom,
             Random,
         }

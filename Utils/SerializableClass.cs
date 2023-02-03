@@ -26,6 +26,7 @@ namespace TootTally.Utils
             public int max_combo;
             public float percentage;
             public string game_version;
+            public float tt;
         }
 
         [Serializable]

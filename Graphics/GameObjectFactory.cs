@@ -439,7 +439,7 @@ namespace TootTally.Graphics
                 outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
                 _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
 
-                
+
                 _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
                 _verticalSliderPrefab.transform.Find("Handle").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
                 _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
@@ -534,7 +534,10 @@ namespace TootTally.Graphics
             }
             else
                 rowEntry.grade.color = gradeColor;
-            rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            if (scoreData.tt == 0)
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            else
+                rowEntry.maxcombo.text = scoreData.tt.ToString("0.0") + "tt";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();
