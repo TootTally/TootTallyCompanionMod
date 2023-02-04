@@ -469,13 +469,14 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void OnAdvanceSongsPostFix(LevelSelectController __instance)
         {
-            if (GameTheme.isDefault || songyear == null) return;
             for (int i = 0; i < 10; i++)
             {
-                __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
+                if (!GameTheme.isDefault)
+                    __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
                 __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
                 __instance.diffstars[i].maskable = true;
             }
+            if (GameTheme.isDefault || songyear == null) return;
             songyear.text = __instance.songyear.text;
             songgenre.text = __instance.songgenre.text;
             songduration.text = __instance.songduration.text;
