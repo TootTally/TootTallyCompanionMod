@@ -116,9 +116,9 @@ namespace TootTally
 
 
             private static bool _isPointerOver;
-            private static EasingHelper.SecondOrderDynamics _multiButtonAnimation;
-            private static RectTransform _multiButtonOutlineRectTransform;
-            private static Vector2 _targetSize;
+            private static EasingHelper.SecondOrderDynamics _multiButtonAnimation, _multiTextAnimation;
+            private static RectTransform _multiButtonOutlineRectTransform, _multiTextRectTransform;
+            private static Vector2 _multiButtonTargetSize, _multiTextTargetSize;
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
@@ -127,20 +127,23 @@ namespace TootTally
                 GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
                 GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
                 _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(3.75f, 0.80f, 1.05f);
+                _multiTextAnimation = new EasingHelper.SecondOrderDynamics(3.5f, 0.65f, 1.15f);
 
                 #region MultiplayerButton
                 GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
                 GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
-                GameObject multiplayerText = GameObject.Instantiate(__instance.paneltxts[(int)HomeScreenButtonIndexes.Play], mainMenu.transform);
+                GameObject multiplayerText = GameObject.Instantiate(__instance.paneltxts[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
                 multiplayerButton.name = "MULTIContainer";
                 multiplayerHitbox.name = "MULTIButton";
                 multiplayerText.name = "MULTIText";
                 GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerButton.transform.Find("FG").gameObject, "MultiplayerButtonV2.png", Color.white);
                 GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerText, "MultiText.png", Color.white);
                 multiplayerButton.transform.SetSiblingIndex(0);
-                RectTransform multiplayerTextRectTransform = multiplayerText.GetComponent<RectTransform>();
-                multiplayerTextRectTransform.anchoredPosition = new Vector2(95, -921);
-                multiplayerTextRectTransform.sizeDelta = new Vector2(334, 87);
+                _multiTextRectTransform = multiplayerText.GetComponent<RectTransform>();
+                _multiTextRectTransform.anchoredPosition = new Vector2(100, 100);
+                _multiTextRectTransform.sizeDelta = new Vector2(334, 87);
+                _multiButtonTargetSize = new Vector2(.2f, .2f);
+                _multiTextTargetSize = new Vector2(0.8f, 0.8f);
 
                 _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
 
@@ -152,7 +155,8 @@ namespace TootTally
                 pointerEnterEvent.callback.AddListener((data) =>
                 {
                     _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
-                    _targetSize = new Vector2(1.01f, 1.01f);
+                    _multiButtonTargetSize = new Vector2(1.01f, 1.01f);
+                    _multiTextTargetSize = new Vector2(1f, 1f);
                     __instance.playSfx(2); // btn sound effect KEKW
                     multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
                 });
@@ -163,9 +167,11 @@ namespace TootTally
                 pointerExitEvent.callback.AddListener((data) =>
                 {
                     _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
-                    _targetSize = new Vector2(.2f, .2f);
+                    _multiButtonTargetSize = new Vector2(.2f, .2f);
+                    _multiTextTargetSize = new Vector2(0.8f, 0.8f);
                     multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(2, 0);
                 });
+                
                 multiBtnEvents.triggers.Add(pointerExitEvent);
 
 
@@ -186,8 +192,9 @@ namespace TootTally
                 RectTransform collectOutlineRectTransform = collectOutline.GetComponent<RectTransform>();
                 collectOutlineRectTransform.sizeDelta = new Vector2(351, 217.2f);
                 GameObject textCollect = __instance.allpaneltxt.transform.Find("imgCOLLECT").gameObject;
-                textCollect.GetComponent<RectTransform>().anchoredPosition = new Vector2(680, 410);
+                textCollect.GetComponent<RectTransform>().anchoredPosition = new Vector2(790, 430);
                 textCollect.GetComponent<RectTransform>().sizeDelta = new Vector2(285, 48);
+                textCollect.GetComponent<RectTransform>().pivot = Vector2.one / 2;
 
                 GameObject improvBtnContainer = __instance.btncontainers[(int)HomeScreenButtonIndexes.Improv];
                 //GameThemeManager.OverwriteGameObjectSpriteAndColor(ImprovBtnContainer.transform.Find("FG").gameObject, "ImprovButtonV2.png", Color.white);
@@ -226,8 +233,9 @@ namespace TootTally
             [HarmonyPostfix]
             public static void AnimateMultiButton(HomeController __instance)
             {
-                _multiButtonOutlineRectTransform.localScale = _multiButtonAnimation.GetNewPosition(_targetSize, Time.deltaTime);
+                _multiButtonOutlineRectTransform.localScale = _multiButtonAnimation.GetNewPosition(_multiButtonTargetSize, Time.deltaTime);
                 _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 1.5f;
+                _multiTextRectTransform.localScale = _multiTextAnimation.GetNewPosition(_multiTextTargetSize, Time.deltaTime);
             }
 
             public enum HomeScreenButtonIndexes
