@@ -126,7 +126,7 @@ namespace TootTally
             {
                 GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
                 GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
-                _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(1.75f, 0.95f, 1.75f);
+                _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(3.75f, 0.80f, 1.05f);
 
                 #region MultiplayerButton
                 GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
@@ -145,7 +145,8 @@ namespace TootTally
                 pointerEnterEvent.callback.AddListener((data) =>
                 {
                     _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
-                    _targetSize = new Vector2(1, 1);
+                    _targetSize = new Vector2(1.01f, 1.01f);
+                    __instance.playSfx(2); // btn sound effect KEKW
                 });
                 multiBtnEvents.triggers.Add(pointerEnterEvent);
 
@@ -216,7 +217,7 @@ namespace TootTally
             public static void AnimateMultiButton(HomeController __instance)
             {
                 _multiButtonOutlineRectTransform.localScale = _multiButtonAnimation.GetNewPosition(_targetSize, Time.deltaTime);
-                _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 0.8f;
+                _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 1.5f;
             }
 
             public enum HomeScreenButtonIndexes
