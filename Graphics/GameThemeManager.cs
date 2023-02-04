@@ -84,6 +84,13 @@ namespace TootTally.Graphics
         }
 
 
+        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+        [HarmonyPostfix]
+        public static void InitializeThemes()
+        {
+
+        }
+
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
         [HarmonyPostfix]
         public static void OnSaveSettingsPostFix()
