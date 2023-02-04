@@ -74,21 +74,7 @@ namespace TootTally.Utils
             Plugin.LogInfo("Downloading asset " + assetName);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetDir + assetName, (success) =>
                 {
-                    coroutineCount--;
-                    if (success)
-                        ReloadTextureLocal(assetDir, assetName);
-                    if (coroutineCount == 0)
-                    {
-                        List<string> missingAssetList = GetMissingAssetsName();
-                        if (missingAssetList.Count > 0)
-                        {
-                            Plugin.LogError("Missing Asset(s):");
-                            foreach (string missingAsset in missingAssetList)
-                                Plugin.LogError("    " + missingAsset);
-                        }
-                        else
-                            Plugin.LogInfo("All Assets Loaded Correctly");
-                    }
+                    ReloadTextureLocal(assetDir, assetName);
                 }));
         }
 
@@ -96,10 +82,23 @@ namespace TootTally.Utils
         {
             Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetDir + assetName, (texture) =>
             {
+                coroutineCount--;
                 if (texture != null)
                 {
                     Plugin.LogInfo("Asset " + assetName + " Reloaded");
                     textureDictionary.Add(assetName, texture);
+                }
+                if (coroutineCount == 0)
+                {
+                    List<string> missingAssetList = GetMissingAssetsName();
+                    if (missingAssetList.Count > 0)
+                    {
+                        Plugin.LogError("Missing Asset(s):");
+                        foreach (string missingAsset in missingAssetList)
+                            Plugin.LogError("    " + missingAsset);
+                    }
+                    else
+                        Plugin.LogInfo("All Assets Loaded Correctly");
                 }
             }));
         }
