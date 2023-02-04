@@ -131,10 +131,17 @@ namespace TootTally
                 #region MultiplayerButton
                 GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
                 GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
+                GameObject multiplayerText = GameObject.Instantiate(__instance.paneltxts[(int)HomeScreenButtonIndexes.Play], mainMenu.transform);
                 multiplayerButton.name = "MULTIContainer";
                 multiplayerHitbox.name = "MULTIButton";
+                multiplayerText.name = "MULTIText";
                 GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerButton.transform.Find("FG").gameObject, "MultiplayerButtonV2.png", Color.white);
+                GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerText, "MultiText.png", Color.white);
                 multiplayerButton.transform.SetSiblingIndex(0);
+                RectTransform multiplayerTextRectTransform = multiplayerText.GetComponent<RectTransform>();
+                multiplayerTextRectTransform.anchoredPosition = new Vector2(95, -921);
+                multiplayerTextRectTransform.sizeDelta = new Vector2(334, 87);
+
                 _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
 
                 EventTrigger multiBtnEvents = multiplayerHitbox.GetComponent<EventTrigger>();
@@ -147,6 +154,7 @@ namespace TootTally
                     _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
                     _targetSize = new Vector2(1.01f, 1.01f);
                     __instance.playSfx(2); // btn sound effect KEKW
+                    multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
                 });
                 multiBtnEvents.triggers.Add(pointerEnterEvent);
 
@@ -156,6 +164,7 @@ namespace TootTally
                 {
                     _multiButtonAnimation.SetStartPosition(_multiButtonOutlineRectTransform.localScale);
                     _targetSize = new Vector2(.2f, .2f);
+                    multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(2, 0);
                 });
                 multiBtnEvents.triggers.Add(pointerExitEvent);
 
@@ -169,12 +178,13 @@ namespace TootTally
                 GameThemeManager.OverwriteGameObjectSpriteAndColor(collectBtnContainer.transform.Find("FG").gameObject, "CollectButtonV2.png", Color.white);
                 GameObject collectFG = collectBtnContainer.transform.Find("FG").gameObject;
                 RectTransform collectFGRectTransform = collectFG.GetComponent<RectTransform>();
-                collectBtnContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(900, 475);
+                collectBtnContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(900, 475.2f);
                 collectBtnContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(320, 190);
                 collectFGRectTransform.sizeDelta = new Vector2(320, 190);
                 GameObject collectOutline = __instance.allbtnoutlines[(int)HomeScreenButtonIndexes.Collect];
+                GameThemeManager.OverwriteGameObjectSpriteAndColor(collectOutline, "CollectButtonOutline.png", Color.white);
                 RectTransform collectOutlineRectTransform = collectOutline.GetComponent<RectTransform>();
-                collectOutlineRectTransform.sizeDelta = new Vector2(470, 230);
+                collectOutlineRectTransform.sizeDelta = new Vector2(351, 217.2f);
                 GameObject textCollect = __instance.allpaneltxt.transform.Find("imgCOLLECT").gameObject;
                 textCollect.GetComponent<RectTransform>().anchoredPosition = new Vector2(680, 410);
                 textCollect.GetComponent<RectTransform>().sizeDelta = new Vector2(285, 48);
