@@ -83,32 +83,13 @@ namespace TootTally.Graphics
             GameObjectFactory.UpdatePrefabTheme();
         }
 
-
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-        [HarmonyPostfix]
-        public static void InitializeThemes()
-        {
-
-        }
-
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
-        [HarmonyPostfix]
-        public static void OnSaveSettingsPostFix()
-        {
-            if (option != null && _currentTheme != option.Theme.Value)
-            {
-                SetTheme(option.Theme.Value);
-                PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
-            }
-
-        }
-
         public static void Initialize()
         {
             if (_isInitialized) return;
 
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + Plugin.CONFIG_NAME, true);
+
             option = new Options()
             {
                 Theme = config.Bind(CONFIG_FIELD, nameof(option.Theme), DEFAULT_THEME),
@@ -117,6 +98,7 @@ namespace TootTally.Graphics
                 TrombGreen = config.Bind(CONFIG_FIELD, "Tromb Green", 1f),
                 TrombBlue = config.Bind(CONFIG_FIELD, "Tromb Blue", 1f),
             };
+            config.SettingChanged += Config_SettingChanged;
 
             object settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
@@ -130,6 +112,12 @@ namespace TootTally.Graphics
 
             SetTheme(option.Theme.Value);
             _isInitialized = true;
+        }
+
+        private static void Config_SettingChanged(object sender, SettingChangedEventArgs e)
+        {
+            SetTheme(option.Theme.Value);
+            PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
