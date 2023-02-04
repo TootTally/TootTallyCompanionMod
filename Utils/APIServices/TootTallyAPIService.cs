@@ -50,6 +50,9 @@ namespace TootTally.Utils
                 {
                     username = jsonData["username"],
                     id = jsonData["id"],
+                    country = jsonData["country"],
+                    tt = jsonData["tt"],
+                    rank = jsonData["rank"],
                 };
                 Plugin.LogInfo($"Welcome, {user.username}!");
             }
@@ -157,6 +160,39 @@ namespace TootTally.Utils
                 Plugin.LogInfo("Replay Downloaded.");
                 callback(uuid);
             }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
+        {
+            string apiLink = $"{APIURL}/api/songs/{songID}";
+            Plugin.LogInfo("looking for " + songID);
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+            {
+                var json = JSONObject.Parse(webRequest.downloadHandler.GetText());
+                var jsonSongData = json["results"];
+                SerializableClass.SongDataFromDB songData = new SerializableClass.SongDataFromDB()
+                {
+                    difficulty = jsonSongData[0]["difficulty"],
+                    tap = jsonSongData[0]["tap"],
+                    aim = jsonSongData[0]["aim"],
+                    base_tt = jsonSongData[0]["base_tt"],
+                    is_rated = jsonSongData[0]["is_rated"]
+                };
+                Plugin.LogInfo(songData.difficulty.ToString());
+                Plugin.LogInfo(songData.tap.ToString());
+                Plugin.LogInfo(songData.aim.ToString());
+                Plugin.LogInfo(songData.base_tt.ToString());
+                Plugin.LogInfo(songData.is_rated.ToString());
+                callback(songData);
+            }
+            else
+                callback(null);
+
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)

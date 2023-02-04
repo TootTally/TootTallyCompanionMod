@@ -516,7 +516,7 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player.Length > 21 ? scoreData.player.Substring(0, 21) : scoreData.player;
+            rowEntry.username.text = scoreData.player.Length > 20 ? scoreData.player.Substring(0, 20) : scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score);
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
@@ -537,7 +537,7 @@ namespace TootTally.Graphics
             if (scoreData.tt == 0)
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
             else
-                rowEntry.maxcombo.text = scoreData.tt.ToString("0.0") + "tt";
+                rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();

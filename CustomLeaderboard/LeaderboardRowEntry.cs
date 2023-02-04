@@ -28,7 +28,7 @@ namespace TootTally.CustomLeaderboard
             username.alignment = TextAnchor.MiddleLeft;
 
             this.score = score;
-            score.GetComponent<RectTransform>().sizeDelta = new Vector2(175, 35);
+            score.GetComponent<RectTransform>().sizeDelta = new Vector2(170, 35);
             score.alignment = TextAnchor.MiddleRight;
 
             this.percent = percent;
@@ -39,7 +39,7 @@ namespace TootTally.CustomLeaderboard
             grade.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
 
             this.maxcombo = maxcombo;
-            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(50, 35);
+            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(55, 35);
             maxcombo.alignment = TextAnchor.MiddleRight;
 
             this.hasBackground = hasBackground;

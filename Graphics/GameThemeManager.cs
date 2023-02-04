@@ -131,7 +131,6 @@ namespace TootTally.Graphics
                 btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
             }
 
-
             #region SongButton
             GameObject btnBGPrefab = GameObject.Instantiate(__instance.btnbgs[0].gameObject);
             GameObject.DestroyImmediate(btnBGPrefab.transform.Find("Image").gameObject);
@@ -352,6 +351,7 @@ namespace TootTally.Graphics
             MainCanvas.transform.Find("FullScreenPanel/diamond").GetComponent<Image>().color = GameTheme.themeColors.background.diamond;
             #endregion
 
+
             //CapsulesTextColor
             songyear.color = GameTheme.themeColors.leaderboard.text;
             songgenre.color = GameTheme.themeColors.leaderboard.text;
@@ -470,11 +470,11 @@ namespace TootTally.Graphics
         public static void OnAdvanceSongsPostFix(LevelSelectController __instance)
         {
             if (GameTheme.isDefault || songyear == null) return;
-
             for (int i = 0; i < 10; i++)
             {
-                if (__instance.diffstars[i].color.a == 1)
-                    __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
+                __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
+                __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
+                __instance.diffstars[i].maskable = true;
             }
             songyear.text = __instance.songyear.text;
             songgenre.text = __instance.songgenre.text;
