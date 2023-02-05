@@ -382,8 +382,18 @@ namespace TootTally.Graphics
             if (File.Exists(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json"))
             {
                 string jsonFilePath = File.ReadAllText(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json");
-                SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFilePath);
-                LoadTheme(deserializedTheme);
+
+                try
+                {
+                    SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFilePath);
+                    LoadTheme(deserializedTheme);
+                }
+                catch(Exception ex)
+                {
+                    Plugin.LogError("Corrupted theme: " + themeFileName);
+                    Plugin.LogError("Loading default theme...");
+                    SetDefaultTheme();
+                }
             }
             else
                 SetDefaultTheme();
