@@ -459,10 +459,10 @@ namespace TootTally.Replays
             rectTransform.sizeDelta = new Vector2(800, 20);
             rectTransform.anchoredPosition = new Vector2(-0, -195);
 
-            _replayTimestampSlider.onValueChanged.AddListener((float value) =>
+            /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
-            });
+            });*/
            //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
         }
 
