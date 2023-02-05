@@ -22,6 +22,7 @@ namespace TootTally.Graphics
         private static ThemeTypes _currentTheme;
         private static bool _isInitialized;
 
+        //can very well be optimized but fuck it xd
         public static void SetTheme(ThemeTypes themeType)
         {
             _currentTheme = themeType;
@@ -60,6 +61,9 @@ namespace TootTally.Graphics
                     break;
                 case ThemeTypes.Katiny:
                     GameTheme.SetCustomTheme("Katiny");
+                    break;
+                case ThemeTypes.Lavender:
+                    GameTheme.SetCustomTheme("Lavender");
                     break;
                 case ThemeTypes.NightRider:
                     GameTheme.SetCustomTheme("Night Rider");
@@ -532,6 +536,7 @@ namespace TootTally.Graphics
             Jeff,
             JoeSickPack,
             Katiny,
+            Lavender,
             NightRider,
             Perandus,
             Samuran,
