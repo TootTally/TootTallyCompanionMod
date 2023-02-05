@@ -377,8 +377,7 @@ namespace TootTally.Graphics
         }
 
         public static void SetCustomTheme(string themeFileName)
-        {
-            if (!Directory.Exists(Paths.BepInExRootPath + "/Themes")) Directory.CreateDirectory(Paths.BepInExRootPath + "/Themes");
+        {           
             if (File.Exists(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json"))
             {
                 string jsonFilePath = File.ReadAllText(Paths.BepInExRootPath + $"/Themes/{themeFileName}.json");

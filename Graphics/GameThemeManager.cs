@@ -111,6 +111,15 @@ namespace TootTally.Graphics
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
             }
 
+            if (!Directory.Exists(Paths.BepInExRootPath + "/Themes"))
+            {
+                Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}" + " to " + Paths.BepInExRootPath);
+                if (Directory.Exists(Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}/Themes"))
+                    Directory.Move(Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}/Themes", Paths.BepInExRootPath + "/Themes");
+                else
+                    Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
+            }
+
             SetTheme(option.Theme.Value);
             _isInitialized = true;
         }

@@ -36,6 +36,7 @@ namespace TootTally
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
         public const string CONFIG_NAME = "TootTally.cfg";
+        public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
         public const int BUILDDATE = 20230205;
