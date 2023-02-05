@@ -165,7 +165,6 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
         {
             string apiLink = $"{APIURL}/api/songs/{songID}";
-            Plugin.LogInfo("looking for " + songID);
 
             UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
 
@@ -183,11 +182,6 @@ namespace TootTally.Utils
                     base_tt = jsonSongData[0]["base_tt"],
                     is_rated = jsonSongData[0]["is_rated"]
                 };
-                Plugin.LogInfo(songData.difficulty.ToString());
-                Plugin.LogInfo(songData.tap.ToString());
-                Plugin.LogInfo(songData.aim.ToString());
-                Plugin.LogInfo(songData.base_tt.ToString());
-                Plugin.LogInfo(songData.is_rated.ToString());
                 callback(songData);
             }
             else

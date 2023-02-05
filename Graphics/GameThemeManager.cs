@@ -34,44 +34,41 @@ namespace TootTally.Graphics
                 case ThemeTypes.Night:
                     GameTheme.SetNightTheme();
                     break;
+                case ThemeTypes.Aradigm:
+                    GameTheme.SetCustomTheme("Aradigm");
+                    break;
+                case ThemeTypes.Citrus:
+                    GameTheme.SetCustomTheme("Citrus");
+                    break;
                 case ThemeTypes.Custom:
                     GameTheme.SetCustomTheme("Custom");
                     break;
                 case ThemeTypes.Electro:
                     GameTheme.SetCustomTheme("Electro");
                     break;
-                case ThemeTypes.Guardie:
-                    GameTheme.SetCustomTheme("Guardie");
-                    break;
                 case ThemeTypes.Gloomhonk:
                     GameTheme.SetCustomTheme("Gloomhonk");
                     break;
+                case ThemeTypes.Guardie:
+                    GameTheme.SetCustomTheme("Guardie");
+                    break;
                 case ThemeTypes.Jeff:
-                    GameTheme.SetCustomTheme("Jeff (Lumpy)");
-                    break;
-                case ThemeTypes.Samuran:
-                    GameTheme.SetCustomTheme("Samuran");
-                    break;
-                case ThemeTypes.Katiny:
-                    GameTheme.SetCustomTheme("Katiny");
-                    break;
-                case ThemeTypes.Citrus:
-                    GameTheme.SetCustomTheme("Citrus");
-                    break;
-                case ThemeTypes.Perandus:
-                    GameTheme.SetCustomTheme("Perandus");
+                    GameTheme.SetCustomTheme("Jeff");
                     break;
                 case ThemeTypes.JoeSickPack:
                     GameTheme.SetCustomTheme("Joes Sick pack");
                     break;
-                case ThemeTypes.Lavender:
-                    GameTheme.SetCustomTheme("Lavender");
+                case ThemeTypes.Katiny:
+                    GameTheme.SetCustomTheme("Katiny");
                     break;
                 case ThemeTypes.NightRider:
-                    GameTheme.SetCustomTheme("Knight Rider");
+                    GameTheme.SetCustomTheme("Night Rider");
                     break;
-                case ThemeTypes.Aradigm:
-                    GameTheme.SetCustomTheme("Aradigm");
+                case ThemeTypes.Perandus:
+                    GameTheme.SetCustomTheme("Perandus");
+                    break;
+                case ThemeTypes.Samuran:
+                    GameTheme.SetCustomTheme("Samuran");
                     break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
@@ -526,19 +523,18 @@ namespace TootTally.Graphics
             Default,
             Day,
             Night,
-            Electro,
-            Guardie,
-            Gloomhonk,
-            Jeff,
-            Samuran,
-            Katiny,
-            Citrus,
-            Perandus,
-            JoeSickPack,
-            Lavender,
-            NightRider,
-            Aradigm,
             Custom,
+            Aradigm,
+            Citrus,
+            Electro,
+            Gloomhonk,
+            Guardie,
+            Jeff,
+            JoeSickPack,
+            Katiny,
+            NightRider,
+            Perandus,
+            Samuran,
             Random,
         }
     }

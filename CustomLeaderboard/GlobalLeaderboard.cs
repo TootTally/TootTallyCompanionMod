@@ -106,9 +106,10 @@ namespace TootTally.CustomLeaderboard
             diffStarsHolder.AddComponent<Mask>();
             Image imageMask = diffStarsHolder.AddComponent<Image>();
             imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__? 
-            diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(43, 0);
-            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", Color.white);
-            _diffRating.fontSize = 22;
+            diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
+            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
+            _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating.fontSize = 20;
             _diffRating.alignment = TextAnchor.MiddleRight;
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
             _diffRating.gameObject.SetActive(true);
@@ -166,6 +167,9 @@ namespace TootTally.CustomLeaderboard
                 {
                     _errorText.text = ERROR_NO_SONGHASH_FOUND_TEXT;
                     callback(LeaderboardState.ErrorNoSongHashFound);
+                    _diffRating.text = "NA";
+                    _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                    _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     return; // Skip if no song found
                 }
                 else
@@ -175,12 +179,21 @@ namespace TootTally.CustomLeaderboard
                 _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, (songData) =>
                 {
                     if (songData != null)
+                    {
                         _songData = songData;
-                    _diffRating.text = _songData.difficulty.ToString("0.0");
-                    int roundedUpStar = Math.Min((int)_songData.difficulty + 1,10);
-                    int roundedDownStar = Math.Max((int)_songData.difficulty, 1);
-                    _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
-                    _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
+                        _diffRating.text = _songData.difficulty.ToString("0.0");
+                        int roundedUpStar = Math.Min((int)_songData.difficulty + 1, 10);
+                        int roundedDownStar = Math.Max((int)_songData.difficulty, 1);
+                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
+                    }
+                    else
+                    {
+                        _diffRating.text = "NA";
+                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
+                    }
+                    
 
                     if (_scoreDataList != null)
                         CancelAndClearAllCoroutineInList();
