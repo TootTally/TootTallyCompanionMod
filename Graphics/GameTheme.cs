@@ -22,7 +22,7 @@ namespace TootTally.Graphics
 
             themeColors = new ThemeColors()
             {
-                
+
                 leaderboard = new LeaderboardColors()
                 {
                     panelBody = new Color(0.95f, 0.22f, 0.35f),
@@ -33,7 +33,7 @@ namespace TootTally.Graphics
                     headerText = new Color(0.95f, 0.22f, 0.35f),
                     text = new Color(1, 1, 1),
                     textOutline = new Color(0, 0, 0, .5f),
-                    
+
                     slider = new SliderColors()
                     {
                         background = new Color(0, 0, 0),
@@ -221,7 +221,7 @@ namespace TootTally.Graphics
                 {
                     songName = new Color(1f, 1f, 1f),
                     titleBar = new Color(0.2f, 0.2f, 0.2f),
-                    title = new Color(1,1,1),
+                    title = new Color(1, 1, 1),
                     titleShadow = new Color(0.2f, 0.2f, 0.2f),
                 }
             };
@@ -366,9 +366,9 @@ namespace TootTally.Graphics
                 },
                 title = new TitleColors()
                 {
-                    songName = new Color(0,0,0),
+                    songName = new Color(0, 0, 0),
                     titleBar = new Color(0.9f, 0.9f, 0.9f, 0.75f),
-                    title = new Color(0,0,0),
+                    title = new Color(0, 0, 0),
                     titleShadow = new Color(0.9f, 0.9f, 0.9f)
                 }
 
@@ -388,7 +388,7 @@ namespace TootTally.Graphics
                     SerializableClass.JsonThemeDeserializer deserializedTheme = JsonConvert.DeserializeObject<SerializableClass.JsonThemeDeserializer>(jsonFilePath);
                     LoadTheme(deserializedTheme);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Plugin.LogError("Corrupted theme: " + themeFileName);
                     Plugin.LogError("Loading default theme...");
@@ -396,7 +396,10 @@ namespace TootTally.Graphics
                 }
             }
             else
+            {
+                Plugin.LogError("Missing theme: " + themeFileName);
                 SetDefaultTheme();
+            }
 
         }
 
@@ -665,7 +668,7 @@ namespace TootTally.Graphics
                     titleShadow = GetRandomColor(rdm, 1)
                 }
             };
-        }    
+        }
 
         private static Color GetRandomColor(System.Random rdm, float alpha)
         {
