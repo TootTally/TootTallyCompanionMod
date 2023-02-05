@@ -49,14 +49,15 @@ namespace TootTally.Utils
         public static void LoadAssets()
         {
             coroutineCount = 0;
-            string assetDir = Path.Combine(Paths.PluginPath, "TootTally-TootTally/Assets/");
+            string assetDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "plugins", "Assets");
             if (!Directory.Exists(assetDir)) Directory.CreateDirectory(assetDir);
 
             textureDictionary = new Dictionary<string, Texture2D>();
 
             foreach (string assetName in requiredAssetNames)
             {
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetDir + assetName, (texture) =>
+                string assetPath = Path.Combine(assetDir, assetName);
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetPath, (texture) =>
                 {
                     if (texture != null)
                     {
@@ -72,7 +73,8 @@ namespace TootTally.Utils
         {
             coroutineCount++;
             Plugin.LogInfo("Downloading asset " + assetName);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetDir + assetName, (success) =>
+            string assetPath = Path.Combine(assetDir, assetName);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetPath, (success) =>
                 {
                     ReloadTextureLocal(assetDir, assetName);
                 }));
@@ -80,7 +82,8 @@ namespace TootTally.Utils
 
         public static void ReloadTextureLocal(string assetDir, string assetName)
         {
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetDir + assetName, (texture) =>
+            string assetPath = Path.Combine(assetDir, assetName);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetPath, (texture) =>
             {
                 coroutineCount--;
                 if (texture != null)

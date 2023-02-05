@@ -110,12 +110,13 @@ namespace TootTally.Graphics
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombGreen);
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
             }
-
-            if (!Directory.Exists(Paths.BepInExRootPath + "/Themes"))
+            string targetThemePath = Path.Combine(Paths.BepInExRootPath, "Themes");
+            if (!Directory.Exists(targetThemePath))
             {
-                Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}" + " to " + Paths.BepInExRootPath);
-                if (Directory.Exists(Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}/Themes"))
-                    Directory.Move(Paths.PluginPath + $"/{Plugin.PLUGIN_FOLDER_NAME}/Themes", Paths.BepInExRootPath + "/Themes");
+                string sourceThemePath = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "plugins", "Themes");
+                Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + sourceThemePath + " to " + targetThemePath);
+                if (Directory.Exists(sourceThemePath))
+                    Directory.Move(sourceThemePath, targetThemePath);
                 else
                     Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
             }
