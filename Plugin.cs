@@ -112,6 +112,18 @@ namespace TootTally
                 }
             }
 
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPrefix]
+            public static void UpdateUserInfoOnLevelSelect()
+            {
+                Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                {
+                    if (user != null)
+                    {
+                        userInfo = user;
+                    }
+                }));
+            }
         }
     }
 }
