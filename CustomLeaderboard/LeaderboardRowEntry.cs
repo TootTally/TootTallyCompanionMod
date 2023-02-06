@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,7 +28,7 @@ namespace TootTally.CustomLeaderboard
             username.alignment = TextAnchor.MiddleLeft;
 
             this.score = score;
-            score.GetComponent<RectTransform>().sizeDelta = new Vector2(175, 35);
+            score.GetComponent<RectTransform>().sizeDelta = new Vector2(170, 35);
             score.alignment = TextAnchor.MiddleRight;
 
             this.percent = percent;
@@ -38,7 +39,7 @@ namespace TootTally.CustomLeaderboard
             grade.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
 
             this.maxcombo = maxcombo;
-            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(50, 35);
+            maxcombo.GetComponent<RectTransform>().sizeDelta = new Vector2(55, 35);
             maxcombo.alignment = TextAnchor.MiddleRight;
 
             this.hasBackground = hasBackground;
@@ -52,5 +53,21 @@ namespace TootTally.CustomLeaderboard
             this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground);
         }
 
+        public void UpdateTheme()
+        {
+            imageStrip.color = GameTheme.themeColors.leaderboard.rowEntry;
+            rank.color = GameTheme.themeColors.leaderboard.headerText;
+            rank.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            username.color = GameTheme.themeColors.leaderboard.text;
+            username.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            score.color = GameTheme.themeColors.leaderboard.text;
+            score.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            percent.color = GameTheme.themeColors.leaderboard.text;
+            percent.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            grade.color = GameTheme.themeColors.leaderboard.text;
+            grade.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            maxcombo.color = GameTheme.themeColors.leaderboard.text;
+            maxcombo.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+        }
     }
 }

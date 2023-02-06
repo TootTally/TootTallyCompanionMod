@@ -18,6 +18,7 @@ using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
+using TootTally.Discord;
 using BepInEx.Bootstrap;
 
 namespace TootTally
@@ -34,10 +35,12 @@ namespace TootTally
         public static void LogError(string msg) => Instance.Logger.LogError(msg);
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
+        public const string CONFIG_NAME = "TootTally.cfg";
+        public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230117;
-        public ConfigEntry<string> APIKey { get; private set; }
+        public const int BUILDDATE = 20230205;
+        internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -50,10 +53,6 @@ namespace TootTally
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
-
-            
-
-
 
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
@@ -68,11 +67,16 @@ namespace TootTally
             }
 
             AssetManager.LoadAssets();
+            GameThemeManager.Initialize();
+
             Harmony.CreateAndPatchAll(typeof(UserLogin));
+            Harmony.CreateAndPatchAll(typeof(GameThemeManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
+            Harmony.CreateAndPatchAll(typeof(DiscordRPC));
+
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             LogInfo($"Game Version: {GlobalVariables.version}");
         }
@@ -98,13 +102,29 @@ namespace TootTally
                             Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
                         }
                     }));
-                    
+
+                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
+                    {
+                        if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
+                        {
+                            PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", GameTheme.themeColors.notification.warningText, 8.5f);
+                        }
+                    }));
                 }
+            }
 
-
-
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPrefix]
+            public static void UpdateUserInfoOnLevelSelect()
+            {
+                Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                {
+                    if (user != null)
+                    {
+                        userInfo = user;
+                    }
+                }));
             }
         }
-
     }
 }

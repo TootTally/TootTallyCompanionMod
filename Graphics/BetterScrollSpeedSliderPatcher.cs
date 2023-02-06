@@ -18,7 +18,7 @@ namespace TootTally.Graphics
         private const string CONFIG_FIELD = "SliderValues";
         private const uint DEFAULT_MAX = 250;
         private const uint DEFAULT_MIN = 5;
-        private const float DEFAULT_VALUE = 1;
+        private const float DEFAULT_VALUE = 100;
 
         public static void PatchScrollSpeedSlider()
         {
@@ -48,6 +48,7 @@ namespace TootTally.Graphics
 
             Text yoinkText = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "100%").GetComponent<Text>();
             Transform handleTransform = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider/Handle Slide Area/Handle").transform;
+            handleTransform.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 
             Transform starTransform = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty stars/star1").transform;
             Text scrollSpeedSliderText = GameObject.Instantiate(yoinkText, handleTransform);
@@ -56,9 +57,11 @@ namespace TootTally.Graphics
             scrollSpeedSliderText.alignment = TextAnchor.MiddleCenter;
             scrollSpeedSliderText.fontSize = 12;
             scrollSpeedSliderText.text = ((int)(GlobalVariables.gamescrollspeed * 100)).ToString();
-            scrollSpeedSliderText.color = new Color(0, 0, 0, 1);
+            scrollSpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
 
             Slider slider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>();
+            slider.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
+            slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
             slider.minValue = option.Min.Value / 100f;
             slider.maxValue = option.Max.Value / 100f;
             slider.value = option.LastValue.Value / 100f;
@@ -70,7 +73,7 @@ namespace TootTally.Graphics
 
         }
 
-        private static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
+        public static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
     }
     public class Options
     {

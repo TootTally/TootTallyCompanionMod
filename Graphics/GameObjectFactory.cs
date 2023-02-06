@@ -15,14 +15,13 @@ namespace TootTally.Graphics
     {
         private static CustomButton _buttonPrefab;
         private static Text _defaultText, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
-        private static Slider _verticalSliderPrefab;
-        private static GameObject _starPrefab;
+        private static Slider _verticalSliderPrefab, _sliderPrefab;
         private static PopUpNotif _popUpNotifPrefab;
 
         private static GameObject _settingsGraphics, _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
-        private static bool _isHomeControllerInitialized = false;
-        private static bool _isLevelSelectControllerInitialized = false;
+        private static bool _isHomeControllerInitialized;
+        private static bool _isLevelSelectControllerInitialized;
 
 
 
@@ -49,14 +48,15 @@ namespace TootTally.Graphics
             SetDefaultTextPrefab();
             SetNotificationPrefab();
             SetCustomButtonPrefab();
-            SetStarPrefab();
             _isHomeControllerInitialized = true;
+            UpdatePrefabTheme();
         }
 
         public static void OnLevelSelectControllerInitialize()
         {
             if (_isLevelSelectControllerInitialized) return;
 
+            SetSliderPrefab();
             SetVerticalSliderPrefab();
             SetSteamLeaderboardPrefab();
             SetSingleScorePrefab();
@@ -64,6 +64,7 @@ namespace TootTally.Graphics
             SetLeaderboardTextPrefab();
             SetSingleRowPrefab();
             _isLevelSelectControllerInitialized = true;
+            UpdatePrefabTheme();
         }
 
         #region SetPrefabs
@@ -98,8 +99,6 @@ namespace TootTally.Graphics
             RectTransform popUpNorifRectTransform = _popUpNotifPrefab.GetComponent<RectTransform>();
             popUpNorifRectTransform.anchoredPosition = new Vector2(695, -700);
             popUpNorifRectTransform.sizeDelta = new Vector2(450, 200);
-            _popUpNotifPrefab.GetComponent<Image>().color = new Color(1, .3f, .5f, .75f);
-            _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = new Color(0, 0, 0, .95f);
 
             Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
             notifText.name = "NotifText";
@@ -131,17 +130,6 @@ namespace TootTally.Graphics
             gameObjectHolder.SetActive(false);
 
             UnityEngine.Object.DontDestroyOnLoad(gameObjectHolder);
-        }
-
-        public static void SetStarPrefab()
-        {
-            GameObject star = _settingsGraphics.transform.Find("ALLEGIANCE/star (back)").gameObject;
-
-            _starPrefab = UnityEngine.Object.Instantiate(star);
-
-            _starPrefab.SetActive(false);
-
-            UnityEngine.Object.DontDestroyOnLoad(_starPrefab);
         }
 
         public static void SetSteamLeaderboardPrefab()
@@ -204,8 +192,6 @@ namespace TootTally.Graphics
                 RectTransform tabRect = currentTab.GetComponent<RectTransform>();
                 tabRect.anchoredPosition = new Vector2(15, -40);
                 tabRect.sizeDelta = new Vector2(40, 40);
-
-                currentTab.AddComponent<Image>();
             }
             VerticalLayoutGroup verticalLayout = tabs.AddComponent<VerticalLayoutGroup>();
             verticalLayout.childForceExpandWidth = false;
@@ -258,7 +244,7 @@ namespace TootTally.Graphics
 
         public static void AddSliderInPanelBody()
         {
-            CreateSliderFromPrefab(_panelBodyPrefab.transform, "LeaderboardVerticalSlider");
+            CreateVerticalSliderFromPrefab(_panelBodyPrefab.transform, "LeaderboardVerticalSlider");
         }
 
         public static void SetSingleScorePrefab()
@@ -292,7 +278,7 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardHeaderPrefab.maskable = true;
-            _leaderboardHeaderPrefab.gameObject.AddComponent<Outline>();
+            Outline outline = _leaderboardHeaderPrefab.gameObject.AddComponent<Outline>();
 
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
         }
@@ -303,7 +289,7 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.alignment = TextAnchor.MiddleCenter;
             _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
             _leaderboardTextPrefab.maskable = true;
-            _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
+            Outline outline = _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
 
             DestroyNumNameScoreFromSingleScorePrefab();
 
@@ -335,7 +321,6 @@ namespace TootTally.Graphics
 
             _verticalSliderPrefab = GameObject.Instantiate(defaultSlider);
             _verticalSliderPrefab.direction = Slider.Direction.TopToBottom;
-            _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = Color.white;
 
             RectTransform sliderRect = _verticalSliderPrefab.GetComponent<RectTransform>();
             sliderRect.sizeDelta = new Vector2(25, 745);
@@ -346,7 +331,6 @@ namespace TootTally.Graphics
             handleRect.sizeDelta = new Vector2(40, 40);
             handleRect.pivot = Vector2.zero;
             handleRect.anchorMax = Vector2.zero;
-            handleRect.gameObject.GetComponent<Image>().color = Color.white;
             GameObject handle = GameObject.Instantiate(handleRect.gameObject, _verticalSliderPrefab.transform);
             handle.name = "Handle";
             RectTransform backgroundSliderRect = _verticalSliderPrefab.transform.Find("Background").GetComponent<RectTransform>();
@@ -361,6 +345,28 @@ namespace TootTally.Graphics
             DestroyFromParent(_verticalSliderPrefab.gameObject, "Handle Slide Area/Handle");
 
             GameObject.DontDestroyOnLoad(_verticalSliderPrefab);
+        }
+        public static void SetSliderPrefab()
+        {
+            Slider defaultSlider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
+
+            _sliderPrefab = GameObject.Instantiate(defaultSlider);
+            //_sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+
+            RectTransform sliderRect = _sliderPrefab.GetComponent<RectTransform>();
+            sliderRect.anchoredPosition = new Vector2(-200, 0);
+
+            RectTransform backgroundSliderRect = _sliderPrefab.transform.Find("Background").GetComponent<RectTransform>();
+            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+
+            _sliderPrefab.value = 1f;
+            _sliderPrefab.minValue = 0f;
+            _sliderPrefab.maxValue = 2f;
+            _sliderPrefab.gameObject.SetActive(false);
+
+
+            GameObject.DontDestroyOnLoad(_sliderPrefab);
         }
 
         public static void DestroyNumNameScoreFromSingleScorePrefab()
@@ -378,13 +384,19 @@ namespace TootTally.Graphics
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
             newButton.gameObject.SetActive(true);
+            ColorBlock btnColors = newButton.button.colors;
+            btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
+            btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
+            btnColors.pressedColor = GameTheme.themeColors.replayButton.colors.pressedColor;
+            btnColors.selectedColor = GameTheme.themeColors.replayButton.colors.normalColor;
+            newButton.button.colors = btnColors;
 
             newButton.textHolder.text = text;
             newButton.textHolder.alignment = TextAnchor.MiddleCenter;
             newButton.textHolder.fontSize = 22;
             newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
-            newButton.textHolder.color = Color.black;
+            newButton.textHolder.color = GameTheme.themeColors.replayButton.text;
 
 
             newButton.GetComponent<RectTransform>().sizeDelta = size;
@@ -395,23 +407,44 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        //Keeping this just in case I wanna use it somewhere
-        public static GameObject CreateLoadingScreenStar(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, float eulerRotationY, string name)
+        public static void UpdatePrefabTheme()
         {
-            GameObject myStar = UnityEngine.Object.Instantiate(_starPrefab, canvasTransform);
-            myStar.name = name;
-            myStar.gameObject.SetActive(true);
+            if (_isHomeControllerInitialized)
+            {
+                _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Text>().color = GameTheme.themeColors.notification.defaultText;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
+            }
 
-            RectTransform rectBack = myStar.GetComponent<RectTransform>();
-            rectBack.anchoredPosition = anchoredPosition;
-            rectBack.eulerAngles = new Vector3(0, eulerRotationY, 0);
-            rectBack.sizeDelta = size;
+            if (_isLevelSelectControllerInitialized)
+            {
+                _panelBodyPrefab.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.panelBody;
+                for (int i = 0; i < 3; i++)
+                {
+                    GameObject currentTab = _steamLeaderboardPrefab.GetComponent<LeaderboardManager>().tabs[i];
+                    ColorBlock colors = currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors;
+                    colors.normalColor = GameTheme.themeColors.leaderboard.tabs.normalColor;
+                    colors.pressedColor = GameTheme.themeColors.leaderboard.tabs.pressedColor;
+                    colors.highlightedColor = GameTheme.themeColors.leaderboard.tabs.highlightedColor;
+                    currentTab.transform.Find("Button").gameObject.GetComponent<Button>().colors = colors;
+                }
+                _panelBodyPrefab.transform.Find("scoresbody").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.scoresBody;
+                _singleRowPrefab.UpdateTheme();
 
-            RectTransform rectFront = myStar.transform.Find("star (front)").GetComponent<RectTransform>();
-            rectFront.anchoredPosition = new Vector2(-1, 1);
-            rectFront.sizeDelta = size;
+                Outline outline = _leaderboardTextPrefab.gameObject.GetComponent<Outline>();
+                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
+                _leaderboardTextPrefab.color = GameTheme.themeColors.leaderboard.text;
+                outline = _leaderboardHeaderPrefab.gameObject.GetComponent<Outline>();
+                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
+                _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
 
-            return myStar;
+
+                _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+                _verticalSliderPrefab.transform.Find("Handle").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
+                _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
+                _verticalSliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
+            }
         }
 
         public static GameObject CreateSteamLeaderboardFromPrefab(Transform canvasTransform, string name)
@@ -421,11 +454,28 @@ namespace TootTally.Graphics
             return steamLeaderboard;
         }
 
-        public static Slider CreateSliderFromPrefab(Transform canvasTransform, string name)
+        public static Slider CreateVerticalSliderFromPrefab(Transform canvasTransform, string name)
         {
             Slider slider = GameObject.Instantiate(_verticalSliderPrefab, canvasTransform);
             slider.name = name;
             return slider;
+        }
+        public static Slider CreateSliderFromPrefab(Transform canvasTransform, string name)
+        {
+            Slider slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
+            slider.name = name;
+            return slider;
+        }
+
+        public static Text CreateSingleText(Transform canvasTransform, string name, string text, Color color)
+        {
+            Text marqueeText = GameObject.Instantiate(_defaultText, canvasTransform);
+            marqueeText.name = name;
+
+            marqueeText.text = text;
+            marqueeText.color = color;
+
+            return marqueeText;
         }
 
         public static Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
@@ -466,7 +516,7 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player;
+            rowEntry.username.text = scoreData.player.Length > 20 ? scoreData.player.Substring(0, 20) : scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score);
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
@@ -474,7 +524,7 @@ namespace TootTally.Graphics
             if (scoreData.grade == "SS")
             {
                 rowEntry.grade.text = "S";
-                GameObjectFactory.CreateDoubleText(rowEntry.grade.transform, "DoubleS" + scoreData.player + "Text", "S", Color.yellow); ;
+                GameObjectFactory.CreateDoubleText(rowEntry.grade.transform, "DoubleS" + scoreData.player + "Text", "S", Color.yellow);
 
             }
             else if (scoreData.grade == "SSS")
@@ -484,7 +534,10 @@ namespace TootTally.Graphics
             }
             else
                 rowEntry.grade.color = gradeColor;
-            rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            if (scoreData.tt == 0)
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            else
+                rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();

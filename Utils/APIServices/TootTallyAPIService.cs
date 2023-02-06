@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using TootTally.Graphics;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -18,12 +19,6 @@ namespace TootTally.Utils
         public const string APIURL = "https://toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
-        #region Logs
-        internal static void LogDebug(string msg) => Plugin.LogDebug(msg);
-        internal static void LogInfo(string msg) => Plugin.LogInfo(msg);
-        internal static void LogError(string msg) => Plugin.LogError(msg);
-        internal static void LogWarning(string msg) => Plugin.LogWarning(msg);
-        #endregion
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
@@ -55,8 +50,11 @@ namespace TootTally.Utils
                 {
                     username = jsonData["username"],
                     id = jsonData["id"],
+                    country = jsonData["country"],
+                    tt = jsonData["tt"],
+                    rank = jsonData["rank"],
                 };
-                LogInfo($"Welcome, {user.username}!");
+                Plugin.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
@@ -65,18 +63,16 @@ namespace TootTally.Utils
                     username = "Guest",
                     id = 0,
                 };
-                LogInfo($"Logged in with Guest Account");
+                Plugin.LogInfo($"Logged in with Guest Account");
             }
             callback(user);
-
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.Chart chart, Action callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
         {
 
             string apiLink = $"{APIURL}/api/upload/";
             string jsonified = JsonUtility.ToJson(chart);
-            LogDebug($"Chart JSON: {jsonified}");
             var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
 
             UnityWebRequest webRequest = PostUploadRequest(apiLink, jsonbin);
@@ -85,15 +81,15 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
-                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, Color.yellow);
+                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, GameTheme.themeColors.notification.warningText);
                 else
                 {
-                    LogInfo($"Chart Sent.");
+                    Plugin.LogInfo($"Chart Sent.");
                     PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
                 }
             }
             else
-                PopUpNotifManager.DisplayNotif("Error in sending chart", Color.red);
+                PopUpNotifManager.DisplayNotif("Error in sending chart", GameTheme.themeColors.notification.errorText);
             callback();
         }
 
@@ -105,7 +101,22 @@ namespace TootTally.Utils
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
-                callback(JSONObject.Parse(webRequest.downloadHandler.text)["id"]);
+            {
+                string replayUUID = JSONObject.Parse(webRequest.downloadHandler.text)["id"];
+                Plugin.LogInfo("Current Replay UUID: " + replayUUID);
+                callback(replayUUID);
+            }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> OnReplayStopUUID(string songHash, string replayUUID)
+        {
+            var apiObj = new SerializableClass.ReplayStopSubmission() { apiKey = Plugin.Instance.APIKey.Value, replayId = replayUUID };
+            var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/replay/stop/", apiKeyAndSongHash);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+                Plugin.LogInfo("Stopped UUID: " + replayUUID);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid)
@@ -126,11 +137,12 @@ namespace TootTally.Utils
             form.AddField("replayId", uuid);
             form.AddBinaryData("replayFile", replayFile);
 
+            Plugin.LogInfo($"Sending Replay for {uuid}.");
             var webRequest = UnityWebRequest.Post(apiLink, form);
 
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, true))
-                LogInfo($"Replay Sent.");
+                Plugin.LogInfo($"Replay Sent.");
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
@@ -145,9 +157,36 @@ namespace TootTally.Utils
             {
                 File.WriteAllBytes(replayDir + uuid + ".ttr", webRequest.downloadHandler.data);
 
-                LogInfo("Replay Downloaded.");
+                Plugin.LogInfo("Replay Downloaded.");
                 callback(uuid);
             }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
+        {
+            string apiLink = $"{APIURL}/api/songs/{songID}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+            {
+                var json = JSONObject.Parse(webRequest.downloadHandler.GetText());
+                var jsonSongData = json["results"];
+                SerializableClass.SongDataFromDB songData = new SerializableClass.SongDataFromDB()
+                {
+                    difficulty = jsonSongData[0]["difficulty"],
+                    tap = jsonSongData[0]["tap"],
+                    aim = jsonSongData[0]["aim"],
+                    base_tt = jsonSongData[0]["base_tt"],
+                    is_rated = jsonSongData[0]["is_rated"]
+                };
+                callback(songData);
+            }
+            else
+                callback(null);
+
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
@@ -181,6 +220,7 @@ namespace TootTally.Utils
                         max_combo = scoreJson["max_combo"],
                         percentage = scoreJson["percentage"],
                         game_version = scoreJson["game_version"],
+                        tt = scoreJson["tt"]
                     };
                     scoreList.Add(score);
                 }
@@ -199,6 +239,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
                 callback(DownloadHandlerTexture.GetContent(webRequest));
         }
+
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadTextureFromServer(string apiLink, string outputPath, Action<bool> callback)
         {
@@ -249,7 +290,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                LogInfo("Request successful");
+                Plugin.LogInfo("Request successful");
             }
         }
 
@@ -268,9 +309,9 @@ namespace TootTally.Utils
         {
             if (isLoggingErrors)
                 if (webRequest.isNetworkError)
-                    LogError($"NETWORK ERROR: {webRequest.error}");
+                    Plugin.LogError($"NETWORK ERROR: {webRequest.error}");
                 else if (webRequest.isHttpError)
-                    LogError($"HTTP ERROR {webRequest.error}");
+                    Plugin.LogError($"HTTP ERROR {webRequest.error}");
             return webRequest.isNetworkError || webRequest.isHttpError;
         }
     }
