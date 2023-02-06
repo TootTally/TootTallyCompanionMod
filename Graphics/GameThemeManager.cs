@@ -113,7 +113,7 @@ namespace TootTally.Graphics
             string targetThemePath = Path.Combine(Paths.BepInExRootPath, "Themes");
             if (!Directory.Exists(targetThemePath))
             {
-                string sourceThemePath = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "plugins", "Themes");
+                string sourceThemePath = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Themes");
                 Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + sourceThemePath + " to " + targetThemePath);
                 if (Directory.Exists(sourceThemePath))
                     Directory.Move(sourceThemePath, targetThemePath);

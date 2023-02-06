@@ -49,7 +49,7 @@ namespace TootTally.Utils
         public static void LoadAssets()
         {
             coroutineCount = 0;
-            string assetDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "plugins", "Assets");
+            string assetDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Assets");
             if (!Directory.Exists(assetDir)) Directory.CreateDirectory(assetDir);
 
             textureDictionary = new Dictionary<string, Texture2D>();
