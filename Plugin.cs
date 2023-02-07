@@ -21,6 +21,8 @@ using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using BepInEx.Bootstrap;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 
 namespace TootTally
 {
@@ -120,15 +122,30 @@ namespace TootTally
             private static RectTransform _multiButtonOutlineRectTransform, _multiTextRectTransform;
             private static Vector2 _multiButtonTargetSize, _multiTextTargetSize;
 
+            [HarmonyPatch(typeof(PlaytestAnims), nameof(PlaytestAnims.Start))]
+            [HarmonyPostfix]
+            public static void ChangePlayTestToMultiplayerScreen(PlaytestAnims __instance)
+            {
+                GameObject.DestroyImmediate(__instance.factpanel.transform.Find("Panelbg2").gameObject);
+
+                GameObject panelfg = __instance.factpanel.transform.Find("panelfg").gameObject;
+                GameObject.DestroyImmediate(panelfg.transform.Find("Button").gameObject);
+                Text text1 = __instance.factpanel.transform.Find("top/Text (1)").gameObject.GetComponent<Text>();
+                Text text2 = __instance.factpanel.transform.Find("top/Text (1)/Text (2)").gameObject.GetComponent<Text>();
+                text1.text = text2.text = "Multiplayer";
+            }
+
+
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
             public static void OnHomeControllerStartPostFixAddMultiplayerButton(HomeController __instance)
             {
+
                 GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
                 GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
                 _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(3.75f, 0.80f, 1.05f);
                 _multiTextAnimation = new EasingHelper.SecondOrderDynamics(3.5f, 0.65f, 1.15f);
-
                 #region MultiplayerButton
                 GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
                 GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
@@ -144,6 +161,27 @@ namespace TootTally
                 _multiTextRectTransform.sizeDelta = new Vector2(334, 87);
                 _multiButtonTargetSize = new Vector2(.2f, .2f);
                 _multiTextTargetSize = new Vector2(0.8f, 0.8f);
+
+                multiplayerHitbox.GetComponent<Button>().onClick.AddListener(() =>
+                 {
+                     //Yoinked from DNSpy KEKW
+                     __instance.addWaitForClick();
+                     __instance.playSfx(3);
+                     __instance.musobj.Stop();
+                     __instance.quickFlash(2);
+                     __instance.fadeAndLoadScene(16);
+                     //SceneManager.MoveGameObjectToScene(GameObject.Instantiate(multiplayerButton), scene);
+                     //6 and 7 cards collection
+                     //8 is LoadController
+                     //9 is GameController
+                     //10 is PointSceneController
+                     //11 is some weird ass fucking notes
+                     //12 is intro
+                     //13 is boss fail animation
+                     //14 is how to play
+                     //15 is end scene
+                     //16 is the demo scene
+                 });
 
                 _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
 
@@ -171,7 +209,7 @@ namespace TootTally
                     _multiTextTargetSize = new Vector2(0.8f, 0.8f);
                     multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(2, 0);
                 });
-                
+
                 multiBtnEvents.triggers.Add(pointerExitEvent);
 
 
