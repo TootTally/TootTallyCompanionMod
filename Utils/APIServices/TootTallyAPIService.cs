@@ -257,7 +257,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> TryLoadingTextureLocal(string filePath, Action<Texture2D> callback)
         {
-            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(filePath);
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture("file://"+filePath);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, false))
