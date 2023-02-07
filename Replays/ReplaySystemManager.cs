@@ -181,7 +181,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Paused:
                     if (_pauseArrowDestination != null)
-                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewPosition(_pauseArrowDestination, Time.deltaTime);
+                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
         }
@@ -510,7 +510,7 @@ namespace TootTally.Replays
         [HarmonyPrefix]
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
-            _pausePointerAnimation.SetStartPosition(__instance.pausearrowr.anchoredPosition);
+            _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
             _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
 
             return false;

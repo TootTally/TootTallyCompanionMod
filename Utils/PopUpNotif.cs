@@ -36,14 +36,14 @@ namespace TootTally.Utils
 
         public void SetTransitionToNewPosition(Vector2 endPosition)
         {
-            _secondOrderDynamic.SetStartPosition(_rectTransform.anchoredPosition);
+            _secondOrderDynamic.SetStartVector(_rectTransform.anchoredPosition);
             _endPosition = endPosition;
         }
 
         public void Update()
         {
             if (_secondOrderDynamic != null && _rectTransform.anchoredPosition != _endPosition)
-                _rectTransform.anchoredPosition = _secondOrderDynamic.GetNewPosition(_endPosition, Time.deltaTime);
+                _rectTransform.anchoredPosition = _secondOrderDynamic.GetNewVector(_endPosition, Time.deltaTime);
 
             _lifespan -= Time.deltaTime;
             if (_lifespan / 1.75f <= 1)
