@@ -25,6 +25,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 using TootTally.Multiplayer;
 
+
 namespace TootTally
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -40,9 +41,10 @@ namespace TootTally
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
         public const string CONFIG_NAME = "TootTally.cfg";
+        public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230201;
+        public const int BUILDDATE = 20230206;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -116,11 +118,23 @@ namespace TootTally
                     }));
                 }
             }
-            
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
             public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD
 
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPrefix]
+            public static void UpdateUserInfoOnLevelSelect()
+            {
+                Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                {
+                    if (user != null)
+                    {
+                        userInfo = user;
+                    }
+                }));
+            }
         }
     }
 }

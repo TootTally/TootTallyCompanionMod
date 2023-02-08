@@ -13,6 +13,7 @@ namespace TootTally.Discord
         private static Core.Discord _discord;
         private static Activity _act;
         private static string _username;
+        private static int _ranking;
 
         private static void InitRPC()
         {
@@ -28,32 +29,53 @@ namespace TootTally.Discord
 
         private static void SetActivity(GameStatus status)
         {
+            string rankingText = "";
+            if (_username != null && _ranking > 0) {
+                rankingText = $"#{_ranking}";
+            }
+            else {
+                rankingText = "Unrated";
+            }
             _act = new Activity
             {
                 Details = Statuses[((int)status)],
-                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username} ({rankingText})" },
             };
             return;
         }
 
         private static void SetActivity(GameStatus status, string message)
         {
+            string rankingText = "";
+            if (_username != null && _ranking > 0) {
+                rankingText = $"#{_ranking}";
+            }
+            else {
+                rankingText = "Unrated";
+            }
             _act = new Activity
             {
                 State = message,
                 Details = Statuses[((int)status)],
-                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username} ({rankingText})" },
             };
         }
 
         private static void SetActivity(GameStatus status, long startTime, string songName, string artist)
         {
+            string rankingText = "";
+            if (_username != null && _ranking > 0) {
+                rankingText = $"#{_ranking}";
+            }
+            else {
+                rankingText = "Unrated";
+            }
             _act = new Activity
             {
                 State = $"{artist} - {songName}",
                 Details = Statuses[((int)status)],
                 Timestamps = { Start = startTime },
-                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username}" },
+                Assets = { LargeImage = "toottallylogo", LargeText = $"{_username} ({rankingText})" },
             };
         }
 
@@ -84,6 +106,7 @@ namespace TootTally.Discord
         {
             if (_discord == null) InitRPC();
             _username = Plugin.userInfo.username;
+            _ranking = Plugin.userInfo.rank;
             SetActivity(GameStatus.MainMenu);
         }
 
@@ -93,6 +116,7 @@ namespace TootTally.Discord
         {
             if (_discord == null) InitRPC();
             _username = Plugin.userInfo.username;
+            _ranking = Plugin.userInfo.rank;
             SetActivity(GameStatus.LevelSelect);
         }
 

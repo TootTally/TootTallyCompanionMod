@@ -31,6 +31,7 @@ namespace TootTally.CustomLeaderboard
         private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
+        private static float[] _starSizeDeltaPositions = { 0, 20, 58, 96, 134, 172, 210, 285, 324, 361, 361 };
         #endregion
 
         private List<IEnumerator<UnityWebRequestAsyncOperation>> _currentLeaderboardCoroutines;
@@ -43,8 +44,11 @@ namespace TootTally.CustomLeaderboard
         private List<RaycastResult> _raycastHitList;
 
         private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly;
-        private Text _errorText;
+        private Text _errorText, _diffRating;
+        private Vector2 _starRatingMaskSizeTarget;
+        private RectTransform _diffRatingMaskRectangle;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
+        private SerializableClass.SongDataFromDB _songData;
         private Slider _slider;
         private GameObject _sliderHandle;
 
@@ -52,6 +56,8 @@ namespace TootTally.CustomLeaderboard
         public bool HasLeaderboard => _leaderboard != null;
 
         private float _scrollAcceleration;
+
+        private EasingHelper.SecondOrderDynamics _starMaskAnimation;
 
         public void Initialize(LevelSelectController __instance)
         {
@@ -89,8 +95,28 @@ namespace TootTally.CustomLeaderboard
             _slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
             _sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
-          
+
             SetOnSliderValueChangeEvent();
+
+            GameObject diffBar = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "diff bar");
+            GameObject diffStarsHolder = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty stars");
+            _diffRatingMaskRectangle = diffStarsHolder.GetComponent<RectTransform>();
+            _diffRatingMaskRectangle.anchoredPosition = new Vector2(-284, -48);
+            _diffRatingMaskRectangle.sizeDelta = new Vector2(0, 30);
+            diffStarsHolder.AddComponent<Mask>();
+            Image imageMask = diffStarsHolder.AddComponent<Image>();
+            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__? 
+            diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
+            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
+            _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating.fontSize = 20;
+            _diffRating.alignment = TextAnchor.MiddleRight;
+            _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
+            _diffRating.gameObject.SetActive(true);
+
+
+
+            _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
         }
 
         public void ClearBaseLeaderboard()
@@ -124,7 +150,7 @@ namespace TootTally.CustomLeaderboard
             GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
         }
 
-        public void UpdateLeaderboard(List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
+        public void UpdateLeaderboard(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
         {
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
             _scrollAcceleration = 0;
@@ -141,11 +167,38 @@ namespace TootTally.CustomLeaderboard
                 {
                     _errorText.text = ERROR_NO_SONGHASH_FOUND_TEXT;
                     callback(LeaderboardState.ErrorNoSongHashFound);
+                    _diffRating.text = "NA";
+                    _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                    _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     return; // Skip if no song found
                 }
                 else
                     _currentSelectedSongHash = songHashInDB;
+                _songData = null;
+                _scoreDataList = null;
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, (songData) =>
+                {
+                    if (songData != null)
+                    {
+                        _songData = songData;
+                        _diffRating.text = _songData.difficulty.ToString("0.0");
+                        int roundedUpStar = Math.Min((int)_songData.difficulty + 1, 10);
+                        int roundedDownStar = Math.Max((int)_songData.difficulty, 1);
+                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
+                    }
+                    else
+                    {
+                        _diffRating.text = "NA";
+                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
+                    }
+                    
 
+                    if (_scoreDataList != null)
+                        CancelAndClearAllCoroutineInList();
+                }));
+                Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
                 _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
                 {
                     if (scoreDataList != null)
@@ -158,7 +211,9 @@ namespace TootTally.CustomLeaderboard
                         _errorText.text = ERROR_NO_LEADERBOARD_FOUND_TEXT;
                         callback(LeaderboardState.ErrorNoLeaderboardFound);
                     }
-                    CancelAndClearAllCoroutineInList();
+
+                    if (_songData != null)
+                        CancelAndClearAllCoroutineInList();
                 }));
                 Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
             }));
@@ -221,6 +276,11 @@ namespace TootTally.CustomLeaderboard
             pointerData.position = Input.mousePosition;
             _raycastHitList.Clear();
             _globalLeaderboardGraphicRaycaster.Raycast(pointerData, _raycastHitList);
+        }
+
+        public void UpdateStarRatingAnimation()
+        {
+            _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewPosition(_starRatingMaskSizeTarget, Time.deltaTime);
         }
 
         public bool IsMouseOver() => _raycastHitList.Count > 0;
@@ -314,6 +374,8 @@ namespace TootTally.CustomLeaderboard
             ErrorNoLeaderboardFound,
             ErrorUnexpected,
             ReadyToRefresh,
+            SongDataLoaded,
+            SongDataMissing
         }
 
         private void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);

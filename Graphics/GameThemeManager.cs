@@ -22,6 +22,7 @@ namespace TootTally.Graphics
         private static ThemeTypes _currentTheme;
         private static bool _isInitialized;
 
+        //can very well be optimized but fuck it xd
         public static void SetTheme(ThemeTypes themeType)
         {
             _currentTheme = themeType;
@@ -34,35 +35,44 @@ namespace TootTally.Graphics
                 case ThemeTypes.Night:
                     GameTheme.SetNightTheme();
                     break;
+                case ThemeTypes.Aradigm:
+                    GameTheme.SetCustomTheme("Aradigm");
+                    break;
+                case ThemeTypes.Citrus:
+                    GameTheme.SetCustomTheme("Citrus");
+                    break;
                 case ThemeTypes.Custom:
                     GameTheme.SetCustomTheme("Custom");
                     break;
                 case ThemeTypes.Electro:
                     GameTheme.SetCustomTheme("Electro");
                     break;
-                case ThemeTypes.Guardie:
-                    GameTheme.SetCustomTheme("Guardie");
-                    break;
                 case ThemeTypes.Gloomhonk:
                     GameTheme.SetCustomTheme("Gloomhonk");
                     break;
-                case ThemeTypes.Jeff:
-                    GameTheme.SetCustomTheme("Jeff (Lumpy)");
+                case ThemeTypes.Guardie:
+                    GameTheme.SetCustomTheme("Guardie");
                     break;
-                case ThemeTypes.Samuran:
-                    GameTheme.SetCustomTheme("Samuran");
+                case ThemeTypes.Jeff:
+                    GameTheme.SetCustomTheme("Jeff");
+                    break;
+                case ThemeTypes.JoeSickPack:
+                    GameTheme.SetCustomTheme("Joes Sick pack");
                     break;
                 case ThemeTypes.Katiny:
                     GameTheme.SetCustomTheme("Katiny");
                     break;
-                case ThemeTypes.Citrus:
-                    GameTheme.SetCustomTheme("Citrus");
+                case ThemeTypes.Lavender:
+                    GameTheme.SetCustomTheme("Lavender");
+                    break;
+                case ThemeTypes.NightRider:
+                    GameTheme.SetCustomTheme("Night Rider");
                     break;
                 case ThemeTypes.Perandus:
                     GameTheme.SetCustomTheme("Perandus");
                     break;
-                case ThemeTypes.JoeSickPack:
-                    GameTheme.SetCustomTheme("Joes Sick pack");
+                case ThemeTypes.Samuran:
+                    GameTheme.SetCustomTheme("Samuran");
                     break;
                 case ThemeTypes.Random:
                     GameTheme.SetRandomTheme();
@@ -74,25 +84,13 @@ namespace TootTally.Graphics
             GameObjectFactory.UpdatePrefabTheme();
         }
 
-
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
-        [HarmonyPostfix]
-        public static void OnSaveSettingsPostFix()
-        {
-            if (option != null && _currentTheme != option.Theme.Value)
-            {
-                SetTheme(option.Theme.Value);
-                PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
-            }
-
-        }
-
         public static void Initialize()
         {
             if (_isInitialized) return;
 
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + Plugin.CONFIG_NAME, true);
+
             option = new Options()
             {
                 Theme = config.Bind(CONFIG_FIELD, nameof(option.Theme), DEFAULT_THEME),
@@ -101,6 +99,7 @@ namespace TootTally.Graphics
                 TrombGreen = config.Bind(CONFIG_FIELD, "Tromb Green", 1f),
                 TrombBlue = config.Bind(CONFIG_FIELD, "Tromb Blue", 1f),
             };
+            config.SettingChanged += Config_SettingChanged;
 
             object settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
@@ -111,9 +110,25 @@ namespace TootTally.Graphics
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombGreen);
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
             }
+            string targetThemePath = Path.Combine(Paths.BepInExRootPath, "Themes");
+            if (!Directory.Exists(targetThemePath))
+            {
+                string sourceThemePath = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Themes");
+                Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + sourceThemePath + " to " + targetThemePath);
+                if (Directory.Exists(sourceThemePath))
+                    Directory.Move(sourceThemePath, targetThemePath);
+                else
+                    Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
+            }
 
             SetTheme(option.Theme.Value);
             _isInitialized = true;
+        }
+
+        private static void Config_SettingChanged(object sender, SettingChangedEventArgs e)
+        {
+            SetTheme(option.Theme.Value);
+            PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -126,7 +141,6 @@ namespace TootTally.Graphics
             {
                 btn.transform.Find("ScoreText").gameObject.GetComponent<Text>().color = GameTheme.themeColors.leaderboard.text;
             }
-
 
             #region SongButton
             GameObject btnBGPrefab = GameObject.Instantiate(__instance.btnbgs[0].gameObject);
@@ -348,6 +362,7 @@ namespace TootTally.Graphics
             MainCanvas.transform.Find("FullScreenPanel/diamond").GetComponent<Image>().color = GameTheme.themeColors.background.diamond;
             #endregion
 
+
             //CapsulesTextColor
             songyear.color = GameTheme.themeColors.leaderboard.text;
             songgenre.color = GameTheme.themeColors.leaderboard.text;
@@ -465,13 +480,14 @@ namespace TootTally.Graphics
         [HarmonyPostfix]
         public static void OnAdvanceSongsPostFix(LevelSelectController __instance)
         {
-            if (GameTheme.isDefault || songyear == null) return;
-
             for (int i = 0; i < 10; i++)
             {
-                if (__instance.diffstars[i].color.a == 1)
+                if (!GameTheme.isDefault)
                     __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
+                __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
+                __instance.diffstars[i].maskable = true;
             }
+            if (GameTheme.isDefault || songyear == null) return;
             songyear.text = __instance.songyear.text;
             songgenre.text = __instance.songgenre.text;
             songduration.text = __instance.songduration.text;
@@ -521,16 +537,19 @@ namespace TootTally.Graphics
             Default,
             Day,
             Night,
-            Electro,
-            Guardie,
-            Gloomhonk,
-            Jeff,
-            Samuran,
-            Katiny,
-            Citrus,
-            Perandus,
-            JoeSickPack,
             Custom,
+            Aradigm,
+            Citrus,
+            Electro,
+            Gloomhonk,
+            Guardie,
+            Jeff,
+            JoeSickPack,
+            Katiny,
+            Lavender,
+            NightRider,
+            Perandus,
+            Samuran,
             Random,
         }
     }

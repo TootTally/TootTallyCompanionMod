@@ -42,8 +42,6 @@ namespace TootTally.Utils
             "pointerOutline.png",
             "MultiplayerButtonV2.png",
             "CollectButtonV2.png",
-            "MultiText.png",
-            "CollectButtonOutline.png"
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
@@ -51,14 +49,15 @@ namespace TootTally.Utils
         public static void LoadAssets()
         {
             coroutineCount = 0;
-            string assetDir = Path.Combine(Paths.BepInExRootPath, "Assets/");
+            string assetDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Assets");
             if (!Directory.Exists(assetDir)) Directory.CreateDirectory(assetDir);
 
             textureDictionary = new Dictionary<string, Texture2D>();
 
             foreach (string assetName in requiredAssetNames)
             {
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetDir + assetName, (texture) =>
+                string assetPath = Path.Combine(assetDir, assetName);
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetPath, (texture) =>
                 {
                     if (texture != null)
                     {
@@ -74,34 +73,35 @@ namespace TootTally.Utils
         {
             coroutineCount++;
             Plugin.LogInfo("Downloading asset " + assetName);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetDir + assetName, (success) =>
+            string assetPath = Path.Combine(assetDir, assetName);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetPath, (success) =>
                 {
-                    coroutineCount--;
-                    if (success)
-                        ReloadTextureLocal(assetDir, assetName);
-                    if (coroutineCount == 0)
-                    {
-                        List<string> missingAssetList = GetMissingAssetsName();
-                        if (missingAssetList.Count > 0)
-                        {
-                            Plugin.LogError("Missing Asset(s):");
-                            foreach (string missingAsset in missingAssetList)
-                                Plugin.LogError("    " + missingAsset);
-                        }
-                        else
-                            Plugin.LogInfo("All Assets Loaded Correctly");
-                    }
+                    ReloadTextureLocal(assetDir, assetName);
                 }));
         }
 
         public static void ReloadTextureLocal(string assetDir, string assetName)
         {
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetDir + assetName, (texture) =>
+            string assetPath = Path.Combine(assetDir, assetName);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.TryLoadingTextureLocal(assetPath, (texture) =>
             {
+                coroutineCount--;
                 if (texture != null)
                 {
                     Plugin.LogInfo("Asset " + assetName + " Reloaded");
                     textureDictionary.Add(assetName, texture);
+                }
+                if (coroutineCount == 0)
+                {
+                    List<string> missingAssetList = GetMissingAssetsName();
+                    if (missingAssetList.Count > 0)
+                    {
+                        Plugin.LogError("Missing Asset(s):");
+                        foreach (string missingAsset in missingAssetList)
+                            Plugin.LogError("    " + missingAsset);
+                    }
+                    else
+                        Plugin.LogInfo("All Assets Loaded Correctly");
                 }
             }));
         }

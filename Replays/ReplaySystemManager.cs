@@ -76,10 +76,17 @@ namespace TootTally.Replays
                     GameObject canBG = GameObject.Find("can-bg-1").gameObject;
                     _videoPlayer = canBG.GetComponent<VideoPlayer>();
                     if (_videoPlayer != null)
+                    {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
+                        _replayTimestampSlider.onValueChanged.AddListener((float value) =>
+                        {
+                            _videoPlayer.time = _videoPlayer.length * value;
+                        });
+                    }
+                        
                 }
             }
         }
@@ -391,7 +398,7 @@ namespace TootTally.Replays
             GameObject GameplayCanvas = GameObject.Find("GameplayCanvas").gameObject;
             GameObject UIHolder = GameplayCanvas.transform.Find("UIHolder").gameObject;
             SetReplaySpeedSlider(UIHolder.transform, __instance);
-            SetReplayTimestampSlider(UIHolder.transform);
+            SetReplayTimestampSlider(UIHolder.transform, __instance);
             SetReplayMarquees(UIHolder.transform);
         }
 
@@ -434,21 +441,29 @@ namespace TootTally.Replays
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             });
+
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);
         }
 
-        private static void SetReplayTimestampSlider(Transform canvasTransform)
+        //This is absolutely the worst and most scuffed thing in the world, the game hate it when you change the musictrack time
+        private static void SetReplayTimestampSlider(Transform canvasTransform, GameController __instance)
         {
             _replayTimestampSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "TimestampSlider");
             _replayTimestampSlider.gameObject.AddComponent<GraphicRaycaster>();
+            _replayTimestampSlider.transform.SetSiblingIndex(0);
             _replayTimestampSlider.value = 0f;
             _replayTimestampSlider.maxValue = 1f;
             _replayTimestampSlider.minValue = 0f;
             RectTransform rectTransform = _replayTimestampSlider.gameObject.GetComponent<RectTransform>();
             rectTransform.sizeDelta = new Vector2(800, 20);
             rectTransform.anchoredPosition = new Vector2(-0, -195);
-            //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
+
+            /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
+            {
+                __instance.musictrack.time = __instance.musictrack.clip.length * value;
+            });*/
+           //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
         }
 
         private static void SetReplayMarquees(Transform canvasTransform)

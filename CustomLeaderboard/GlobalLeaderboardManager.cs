@@ -37,7 +37,7 @@ namespace TootTally.CustomLeaderboard
             globalLeaderboard = new GlobalLeaderboard();
             globalLeaderboard.Initialize(__instance);
 
-            globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
+            globalLeaderboard.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.populateScores))]
@@ -52,6 +52,8 @@ namespace TootTally.CustomLeaderboard
 
             if (!_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateLoadingSwirlyAnimation();
+            else
+                globalLeaderboard.UpdateStarRatingAnimation();
 
             globalLeaderboard.UpdateRaycastHitList();
 
@@ -119,7 +121,7 @@ namespace TootTally.CustomLeaderboard
 
             if (__instance.randomizing) return; //Do nothing if randomizing
 
-            globalLeaderboard.UpdateLeaderboard(___alltrackslist, OnUpdateLeaderboardCallback);
+            globalLeaderboard.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
         }
 
         private static void OnUpdateLeaderboardCallback(GlobalLeaderboard.LeaderboardState state)
@@ -143,9 +145,14 @@ namespace TootTally.CustomLeaderboard
                     break;
             }
 
-            _hasLeaderboardFinishedLoading = true;
-            globalLeaderboard.HideLoadingSwirly();
+            if (state != GlobalLeaderboard.LeaderboardState.SongDataLoaded || state != GlobalLeaderboard.LeaderboardState.SongDataMissing)
+            {
+                _hasLeaderboardFinishedLoading = true;
+                globalLeaderboard.HideLoadingSwirly();
+            }
+            
         }
+
         #endregion
     }
 }

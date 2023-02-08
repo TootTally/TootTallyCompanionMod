@@ -22,7 +22,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
-            UnityWebRequest webRequest = isCustom ? UnityWebRequest.Get($"{APIURL}/api/hashcheck/custom/?songHash={songHash}") : UnityWebRequest.Get($"{APIURL}/api/hashcheck/official/?trackref={songHash}");
+            UnityWebRequest webRequest = isCustom ? UnityWebRequest.Get($"{APIURL}/hashcheck/{songHash}/") : UnityWebRequest.Get($"{APIURL}/api/hashcheck/official/?trackref={songHash}");
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
@@ -50,6 +50,9 @@ namespace TootTally.Utils
                 {
                     username = jsonData["username"],
                     id = jsonData["id"],
+                    country = jsonData["country"],
+                    tt = jsonData["tt"],
+                    rank = jsonData["rank"],
                 };
                 Plugin.LogInfo($"Welcome, {user.username}!");
             }
@@ -159,6 +162,33 @@ namespace TootTally.Utils
             }
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
+        {
+            string apiLink = $"{APIURL}/api/songs/{songID}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(apiLink);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, false))
+            {
+                var json = JSONObject.Parse(webRequest.downloadHandler.GetText());
+                var jsonSongData = json["results"];
+                SerializableClass.SongDataFromDB songData = new SerializableClass.SongDataFromDB()
+                {
+                    difficulty = jsonSongData[0]["difficulty"],
+                    tap = jsonSongData[0]["tap"],
+                    aim = jsonSongData[0]["aim"],
+                    base_tt = jsonSongData[0]["base_tt"],
+                    is_rated = jsonSongData[0]["is_rated"]
+                };
+                callback(songData);
+            }
+            else
+                callback(null);
+
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
         {
             string apiLink = $"{APIURL}/api/songs/{songID}/leaderboard/";
@@ -190,6 +220,7 @@ namespace TootTally.Utils
                         max_combo = scoreJson["max_combo"],
                         percentage = scoreJson["percentage"],
                         game_version = scoreJson["game_version"],
+                        tt = scoreJson["tt"]
                     };
                     scoreList.Add(score);
                 }

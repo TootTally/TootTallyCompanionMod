@@ -26,7 +26,20 @@ namespace TootTally.Utils
             public int max_combo;
             public float percentage;
             public string game_version;
+            public float tt;
         }
+
+        [Serializable]
+        public class SongDataFromDB
+        {
+            public float difficulty;
+            public float tap;
+            public float aim;
+            public float base_tt;
+            public bool is_rated;
+        }
+
+
 
         [Serializable]
         public class SendableModInfo
@@ -34,7 +47,6 @@ namespace TootTally.Utils
             public string name;
             public string version;
             public string hash;
-
         }
 
 
@@ -64,6 +76,9 @@ namespace TootTally.Utils
         {
             public string username;
             public int id;
+            public string country;
+            public float tt;
+            public int rank;
         }
 
         #region Theme

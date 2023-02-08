@@ -439,7 +439,7 @@ namespace TootTally.Graphics
                 outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
                 _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
 
-                
+
                 _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
                 _verticalSliderPrefab.transform.Find("Handle").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
                 _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
@@ -516,7 +516,7 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player.Length > 21 ? scoreData.player.Substring(0, 21) : scoreData.player;
+            rowEntry.username.text = scoreData.player.Length > 20 ? scoreData.player.Substring(0, 20) : scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score);
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
@@ -534,7 +534,10 @@ namespace TootTally.Graphics
             }
             else
                 rowEntry.grade.color = gradeColor;
-            rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            if (scoreData.tt == 0)
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
+            else
+                rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();
