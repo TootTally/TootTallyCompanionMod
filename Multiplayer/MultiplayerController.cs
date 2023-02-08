@@ -51,10 +51,6 @@ namespace TootTally.Multiplayer
             _mainPanelBorder.GetComponent<Image>().color = Color.green;
             __instance.factpanel.transform.Find("top").GetComponent<Image>().color = Color.green;
 
-            InputField inputfield = _mainPanel.AddComponent<InputField>();
-            inputfield.image = _mainPanel.GetComponent<Image>();
-            inputfield.textComponent = mainText;
-
             _acceptButton = GameObjectFactory.CreateCustomButton(__instance.factpanel.transform, new Vector2(160, -175), new Vector2(200, 50), "Accept", "AcceptButton", OnAcceptButtonClick).gameObject;
             _acceptButtonCanvasGroup = _acceptButton.AddComponent<CanvasGroup>();
             _declineButton = GameObjectFactory.CreateCustomButton(__instance.factpanel.transform, new Vector2(-75, -175), new Vector2(200, 50), "Decline", "DeclineButton", OnDeclineButtonClick).gameObject;
