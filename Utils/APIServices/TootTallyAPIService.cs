@@ -124,14 +124,24 @@ namespace TootTally.Utils
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
 
             byte[] replayFile;
+
+            Plugin.LogInfo(replayDir);
+
             using (var memoryStream = new MemoryStream())
             {
+                Plugin.LogInfo("memory stream created");
                 using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Open))
+                {
                     fileStream.CopyTo(memoryStream);
+                    Plugin.LogInfo("fileStream copied to memory stream");
+                }
                 replayFile = memoryStream.ToArray();
+                Plugin.LogInfo("memoryStream bytes copied to replayFile");
+                Plugin.LogInfo("replayFile content: " + replayFile);
             }
 
             string apiLink = $"{APIURL}/api/replay/submit/";
+            Plugin.LogInfo("apiLink: " + apiLink);
             WWWForm form = new WWWForm();
             form.AddField("apiKey", Plugin.Instance.APIKey.Value);
             form.AddField("replayId", uuid);
@@ -257,7 +267,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> TryLoadingTextureLocal(string filePath, Action<Texture2D> callback)
         {
-            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture("file://"+filePath);
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture("file://" + filePath);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, false))

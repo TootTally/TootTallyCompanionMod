@@ -208,6 +208,7 @@ namespace TootTally.Replays
         public ReplayState LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+            Plugin.LogInfo(replayDir);
             if (!Directory.Exists(replayDir))
             {
                 Plugin.LogInfo("Replay folder not found");

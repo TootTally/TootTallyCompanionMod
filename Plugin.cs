@@ -117,13 +117,15 @@ namespace TootTally
             [HarmonyPrefix]
             public static void UpdateUserInfoOnLevelSelect()
             {
-                Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
-                {
-                    if (user != null)
+                //in case they failed to login. Try logging in again
+                if (userInfo == null || userInfo.username == "Guest")
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
-                        userInfo = user;
-                    }
-                }));
+                        if (user != null)
+                        {
+                            userInfo = user;
+                        }
+                    }));
             }
         }
     }
