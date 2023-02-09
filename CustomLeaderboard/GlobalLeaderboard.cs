@@ -168,7 +168,7 @@ namespace TootTally.CustomLeaderboard
                     _errorText.text = ERROR_NO_SONGHASH_FOUND_TEXT;
                     callback(LeaderboardState.ErrorNoSongHashFound);
                     _diffRating.text = "NA";
-                    _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                    _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                     _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     return; // Skip if no song found
                 }
@@ -184,13 +184,13 @@ namespace TootTally.CustomLeaderboard
                         _diffRating.text = _songData.difficulty.ToString("0.0");
                         int roundedUpStar = Math.Min((int)_songData.difficulty + 1, 10);
                         int roundedDownStar = Math.Max((int)_songData.difficulty, 1);
-                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
                     }
                     else
                     {
                         _diffRating.text = "NA";
-                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     }
                     
@@ -280,7 +280,7 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateStarRatingAnimation()
         {
-            _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewPosition(_starRatingMaskSizeTarget, Time.deltaTime);
+            _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewVector(_starRatingMaskSizeTarget, Time.deltaTime);
         }
 
         public bool IsMouseOver() => _raycastHitList.Count > 0;
