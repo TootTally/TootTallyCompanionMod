@@ -1,5 +1,5 @@
 ﻿using BepInEx;
-using SimpleJSON;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,15 +45,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var jsonData = JSONObject.Parse(webRequest.downloadHandler.text);
-                user = new SerializableClass.User()
-                {
-                    username = jsonData["username"],
-                    id = jsonData["id"],
-                    country = jsonData["country"],
-                    tt = jsonData["tt"],
-                    rank = jsonData["rank"],
-                };
+                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
                 Plugin.LogInfo($"Welcome, {user.username}!");
             }
             else
@@ -102,7 +94,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                string replayUUID = JSONObject.Parse(webRequest.downloadHandler.text)["id"];
+                string replayUUID = JsonConvert.DeserializeObject<SerializableClass.ReplayStart>(webRequest.downloadHandler.text).id;
                 Plugin.LogInfo("Current Replay UUID: " + replayUUID);
                 callback(replayUUID);
             }
@@ -182,16 +174,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var json = JSONObject.Parse(webRequest.downloadHandler.GetText());
-                var jsonSongData = json["results"];
-                SerializableClass.SongDataFromDB songData = new SerializableClass.SongDataFromDB()
-                {
-                    difficulty = jsonSongData[0]["difficulty"],
-                    tap = jsonSongData[0]["tap"],
-                    aim = jsonSongData[0]["aim"],
-                    base_tt = jsonSongData[0]["base_tt"],
-                    is_rated = jsonSongData[0]["is_rated"]
-                };
+                var songData = JsonConvert.DeserializeObject<SerializableClass.SongDataFromDB>(webRequest.downloadHandler.GetText());
                 callback(songData);
             }
             else
@@ -211,27 +194,9 @@ namespace TootTally.Utils
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
-                var leaderboardJson = JSONObject.Parse(webRequest.downloadHandler.GetText());
-                foreach (JSONObject scoreJson in leaderboardJson["results"])
+                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.GetText());
+                foreach (SerializableClass.ScoreDataFromDB score in leaderboardInfo.results)
                 {
-                    SerializableClass.ScoreDataFromDB score = new SerializableClass.ScoreDataFromDB()
-                    {
-                        score = scoreJson["score"],
-                        player = scoreJson["player"],
-                        played_on = scoreJson["played_on"],
-                        grade = scoreJson["grade"],
-                        noteTally = new int[]
-                        {   scoreJson["perfect"],
-                            scoreJson["nice"],
-                            scoreJson["okay"],
-                            scoreJson["meh"],
-                            scoreJson["nasty"]},
-                        replay_id = scoreJson["replay_id"] != null ? scoreJson["replay_id"] : "NA", //if no replay_id, set to NA
-                        max_combo = scoreJson["max_combo"],
-                        percentage = scoreJson["percentage"],
-                        game_version = scoreJson["game_version"],
-                        tt = scoreJson["tt"]
-                    };
                     scoreList.Add(score);
                 }
                 callback(scoreList);
@@ -278,22 +243,22 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SendModInfo(Dictionary<string, BepInEx.PluginInfo> modsDict)
         {
-            JSONObject json = new JSONObject();
-            JSONArray jsonMods = new JSONArray();
+            var sendableModInfo = new SerializableClass.ModInfoAPI();
+            var mods = new List<SerializableClass.SendableModInfo>();
 
             foreach (string key in modsDict.Keys)
             {
-                JSONObject jsonobj = new JSONObject();
-                jsonobj["name"] = modsDict[key].Metadata.Name;
-                jsonobj["version"] = modsDict[key].Metadata.Version.ToString();
-                jsonobj["hash"] = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location));
-                jsonMods.Add(jsonobj);
+                var mod = new SerializableClass.SendableModInfo();
+                mod.name = modsDict[key].Metadata.Name;
+                mod.version = modsDict[key].Metadata.Version.ToString();
+                mod.hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location));
+                mods.Add(mod);
             }
 
-            json["apiKey"] = Plugin.Instance.APIKey.Value;
-            json["mods"] = jsonMods;
+            sendableModInfo.apiKey = Plugin.Instance.APIKey.Value;
+            sendableModInfo.mods = mods.ToArray();
             string apiLink = $"{APIURL}/api/mods/submit/";
-            var jsonbin = System.Text.Encoding.UTF8.GetBytes(json.ToString());
+            var jsonbin = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(sendableModInfo));
 
             UnityWebRequest webRequest = PostUploadRequest(apiLink, jsonbin);
             yield return webRequest.SendWebRequest();
