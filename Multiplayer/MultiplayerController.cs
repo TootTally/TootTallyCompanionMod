@@ -14,14 +14,15 @@ namespace TootTally.Multiplayer
     public class MultiplayerController : MonoBehaviour
     {
         private static PlaytestAnims _currentInstance;
-        private static bool _isPointerOver, _AcceptButtonClicked, _DeclineButtonClicked;
+        private static bool _isPointerOver, _acceptButtonClicked, _declineButtonClicked;
         private static EasingHelper.SecondOrderDynamics _multiButtonAnimation, _multiTextAnimation;
         private static EasingHelper.SecondOrderDynamics _panelResizeAnimation;
-        private static RectTransform _multiButtonOutlineRectTransform, _multiTextRectTransform;
+        private static EasingHelper.SecondOrderDynamics _panelPositionAnimation;
+        private static RectTransform _multiButtonOutlineRectTransform, _multiTextRectTransform, _mainPanelRectTransform;
         private static Vector2 _multiButtonTargetSize, _multiTextTargetSize;
-        private static Vector2 _panelTargetSize;
+        private static Vector2 _panelTargetSize, _panelTargetPosition;
         private static bool _isSceneActive;
-        private static GameObject _mainPanel, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
+        private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
 
 
@@ -29,36 +30,38 @@ namespace TootTally.Multiplayer
         [HarmonyPostfix]
         public static void ChangePlayTestToMultiplayerScreen(PlaytestAnims __instance)
         {
-            if (_currentInstance != null) return;
-            _currentInstance = __instance;
-            _isSceneActive = true;
-            GameObject.DestroyImmediate(__instance.factpanel.transform.Find("Panelbg2").gameObject);
+            if (_currentInstance == null)
+                _currentInstance = __instance;
+            __instance.factpanel.gameObject.SetActive(false);
 
-            _mainPanel = __instance.factpanel.transform.Find("panelfg").gameObject;
-            _mainPanelBorder = __instance.factpanel.transform.Find("Panelbg1").gameObject;
-            GameObject.DestroyImmediate(_mainPanel.transform.Find("Button").gameObject);
-            _topBar = __instance.factpanel.transform.Find("top").gameObject;
-            _topBarCanvasGroup = _topBar.AddComponent<CanvasGroup>();
-            Text topTextShadow = _topBar.transform.Find("Text (1)").gameObject.GetComponent<Text>();
-            Text topText = _topBar.transform.Find("Text (1)/Text (2)").gameObject.GetComponent<Text>();
-            topTextShadow.text = topText.text = "Multiplayer";
-            Text mainText = _mainPanel.transform.Find("FactText").GetComponent<Text>();
-            mainText.text =
-            "<size=36>Welcome to TootTally Multiplayer Test!</size>\n\n\n<color=\"green\">This is a beta state of the multiplayer mod and there may be a lot of glitches.\n\n" +
-            "Please report any bugs found on our discord.</color>";
-            _mainTextCanvasGroup = mainText.gameObject.AddComponent<CanvasGroup>();
+            GameObject canvasWindow = GameObject.Find("Canvas-Window").gameObject;
+            Transform panelTransform = canvasWindow.transform.Find("Panel");
 
-            _mainPanelBorder.GetComponent<Image>().color = Color.green;
-            __instance.factpanel.transform.Find("top").GetComponent<Image>().color = Color.green;
+            _mainPanel = GameObjectFactory.CreateMultiplayerPanel(panelTransform, "MultiPanel");
+            _mainPanel.SetActive(true);
+            _mainPanelRectTransform = _mainPanel.GetComponent<RectTransform>();
+            _panelPositionAnimation = new EasingHelper.SecondOrderDynamics(1.25f, 1f, 0f);
+            _panelPositionAnimation.SetStartVector(_mainPanelRectTransform.anchoredPosition);
+            _panelTargetPosition = new Vector2(0, 0);
 
-            _acceptButton = GameObjectFactory.CreateCustomButton(__instance.factpanel.transform, new Vector2(160, -175), new Vector2(200, 50), "Accept", "AcceptButton", OnAcceptButtonClick).gameObject;
+            _mainPanelFg = _mainPanel.transform.Find("panelfg").gameObject;
+
+            _mainPanelBorder = _mainPanel.transform.Find("Panelbg1").gameObject;
+
+            _topBar = _mainPanel.transform.Find("top").gameObject;
+            _topBarCanvasGroup = _topBar.GetComponent<CanvasGroup>();
+            _mainTextCanvasGroup = _mainPanelFg.transform.Find("FactText").GetComponent<CanvasGroup>();
+
+            _acceptButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-80, -340), new Vector2(200, 50), "Accept", "AcceptButton", OnAcceptButtonClick).gameObject;
             _acceptButtonCanvasGroup = _acceptButton.AddComponent<CanvasGroup>();
-            _declineButton = GameObjectFactory.CreateCustomButton(__instance.factpanel.transform, new Vector2(-75, -175), new Vector2(200, 50), "Decline", "DeclineButton", OnDeclineButtonClick).gameObject;
+            _declineButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-320, -340), new Vector2(200, 50), "Decline", "DeclineButton", OnDeclineButtonClick).gameObject;
             _declineButtonCanvasGroup = _declineButton.AddComponent<CanvasGroup>();
 
             _panelResizeAnimation = new EasingHelper.SecondOrderDynamics(.75f, 1f, 0f);
             _panelResizeAnimation.SetStartVector(_mainPanel.GetComponent<RectTransform>().sizeDelta);
+            _acceptButtonClicked = _declineButtonClicked = false;
 
+            _isSceneActive = true;
         }
 
         [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
@@ -67,38 +70,40 @@ namespace TootTally.Multiplayer
         {
             if (!_isSceneActive) return;
 
-            if (_AcceptButtonClicked || _DeclineButtonClicked)
+            _mainPanelRectTransform.anchoredPosition = _panelPositionAnimation.GetNewVector(_panelTargetPosition, Time.deltaTime);
+
+            if (_acceptButtonClicked || _declineButtonClicked)
             {
                 _acceptButtonCanvasGroup.alpha = _topBarCanvasGroup.alpha = _mainTextCanvasGroup.alpha = _declineButtonCanvasGroup.alpha -= Time.deltaTime * 4; //fade out texts and top bar
                 if (_acceptButtonCanvasGroup.alpha < 0)
                 {
-                    _acceptButton.SetActive(false);
-                    _declineButton.SetActive(false);
+                    GameObject.Destroy(_acceptButton);
+                    GameObject.Destroy(_declineButton);
                 }
 
-                _mainPanel.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime);
+                _mainPanelFg.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime);
                 _mainPanelBorder.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime) + new Vector2(10, 10);
             }
         }
 
         public static void OnAcceptButtonClick()
         {
-            RectTransform mainPanelRecTransform = _mainPanel.GetComponent<RectTransform>();
+            RectTransform mainPanelRecTransform = _mainPanelFg.GetComponent<RectTransform>();
             _panelResizeAnimation.SetStartVector(mainPanelRecTransform.sizeDelta);
             _panelTargetSize = new Vector2(1240, 630);
 
             _currentInstance.sfx_ok.Play();
-            _AcceptButtonClicked = true;
+            _acceptButtonClicked = true;
         }
 
         public static void OnDeclineButtonClick()
         {
-            RectTransform mainPanelRecTransform = _mainPanel.GetComponent<RectTransform>();
+            RectTransform mainPanelRecTransform = _mainPanelFg.GetComponent<RectTransform>();
             _panelResizeAnimation.SetStartVector(mainPanelRecTransform.sizeDelta);
             _panelTargetSize = new Vector2(0, 0);
 
             _currentInstance.clickedOK();
-            _DeclineButtonClicked = true;
+            _declineButtonClicked = true;
         }
 
         [HarmonyPatch(typeof(PlaytestAnims), nameof(PlaytestAnims.nextScene))]
@@ -106,6 +111,10 @@ namespace TootTally.Multiplayer
         public static bool OverwriteNextScene()
         {
             _isSceneActive = false;
+            GameObject.Destroy(_mainPanel);
+            GameObject.Destroy(_acceptButton);
+            GameObject.Destroy(_declineButton);
+
             SceneManager.LoadScene("saveslot");
             return false;
         }

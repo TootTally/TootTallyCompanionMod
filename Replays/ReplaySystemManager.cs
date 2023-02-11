@@ -81,14 +81,15 @@ namespace TootTally.Replays
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
-                        _replayTimestampSlider.onValueChanged.AddListener((float value) =>
+                        /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.time = _videoPlayer.length * value;
-                        });
+                        });*/
                     }
                         
                 }
             }
+
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -242,6 +243,7 @@ namespace TootTally.Replays
                     break;
 
             }
+
             _pauseArrow = __instance.pausearrow;
             _hasPaused = true;
             _replayManagerState = ReplayManagerState.Paused;
@@ -463,7 +465,7 @@ namespace TootTally.Replays
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
             });*/
-           //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
+           _replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
         }
 
         private static void SetReplayMarquees(Transform canvasTransform)

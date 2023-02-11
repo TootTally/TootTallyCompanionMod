@@ -20,8 +20,12 @@ namespace TootTally.Graphics
 
         private static GameObject _settingsGraphics, _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
+
+        private static GameObject _mainMultiplayerPanelPrefab;
+
         private static bool _isHomeControllerInitialized;
         private static bool _isLevelSelectControllerInitialized;
+        private static bool _isPlaytestAnimsInitialized;
 
 
 
@@ -35,9 +39,16 @@ namespace TootTally.Graphics
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
-        static void YoinkSettingsGraphicsLevelSelectController()
+        static void YoinkGraphicsLevelSelectController()
         {
             OnLevelSelectControllerInitialize();
+        }
+
+        [HarmonyPatch(typeof(PlaytestAnims), nameof(PlaytestAnims.Start))]
+        [HarmonyPostfix]
+        static void YoinkGraphicsPlaytestAnims(PlaytestAnims __instance)
+        {
+            OnPlaytestAnimsInitialize(__instance);
         }
 
         public static void OnHomeControllerInitialize()
@@ -67,7 +78,50 @@ namespace TootTally.Graphics
             UpdatePrefabTheme();
         }
 
+        public static void OnPlaytestAnimsInitialize(PlaytestAnims __instance)
+        {
+            if (_isPlaytestAnimsInitialized) return;
+
+            SetMainMultiplayerPanelPrefab(__instance);
+
+            _isPlaytestAnimsInitialized = true;
+
+        }
+
+
         #region SetPrefabs
+        public static void SetMainMultiplayerPanelPrefab(PlaytestAnims __instance)
+        {
+            GameObject factPanel = __instance.factpanel.gameObject;
+
+            GameObject.DestroyImmediate(factPanel.transform.Find("Panelbg2").gameObject);
+            factPanel.transform.Find("top").GetComponent<Image>().color = Color.green;
+
+            GameObject border = factPanel.transform.Find("Panelbg1").gameObject;
+            border.GetComponent<Image>().color = Color.green;
+
+            GameObject topBar = factPanel.transform.Find("top").gameObject;
+            topBar.AddComponent<CanvasGroup>();
+            Text topTextShadow = topBar.transform.Find("Text (1)").gameObject.GetComponent<Text>();
+            Text topText = topBar.transform.Find("Text (1)/Text (2)").gameObject.GetComponent<Text>();
+            topTextShadow.text = topText.text = "Multiplayer";
+
+            GameObject panelfg = __instance.factpanel.transform.Find("panelfg").gameObject;
+
+            Text mainText = panelfg.transform.Find("FactText").GetComponent<Text>();
+            mainText.text =
+            "<size=36>Welcome to TootTally Multiplayer Test!</size>\n\n\n<color=\"green\">This is a beta state of the multiplayer mod and there may be a lot of glitches.\n\n" +
+            "Please report any bugs found on our discord.</color>";
+            mainText.gameObject.AddComponent<CanvasGroup>();
+
+            GameObject.DestroyImmediate(panelfg.transform.Find("Button").gameObject);
+
+            _mainMultiplayerPanelPrefab = GameObject.Instantiate(factPanel.gameObject);
+            _mainMultiplayerPanelPrefab.SetActive(false);
+
+            GameObject.DontDestroyOnLoad(_mainMultiplayerPanelPrefab);
+        }
+
         public static void SetDefaultTextPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
@@ -379,6 +433,14 @@ namespace TootTally.Graphics
         #endregion
 
         #region Create Objects
+
+        public static GameObject CreateMultiplayerPanel(Transform canvasTransform, string name)
+        {
+            GameObject multiPanel = GameObject.Instantiate(_mainMultiplayerPanelPrefab, canvasTransform);
+            multiPanel.name = name;
+            return multiPanel;
+        }
+
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);

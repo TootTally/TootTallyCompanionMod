@@ -75,10 +75,10 @@ namespace TootTally
             GameThemeManager.Initialize();
 
             Harmony.CreateAndPatchAll(typeof(UserLogin));
+            Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(MultiplayerController));
             Harmony.CreateAndPatchAll(typeof(GameThemeManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
-            Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
             Harmony.CreateAndPatchAll(typeof(DiscordRPC));
