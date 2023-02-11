@@ -73,18 +73,25 @@ namespace TootTally.Replays
             {
                 if (__instance.bgobjects != null)
                 {
-                    GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                    _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    try
+                    {
+                        GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                        _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    } catch (Exception e)
+                    {
+                        Plugin.LogInfo("Couldn't find VideoPlayer in background");
+                    }
+                    
                     if (_videoPlayer != null)
                     {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
-                        _replayTimestampSlider.onValueChanged.AddListener((float value) =>
+                        /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.time = _videoPlayer.length * value;
-                        });
+                        });*/
                     }
                         
                 }
