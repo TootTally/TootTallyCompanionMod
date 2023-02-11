@@ -117,23 +117,16 @@ namespace TootTally.Utils
 
             byte[] replayFile;
 
-            Plugin.LogInfo(replayDir);
-
             using (var memoryStream = new MemoryStream())
             {
-                Plugin.LogInfo("memory stream created");
                 using (var fileStream = new FileStream(replayDir + replayFileName, FileMode.Open))
                 {
                     fileStream.CopyTo(memoryStream);
-                    Plugin.LogInfo("fileStream copied to memory stream");
                 }
                 replayFile = memoryStream.ToArray();
-                Plugin.LogInfo("memoryStream bytes copied to replayFile");
-                Plugin.LogInfo("replayFile content: " + replayFile);
             }
 
             string apiLink = $"{APIURL}/api/replay/submit/";
-            Plugin.LogInfo("apiLink: " + apiLink);
             WWWForm form = new WWWForm();
             form.AddField("apiKey", Plugin.Instance.APIKey.Value);
             form.AddField("replayId", uuid);

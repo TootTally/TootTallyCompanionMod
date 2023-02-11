@@ -116,7 +116,6 @@ namespace TootTally.Replays
             {
                 string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
                 string tmb = SongDataHelper.GenerateBaseTmb(songFilePath);
-                Plugin.LogInfo(tmb);
                 songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
             else
@@ -196,7 +195,6 @@ namespace TootTally.Replays
         public ReplayState LoadReplay(string replayFileName)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
-            Plugin.LogInfo(replayDir);
             if (!Directory.Exists(replayDir))
             {
                 Plugin.LogInfo("Replay folder not found");

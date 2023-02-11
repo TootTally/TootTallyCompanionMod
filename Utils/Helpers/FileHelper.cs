@@ -34,7 +34,6 @@ namespace TootTally.Utils.Helpers
         public static string ReadJsonFromFile(string dirName, string fileName)
         {
             string jsonString;
-            Plugin.LogInfo(dirName + fileName);
             using (var memoryStream = new MemoryStream())
             {
                 using (var fileStream = new FileStream(dirName + fileName, FileMode.Open))
