@@ -181,8 +181,8 @@ namespace TootTally.CustomLeaderboard
                     {
                         _songData = songData;
                         _diffRating.text = _songData.difficulty.ToString("0.0");
-                        int roundedUpStar = Math.Clamp((int)_songData.difficulty + 1, 0,9);
-                        int roundedDownStar = Math.Clamp((int)_songData.difficulty, 0, 9);
+                        int roundedUpStar = (int)Mathf.Clamp(_songData.difficulty + 1, 1, 9);
+                        int roundedDownStar = (int)Mathf.Clamp(_songData.difficulty, 0, 9);
                         _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
                     }
@@ -192,7 +192,7 @@ namespace TootTally.CustomLeaderboard
                         _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     }
-                    
+
 
                     if (_scoreDataList != null)
                         CancelAndClearAllCoroutineInList();
