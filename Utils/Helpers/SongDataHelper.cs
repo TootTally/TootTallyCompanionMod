@@ -101,8 +101,8 @@ namespace TootTally.Utils.Helpers
                 tmb.notes = levelData;
             }
 
-            Plugin.LogInfo(JsonConvert.SerializeObject(tmb));
-            return JsonConvert.SerializeObject(tmb);
+            Plugin.LogInfo(JsonConvert.SerializeObject(tmb, new DecimalJsonConverter()));
+            return JsonConvert.SerializeObject(tmb, new DecimalJsonConverter());
         }
     }
 }
