@@ -13,6 +13,22 @@ namespace TootTally.Utils.Helpers
 {
     public static class SongDataHelper
     {
+        public class DecimalJsonConverter : JsonConverter<float>
+        {
+            public override bool CanRead => false;
+            public override void WriteJson(JsonWriter writer, float value, JsonSerializer serializer)
+            {
+                if (value == Math.Truncate(value))
+                    writer.WriteRawValue(((int)value).ToString());
+                else
+                    writer.WriteRawValue(value.ToString());
+            }
+
+            public override float ReadJson(JsonReader reader, Type objectType, float existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public static string CalcSHA256Hash(byte[] data)
         {
@@ -71,11 +87,11 @@ namespace TootTally.Utils.Helpers
             {
                 var binaryFormatter = new BinaryFormatter();
                 var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new List<string[]>();
+                var levelData = new List<float[]>();
                 savedLevel.savedleveldata.ForEach(arr =>
                 {
-                    var noteData = new List<string>();
-                    foreach (var note in arr) noteData.Add(note.ToString());
+                    var noteData = new List<float>();
+                    foreach (var note in arr) noteData.Add(note);
                     levelData.Add(noteData.ToArray());
                 });
                 tmb.savednotespacing = savedLevel.savednotespacing;
@@ -84,6 +100,8 @@ namespace TootTally.Utils.Helpers
                 tmb.tempo = savedLevel.tempo;
                 tmb.notes = levelData;
             }
+
+            Plugin.LogInfo(JsonConvert.SerializeObject(tmb));
             return JsonConvert.SerializeObject(tmb);
         }
     }

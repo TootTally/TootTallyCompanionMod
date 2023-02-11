@@ -28,7 +28,7 @@ namespace TootTally.Utils
             public float endpoint;
             public int timesig;
             public float tempo;
-            public List<string[]> notes;
+            public List<float[]> notes;
         }
 
 
