@@ -38,7 +38,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230206;
+        public const int BUILDDATE = 20230211;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -96,10 +96,7 @@ namespace TootTally
                     Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
                         if (user != null)
-                        {
-                            userInfo = user;
-                            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
-                        }
+                            OnUserLogin(user);
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
@@ -121,10 +118,17 @@ namespace TootTally
                     Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
                         if (user != null)
-                        {
-                            userInfo = user;
-                        }
+                            OnUserLogin(user);
                     }));
+            }
+
+            private static void OnUserLogin(SerializableClass.User user)
+            {
+                userInfo = user;
+                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, (allowSubmit) =>
+                {
+                    userInfo.allowSubmit = allowSubmit;
+                }));
             }
         }
     }

@@ -234,10 +234,11 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SendModInfo(Dictionary<string, BepInEx.PluginInfo> modsDict)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendModInfo(Dictionary<string, BepInEx.PluginInfo> modsDict, Action<bool> callback)
         {
             var sendableModInfo = new SerializableClass.ModInfoAPI();
             var mods = new List<SerializableClass.SendableModInfo>();
+            bool allowSubmit = true;
 
             foreach (string key in modsDict.Keys)
             {
@@ -247,6 +248,12 @@ namespace TootTally.Utils
                     version = modsDict[key].Metadata.Version.ToString(),
                     hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location))
                 };
+
+                if (mod.name == "CircularBreathing")
+                {
+                    PopUpNotifManager.DisplayNotif("Circular Breathing detected!\n Uninstall the mod to submit scores on TootTally.", GameTheme.themeColors.notification.warningText, 9.5f);
+                    allowSubmit = false;
+                }
                 mods.Add(mod);
             }
 
@@ -262,6 +269,7 @@ namespace TootTally.Utils
             {
                 Plugin.LogInfo("Request successful");
             }
+            callback(allowSubmit);
         }
 
         private static UnityWebRequest PostUploadRequest(string apiLink, byte[] data, string contentType = "application/json")

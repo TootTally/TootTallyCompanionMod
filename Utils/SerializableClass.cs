@@ -146,6 +146,7 @@ namespace TootTally.Utils
             public string country;
             public float tt;
             public int rank;
+            public bool allowSubmit;
         }
 
         [Serializable]
