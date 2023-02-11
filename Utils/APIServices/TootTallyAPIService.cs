@@ -167,9 +167,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                Plugin.LogInfo(webRequest.downloadHandler.GetText());
                 var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.GetText()).results[0];
-                Plugin.LogInfo(songData.tap.ToString() + songData.aim.ToString() + songData.difficulty.ToString());
                 callback(songData);
             }
             else
