@@ -30,7 +30,7 @@ namespace TootTally.CustomLeaderboard
         private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
-        private static float[] _starSizeDeltaPositions = { 0, 20, 58, 96, 134, 172, 210, 285, 324, 361, 361 };
+        private static float[] _starSizeDeltaPositions = { 0, 20, 58, 96, 134, 172, 210, 248, 285, 324, 361 };
         #endregion
 
         private List<IEnumerator<UnityWebRequestAsyncOperation>> _currentLeaderboardCoroutines;
@@ -113,8 +113,6 @@ namespace TootTally.CustomLeaderboard
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
             _diffRating.gameObject.SetActive(true);
 
-
-
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
         }
 
@@ -181,7 +179,7 @@ namespace TootTally.CustomLeaderboard
                     {
                         _songData = songData;
                         _diffRating.text = _songData.difficulty.ToString("0.0");
-                        int roundedUpStar = (int)Mathf.Clamp(_songData.difficulty + 1, 1, 9);
+                        int roundedUpStar = (int)Mathf.Clamp(_songData.difficulty + 1, 1, 10);
                         int roundedDownStar = (int)Mathf.Clamp(_songData.difficulty, 0, 9);
                         _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
