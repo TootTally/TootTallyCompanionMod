@@ -58,6 +58,14 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public class SongInfoFromDB
+        {
+            public float count;
+            public SongDataFromDB[] results;
+        }
+
+
+        [Serializable]
         public class LeaderboardInfo
         {
             public int count;

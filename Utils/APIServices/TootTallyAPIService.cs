@@ -167,7 +167,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var songData = JsonConvert.DeserializeObject<SerializableClass.SongDataFromDB>(webRequest.downloadHandler.GetText());
+                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.GetText()).results[0];
                 callback(songData);
             }
             else
