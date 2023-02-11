@@ -181,7 +181,7 @@ namespace TootTally.CustomLeaderboard
                     {
                         _songData = songData;
                         _diffRating.text = _songData.difficulty.ToString("0.0");
-                        int roundedUpStar = Math.Min((int)_songData.difficulty + 1, 10);
+                        int roundedUpStar = Math.Min((int)_songData.difficulty + 1, 9);
                         int roundedDownStar = Math.Max((int)_songData.difficulty, 1);
                         _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
