@@ -1,5 +1,5 @@
 ﻿using BepInEx;
-using SimpleJSON;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -106,7 +106,7 @@ namespace TootTally.Replays
 
         }
 
-        public JSONObject GetRecordedReplayJson(string uuid, float targetFramerate)
+        public string GetRecordedReplayJson(string uuid, float targetFramerate)
         {
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
@@ -116,6 +116,7 @@ namespace TootTally.Replays
             {
                 string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
                 string tmb = SongDataHelper.GenerateBaseTmb(songFilePath);
+                Plugin.LogInfo(tmb);
                 songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
             else
@@ -127,46 +128,33 @@ namespace TootTally.Replays
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
 
             string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
-            var replayJson = new JSONObject();
-            replayJson["username"] = username;
-            replayJson["starttime"] = startDateTimeUnix;
-            replayJson["endtime"] = endDateTimeUnix;
-            replayJson["uuid"] = uuid;
-            replayJson["input"] = inputType;
-            replayJson["song"] = songNameLong;
-            replayJson["samplerate"] = targetFramerate;
-            replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
-            replayJson["pluginbuilddate"] = Plugin.BUILDDATE;
-            replayJson["gameversion"] = GlobalVariables.version;
-            replayJson["songhash"] = songHash;
-            replayJson["finalscore"] = GlobalVariables.gameplay_scoretotal;
-            replayJson["maxcombo"] = _maxCombo;
+            var replayJson = new SerializableClass.ReplayData();
+            replayJson.username = username;
+            replayJson.starttime = startDateTimeUnix;
+            replayJson.endtime = endDateTimeUnix;
+            replayJson.uuid = uuid;
+            replayJson.input = inputType;
+            replayJson.song = songNameLong;
+            replayJson.samplerate = targetFramerate;
+            replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
+            replayJson.pluginbuilddate = Plugin.BUILDDATE;
+            replayJson.gameversion = GlobalVariables.version;
+            replayJson.songhash = songHash;
+            replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
+            replayJson.maxcombo = _maxCombo;
 
-            var noteJudgmentData = new JSONArray();
+            var noteJudgmentData = new List<int>();
             noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
-            replayJson["finalnotetallies"] = noteJudgmentData;
+            replayJson.finalnotetallies = noteJudgmentData.ToArray();
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
             _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
 
-            replayJson["framedata"] = DataListToJson(_frameData);
-            replayJson["notedata"] = DataListToJson(_noteData);
-            replayJson["tootdata"] = DataListToJson(_tootData);
+            replayJson.framedata = _frameData;
+            replayJson.notedata = _noteData;
+            replayJson.tootdata = _tootData;
 
-            return replayJson;
-        }
-
-        private static JSONArray DataListToJson(List<int[]> dataList)
-        {
-            var jsonArrayData = new JSONArray();
-            dataList.ForEach(item =>
-            {
-                var dataJsonArray = new JSONArray();
-                foreach (var itemData in item)
-                    dataJsonArray.Add(itemData);
-                jsonArrayData.Add(dataJsonArray);
-            });
-            return jsonArrayData;
+            return JsonConvert.SerializeObject(replayJson);
         }
 
         private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
@@ -222,25 +210,22 @@ namespace TootTally.Replays
 
             string jsonFileFromZip = FileHelper.ReadJsonFromFile(replayDir, replayFileName + ".ttr");
 
-            var replayJson = JSONObject.Parse(jsonFileFromZip);
-            if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
+            var replayJson = JsonConvert.DeserializeObject<SerializableClass.ReplayData>(jsonFileFromZip);
+            if (incompatibleReplayPluginBuildDate.Contains(replayJson.pluginbuilddate.ToString()))
             {
-                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
+                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson.pluginbuilddate}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
                 Plugin.LogError("Cannot load replay:");
-                Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
+                Plugin.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
                 return ReplayState.ReplayLoadErrorIncompatible;
             }
-            GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
-            foreach (JSONArray jsonArray in replayJson["framedata"])
-                _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
-            foreach (JSONArray jsonArray in replayJson["notedata"])
-                _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
-            foreach (JSONArray jsonArray in replayJson["tootdata"])
-                _tootData.Add(new int[] { jsonArray[0] });
+            GlobalVariables.gamescrollspeed = replayJson.scrollspeed;
+            _frameData = replayJson.framedata;
+            _noteData = replayJson.notedata;
+            _tootData = replayJson.tootdata;
 
-            _replayUsername = replayJson["username"];
-            _replaySong = replayJson["song"];
+            _replayUsername = replayJson.username;
+            _replaySong = replayJson.song;
 
             return ReplayState.ReplayLoadSuccess;
         }

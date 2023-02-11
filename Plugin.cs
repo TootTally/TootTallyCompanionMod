@@ -3,7 +3,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
-using SimpleJSON;
 using System;
 using System.Linq;
 using System.IO;

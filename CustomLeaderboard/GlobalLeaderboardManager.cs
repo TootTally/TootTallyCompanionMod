@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using HarmonyLib;
-using SimpleJSON;
 using System.IO;
 using System.Linq;
 using System.Net;

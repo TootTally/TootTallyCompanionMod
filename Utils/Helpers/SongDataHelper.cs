@@ -1,4 +1,4 @@
-﻿using SimpleJSON;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,35 +53,35 @@ namespace TootTally.Utils.Helpers
         public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
         {
             if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-            var tmb = new JSONObject();
-            tmb["name"] = singleTrackData.trackname_long;
-            tmb["shortName"] = singleTrackData.trackname_short;
-            tmb["trackRef"] = singleTrackData.trackref;
+            var tmb = new SerializableClass.TMBData();
             int year = 0;
             int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-            tmb["year"] = year;
-            tmb["author"] = singleTrackData.artist;
-            tmb["genre"] = singleTrackData.genre;
-            tmb["description"] = singleTrackData.desc;
-            tmb["difficulty"] = singleTrackData.difficulty;
+            tmb.name = singleTrackData.trackname_long;
+            tmb.shortName = singleTrackData.trackname_short;
+            tmb.trackRef = singleTrackData.trackref;
+            tmb.year = year;
+            tmb.author = singleTrackData.artist;
+            tmb.genre = singleTrackData.genre;
+            tmb.description = singleTrackData.desc;
+            tmb.difficulty = singleTrackData.difficulty;
             using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
             {
                 var binaryFormatter = new BinaryFormatter();
                 var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new JSONArray();
+                var levelData = new List<float[]>();
                 savedLevel.savedleveldata.ForEach(arr =>
                 {
-                    var noteData = new JSONArray();
+                    var noteData = new List<float>();
                     foreach (var note in arr) noteData.Add(note);
-                    levelData.Add(noteData);
+                    levelData.Add(noteData.ToArray<float>());
                 });
-                tmb["savednotespacing"] = savedLevel.savednotespacing;
-                tmb["endpoint"] = savedLevel.endpoint;
-                tmb["timesig"] = savedLevel.timesig;
-                tmb["tempo"] = savedLevel.tempo;
-                tmb["notes"] = levelData;
+                tmb.savednotespacing = savedLevel.savednotespacing;
+                tmb.endpoint = savedLevel.endpoint;
+                tmb.timesig = savedLevel.timesig;
+                tmb.tempo = savedLevel.tempo;
+                tmb.notes = levelData;
             }
-            return tmb.ToString();
+            return JsonConvert.SerializeObject(tmb);
         }
     }
 }
