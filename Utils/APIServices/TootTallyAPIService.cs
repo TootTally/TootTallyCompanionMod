@@ -241,10 +241,12 @@ namespace TootTally.Utils
 
             foreach (string key in modsDict.Keys)
             {
-                var mod = new SerializableClass.SendableModInfo();
-                mod.name = modsDict[key].Metadata.Name;
-                mod.version = modsDict[key].Metadata.Version.ToString();
-                mod.hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location));
+                var mod = new SerializableClass.SendableModInfo
+                {
+                    name = modsDict[key].Metadata.Name,
+                    version = modsDict[key].Metadata.Version.ToString(),
+                    hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location))
+                };
                 mods.Add(mod);
             }
 

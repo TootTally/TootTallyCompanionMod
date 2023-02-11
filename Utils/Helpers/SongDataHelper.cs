@@ -53,17 +53,20 @@ namespace TootTally.Utils.Helpers
         public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
         {
             if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-            var tmb = new SerializableClass.TMBData();
-            int year = 0;
-            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-            tmb.name = singleTrackData.trackname_long;
-            tmb.shortName = singleTrackData.trackname_short;
-            tmb.trackRef = singleTrackData.trackref;
-            tmb.year = year;
-            tmb.author = singleTrackData.artist;
-            tmb.genre = singleTrackData.genre;
-            tmb.description = singleTrackData.desc;
-            tmb.difficulty = singleTrackData.difficulty;
+
+            var tmb = new SerializableClass.TMBData
+            {
+                name = singleTrackData.trackname_long,
+                shortName = singleTrackData.trackname_short,
+                trackRef = singleTrackData.trackref,
+                author = singleTrackData.artist,
+                genre = singleTrackData.genre,
+                description = singleTrackData.desc,
+                difficulty = singleTrackData.difficulty
+            };
+
+            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out tmb.year);
+
             using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
             {
                 var binaryFormatter = new BinaryFormatter();
@@ -73,7 +76,7 @@ namespace TootTally.Utils.Helpers
                 {
                     var noteData = new List<float>();
                     foreach (var note in arr) noteData.Add(note);
-                    levelData.Add(noteData.ToArray<float>());
+                    levelData.Add(noteData.ToArray());
                 });
                 tmb.savednotespacing = savedLevel.savednotespacing;
                 tmb.endpoint = savedLevel.endpoint;
