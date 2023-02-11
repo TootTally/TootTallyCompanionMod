@@ -71,11 +71,11 @@ namespace TootTally.Utils.Helpers
             {
                 var binaryFormatter = new BinaryFormatter();
                 var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new List<float[]>();
+                var levelData = new List<string[]>();
                 savedLevel.savedleveldata.ForEach(arr =>
                 {
-                    var noteData = new List<float>();
-                    foreach (var note in arr) noteData.Add(note);
+                    var noteData = new List<string>();
+                    foreach (var note in arr) noteData.Add(note.ToString());
                     levelData.Add(noteData.ToArray());
                 });
                 tmb.savednotespacing = savedLevel.savednotespacing;
