@@ -534,10 +534,10 @@ namespace TootTally.Graphics
             }
             else
                 rowEntry.grade.color = gradeColor;
-            if (scoreData.tt == 0)
-                rowEntry.maxcombo.text = scoreData.max_combo + "x";
-            else
+            if (scoreData.is_rated)
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
+            else
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();

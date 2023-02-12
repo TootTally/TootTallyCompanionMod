@@ -45,6 +45,7 @@ namespace TootTally.Utils
             public float percentage;
             public string game_version;
             public float tt;
+            public bool is_rated;
         }
 
         [Serializable]
