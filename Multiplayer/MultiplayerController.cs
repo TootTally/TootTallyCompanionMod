@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TootTally.Graphics;
+using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,15 +16,11 @@ namespace TootTally.Multiplayer
     {
         private static PlaytestAnims _currentInstance;
         private static bool _isPointerOver, _acceptButtonClicked, _declineButtonClicked;
-        private static EasingHelper.SecondOrderDynamics _multiButtonAnimation, _multiTextAnimation;
-        private static EasingHelper.SecondOrderDynamics _panelResizeAnimation;
-        private static EasingHelper.SecondOrderDynamics _panelPositionAnimation;
-        private static RectTransform _multiButtonOutlineRectTransform, _multiTextRectTransform, _mainPanelRectTransform;
-        private static Vector2 _multiButtonTargetSize, _multiTextTargetSize;
-        private static Vector2 _panelTargetSize, _panelTargetPosition;
+        private static RectTransform _mainPanelRectTransform, _multiButtonOutlineRectTransform;
         private static bool _isSceneActive;
         private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
+        private static CustomAnimation _multiBtnAnimation, _multiTextAnimation;
 
 
         [HarmonyPatch(typeof(PlaytestAnims), nameof(PlaytestAnims.Start))]
@@ -39,9 +36,7 @@ namespace TootTally.Multiplayer
 
             _mainPanel = GameObjectFactory.CreateMultiplayerMainPanel(panelTransform, "MultiPanel");
             _mainPanelRectTransform = _mainPanel.GetComponent<RectTransform>();
-            _panelPositionAnimation = new EasingHelper.SecondOrderDynamics(1.25f, 1f, 0f);
-            _panelPositionAnimation.SetStartVector(_mainPanelRectTransform.anchoredPosition);
-            _panelTargetPosition = new Vector2(0, -20);
+
 
             _mainPanelFg = _mainPanel.transform.Find("panelfg").gameObject;
 
@@ -51,15 +46,23 @@ namespace TootTally.Multiplayer
             _topBarCanvasGroup = _topBar.GetComponent<CanvasGroup>();
             _mainTextCanvasGroup = _mainPanelFg.transform.Find("FactText").GetComponent<CanvasGroup>();
 
-            _acceptButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-80, -340), new Vector2(200, 50), "Accept", "AcceptButton", OnAcceptButtonClick).gameObject;
-            _acceptButtonCanvasGroup = _acceptButton.AddComponent<CanvasGroup>();
-            _declineButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-320, -340), new Vector2(200, 50), "Decline", "DeclineButton", OnDeclineButtonClick).gameObject;
-            _declineButtonCanvasGroup = _declineButton.AddComponent<CanvasGroup>();
-
-            _panelResizeAnimation = new EasingHelper.SecondOrderDynamics(.75f, 1f, 0f);
-            _panelResizeAnimation.SetStartVector(_mainPanel.GetComponent<RectTransform>().sizeDelta);
             _acceptButtonClicked = _declineButtonClicked = false;
 
+            if (Plugin.userInfo.username == "emmett")
+            {
+                _mainTextCanvasGroup.alpha = 0;
+                _topBarCanvasGroup.alpha = 0;
+                AnimatePanels();
+            }
+            else
+            {
+                _acceptButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-80, -340), new Vector2(200, 50), "Accept", "AcceptButton", OnAcceptButtonClick).gameObject;
+                _acceptButtonCanvasGroup = _acceptButton.AddComponent<CanvasGroup>();
+                _declineButton = GameObjectFactory.CreateCustomButton(_mainPanelFg.transform, new Vector2(-320, -340), new Vector2(200, 50), "Decline", "DeclineButton", OnDeclineButtonClick).gameObject;
+                _declineButtonCanvasGroup = _declineButton.AddComponent<CanvasGroup>();
+            }
+
+            AnimationManager.AddNewPositionAnimation(_mainPanel, new Vector2(0, -20), 2f, new EasingHelper.SecondOrderDynamics(1.25f, 1f, 0f));
 
             _isSceneActive = true;
         }
@@ -72,8 +75,6 @@ namespace TootTally.Multiplayer
 
             if (Input.GetKeyDown(KeyCode.Escape))
                 OnDeclineButtonClick();
-
-            _mainPanelRectTransform.anchoredPosition = _panelPositionAnimation.GetNewVector(_panelTargetPosition, Time.deltaTime);
 
             if (_acceptButtonClicked || _declineButtonClicked)
             {
@@ -88,31 +89,43 @@ namespace TootTally.Multiplayer
                         _declineButton = null;
                     }
                 }
-                _mainPanelFg.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime);
-                _mainPanelBorder.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime) + new Vector2(10, 10);
             }
         }
 
         public static void OnAcceptButtonClick()
         {
-            RectTransform mainPanelRecTransform = _mainPanelFg.GetComponent<RectTransform>();
-            _panelResizeAnimation.SetStartVector(mainPanelRecTransform.sizeDelta);
-            _panelTargetSize = new Vector2(1240, 630);
-
-            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", new Vector2(1230, 50), new Vector2(0, 284));
-            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", new Vector2(750, 564), new Vector2(-240, -28));
-            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", new Vector2(426, 280), new Vector2(402, 114));
-            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", new Vector2(426, 280), new Vector2(402, -170));
-
+            AnimatePanels();
+            AnimationManager.AddNewSizeDeltaAnimation(_acceptButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             _currentInstance.sfx_ok.Play();
             _acceptButtonClicked = true;
         }
 
+        public static void AnimatePanels()
+        {
+            GameObject topPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", Vector2.zero, new Vector2(0, 284));
+            GameObject leftPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", Vector2.zero, new Vector2(-240, -28));
+            GameObject topRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", Vector2.zero, new Vector2(402, 114));
+            GameObject bottomRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", Vector2.zero, new Vector2(402, -170));
+
+
+            AnimationManager.AddNewSizeDeltaAnimation(_mainPanelFg, new Vector2(1240, 630), 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            AnimationManager.AddNewSizeDeltaAnimation(_mainPanelBorder, new Vector2(1250, 640), 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+            {
+                AnimationManager.AddNewSizeDeltaAnimation(topPanel.transform.Find("panelfg").gameObject, new Vector2(1226, 46), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(topPanel.transform.Find("Panelbg1").gameObject, new Vector2(1230, 50), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(leftPanel.transform.Find("panelfg").gameObject, new Vector2(746, 560), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(leftPanel.transform.Find("Panelbg1").gameObject, new Vector2(750, 564), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(topRightPanel.transform.Find("panelfg").gameObject, new Vector2(420, 276), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(topRightPanel.transform.Find("Panelbg1").gameObject, new Vector2(426, 280), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(bottomRightPanel.transform.Find("panelfg").gameObject, new Vector2(420, 276), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewSizeDeltaAnimation(bottomRightPanel.transform.Find("Panelbg1").gameObject, new Vector2(426, 280), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            });
+        }
+
         public static void OnDeclineButtonClick()
         {
-            RectTransform mainPanelRecTransform = _mainPanelFg.GetComponent<RectTransform>();
-            _panelResizeAnimation.SetStartVector(mainPanelRecTransform.sizeDelta);
-            _panelTargetSize = new Vector2(0, 0);
+            AnimationManager.AddNewScaleAnimation(_mainPanel, Vector2.zero, 2f, new EasingHelper.SecondOrderDynamics(.75f, 1f, 0f));
 
             _currentInstance.clickedOK();
             _declineButtonClicked = true;
@@ -138,8 +151,6 @@ namespace TootTally.Multiplayer
 
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
-            _multiButtonAnimation = new EasingHelper.SecondOrderDynamics(3.75f, 0.80f, 1.05f);
-            _multiTextAnimation = new EasingHelper.SecondOrderDynamics(3.5f, 0.65f, 1.15f);
             #region MultiplayerButton
             GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
             GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
@@ -150,11 +161,11 @@ namespace TootTally.Multiplayer
             GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerButton.transform.Find("FG").gameObject, "MultiplayerButtonV2.png", Color.white);
             GameThemeManager.OverwriteGameObjectSpriteAndColor(multiplayerText, "MultiText.png", Color.white);
             multiplayerButton.transform.SetSiblingIndex(0);
-            _multiTextRectTransform = multiplayerText.GetComponent<RectTransform>();
-            _multiTextRectTransform.anchoredPosition = new Vector2(100, 100);
-            _multiTextRectTransform.sizeDelta = new Vector2(334, 87);
-            _multiButtonTargetSize = new Vector2(.2f, .2f);
-            _multiTextTargetSize = new Vector2(0.8f, 0.8f);
+            RectTransform multiTextRectTransform = multiplayerText.GetComponent<RectTransform>();
+            multiTextRectTransform.anchoredPosition = new Vector2(100, 100);
+            multiTextRectTransform.sizeDelta = new Vector2(334, 87);
+
+            _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
 
             multiplayerHitbox.GetComponent<Button>().onClick.AddListener(() =>
             {
@@ -177,8 +188,6 @@ namespace TootTally.Multiplayer
                 //16 is the demo scene
             });
 
-            _multiButtonOutlineRectTransform = multiplayerButton.transform.Find("outline").GetComponent<RectTransform>();
-
             EventTrigger multiBtnEvents = multiplayerHitbox.GetComponent<EventTrigger>();
             multiBtnEvents.triggers.Clear();
 
@@ -186,9 +195,16 @@ namespace TootTally.Multiplayer
             pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
             pointerEnterEvent.callback.AddListener((data) =>
             {
-                _multiButtonAnimation.SetStartVector(_multiButtonOutlineRectTransform.localScale);
-                _multiButtonTargetSize = new Vector2(1.01f, 1.01f);
-                _multiTextTargetSize = new Vector2(1f, 1f);
+                if (_multiBtnAnimation != null)
+                    _multiBtnAnimation.Dispose();
+                _multiBtnAnimation = AnimationManager.AddNewScaleAnimation(multiplayerButton.transform.Find("outline").gameObject, new Vector2(1.01f, 1.01f), 0.5f, new EasingHelper.SecondOrderDynamics(3.75f, 0.80f, 1.05f));
+                _multiBtnAnimation.SetStartVector(_multiButtonOutlineRectTransform.localScale);
+
+                if (_multiTextAnimation != null)
+                    _multiTextAnimation.Dispose();
+                _multiTextAnimation = AnimationManager.AddNewScaleAnimation(multiplayerText, new Vector2(1f, 1f), 0.5f, new EasingHelper.SecondOrderDynamics(3.5f, 0.65f, 1.15f));
+                _multiTextAnimation.SetStartVector(multiplayerText.GetComponent<RectTransform>().localScale);
+
                 __instance.playSfx(2); // btn sound effect KEKW
                 multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
             });
@@ -198,9 +214,16 @@ namespace TootTally.Multiplayer
             pointerExitEvent.eventID = EventTriggerType.PointerExit;
             pointerExitEvent.callback.AddListener((data) =>
             {
-                _multiButtonAnimation.SetStartVector(_multiButtonOutlineRectTransform.localScale);
-                _multiButtonTargetSize = new Vector2(.2f, .2f);
-                _multiTextTargetSize = new Vector2(0.8f, 0.8f);
+                if (_multiBtnAnimation != null)
+                    _multiBtnAnimation.Dispose();
+                _multiBtnAnimation = AnimationManager.AddNewScaleAnimation(multiplayerButton.transform.Find("outline").gameObject, new Vector2(.4f, .4f), 0.5f, new EasingHelper.SecondOrderDynamics(1.50f, 0.80f, 1.00f));
+                _multiBtnAnimation.SetStartVector(_multiButtonOutlineRectTransform.localScale);
+
+                if (_multiTextAnimation != null)
+                    _multiTextAnimation.Dispose();
+                _multiTextAnimation = AnimationManager.AddNewScaleAnimation(multiplayerText, new Vector2(.8f, .8f), 0.5f, new EasingHelper.SecondOrderDynamics(3.5f, 0.65f, 1.15f));
+                _multiTextAnimation.SetStartVector(multiplayerText.GetComponent<RectTransform>().localScale);
+
                 multiplayerButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(2, 0);
             });
 
@@ -265,9 +288,8 @@ namespace TootTally.Multiplayer
         [HarmonyPostfix]
         public static void AnimateMultiButton(HomeController __instance)
         {
-            _multiButtonOutlineRectTransform.localScale = _multiButtonAnimation.GetNewVector(_multiButtonTargetSize, Time.deltaTime);
+
             _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 1.5f;
-            _multiTextRectTransform.localScale = _multiTextAnimation.GetNewVector(_multiTextTargetSize, Time.deltaTime);
         }
 
 

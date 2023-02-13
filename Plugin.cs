@@ -24,7 +24,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 using TootTally.Multiplayer;
-
+using TootTally.Graphics.Animation;
 
 namespace TootTally
 {
@@ -75,12 +75,13 @@ namespace TootTally
             GameThemeManager.Initialize();
 
             Harmony.CreateAndPatchAll(typeof(UserLogin));
+            Harmony.CreateAndPatchAll(typeof(AnimationManager));
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(MultiplayerController));
             Harmony.CreateAndPatchAll(typeof(GameThemeManager));
+            Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
+            Harmony.CreateAndPatchAll(typeof(MultiplayerController));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
-            Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
             Harmony.CreateAndPatchAll(typeof(DiscordRPC));
 
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
