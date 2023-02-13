@@ -434,11 +434,34 @@ namespace TootTally.Graphics
 
         #region Create Objects
 
-        public static GameObject CreateMultiplayerPanel(Transform canvasTransform, string name)
+        public static GameObject CreateMultiplayerMainPanel(Transform canvasTransform, string name)
         {
             GameObject multiPanel = GameObject.Instantiate(_mainMultiplayerPanelPrefab, canvasTransform);
             multiPanel.name = name;
+            multiPanel.SetActive(true);
             return multiPanel;
+        }
+
+        public static GameObject CreateMultiplayerPanel(Transform canvasTransform, string name, Vector2 size, Vector2 position)
+        {
+            GameObject panel = GameObject.Instantiate(_mainMultiplayerPanelPrefab, canvasTransform);
+            GameObject panelbg = panel.transform.Find("Panelbg1").gameObject;
+            GameObject panelfg = panel.transform.Find("panelfg").gameObject;
+
+            RectTransform panelbgRectTransform = panelbg.GetComponent<RectTransform>();
+            RectTransform panelfgRectTransform = panelfg.GetComponent<RectTransform>();
+            panel.GetComponent<RectTransform>().anchoredPosition = position;
+            panelbgRectTransform.anchoredPosition = Vector2.zero;
+            panelbgRectTransform.sizeDelta = size;
+
+            panelfgRectTransform.sizeDelta = size - new Vector2(4, 4);
+
+            GameObject.DestroyImmediate(panel.transform.Find("top").gameObject);
+            GameObject.DestroyImmediate(panelfg.transform.Find("FactText").gameObject);
+
+            panel.name = name;
+            panel.SetActive(true);
+            return panel;
         }
 
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)

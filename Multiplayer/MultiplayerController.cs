@@ -37,12 +37,11 @@ namespace TootTally.Multiplayer
             GameObject canvasWindow = GameObject.Find("Canvas-Window").gameObject;
             Transform panelTransform = canvasWindow.transform.Find("Panel");
 
-            _mainPanel = GameObjectFactory.CreateMultiplayerPanel(panelTransform, "MultiPanel");
-            _mainPanel.SetActive(true);
+            _mainPanel = GameObjectFactory.CreateMultiplayerMainPanel(panelTransform, "MultiPanel");
             _mainPanelRectTransform = _mainPanel.GetComponent<RectTransform>();
             _panelPositionAnimation = new EasingHelper.SecondOrderDynamics(1.25f, 1f, 0f);
             _panelPositionAnimation.SetStartVector(_mainPanelRectTransform.anchoredPosition);
-            _panelTargetPosition = new Vector2(0, 0);
+            _panelTargetPosition = new Vector2(0, -20);
 
             _mainPanelFg = _mainPanel.transform.Find("panelfg").gameObject;
 
@@ -61,6 +60,7 @@ namespace TootTally.Multiplayer
             _panelResizeAnimation.SetStartVector(_mainPanel.GetComponent<RectTransform>().sizeDelta);
             _acceptButtonClicked = _declineButtonClicked = false;
 
+
             _isSceneActive = true;
         }
 
@@ -70,17 +70,24 @@ namespace TootTally.Multiplayer
         {
             if (!_isSceneActive) return;
 
+            if (Input.GetKeyDown(KeyCode.Escape))
+                OnDeclineButtonClick();
+
             _mainPanelRectTransform.anchoredPosition = _panelPositionAnimation.GetNewVector(_panelTargetPosition, Time.deltaTime);
 
             if (_acceptButtonClicked || _declineButtonClicked)
             {
-                _acceptButtonCanvasGroup.alpha = _topBarCanvasGroup.alpha = _mainTextCanvasGroup.alpha = _declineButtonCanvasGroup.alpha -= Time.deltaTime * 4; //fade out texts and top bar
-                if (_acceptButtonCanvasGroup.alpha < 0)
+                if (_acceptButton != null && _declineButton != null)
                 {
-                    GameObject.Destroy(_acceptButton);
-                    GameObject.Destroy(_declineButton);
+                    _acceptButtonCanvasGroup.alpha = _topBarCanvasGroup.alpha = _mainTextCanvasGroup.alpha = _declineButtonCanvasGroup.alpha -= Time.deltaTime * 4; //fade out texts and top bar
+                    if (_acceptButtonCanvasGroup.alpha <= 0)
+                    {
+                        GameObject.DestroyImmediate(_acceptButton);
+                        GameObject.DestroyImmediate(_declineButton);
+                        _acceptButton = null;
+                        _declineButton = null;
+                    }
                 }
-
                 _mainPanelFg.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime);
                 _mainPanelBorder.GetComponent<RectTransform>().sizeDelta = _panelResizeAnimation.GetNewVector(_panelTargetSize, Time.deltaTime) + new Vector2(10, 10);
             }
@@ -91,6 +98,11 @@ namespace TootTally.Multiplayer
             RectTransform mainPanelRecTransform = _mainPanelFg.GetComponent<RectTransform>();
             _panelResizeAnimation.SetStartVector(mainPanelRecTransform.sizeDelta);
             _panelTargetSize = new Vector2(1240, 630);
+
+            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", new Vector2(1230, 50), new Vector2(0, 284));
+            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", new Vector2(750, 564), new Vector2(-240, -28));
+            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", new Vector2(426, 280), new Vector2(402, 114));
+            GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", new Vector2(426, 280), new Vector2(402, -170));
 
             _currentInstance.sfx_ok.Play();
             _acceptButtonClicked = true;
