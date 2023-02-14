@@ -457,7 +457,11 @@ namespace TootTally.Graphics
             panelfgRectTransform.sizeDelta = size - new Vector2(4, 4);
 
             GameObject.DestroyImmediate(panel.transform.Find("top").gameObject);
-            GameObject.DestroyImmediate(panelfg.transform.Find("FactText").gameObject);
+            panelfg.transform.Find("FactText").GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            panelfg.transform.Find("FactText").GetComponent<RectTransform>().sizeDelta = panelfgRectTransform.sizeDelta;
+            panelfg.transform.Find("FactText").GetComponent<Text>().text = "This is a testing text area";
+            panelfg.transform.Find("FactText").GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+            //GameObject.DestroyImmediate(panelfg.transform.Find("FactText").gameObject);
 
             panel.name = name;
             panel.SetActive(true);

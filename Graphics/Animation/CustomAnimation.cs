@@ -45,11 +45,15 @@ namespace TootTally.Graphics.Animation
 
             var delta = Time.deltaTime;
             _timeSpan -= delta;
-            if (_timeSpan <= 0 && _disposeOnFinish)
+            if (_timeSpan <= 0)
             {
                 if (_onFinishCallback != null)
+                {
                     _onFinishCallback(_gameObject);
-                Dispose();
+                    _onFinishCallback = null;
+                }
+                if (_disposeOnFinish)
+                    Dispose();
             }
             else
             {
@@ -71,7 +75,6 @@ namespace TootTally.Graphics.Animation
         public void Dispose()
         {
             if (_isAlreadyDisposed) return;
-
             AnimationManager.RemoveFromList(this);
             _isAlreadyDisposed = true;
         }

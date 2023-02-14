@@ -103,23 +103,23 @@ namespace TootTally.Multiplayer
 
         public static void AnimatePanels()
         {
-            GameObject topPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", Vector2.zero, new Vector2(0, 284));
-            GameObject leftPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", Vector2.zero, new Vector2(-240, -28));
-            GameObject topRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", Vector2.zero, new Vector2(402, 114));
-            GameObject bottomRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", Vector2.zero, new Vector2(402, -170));
+            GameObject topPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", new Vector2(1230, 50), new Vector2(0, 284));
+            topPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
+            GameObject leftPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", new Vector2(750, 564), new Vector2(-240, -28));
+            leftPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
+            GameObject topRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", new Vector2(426, 280), new Vector2(402, 114));
+            topRightPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
+            GameObject bottomRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", new Vector2(426, 280), new Vector2(402, -170));
+            bottomRightPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
 
 
             AnimationManager.AddNewSizeDeltaAnimation(_mainPanelFg, new Vector2(1240, 630), 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             AnimationManager.AddNewSizeDeltaAnimation(_mainPanelBorder, new Vector2(1250, 640), 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
             {
-                AnimationManager.AddNewSizeDeltaAnimation(topPanel.transform.Find("panelfg").gameObject, new Vector2(1226, 46), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(topPanel.transform.Find("Panelbg1").gameObject, new Vector2(1230, 50), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(leftPanel.transform.Find("panelfg").gameObject, new Vector2(746, 560), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(leftPanel.transform.Find("Panelbg1").gameObject, new Vector2(750, 564), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(topRightPanel.transform.Find("panelfg").gameObject, new Vector2(420, 276), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(topRightPanel.transform.Find("Panelbg1").gameObject, new Vector2(426, 280), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(bottomRightPanel.transform.Find("panelfg").gameObject, new Vector2(420, 276), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                AnimationManager.AddNewSizeDeltaAnimation(bottomRightPanel.transform.Find("Panelbg1").gameObject, new Vector2(426, 280), 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(topPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(leftPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(topRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(bottomRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             });
         }
 
@@ -289,7 +289,7 @@ namespace TootTally.Multiplayer
         public static void AnimateMultiButton(HomeController __instance)
         {
 
-            _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.2f) / 1.5f;
+            _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.4f) / 1.5f;
         }
 
 
