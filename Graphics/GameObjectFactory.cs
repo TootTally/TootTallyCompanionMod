@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TootTally.CustomLeaderboard;
+using TootTally.Graphics.Animation;
 using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TootTally.Graphics
@@ -90,6 +92,7 @@ namespace TootTally.Graphics
 
 
         #region SetPrefabs
+
         public static void SetMainMultiplayerPanelPrefab(PlaytestAnims __instance)
         {
             GameObject factPanel = __instance.factpanel.gameObject;
@@ -434,6 +437,132 @@ namespace TootTally.Graphics
 
         #region Create Objects
 
+        public static GameObject CreateLoginPanel(HomeController __instance)
+        {
+            GameObject playTesterPopup = __instance.ext_credits_go.transform.parent.gameObject;
+            GameObject loginPanelPopup = GameObject.Instantiate(playTesterPopup);
+            loginPanelPopup.name = "LoginPanel";
+            loginPanelPopup.SetActive(true);
+
+            GameObject fsLatencyPanel = loginPanelPopup.transform.Find("FSLatencyPanel").gameObject;
+            fsLatencyPanel.SetActive(true);
+            GameObject.DestroyImmediate(fsLatencyPanel.transform.Find("LatencyBG2").gameObject);
+            fsLatencyPanel.transform.Find("LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+
+            GameObject latencyFGPanel = fsLatencyPanel.transform.Find("LatencyFG").gameObject; //this where most objects are located
+            latencyFGPanel.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
+            Text title = latencyFGPanel.transform.Find("title").gameObject.GetComponent<Text>();
+            Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
+            title.text = "TootTally Login";
+            title.color = GameTheme.themeColors.notification.defaultText;
+            subtitle.text = "This is a pop up test to Login on TootTally.";
+            subtitle.color = GameTheme.themeColors.notification.defaultText;
+
+
+            GameObject loginPage = latencyFGPanel.transform.Find("page1").gameObject;
+            GameObject.DestroyImmediate(loginPage.GetComponent<HorizontalLayoutGroup>());
+            VerticalLayoutGroup vgroup = loginPage.AddComponent<VerticalLayoutGroup>();
+            vgroup.childForceExpandHeight = vgroup.childScaleHeight = vgroup.childControlHeight = false;
+            vgroup.childForceExpandWidth = vgroup.childScaleWidth = vgroup.childControlWidth = false;
+            vgroup.padding.left = (int)(loginPage.GetComponent<RectTransform>().sizeDelta.x / 2) - 125;
+            vgroup.spacing = 20;
+            loginPage.name = "LoginPage";
+
+            GameObject.DestroyImmediate(loginPage.transform.Find("col1").gameObject);
+            GameObject.DestroyImmediate(loginPage.transform.Find("col3").gameObject);
+
+            //username
+            GameObject usernameTextHolder = loginPage.transform.Find("col2").gameObject;
+            usernameTextHolder.name = "UsernameText";
+            usernameTextHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 35);
+            usernameTextHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(125, 0);
+            Text usernameText = usernameTextHolder.GetComponent<Text>();
+            usernameText.text = "Username:";
+            usernameText.color = GameTheme.themeColors.notification.defaultText;
+
+            GameObject usernameInputHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
+            GameObject usernameInputTextHolder = GameObject.Instantiate(usernameInputHolder, usernameInputHolder.transform);
+            usernameInputTextHolder.name = "Text";
+            GameObject.DestroyImmediate(usernameInputHolder.GetComponent<Text>());
+            usernameInputHolder.name = "UsernameInput";
+            InputField usernameInput = usernameInputHolder.AddComponent<InputField>();
+            usernameInput.textComponent = usernameInputTextHolder.GetComponent<Text>();
+            usernameInput.textComponent.alignment = TextAnchor.MiddleCenter;
+            usernameInput.image = usernameInputHolder.AddComponent<Image>();
+            usernameInput.image.color = GameTheme.themeColors.leaderboard.rowEntry;
+            usernameInput.text = "Enter Username";
+
+            //password
+            GameObject passwordTextHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
+            passwordTextHolder.name = "PasswordText";
+            Text passwordText = passwordTextHolder.GetComponent<Text>();
+            passwordText.text = "Password:";
+
+            GameObject passwordInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
+            passwordInputHolder.name = "PasswordInput";
+            InputField passwordInput = passwordInputHolder.GetComponent<InputField>();
+            passwordInput.inputType = InputField.InputType.Password;
+            passwordInput.textComponent = passwordInputHolder.transform.Find("Text").GetComponent<Text>();
+            passwordInput.image = latencyFGPanel.GetComponent<Image>();
+            passwordInput.text = "Password";
+
+            //login button
+            GameObject nextButtonHolder = latencyFGPanel.transform.Find("NEXT").gameObject;
+            nextButtonHolder.name = "LoginButton";
+            Button nextButton = nextButtonHolder.GetComponent<Button>();
+            nextButton.onClick = new Button.ButtonClickedEvent();
+            nextButton.onClick.AddListener(delegate {
+                __instance.playSfx(4);// click button sfx
+                AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0,-900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                {
+                    GameObject.DestroyImmediate(sender);
+                });
+            });
+
+            //close button
+            GameObject closeButtonHolder = latencyFGPanel.transform.Find("CloseBtn").gameObject;
+            Button closeButton = closeButtonHolder.GetComponent<Button>();
+            closeButton.onClick = new Button.ButtonClickedEvent();
+            closeButton.onClick.AddListener(delegate
+            {
+                __instance.playSfx(0);// click button sfx
+                AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                {
+                    GameObject.DestroyImmediate(sender);
+                });
+            });
+
+            //sign up button
+            CustomButton signUpButton = CreateCustomButton(loginPage.transform, Vector2.zero, new Vector2(250, 50), "SignUp", "SignUpButton");
+            signUpButton.button.onClick.AddListener(delegate
+            {
+                //confirm password
+                GameObject confirmTextHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
+                confirmTextHolder.name = "ConfirmText";
+                Text confirmText = confirmTextHolder.GetComponent<Text>();
+                confirmText.text = "Confirm Password:";
+
+                GameObject confirmInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
+                confirmInputHolder.name = "ConfirmInput";
+                InputField confirmInput = confirmInputHolder.GetComponent<InputField>();
+                confirmInput.inputType = InputField.InputType.Password;
+                confirmInput.textComponent = confirmInputHolder.transform.Find("Text").GetComponent<Text>();
+                confirmInput.image = latencyFGPanel.GetComponent<Image>();
+                confirmInput.text = "Password";
+                GameObject.DestroyImmediate(signUpButton.gameObject);
+                nextButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
+            });
+
+
+
+            nextButtonHolder.transform.Find("Text").GetComponent<Text>().text = "Login";
+
+            return loginPanelPopup;
+        }
+
         public static GameObject CreateMultiplayerMainPanel(Transform canvasTransform, string name)
         {
             GameObject multiPanel = GameObject.Instantiate(_mainMultiplayerPanelPrefab, canvasTransform);
@@ -461,7 +590,6 @@ namespace TootTally.Graphics
             panelfg.transform.Find("FactText").GetComponent<RectTransform>().sizeDelta = panelfgRectTransform.sizeDelta;
             panelfg.transform.Find("FactText").GetComponent<Text>().text = "This is a testing text area";
             panelfg.transform.Find("FactText").GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-            //GameObject.DestroyImmediate(panelfg.transform.Find("FactText").gameObject);
 
             panel.name = name;
             panel.SetActive(true);
