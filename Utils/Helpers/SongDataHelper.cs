@@ -1,4 +1,4 @@
-﻿using SimpleJSON;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,6 +13,22 @@ namespace TootTally.Utils.Helpers
 {
     public static class SongDataHelper
     {
+        public class DecimalJsonConverter : JsonConverter<float>
+        {
+            public override bool CanRead => false;
+            public override void WriteJson(JsonWriter writer, float value, JsonSerializer serializer)
+            {
+                if (value == Math.Truncate(value))
+                    writer.WriteRawValue(((int)value).ToString());
+                else
+                    writer.WriteRawValue(value.ToString());
+            }
+
+            public override float ReadJson(JsonReader reader, Type objectType, float existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public static string CalcSHA256Hash(byte[] data)
         {
@@ -53,35 +69,40 @@ namespace TootTally.Utils.Helpers
         public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
         {
             if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
-            var tmb = new JSONObject();
-            tmb["name"] = singleTrackData.trackname_long;
-            tmb["shortName"] = singleTrackData.trackname_short;
-            tmb["trackRef"] = singleTrackData.trackref;
-            int year = 0;
-            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out year);
-            tmb["year"] = year;
-            tmb["author"] = singleTrackData.artist;
-            tmb["genre"] = singleTrackData.genre;
-            tmb["description"] = singleTrackData.desc;
-            tmb["difficulty"] = singleTrackData.difficulty;
+
+            var tmb = new SerializableClass.TMBData
+            {
+                name = singleTrackData.trackname_long,
+                shortName = singleTrackData.trackname_short,
+                trackRef = singleTrackData.trackref,
+                author = singleTrackData.artist,
+                genre = singleTrackData.genre,
+                description = singleTrackData.desc,
+                difficulty = singleTrackData.difficulty
+            };
+
+            int.TryParse(new string(singleTrackData.year.Where(char.IsDigit).ToArray()), out tmb.year);
+
             using (FileStream fileStream = File.Open(songFilePath, FileMode.Open))
             {
                 var binaryFormatter = new BinaryFormatter();
                 var savedLevel = (SavedLevel)binaryFormatter.Deserialize(fileStream);
-                var levelData = new JSONArray();
+                var levelData = new List<float[]>();
                 savedLevel.savedleveldata.ForEach(arr =>
                 {
-                    var noteData = new JSONArray();
+                    var noteData = new List<float>();
                     foreach (var note in arr) noteData.Add(note);
-                    levelData.Add(noteData);
+                    levelData.Add(noteData.ToArray());
                 });
-                tmb["savednotespacing"] = savedLevel.savednotespacing;
-                tmb["endpoint"] = savedLevel.endpoint;
-                tmb["timesig"] = savedLevel.timesig;
-                tmb["tempo"] = savedLevel.tempo;
-                tmb["notes"] = levelData;
+                tmb.savednotespacing = savedLevel.savednotespacing;
+                tmb.endpoint = savedLevel.endpoint;
+                tmb.timesig = savedLevel.timesig;
+                tmb.tempo = savedLevel.tempo;
+                tmb.notes = levelData;
             }
-            return tmb.ToString();
+
+            Plugin.LogInfo(JsonConvert.SerializeObject(tmb, new DecimalJsonConverter()));
+            return JsonConvert.SerializeObject(tmb, new DecimalJsonConverter());
         }
     }
 }

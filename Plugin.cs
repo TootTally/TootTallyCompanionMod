@@ -3,7 +3,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Networking;
-using SimpleJSON;
 using System;
 using System.Linq;
 using System.IO;
@@ -104,16 +103,7 @@ namespace TootTally
                     Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
                         if (user != null)
-                        {
-                            userInfo = user;
-                            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos));
-                            if (user.id == 0)
-                            {
-                                GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
-                                loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
-                                AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                            }
-                        }
+                            OnUserLogin(user);
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
@@ -134,12 +124,21 @@ namespace TootTally
             [HarmonyPrefix]
             public static void UpdateUserInfoOnLevelSelect()
             {
-                Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
-                {
-                    if (user != null)
+                //in case they failed to login. Try logging in again
+                if (userInfo == null || userInfo.username == "Guest")
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
-                        userInfo = user;
-                    }
+                        if (user != null)
+                            OnUserLogin(user);
+                    }));
+            }
+
+            private static void OnUserLogin(SerializableClass.User user)
+            {
+                userInfo = user;
+                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, (allowSubmit) =>
+                {
+                    userInfo.allowSubmit = allowSubmit;
                 }));
             }
         }

@@ -73,8 +73,15 @@ namespace TootTally.Replays
             {
                 if (__instance.bgobjects != null)
                 {
-                    GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                    _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    try
+                    {
+                        GameObject canBG = GameObject.Find("can-bg-1").gameObject;
+                        _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    } catch (Exception e)
+                    {
+                        Plugin.LogInfo("Couldn't find VideoPlayer in background");
+                    }
+                    
                     if (_videoPlayer != null)
                     {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
@@ -380,7 +387,7 @@ namespace TootTally.Replays
             if (_replayUUID == null) return;//Dont save or upload if no UUID
 
             SaveReplayToFile();
-            if (Plugin.userInfo.username != "Guest") //Don't upload if logged in as a Guest
+            if (Plugin.userInfo.username != "Guest" && Plugin.userInfo.allowSubmit) //Don't upload if logged in as a Guest or doesn't allowSubmit
                 SendReplayFileToServer();
         }
 
@@ -392,7 +399,7 @@ namespace TootTally.Replays
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
 
-            FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate).ToString());
+            FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
         }
 
         private static void SetReplayUI(GameController __instance)
