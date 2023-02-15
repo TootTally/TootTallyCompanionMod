@@ -57,6 +57,27 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public class APISignUp
+        {
+            public string username;
+            public string password;
+            public string pass_check;
+        }
+
+        [Serializable]
+        public class APILogin
+        {
+            public string username;
+            public string password;
+        }
+
+        [Serializable]
+        public class LoginToken
+        {
+            public string tt_token;
+        }
+
+        [Serializable]
         public class ReplayUUIDSubmission
         {
             public string apiKey;

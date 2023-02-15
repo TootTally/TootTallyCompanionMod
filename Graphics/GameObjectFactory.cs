@@ -514,6 +514,9 @@ namespace TootTally.Graphics
             nextButton.onClick = new Button.ButtonClickedEvent();
             nextButton.onClick.AddListener(delegate {
                 __instance.playSfx(4);// click button sfx
+                
+
+
                 AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0,-900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
                 {
