@@ -103,7 +103,20 @@ namespace TootTally
                     Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
                     {
                         if (user != null)
+                        {
                             OnUserLogin(user);
+
+                            if (user.id == 0)
+                            {
+                                GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
+                                loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
+                                AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                            }
+
+                        }
+
+
+
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>

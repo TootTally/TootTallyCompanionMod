@@ -512,16 +512,24 @@ namespace TootTally.Graphics
             nextButtonHolder.name = "LoginButton";
             Button nextButton = nextButtonHolder.GetComponent<Button>();
             nextButton.onClick = new Button.ButtonClickedEvent();
-            nextButton.onClick.AddListener(delegate {
+            nextButton.onClick.AddListener(delegate
+            {
                 __instance.playSfx(4);// click button sfx
-                
 
-
-                AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0,-900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoginRequest(usernameInput.text, passwordInput.text, (token) =>
                 {
-                    GameObject.DestroyImmediate(sender);
-                });
+                    Plugin.LogInfo("Token: " + token.tt_token);
+                    if (token.tt_token != "")
+                    {
+                        AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
+                        AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                        {
+                            GameObject.DestroyImmediate(sender);
+                        });
+                    }
+
+                }));
+
             });
 
             //close button
@@ -557,7 +565,28 @@ namespace TootTally.Graphics
                 confirmInput.text = "Password";
                 GameObject.DestroyImmediate(signUpButton.gameObject);
                 nextButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
+                nextButton.onClick.RemoveAllListeners();
+                nextButton.onClick.AddListener(delegate
+                {
+                    __instance.playSfx(4);// click button sfx
+
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(usernameInput.text, passwordInput.text, confirmInput.text, (token) =>
+                    {
+                        Plugin.LogInfo("Token: " + token.tt_token);
+                        if (token.tt_token != "")
+                        {
+                            AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
+                            AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                            {
+                                GameObject.DestroyImmediate(sender);
+                            });
+                        }
+
+                    }));
+
+                });
             });
+
 
 
 

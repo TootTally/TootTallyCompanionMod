@@ -60,6 +60,56 @@ namespace TootTally.Utils
             callback(user);
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoginRequest(string username, string password, Action<SerializableClass.LoginToken> callback)
+        {
+            var apiObj = new SerializableClass.APILogin() { username = username, password = password };
+            var apiLogin = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/token/", apiLogin);
+            SerializableClass.LoginToken token;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                Plugin.LogInfo(webRequest.downloadHandler.text);
+                token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
+                Plugin.LogInfo($"Logged in with {token.tt_token}!");
+            }
+            else
+            {
+                token = new SerializableClass.LoginToken()
+                {
+                    tt_token = ""
+                };
+                Plugin.LogInfo($"Error Logging in");
+            }
+            callback(token);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SignUpRequest(string username, string password, string pass_check, Action<SerializableClass.LoginToken> callback)
+        {
+            var apiObj = new SerializableClass.APISignUp() { username = username, password = password, pass_check = pass_check };
+            var apiSignUp = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/auth/signup/", apiSignUp);
+            SerializableClass.LoginToken token;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
+                Plugin.LogInfo($"Signed in with {token.tt_token}!");
+
+            }
+            else
+            {
+                token = new SerializableClass.LoginToken()
+                {
+                    tt_token = ""
+                };
+                Plugin.LogInfo($"Error Signing in");
+            }
+            callback(token);
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
         {
 
@@ -279,7 +329,20 @@ namespace TootTally.Utils
             UploadHandler ulHandler = new UploadHandlerRaw(data);
             ulHandler.contentType = contentType;
 
+
             UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
+            return webRequest;
+        }
+        private static UnityWebRequest PostUploadRequestWithHeader(string apiLink, byte[] data, List<string[]> headers, string contentType = "application/json")
+        {
+            DownloadHandler dlHandler = new DownloadHandlerBuffer();
+            UploadHandler ulHandler = new UploadHandlerRaw(data);
+            ulHandler.contentType = contentType;
+
+
+            UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
+            foreach (string[] s in headers)
+                webRequest.SetRequestHeader(s[0], s[1]);
             return webRequest;
         }
 
