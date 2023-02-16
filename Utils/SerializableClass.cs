@@ -114,7 +114,7 @@ namespace TootTally.Utils
         [Serializable]
         public class LoginToken
         {
-            public string tt_token;
+            public string token;
 		}
 		
 		[Serializable]
@@ -169,6 +169,8 @@ namespace TootTally.Utils
             public float tt;
             public int rank;
             public bool allowSubmit;
+            public string email;
+            public string api_key;
         }
 
         [Serializable]

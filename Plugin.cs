@@ -100,7 +100,7 @@ namespace TootTally
             {
                 if (userInfo == null)
                 {
-                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
                         if (user != null)
                         {
@@ -139,7 +139,7 @@ namespace TootTally
             {
                 //in case they failed to login. Try logging in again
                 if (userInfo == null || userInfo.username == "Guest")
-                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
                         if (user != null)
                             OnUserLogin(user);
