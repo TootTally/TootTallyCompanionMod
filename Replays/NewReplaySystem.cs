@@ -46,7 +46,7 @@ namespace TootTally.Replays
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-            _lastFrameData = new int[2];
+            _lastFrameData = new int[4];
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -62,12 +62,18 @@ namespace TootTally.Replays
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
             float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
             float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
+            float mousePosX = Input.mousePosition.x;
+            float mousePosY = Input.mousePosition.y;
 
             _lastFrameData[(int)FrameDataStructure.NoteHolder] = (int)noteHolderPosition;
             _lastFrameData[(int)FrameDataStructure.PointerPosition] = (int)pointerPos;
+            _lastFrameData[(int)FrameDataStructure.MousePositionX] = (int)mousePosX;
+            _lastFrameData[(int)FrameDataStructure.MousePositionY] = (int)mousePosY;
 
-            if (_frameData.Count < 1 || (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition] && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]))
-                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
+            if (_frameData.Count < 1 || (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition]
+                && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]
+                && _frameData.Last()[(int)FrameDataStructure.MousePositionY] != _lastFrameData[(int)FrameDataStructure.MousePositionY]))
+                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -324,6 +330,8 @@ namespace TootTally.Replays
         {
             NoteHolder = 0,
             PointerPosition = 1,
+            MousePositionX = 2,
+            MousePositionY = 3,
         }
 
         private enum TootDataStructure
