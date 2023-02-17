@@ -31,6 +31,7 @@ namespace TootTally.Multiplayer
             if (_currentInstance == null)
                 _currentInstance = __instance;
             __instance.factpanel.gameObject.SetActive(false);
+            Plugin.LogInfo(SceneManager.GetActiveScene().name);
 
             GameObject canvasWindow = GameObject.Find("Canvas-Window").gameObject;
             Transform panelTransform = canvasWindow.transform.Find("Panel");
@@ -49,7 +50,7 @@ namespace TootTally.Multiplayer
 
             _acceptButtonClicked = _declineButtonClicked = false;
 
-            if (Plugin.userInfo.username == "emmett")
+            if (Plugin.userInfo.username == "emmett" || true)
             {
                 _mainTextCanvasGroup.alpha = 0;
                 _topBarCanvasGroup.alpha = 0;
@@ -119,6 +120,12 @@ namespace TootTally.Multiplayer
             {
                 AnimationManager.AddNewScaleAnimation(topPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(leftPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                CustomButton selectSongButton = GameObjectFactory.CreateCustomButton(leftPanel.transform, Vector2.zero, new Vector2(200, 200), "SelectSong", "SelectSongButton", delegate
+                {
+                    SceneManager.LoadScene("levelselect");
+                });
+                selectSongButton.GetComponent<RectTransform>().localScale = Vector2.zero;
+                AnimationManager.AddNewScaleAnimation(selectSongButton.gameObject, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(topRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(bottomRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             });
@@ -184,6 +191,7 @@ namespace TootTally.Multiplayer
                 __instance.quickFlash(2);
                 __instance.fadeAndLoadScene(16);
                 //SceneManager.MoveGameObjectToScene(GameObject.Instantiate(multiplayerButton), scene);
+                //1 is HomeScreen
                 //6 and 7 cards collection
                 //8 is LoadController
                 //9 is GameController
@@ -298,6 +306,19 @@ namespace TootTally.Multiplayer
         {
 
             _multiButtonOutlineRectTransform.transform.parent.transform.Find("FG/texholder").GetComponent<CanvasGroup>().alpha = (_multiButtonOutlineRectTransform.localScale.y - 0.4f) / 1.5f;
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickBack))]
+        [HarmonyPrefix]
+        public static bool ClickBackButtonMultiplayerSelectSong(LevelSelectController __instance)
+        {
+
+            GlobalVariables.levelselect_index = __instance.songindex;
+            __instance.back_clicked = true;
+            __instance.bgmus.Stop();
+            __instance.doSfx(__instance.sfx_slidedown);
+            __instance.fadeOut("playtest", 0.35f);
+            return false;
         }
 
 
