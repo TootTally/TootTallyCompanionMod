@@ -508,32 +508,38 @@ namespace TootTally.Graphics
             passwordInput.text = "Password";
 
             //login button
-            GameObject nextButtonHolder = latencyFGPanel.transform.Find("NEXT").gameObject;
-            nextButtonHolder.name = "LoginButton";
-            Button nextButton = nextButtonHolder.GetComponent<Button>();
-            nextButton.onClick = new Button.ButtonClickedEvent();
-            nextButton.onClick.AddListener(delegate
+            GameObject loginButtonHolder = latencyFGPanel.transform.Find("NEXT").gameObject;
+            loginButtonHolder.name = "LoginButton";
+            Button loginButton = loginButtonHolder.GetComponent<Button>();
+            loginButton.onClick = new Button.ButtonClickedEvent();
+            loginButton.onClick.AddListener(delegate
             {
                 __instance.playSfx(4);// click button sfx
+                PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
                 {
-                    Plugin.LogInfo(token.token);
-                    if (token.token != "")
+                    if (token.token == "")
                     {
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, (user) =>
-                        {
-                            if (user != null)
-                            {
-                                Plugin.userInfo = user;
-                                Plugin.Instance.APIKey.Value = user.api_key;
-                                AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                                AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
-                                {
-                                    GameObject.DestroyImmediate(sender);
-                                });
-                            }
-                        }));
+                        PopUpNotifManager.DisplayNotif("Username or password wrong... Try login in again.", GameTheme.themeColors.notification.errorText);
+                        return;
                     }
+
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, (user) =>
+                    {
+                        if (user == null)
+                        {
+                            PopUpNotifManager.DisplayNotif("Couldn't get user info... Please contact TootTally's moderator on discord.", GameTheme.themeColors.notification.errorText);
+                            return;
+                        }
+                        PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
+                        Plugin.userInfo = user;
+                        Plugin.Instance.APIKey.Value = user.api_key;
+                        AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
+                        AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                        {
+                            GameObject.DestroyImmediate(sender);
+                        });
+                    }));
                 }));
             });
 
@@ -569,16 +575,24 @@ namespace TootTally.Graphics
                 confirmInput.image = latencyFGPanel.GetComponent<Image>();
                 confirmInput.text = "Password";
                 GameObject.DestroyImmediate(signUpButton.gameObject);
-                nextButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
-                nextButton.onClick.RemoveAllListeners();
-                nextButton.onClick.AddListener(delegate
+                loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
+                loginButton.onClick.RemoveAllListeners();
+                loginButton.onClick.AddListener(delegate
                 {
                     __instance.playSfx(4);// click button sfx
-
+                    if (passwordInput.text != confirmInput.text)
+                    {
+                        passwordInput.text = "";
+                        confirmInput.text = "";
+                        PopUpNotifManager.DisplayNotif($"Passwords did not match! Type your password again.", GameTheme.themeColors.notification.errorText);
+                        return; //skip requests
+                    }
+                    PopUpNotifManager.DisplayNotif($"Sending sign up request... Please wait.", GameTheme.themeColors.notification.defaultText);
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(usernameInput.text, passwordInput.text, confirmInput.text, (isValid) =>
                     {
                         if (isValid)
                         {
+                            PopUpNotifManager.DisplayNotif($"Getting new user info...", GameTheme.themeColors.notification.defaultText);
                             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
                             {
                                 if (token.token != "")
@@ -587,6 +601,7 @@ namespace TootTally.Graphics
                                     {
                                         if (user != null)
                                         {
+                                            PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
                                             Plugin.userInfo = user;
                                             Plugin.Instance.APIKey.Value = user.api_key;
                                             AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
@@ -605,9 +620,7 @@ namespace TootTally.Graphics
             });
 
 
-
-
-            nextButtonHolder.transform.Find("Text").GetComponent<Text>().text = "Login";
+            loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "Login";
 
             return loginPanelPopup;
         }

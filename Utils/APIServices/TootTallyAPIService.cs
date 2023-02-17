@@ -63,7 +63,7 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromToken(string token, Action<SerializableClass.User> callback)
         {
             UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/auth/self/");
-            webRequest.SetRequestHeader("token", token);
+            webRequest.SetRequestHeader("Authorization", $"Token {token}");
             SerializableClass.User user;
             yield return webRequest.SendWebRequest();
 

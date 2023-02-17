@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
+using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -169,9 +170,16 @@ namespace TootTally.Multiplayer
 
             multiplayerHitbox.GetComponent<Button>().onClick.AddListener(() =>
             {
-                //Yoinked from DNSpy KEKW
                 __instance.addWaitForClick();
                 __instance.playSfx(3);
+                if (Plugin.userInfo.id == 0)
+                {
+                    PopUpNotifManager.DisplayNotif("Please login on TootTally to play online.", GameTheme.themeColors.notification.errorText);
+                    return;
+                }
+
+                //Yoinked from DNSpy KEKW
+
                 __instance.musobj.Stop();
                 __instance.quickFlash(2);
                 __instance.fadeAndLoadScene(16);

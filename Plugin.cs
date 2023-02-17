@@ -138,7 +138,7 @@ namespace TootTally
             public static void UpdateUserInfoOnLevelSelect()
             {
                 //in case they failed to login. Try logging in again
-                if (userInfo == null || userInfo.username == "Guest")
+                if (userInfo == null || userInfo.id == 0)
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
                         if (user != null)
