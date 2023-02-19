@@ -65,6 +65,6 @@
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)"/>
 	</Target>
 </Project>

@@ -182,7 +182,7 @@ namespace TootTally.Replays
             switch (_replayManagerState)
             {
                 case ReplayManagerState.Replaying:
-                    _replayTimestampSlider.value = __instance.musictrack.time / __instance.musictrack.clip.length;
+                    _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
                     __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
@@ -448,13 +448,14 @@ namespace TootTally.Replays
             replaySpeedSliderText.gameObject.SetActive(true);
             _replaySpeedSlider.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
             _replaySpeedSlider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
-
             _replaySpeedSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.pitch = _replaySpeedSlider.value;
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
+                EventSystem.current.SetSelectedGameObject(null);
             });
+
 
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);
@@ -476,6 +477,7 @@ namespace TootTally.Replays
             /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                EventSystem.current.SetSelectedGameObject(null);
             });*/
            //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
         }
