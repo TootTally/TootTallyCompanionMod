@@ -79,6 +79,7 @@ namespace TootTally.Replays
                         _videoPlayer = canBG.GetComponent<VideoPlayer>();
                     } catch (Exception e)
                     {
+                        Plugin.LogError(e.ToString());
                         Plugin.LogInfo("Couldn't find VideoPlayer in background");
                     }
                     

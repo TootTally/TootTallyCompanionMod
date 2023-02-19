@@ -23,7 +23,10 @@ namespace TootTally.Discord
                 _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
                 _actMan = _discord.GetActivityManager();
             }
-            catch (Exception) { }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.ToString());
+            }
 
         }
 
@@ -153,8 +156,9 @@ namespace TootTally.Discord
                 {
                     _discord.RunCallbacks();
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Plugin.LogError(e.ToString());
                     _discord.Dispose();
                     _discord = null;
                 }
