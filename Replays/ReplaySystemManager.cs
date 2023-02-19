@@ -397,8 +397,14 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-
-            FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+            try
+            {
+                FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.ToString());
+            }
         }
 
         private static void SetReplayUI(GameController __instance)
