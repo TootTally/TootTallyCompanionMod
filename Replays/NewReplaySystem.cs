@@ -285,8 +285,6 @@ namespace TootTally.Replays
             }
         }
 
-
-
         public void SetNoteScore(GameController __instance)
         {
             var note = _noteData.Find(x => x[(int)NoteDataStructure.NoteIndex] == __instance.currentnoteindex);

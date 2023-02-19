@@ -77,12 +77,13 @@ namespace TootTally.Replays
                     {
                         GameObject canBG = GameObject.Find("can-bg-1").gameObject;
                         _videoPlayer = canBG.GetComponent<VideoPlayer>();
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         Plugin.LogError(e.ToString());
                         Plugin.LogInfo("Couldn't find VideoPlayer in background");
                     }
-                    
+
                     if (_videoPlayer != null)
                     {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
@@ -94,7 +95,7 @@ namespace TootTally.Replays
                             _videoPlayer.time = _videoPlayer.length * value;
                         });*/
                     }
-                        
+
                 }
             }
         }
@@ -196,7 +197,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Paused:
                     if (_pauseArrowDestination != null)
-                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewPosition(_pauseArrowDestination, Time.deltaTime);
+                        _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewPosition(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
         }
@@ -477,9 +478,19 @@ namespace TootTally.Replays
             /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                var oldIndex = __instance.currentnoteindex;
+                __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Math.Abs(__instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult)), 1, __instance.allnotevals.Count) - 1;
+                __instance.beatstoshow = __instance.currentnoteindex + 64;
+                for (int i = __instance.currentnoteindex; i < oldIndex; i++)
+                {
+                    __instance.allnotes[i].GetComponent<RectTransform>().localScale = Vector2.one;
+                    __instance.allnotes[i].SetActive(i - __instance.currentnoteindex <= __instance.beatstoshow);
+                }
+
+                _replay.OnReplayPlayerStart();
                 EventSystem.current.SetSelectedGameObject(null);
             });*/
-           //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
+            //_replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
         }
 
         private static void SetReplayMarquees(Transform canvasTransform)
@@ -542,7 +553,7 @@ namespace TootTally.Replays
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
             _pausePointerAnimation.SetStartPosition(__instance.pausearrowr.anchoredPosition);
-            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
+            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0] - 1) - 37);
 
             return false;
         }
