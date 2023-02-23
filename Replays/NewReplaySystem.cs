@@ -17,8 +17,8 @@ namespace TootTally.Replays
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
-        private int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
-        private int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
+        private int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore, _finalTotalScore;
+        private int[] _finalNoteTally, _replayNoteTally; // [nasties, mehs, okays, nices, perfects]
         private int _frameIndex, _tootIndex;
         private int _maxCombo;
 
@@ -189,13 +189,28 @@ namespace TootTally.Replays
             _totalScore = 0;
             _frameIndex = 0;
             _tootIndex = 0;
-            _noteTally = new int[5];
+            _replayNoteTally = new int[5];
             _isTooting = false;
         }
 
+        public void OnReplayRewind(float noteHolderNewPosX, GameController __instance)
+        {
+            float currentMapPosition = (noteHolderNewPosX / 45f) * GetNoteHolderPrecisionMultiplier(); //45f is a rough estimate of the ratio between localPos and worldPos
+
+            _frameIndex = Mathf.Clamp(_frameData.FindIndex(frame => frame[(int)FrameDataStructure.NoteHolder] <= currentMapPosition) - 1, 0, _frameData.Count - 1);
+            _lastTiming = _frameIndex > 0 ? _frameData[_frameIndex - 1][(int)FrameDataStructure.NoteHolder] : 0;
+            _tootIndex = Mathf.Clamp(_tootData.FindIndex(frame => frame[(int)TootDataStructure.NoteHolder] <= currentMapPosition) - 1, 0, _tootData.Count - 1);
+            _isTooting = _tootIndex % 2 == 1; //if the count is odd then its tooting.
+
+            if (__instance.currentnoteindex != 0)
+                __instance.currentscore = _noteData.Find(note => note[(int)NoteDataStructure.NoteIndex] == __instance.currentnoteindex - 1)[(int)NoteDataStructure.TotalScore];
+        }
+
+
         public void OnReplayPlayerStop()
         {
-            GlobalVariables.gameplay_notescores = _noteTally;
+            GlobalVariables.gameplay_notescores = _finalNoteTally;
+            GlobalVariables.gameplay_scoretotal = _finalTotalScore;
         }
 
         public ReplayState LoadReplay(string replayFileName)
@@ -227,7 +242,8 @@ namespace TootTally.Replays
             _frameData = replayJson.framedata;
             _noteData = replayJson.notedata;
             _tootData = replayJson.tootdata;
-
+            _finalNoteTally = replayJson.finalnotetallies;
+            _finalTotalScore = replayJson.finalscore;
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
 
@@ -278,7 +294,7 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            while (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
@@ -295,7 +311,7 @@ namespace TootTally.Replays
                 __instance.multiplier = note[(int)NoteDataStructure.Multiplier];
                 __instance.currenthealth = note[(int)NoteDataStructure.CurrentHealth];
                 int tallyIndex = Mathf.Clamp(note[(int)NoteDataStructure.NoteJudgement], 0, 4); //Temporary fix for note tally being -1 sometimes?
-                _noteTally[tallyIndex]++;
+                _replayNoteTally[tallyIndex]++;
             }
         }
 
