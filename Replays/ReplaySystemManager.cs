@@ -476,7 +476,6 @@ namespace TootTally.Replays
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
-                Plugin.LogInfo("NoteI: " + __instance.currentnoteindex);
                 __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
                 __instance.beatstoshow = __instance.currentnoteindex + 64; // hardcoded 64 for now but ultimately depends on what people use in Trombloader's config
                 for (int i = __instance.currentnoteindex; i < oldIndex + 64; i++)

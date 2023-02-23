@@ -259,6 +259,7 @@ namespace TootTally.Replays
             __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
+
             PlaybackFrameData(currentMapPosition, __instance);
             PlaybackTootData(currentMapPosition);
         }
@@ -272,10 +273,15 @@ namespace TootTally.Replays
 
         private void PlaybackFrameData(float currentMapPosition, GameController __instance)
         {
-            while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
+            if (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder])
             {
                 _lastTiming = _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder];
                 _lastPosition = _frameData[_frameIndex][(int)FrameDataStructure.PointerPosition] / 100f;
+            }
+            
+            while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
+            {
+                
                 if (_frameIndex < _frameData.Count - 1)
                 {
                     _nextTimingTarget = _frameData[_frameIndex + 1][(int)FrameDataStructure.NoteHolder];
@@ -294,7 +300,7 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            while (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            if(_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
