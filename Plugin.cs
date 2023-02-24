@@ -129,6 +129,20 @@ namespace TootTally
                 }
             }
 
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPostfix]
+            public static void OnLevelSelectScreenGetMessagesFromServer(LevelSelectController __instance)
+            {
+                Instance.StartCoroutine(TootTallyAPIService.GetMessageFromAPIKey((messages) =>
+                {
+                    Plugin.LogInfo("Messages received: " + messages.results.Count);
+                    foreach (SerializableClass.Message message in messages.results)
+                    {
+                        PopUpNotifManager.DisplayNotif("From: " + message.author + "/n" + message.message, GameTheme.themeColors.notification.defaultText);
+                    }
+                }));
+            }
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
             public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD

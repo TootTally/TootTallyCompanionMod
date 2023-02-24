@@ -60,6 +60,23 @@ namespace TootTally.Utils
             callback(user);
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<SerializableClass.APIMessages> callback)
+        {
+            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/api/announcements/", apiKey);
+            SerializableClass.APIMessages messages;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                Plugin.LogInfo(webRequest.downloadHandler.text);
+                messages = JsonConvert.DeserializeObject<SerializableClass.APIMessages>(webRequest.downloadHandler.text);
+                if (messages.results.Count > 0)
+                    callback(messages);
+            }
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromToken(string token, Action<SerializableClass.User> callback)
         {
             UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/auth/self/");

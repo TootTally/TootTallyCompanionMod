@@ -82,13 +82,30 @@ namespace TootTally.Utils
             public string version;
             public string hash;
         }
-
+        
         [Serializable]
         public class ModInfoAPI
         {
             public string apiKey;
             public SendableModInfo[] mods;
         }
+
+        
+
+        [Serializable]
+        public class Message
+        {
+            public string author;
+            public string message;
+            public string dateTimeSent;
+        }
+
+        [Serializable]
+        public class APIMessages
+        {
+            public List<Message> results;
+        }
+
 
         [Serializable]
         public class APISubmission
