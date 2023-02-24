@@ -73,8 +73,8 @@ namespace TootTally.Replays
             {
                 try
                 {
-                    GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                    _videoPlayer = canBG.GetComponent<VideoPlayer>();
+                    GameObject bgObj = GameObject.Find("BGCameraObj").gameObject;
+                    _videoPlayer = bgObj.GetComponentInChildren<VideoPlayer>();
                     if (_videoPlayer != null)
                     {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
@@ -89,7 +89,7 @@ namespace TootTally.Replays
                 }
                 catch (Exception e)
                 {
-                    Plugin.LogError(e.ToString());
+                    Plugin.LogWarning(e.ToString());
                     Plugin.LogInfo("Couldn't find VideoPlayer in background");
                 }
             }
@@ -478,13 +478,13 @@ namespace TootTally.Replays
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
                 __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
                 __instance.beatstoshow = __instance.currentnoteindex + 64; // hardcoded 64 for now but ultimately depends on what people use in Trombloader's config
-                for (int i = __instance.currentnoteindex; i < oldIndex + 64; i++)
+                for (int i = __instance.currentnoteindex; i <= oldIndex + 64; i++)
                 {
                     __instance.allnotes[i].GetComponent<RectTransform>().localScale = Vector3.one;
                     __instance.allnotes[i].SetActive(i <= __instance.beatstoshow);
                 }
 
-                for (int i = __instance.currentnoteindex; i < __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
+                for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
                     __instance.allnotes[i].SetActive(true);
 
                 _replay.OnReplayRewind(noteHolderNewLocalPosX, __instance);
