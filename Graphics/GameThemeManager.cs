@@ -127,6 +127,8 @@ namespace TootTally.Graphics
 
         private static void Config_SettingChanged(object sender, SettingChangedEventArgs e)
         {
+            if (_currentTheme == option.Theme.Value) return; //skip if theme did not change
+
             SetTheme(option.Theme.Value);
             PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
         }
@@ -484,6 +486,8 @@ namespace TootTally.Graphics
             {
                 if (!GameTheme.isDefault)
                     __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
+                else
+                    __instance.diffstars[i].color = Color.white;
                 __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
                 __instance.diffstars[i].maskable = true;
             }

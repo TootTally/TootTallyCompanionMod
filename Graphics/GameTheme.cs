@@ -389,6 +389,7 @@ namespace TootTally.Graphics
                 }
                 catch (Exception ex)
                 {
+                    Plugin.LogError(ex.ToString());
                     Plugin.LogError("Corrupted theme: " + themeFileName);
                     Plugin.LogError("Loading default theme...");
                     SetDefaultTheme();

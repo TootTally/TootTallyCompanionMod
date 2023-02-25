@@ -1,5 +1,5 @@
 ﻿using BepInEx;
-using SimpleJSON;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,8 +17,8 @@ namespace TootTally.Replays
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
-        private int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore;
-        private int[] _noteTally; // [nasties, mehs, okays, nices, perfects]
+        private int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore, _finalTotalScore;
+        private int[] _finalNoteTally, _replayNoteTally; // [nasties, mehs, okays, nices, perfects]
         private int _frameIndex, _tootIndex;
         private int _maxCombo;
 
@@ -46,7 +46,7 @@ namespace TootTally.Replays
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             _maxCombo = 0;
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-            _lastFrameData = new int[2];
+            _lastFrameData = new int[4];
 
             Plugin.LogInfo("Started recording replay");
         }
@@ -62,12 +62,18 @@ namespace TootTally.Replays
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
             float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
             float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
+            float mousePosX = Input.mousePosition.x;
+            float mousePosY = Input.mousePosition.y;
 
             _lastFrameData[(int)FrameDataStructure.NoteHolder] = (int)noteHolderPosition;
             _lastFrameData[(int)FrameDataStructure.PointerPosition] = (int)pointerPos;
+            _lastFrameData[(int)FrameDataStructure.MousePositionX] = (int)mousePosX;
+            _lastFrameData[(int)FrameDataStructure.MousePositionY] = (int)mousePosY;
 
-            if (_frameData.Count < 1 || (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition] && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]))
-                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos });
+            if (_frameData.Count < 1 || (_frameData.Last()[(int)FrameDataStructure.PointerPosition] != _lastFrameData[(int)FrameDataStructure.PointerPosition]
+                && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]
+                && _frameData.Last()[(int)FrameDataStructure.MousePositionY] != _lastFrameData[(int)FrameDataStructure.MousePositionY]))
+                _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -106,7 +112,7 @@ namespace TootTally.Replays
 
         }
 
-        public JSONObject GetRecordedReplayJson(string uuid, float targetFramerate)
+        public string GetRecordedReplayJson(string uuid, float targetFramerate)
         {
             string songNameLong = GlobalVariables.chosen_track_data.trackname_long;
             string trackRef = GlobalVariables.chosen_track_data.trackref;
@@ -127,46 +133,33 @@ namespace TootTally.Replays
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
 
             string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
-            var replayJson = new JSONObject();
-            replayJson["username"] = username;
-            replayJson["starttime"] = startDateTimeUnix;
-            replayJson["endtime"] = endDateTimeUnix;
-            replayJson["uuid"] = uuid;
-            replayJson["input"] = inputType;
-            replayJson["song"] = songNameLong;
-            replayJson["samplerate"] = targetFramerate;
-            replayJson["scrollspeed"] = GlobalVariables.gamescrollspeed;
-            replayJson["pluginbuilddate"] = Plugin.BUILDDATE;
-            replayJson["gameversion"] = GlobalVariables.version;
-            replayJson["songhash"] = songHash;
-            replayJson["finalscore"] = GlobalVariables.gameplay_scoretotal;
-            replayJson["maxcombo"] = _maxCombo;
+            var replayJson = new SerializableClass.ReplayData();
+            replayJson.username = username;
+            replayJson.starttime = startDateTimeUnix;
+            replayJson.endtime = endDateTimeUnix;
+            replayJson.uuid = uuid;
+            replayJson.input = inputType;
+            replayJson.song = songNameLong;
+            replayJson.samplerate = targetFramerate;
+            replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
+            replayJson.pluginbuilddate = Plugin.BUILDDATE;
+            replayJson.gameversion = GlobalVariables.version;
+            replayJson.songhash = songHash;
+            replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
+            replayJson.maxcombo = _maxCombo;
 
-            var noteJudgmentData = new JSONArray();
+            var noteJudgmentData = new List<int>();
             noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
-            replayJson["finalnotetallies"] = noteJudgmentData;
+            replayJson.finalnotetallies = noteJudgmentData.ToArray();
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
             _noteData[_noteData.Count - 1][1] = GlobalVariables.gameplay_scoretotal; // Manually set the last note's totalscore to the actual totalscore because game is weird...
 
-            replayJson["framedata"] = DataListToJson(_frameData);
-            replayJson["notedata"] = DataListToJson(_noteData);
-            replayJson["tootdata"] = DataListToJson(_tootData);
+            replayJson.framedata = _frameData;
+            replayJson.notedata = _noteData;
+            replayJson.tootdata = _tootData;
 
-            return replayJson;
-        }
-
-        private static JSONArray DataListToJson(List<int[]> dataList)
-        {
-            var jsonArrayData = new JSONArray();
-            dataList.ForEach(item =>
-            {
-                var dataJsonArray = new JSONArray();
-                foreach (var itemData in item)
-                    dataJsonArray.Add(itemData);
-                jsonArrayData.Add(dataJsonArray);
-            });
-            return jsonArrayData;
+            return JsonConvert.SerializeObject(replayJson);
         }
 
         private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
@@ -196,13 +189,28 @@ namespace TootTally.Replays
             _totalScore = 0;
             _frameIndex = 0;
             _tootIndex = 0;
-            _noteTally = new int[5];
+            _replayNoteTally = new int[5];
             _isTooting = false;
         }
 
+        public void OnReplayRewind(float noteHolderNewPosX, GameController __instance)
+        {
+            float currentMapPosition = (noteHolderNewPosX / 45f) * GetNoteHolderPrecisionMultiplier(); //45f is a rough estimate of the ratio between localPos and worldPos
+
+            _frameIndex = Mathf.Clamp(_frameData.FindIndex(frame => frame[(int)FrameDataStructure.NoteHolder] <= currentMapPosition) - 1, 0, _frameData.Count - 1);
+            _lastTiming = _frameIndex > 0 ? _frameData[_frameIndex - 1][(int)FrameDataStructure.NoteHolder] : 0;
+            _tootIndex = Mathf.Clamp(_tootData.FindIndex(frame => frame[(int)TootDataStructure.NoteHolder] <= currentMapPosition) - 1, 0, _tootData.Count - 1);
+            _isTooting = _tootIndex % 2 == 1; //if the count is odd then its tooting.
+
+            if (__instance.currentnoteindex != 0)
+                __instance.currentscore = _noteData.Find(note => note[(int)NoteDataStructure.NoteIndex] == __instance.currentnoteindex - 1)[(int)NoteDataStructure.TotalScore];
+        }
+
+
         public void OnReplayPlayerStop()
         {
-            GlobalVariables.gameplay_notescores = _noteTally;
+            GlobalVariables.gameplay_notescores = _finalNoteTally;
+            GlobalVariables.gameplay_scoretotal = _finalTotalScore;
         }
 
         public ReplayState LoadReplay(string replayFileName)
@@ -221,25 +229,23 @@ namespace TootTally.Replays
 
             string jsonFileFromZip = FileHelper.ReadJsonFromFile(replayDir, replayFileName + ".ttr");
 
-            var replayJson = JSONObject.Parse(jsonFileFromZip);
-            if (incompatibleReplayPluginBuildDate.Contains(replayJson["pluginbuilddate"]))
+            var replayJson = JsonConvert.DeserializeObject<SerializableClass.ReplayData>(jsonFileFromZip);
+            if (incompatibleReplayPluginBuildDate.Contains(replayJson.pluginbuilddate.ToString()))
             {
-                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson["pluginbuilddate"]}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
+                PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson.pluginbuilddate}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
                 Plugin.LogError("Cannot load replay:");
-                Plugin.LogError("   Replay Build Date is " + replayJson["pluginbuilddate"]);
+                Plugin.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
                 Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
                 return ReplayState.ReplayLoadErrorIncompatible;
             }
-            GlobalVariables.gamescrollspeed = replayJson["scrollspeed"];
-            foreach (JSONArray jsonArray in replayJson["framedata"])
-                _frameData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2] });
-            foreach (JSONArray jsonArray in replayJson["notedata"])
-                _noteData.Add(new int[] { jsonArray[0], jsonArray[1], jsonArray[2], jsonArray[3], jsonArray[4] });
-            foreach (JSONArray jsonArray in replayJson["tootdata"])
-                _tootData.Add(new int[] { jsonArray[0] });
-
-            _replayUsername = replayJson["username"];
-            _replaySong = replayJson["song"];
+            GlobalVariables.gamescrollspeed = replayJson.scrollspeed;
+            _frameData = replayJson.framedata;
+            _noteData = replayJson.notedata;
+            _tootData = replayJson.tootdata;
+            _finalNoteTally = replayJson.finalnotetallies;
+            _finalTotalScore = replayJson.finalscore;
+            _replayUsername = replayJson.username;
+            _replaySong = replayJson.song;
 
             return ReplayState.ReplayLoadSuccess;
         }
@@ -253,6 +259,7 @@ namespace TootTally.Replays
             __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
+
             PlaybackFrameData(currentMapPosition, __instance);
             PlaybackTootData(currentMapPosition);
         }
@@ -266,10 +273,15 @@ namespace TootTally.Replays
 
         private void PlaybackFrameData(float currentMapPosition, GameController __instance)
         {
-            while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
+            if (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder])
             {
                 _lastTiming = _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder];
                 _lastPosition = _frameData[_frameIndex][(int)FrameDataStructure.PointerPosition] / 100f;
+            }
+            
+            while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
+            {
+                
                 if (_frameIndex < _frameData.Count - 1)
                 {
                     _nextTimingTarget = _frameData[_frameIndex + 1][(int)FrameDataStructure.NoteHolder];
@@ -288,14 +300,12 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            if(_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
             }
         }
-
-
 
         public void SetNoteScore(GameController __instance)
         {
@@ -307,7 +317,7 @@ namespace TootTally.Replays
                 __instance.multiplier = note[(int)NoteDataStructure.Multiplier];
                 __instance.currenthealth = note[(int)NoteDataStructure.CurrentHealth];
                 int tallyIndex = Mathf.Clamp(note[(int)NoteDataStructure.NoteJudgement], 0, 4); //Temporary fix for note tally being -1 sometimes?
-                _noteTally[tallyIndex]++;
+                _replayNoteTally[tallyIndex]++;
             }
         }
 
@@ -340,6 +350,8 @@ namespace TootTally.Replays
         {
             NoteHolder = 0,
             PointerPosition = 1,
+            MousePositionX = 2,
+            MousePositionY = 3,
         }
 
         private enum TootDataStructure

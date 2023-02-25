@@ -1,4 +1,4 @@
-﻿using SimpleJSON;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,8 +19,8 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                JSONNode json = JSON.Parse(webRequest.downloadHandler.text);
-                callback(json["latest"]["version_number"]);
+                var verObj = JsonConvert.DeserializeObject<SerializableClass.ThunderstorePluginData>(webRequest.downloadHandler.text);
+                callback(verObj.latest.version_number);
             }
         }
         private static bool HasError(UnityWebRequest webRequest, bool isLoggingErrors)

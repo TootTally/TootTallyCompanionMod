@@ -340,6 +340,7 @@ namespace TootTally.Graphics
             _verticalSliderPrefab.value = 0f;
             _verticalSliderPrefab.minValue = -0.05f;
             _verticalSliderPrefab.maxValue = 1.04f;
+            _verticalSliderPrefab.onValueChanged = new Slider.SliderEvent();
             _verticalSliderPrefab.gameObject.SetActive(false);
 
             DestroyFromParent(_verticalSliderPrefab.gameObject, "Handle Slide Area/Handle");
@@ -363,6 +364,7 @@ namespace TootTally.Graphics
             _sliderPrefab.value = 1f;
             _sliderPrefab.minValue = 0f;
             _sliderPrefab.maxValue = 2f;
+            _sliderPrefab.onValueChanged = new Slider.SliderEvent();
             _sliderPrefab.gameObject.SetActive(false);
 
 
@@ -534,10 +536,10 @@ namespace TootTally.Graphics
             }
             else
                 rowEntry.grade.color = gradeColor;
-            if (scoreData.tt == 0)
-                rowEntry.maxcombo.text = scoreData.max_combo + "x";
-            else
+            if (scoreData.is_rated)
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
+            else
+                rowEntry.maxcombo.text = scoreData.max_combo + "x";
             rowEntry.replayId = scoreData.replay_id;
             rowEntry.rowId = count;
             rowEntry.singleScore.AddComponent<CanvasGroup>();

@@ -13,6 +13,24 @@ namespace TootTally.Utils
             public string tmb;
         }
 
+        [Serializable]
+        public class TMBData
+        {
+            public string name;
+            public string shortName;
+            public string trackRef;
+            public int year;
+            public string author;
+            public string genre;
+            public string description;
+            public int difficulty;
+            public int savednotespacing;
+            public float endpoint;
+            public int timesig;
+            public float tempo;
+            public List<float[]> notes;
+        }
+
 
         [Serializable]
         public class ScoreDataFromDB
@@ -27,6 +45,7 @@ namespace TootTally.Utils
             public float percentage;
             public string game_version;
             public float tt;
+            public bool is_rated;
         }
 
         [Serializable]
@@ -39,7 +58,22 @@ namespace TootTally.Utils
             public bool is_rated;
         }
 
+        [Serializable]
+        public class SongInfoFromDB
+        {
+            public float count;
+            public SongDataFromDB[] results;
+        }
 
+
+        [Serializable]
+        public class LeaderboardInfo
+        {
+            public int count;
+            public string next;
+            public string previous;
+            public ScoreDataFromDB[] results;
+        }
 
         [Serializable]
         public class SendableModInfo
@@ -49,11 +83,23 @@ namespace TootTally.Utils
             public string hash;
         }
 
+        [Serializable]
+        public class ModInfoAPI
+        {
+            public string apiKey;
+            public SendableModInfo[] mods;
+        }
 
         [Serializable]
         public class APISubmission
         {
             public string apiKey;
+        }
+
+        [Serializable]
+        public class ReplayStart
+        {
+            public string id;
         }
 
         [Serializable]
@@ -70,6 +116,28 @@ namespace TootTally.Utils
             public string replayId;
         }
 
+        [Serializable]
+        public class ReplayData
+        {
+            public string username;
+            public string starttime;
+            public string endtime;
+            public string uuid;
+            public string input;
+            public string song;
+            public float samplerate;
+            public float scrollspeed;
+            public int pluginbuilddate;
+            public string gameversion;
+            public string songhash;
+            public int finalscore;
+            public int maxcombo;
+            public int[] finalnotetallies;
+            public List<int[]> framedata;
+            public List<int[]> notedata;
+            public List<int[]> tootdata;
+        }
+
 
         [Serializable]
         public class User
@@ -79,6 +147,19 @@ namespace TootTally.Utils
             public string country;
             public float tt;
             public int rank;
+            public bool allowSubmit;
+        }
+
+        [Serializable]
+        public class ThunderstoreLatestData
+        {
+            public string version_number;
+        }
+
+        [Serializable]
+        public class ThunderstorePluginData
+        {
+            public ThunderstoreLatestData latest;
         }
 
         #region Theme
