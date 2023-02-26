@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace TootTally.Utils.Helpers
                 if (value == Math.Truncate(value))
                     writer.WriteRawValue(((int)value).ToString());
                 else {
-                    writer.WriteRawValue(((double)value).ToString());
+                    writer.WriteRawValue(((double)value).ToString(CultureInfo.InvariantCulture));
                 }
             }
 
