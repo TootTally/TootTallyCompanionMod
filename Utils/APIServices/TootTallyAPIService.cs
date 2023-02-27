@@ -62,9 +62,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<SerializableClass.APIMessages> callback)
         {
-            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
-            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
-            var webRequest = PostUploadRequest($"{APIURL}/api/announcements/", apiKey);
+            var webRequest = UnityWebRequest.Get($"{APIURL}/api/announcements/?apiKey={Plugin.Instance.APIKey.Value}");
             SerializableClass.APIMessages messages;
             yield return webRequest.SendWebRequest();
 

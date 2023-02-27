@@ -138,7 +138,7 @@ namespace TootTally
                     Plugin.LogInfo("Messages received: " + messages.results.Count);
                     foreach (SerializableClass.Message message in messages.results)
                     {
-                        PopUpNotifManager.DisplayNotif("From: " + message.author + "/n" + message.message, GameTheme.themeColors.notification.defaultText);
+                        PopUpNotifManager.DisplayNotif($"From:{message.author} ({message.sent_on})\n{message.message}", GameTheme.themeColors.notification.defaultText, 12f);
                     }
                 }));
             }

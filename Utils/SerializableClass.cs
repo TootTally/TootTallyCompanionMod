@@ -97,7 +97,7 @@ namespace TootTally.Utils
         {
             public string author;
             public string message;
-            public string dateTimeSent;
+            public string sent_on;
         }
 
         [Serializable]
