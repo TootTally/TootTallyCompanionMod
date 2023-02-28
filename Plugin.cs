@@ -129,16 +129,24 @@ namespace TootTally
                 }
             }
 
+            private static List<SerializableClass.Message> _messagesReceived;
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void OnLevelSelectScreenGetMessagesFromServer(LevelSelectController __instance)
             {
+                if (userInfo == null || userInfo.id == 0) return; //Do not receive massages if not logged in
+
                 Instance.StartCoroutine(TootTallyAPIService.GetMessageFromAPIKey((messages) =>
                 {
                     Plugin.LogInfo("Messages received: " + messages.results.Count);
                     foreach (SerializableClass.Message message in messages.results)
                     {
-                        PopUpNotifManager.DisplayNotif($"From:{message.author} ({message.sent_on})\n{message.message}", GameTheme.themeColors.notification.defaultText, 12f);
+                        if (_messagesReceived.FindAll(m => m.sent_on == message.sent_on).Count == 0)
+                        {
+                            _messagesReceived.Add(message);
+                            PopUpNotifManager.DisplayNotif($"<size=14>From:{message.author} ({message.sent_on})</size>\n{message.message}", GameTheme.themeColors.notification.defaultText, 12f);
+                        }
                     }
                 }));
             }
@@ -162,6 +170,7 @@ namespace TootTally
 
             private static void OnUserLogin(SerializableClass.User user)
             {
+                _messagesReceived = new List<SerializableClass.Message>();
                 userInfo = user;
                 Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, (allowSubmit) =>
                 {
