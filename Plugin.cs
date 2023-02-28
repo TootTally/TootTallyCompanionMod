@@ -78,7 +78,7 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GameThemeManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
-            Harmony.CreateAndPatchAll(typeof(MultiplayerController));
+            Harmony.CreateAndPatchAll(typeof(MultiplayerManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(DiscordRPC));
