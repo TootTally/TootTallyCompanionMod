@@ -24,14 +24,14 @@ namespace TootTally.Multiplayer
 
 
         [HarmonyPatch(typeof(PlaytestAnims), nameof(PlaytestAnims.Start))]
-        [HarmonyPrefix]
-        public static bool ChangePlayTestToMultiplayerScreen(PlaytestAnims __instance)
+        [HarmonyPostfix]
+        public static void ChangePlayTestToMultiplayerScreen(PlaytestAnims __instance)
         {
             if (_multiController != null)
             {
                 if (_state == MultiplayerController.MultiplayerState.SelectSong)
                     UpdateMultiplayerState(MultiplayerController.MultiplayerState.Hosting);
-                return false;
+                return;
             }
 
 
@@ -45,7 +45,6 @@ namespace TootTally.Multiplayer
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.FirstTimePopUp);
             else
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.LoadHome);
-            return true;
         }
 
         [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
@@ -95,7 +94,7 @@ namespace TootTally.Multiplayer
             {
                 __instance.addWaitForClick();
                 __instance.playSfx(3);
-                if (Plugin.userInfo.id == 0)
+                if (Plugin.userInfo == null || Plugin.userInfo.id == 0)
                 {
                     PopUpNotifManager.DisplayNotif("Please login on TootTally to play online.", GameTheme.themeColors.notification.errorText);
                     return;
@@ -260,6 +259,7 @@ namespace TootTally.Multiplayer
                     break;
                 case MultiplayerController.MultiplayerState.ExitScene:
                     _multiController.OnExitAnimation();
+                    _multiController = null;
                     break;
             }
         }
