@@ -127,6 +127,8 @@ namespace TootTally.Graphics
 
         private static void Config_SettingChanged(object sender, SettingChangedEventArgs e)
         {
+            if (_currentTheme == option.Theme.Value) return; //skip if theme did not change
+
             SetTheme(option.Theme.Value);
             PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
         }

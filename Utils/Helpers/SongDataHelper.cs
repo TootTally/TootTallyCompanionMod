@@ -20,8 +20,9 @@ namespace TootTally.Utils.Helpers
             {
                 if (value == Math.Truncate(value))
                     writer.WriteRawValue(((int)value).ToString());
-                else
-                    writer.WriteRawValue(value.ToString());
+                else {
+                    writer.WriteRawValue(((double)value).ToString());
+                }
             }
 
             public override float ReadJson(JsonReader reader, Type objectType, float existingValue, bool hasExistingValue, JsonSerializer serializer)

@@ -23,7 +23,7 @@ namespace TootTally.Replays
 
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
-        private static bool _hasPaused;
+        private static bool _hasPaused, _hasRewindReplay;
         private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
@@ -71,29 +71,26 @@ namespace TootTally.Replays
         {
             if (_replayManagerState == ReplayManagerState.Replaying)
             {
-                if (__instance.bgobjects != null)
+                try
                 {
-                    try
-                    {
-                        GameObject canBG = GameObject.Find("can-bg-1").gameObject;
-                        _videoPlayer = canBG.GetComponent<VideoPlayer>();
-                    } catch (Exception e)
-                    {
-                        Plugin.LogInfo("Couldn't find VideoPlayer in background");
-                    }
-                    
+                    GameObject bgObj = GameObject.Find("BGCameraObj").gameObject;
+                    _videoPlayer = bgObj.GetComponentInChildren<VideoPlayer>();
                     if (_videoPlayer != null)
                     {
                         _replaySpeedSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.playbackSpeed = value;
                         });
-                        /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
+                        _replayTimestampSlider.onValueChanged.AddListener((float value) =>
                         {
                             _videoPlayer.time = _videoPlayer.length * value;
-                        });*/
+                        });
                     }
-                        
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogWarning(e.ToString());
+                    Plugin.LogInfo("Couldn't find VideoPlayer in background");
                 }
             }
 
@@ -121,7 +118,7 @@ namespace TootTally.Replays
 
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         public static void PointSceneControllerPostfixPatch(PointSceneController __instance)
         {
             switch (_replayManagerState)
@@ -131,8 +128,6 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     OnReplayingStop();
-                    GlobalVariables.localsave.tracks_played--;
-                    Time.timeScale = 1f;
                     break;
             }
 
@@ -171,7 +166,9 @@ namespace TootTally.Replays
                     }
                     break;
                 case ReplayManagerState.Replaying:
-                    _replay.PlaybackReplay(__instance);
+                    if (!_hasRewindReplay) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
+                        _replay.PlaybackReplay(__instance);
+                    _hasRewindReplay = false;
                     break;
             }
         }
@@ -182,7 +179,7 @@ namespace TootTally.Replays
             switch (_replayManagerState)
             {
                 case ReplayManagerState.Replaying:
-                    _replayTimestampSlider.value = __instance.musictrack.time / __instance.musictrack.clip.length;
+                    _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
                     __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
@@ -370,7 +367,7 @@ namespace TootTally.Replays
         public static void OnReplayingStart()
         {
             _replay.OnReplayPlayerStart();
-            _lastIsTooting = false;
+            _lastIsTooting = _hasRewindReplay = false;
             wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
             Plugin.LogInfo("Replay Started");
@@ -398,8 +395,14 @@ namespace TootTally.Replays
             // Create Replays directory in case it doesn't exist
             if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
 
-
-            FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+            try
+            {
+                FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.ToString());
+            }
         }
 
         private static void SetReplayUI(GameController __instance)
@@ -443,13 +446,14 @@ namespace TootTally.Replays
             replaySpeedSliderText.gameObject.SetActive(true);
             _replaySpeedSlider.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
             _replaySpeedSlider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
-
             _replaySpeedSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.pitch = _replaySpeedSlider.value;
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
+                EventSystem.current.SetSelectedGameObject(null);
             });
+
 
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);
@@ -468,11 +472,28 @@ namespace TootTally.Replays
             rectTransform.sizeDelta = new Vector2(800, 20);
             rectTransform.anchoredPosition = new Vector2(-0, -195);
 
-            /*_replayTimestampSlider.onValueChanged.AddListener((float value) =>
+            _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
-            });*/
-           _replayTimestampSlider.gameObject.SetActive(true); //Hidding until we figure out 
+                var oldIndex = __instance.currentnoteindex;
+                var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
+                __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
+                __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
+                __instance.beatstoshow = __instance.currentnoteindex + 64; // hardcoded 64 for now but ultimately depends on what people use in Trombloader's config
+                for (int i = __instance.currentnoteindex; i <= oldIndex + 64; i++)
+                {
+                    __instance.allnotes[i].GetComponent<RectTransform>().localScale = Vector3.one;
+                    __instance.allnotes[i].SetActive(i <= __instance.beatstoshow);
+                }
+
+                for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
+                    __instance.allnotes[i].SetActive(true);
+
+                _replay.OnReplayRewind(noteHolderNewLocalPosX, __instance);
+                _hasRewindReplay = true;
+                EventSystem.current.SetSelectedGameObject(null);
+            });
+            _replayTimestampSlider.gameObject.SetActive(true);
         }
 
         private static void SetReplayMarquees(Transform canvasTransform)
@@ -495,6 +516,9 @@ namespace TootTally.Replays
         {
             _replay.OnReplayPlayerStop();
             _replayFileName = null;
+            GlobalVariables.localsave.tracks_played--;
+            Time.timeScale = 1f;
+
             _replayManagerState = ReplayManagerState.None;
             Plugin.LogInfo("Replay finished");
         }
@@ -536,7 +560,6 @@ namespace TootTally.Replays
         {
             _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
             _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
-
             return false;
         }
 
