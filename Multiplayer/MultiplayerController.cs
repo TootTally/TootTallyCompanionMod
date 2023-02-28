@@ -16,7 +16,6 @@ namespace TootTally.Multiplayer
     public class MultiplayerController
     {
         private static PlaytestAnims _currentInstance;
-        private static bool _isPointerOver;
         private static RectTransform _mainPanelRectTransform;
         private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
@@ -106,15 +105,18 @@ namespace TootTally.Multiplayer
         {
             MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadHome);
             AnimationManager.AddNewSizeDeltaAnimation(_acceptButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-            AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) => DestroyAcceptDeclineButtons());
             _currentInstance.sfx_ok.Play();
         }
 
         public void OnDeclineButtonClick()
         {
             MultiplayerManager.UpdateMultiplayerState(MultiplayerState.ExitScene);
-            _currentInstance.clickedOK();
             GameObject.Destroy(_mainPanel);
+        }
+
+        public void DestroyAcceptDeclineButtons()
+        {
             GameObject.Destroy(_acceptButton);
             GameObject.Destroy(_declineButton);
         }

@@ -62,6 +62,7 @@ namespace TootTally.Multiplayer
         [HarmonyPrefix]
         public static bool OverwriteNextScene()
         {
+            Plugin.LogInfo("exiting multi");
             _isSceneActive = false;
             SceneManager.LoadScene("saveslot");
             return false;
@@ -258,6 +259,7 @@ namespace TootTally.Multiplayer
                     SceneManager.LoadScene("levelselect");
                     break;
                 case MultiplayerController.MultiplayerState.ExitScene:
+                    _currentInstance.clickedOK();
                     _multiController.OnExitAnimation();
                     _multiController = null;
                     break;
