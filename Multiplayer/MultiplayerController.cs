@@ -16,7 +16,6 @@ namespace TootTally.Multiplayer
     public class MultiplayerController
     {
         private static PlaytestAnims _currentInstance;
-        private static RectTransform _mainPanelRectTransform;
         private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
 
@@ -29,8 +28,6 @@ namespace TootTally.Multiplayer
             Transform panelTransform = canvasWindow.transform.Find("Panel");
 
             _mainPanel = GameObjectFactory.CreateMultiplayerMainPanel(panelTransform, "MultiPanel");
-            _mainPanelRectTransform = _mainPanel.GetComponent<RectTransform>();
-
 
             _mainPanelFg = _mainPanel.transform.Find("panelfg").gameObject;
 
@@ -52,20 +49,46 @@ namespace TootTally.Multiplayer
 
         public void OnMultiplayerHomeScreenEnter()
         {
+            DestroyFactTextTopBarAndAcceptDeclineButtons();
             AddHomeScreenPanelsToMainPanel();
             AnimateHomeScreenPanels();
         }
 
         public void AddHomeScreenPanelsToMainPanel()
         {
-            GameObject topPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopPanel", new Vector2(1230, 50), new Vector2(0, 284));
+            #region topPanel
+            GameObject topPanel = GameObjectFactory.CreateEmptyMultiplayerPanel(_mainPanel.transform, "TopPanel", new Vector2(1230, 50), new Vector2(0, 284));
             topPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
-            GameObject leftPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "LeftPanel", new Vector2(750, 564), new Vector2(-240, -28));
+            HorizontalLayoutGroup topPanelLayoutGroup = topPanel.transform.Find("panelfg").gameObject.AddComponent<HorizontalLayoutGroup>();
+            topPanelLayoutGroup.padding = new RectOffset(8, 8, 8, 8);
+            Text lobbyText = GameObjectFactory.CreateSingleText(topPanel.transform.Find("panelfg"), "TitleText", "TootTally Multiplayer Lobbies", Color.white);
+            lobbyText.alignment = TextAnchor.MiddleLeft;
+            Text serverText = GameObjectFactory.CreateSingleText(topPanel.transform.Find("panelfg"), "ServerText", "Current Server: localHost", Color.white);
+            serverText.alignment = TextAnchor.MiddleRight;
+            #endregion
+
+            #region topPanel
+            GameObject leftPanel = GameObjectFactory.CreateEmptyMultiplayerPanel(_mainPanel.transform, "LeftPanel", new Vector2(750, 564), new Vector2(-240, -28));
             leftPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
-            GameObject topRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "TopRightPanel", new Vector2(426, 280), new Vector2(402, 114));
+            VerticalLayoutGroup leftPanelLayoutGroup = leftPanel.transform.Find("panelfg").gameObject.AddComponent<VerticalLayoutGroup>();
+            leftPanelLayoutGroup.childForceExpandHeight = leftPanelLayoutGroup.childScaleHeight = leftPanelLayoutGroup.childControlHeight = false;
+            leftPanelLayoutGroup.padding = new RectOffset(8, 8, 8, 8);
+            GameObjectFactory.CreateLobbyInfoRow(leftPanel.transform.Find("panelfg"), "TestRow1", "gristCollector's Lobby", 1, 16, "Never gonna give you up", 69f);
+            GameObjectFactory.CreateLobbyInfoRow(leftPanel.transform.Find("panelfg"), "TestRow2", "Electrostats's Lobby", 1, 32, "Taps", 1f);
+            GameObjectFactory.CreateLobbyInfoRow(leftPanel.transform.Find("panelfg"), "TestRow3", "Lumpytf's private room", 1, 1, "Forever Alone", 12f);
+            GameObjectFactory.CreateLobbyInfoRow(leftPanel.transform.Find("panelfg"), "TestRow4", "GloomHonk's Meme songs", 1, 99, "tt is love tt is life", 224f);
+            #endregion
+
+            #region topPanel
+            GameObject topRightPanel = GameObjectFactory.CreateEmptyMultiplayerPanel(_mainPanel.transform, "TopRightPanel", new Vector2(426, 280), new Vector2(402, 114));
             topRightPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
-            GameObject bottomRightPanel = GameObjectFactory.CreateMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", new Vector2(426, 280), new Vector2(402, -170));
+            #endregion
+
+            #region topPanel
+            GameObject bottomRightPanel = GameObjectFactory.CreateEmptyMultiplayerPanel(_mainPanel.transform, "BottomRightPanel", new Vector2(426, 280), new Vector2(402, -170));
             bottomRightPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
+            #endregion
+
         }
 
         public void AnimateHomeScreenPanels()
@@ -82,12 +105,12 @@ namespace TootTally.Multiplayer
                 AnimationManager.AddNewScaleAnimation(leftPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
 
                 //testing button
-                CustomButton selectSongButton = GameObjectFactory.CreateCustomButton(leftPanel.transform, Vector2.zero, new Vector2(200, 200), "SelectSong", "SelectSongButton", delegate
+                /*CustomButton selectSongButton = GameObjectFactory.CreateCustomButton(leftPanel.transform, Vector2.zero, new Vector2(200, 200), "SelectSong", "SelectSongButton", delegate
                 {
                     MultiplayerManager.UpdateMultiplayerState(MultiplayerState.SelectSong);
                 });
                 selectSongButton.GetComponent<RectTransform>().localScale = Vector2.zero;
-                AnimationManager.AddNewScaleAnimation(selectSongButton.gameObject, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                AnimationManager.AddNewScaleAnimation(selectSongButton.gameObject, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));*/
 
                 AnimationManager.AddNewScaleAnimation(topRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(bottomRightPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
@@ -105,7 +128,7 @@ namespace TootTally.Multiplayer
         {
             MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadHome);
             AnimationManager.AddNewSizeDeltaAnimation(_acceptButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-            AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) => DestroyAcceptDeclineButtons());
+            AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) => DestroyFactTextTopBarAndAcceptDeclineButtons());
             _currentInstance.sfx_ok.Play();
         }
 
@@ -115,10 +138,14 @@ namespace TootTally.Multiplayer
             GameObject.Destroy(_mainPanel);
         }
 
-        public void DestroyAcceptDeclineButtons()
+        public void DestroyFactTextTopBarAndAcceptDeclineButtons()
         {
-            GameObject.Destroy(_acceptButton);
-            GameObject.Destroy(_declineButton);
+            GameObject.DestroyImmediate(_mainPanelFg.transform.Find("FactText").gameObject);
+            GameObject.DestroyImmediate(_topBar);
+            if (_acceptButton != null)
+                GameObject.DestroyImmediate(_acceptButton);
+            if (_declineButton != null)
+            GameObject.DestroyImmediate(_declineButton);
         }
 
         public void OnExitAnimation()

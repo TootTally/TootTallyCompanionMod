@@ -428,9 +428,7 @@ namespace TootTally.Replays
             floatingSpeedText.fontSize = 14;
             floatingSpeedText.alignment = TextAnchor.MiddleCenter;
             floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
-            floatingSpeedText.GetComponent<RectTransform>().sizeDelta = _replaySpeedSlider.GetComponent<RectTransform>().sizeDelta;
             floatingSpeedText.GetComponent<Outline>().effectDistance = Vector2.one / 3f;
-            floatingSpeedText.gameObject.SetActive(true);
 
             //Text inside the slider
             Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
@@ -443,7 +441,6 @@ namespace TootTally.Replays
             replaySpeedSliderText.fontSize = 8;
             replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             replaySpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
-            replaySpeedSliderText.gameObject.SetActive(true);
             _replaySpeedSlider.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
             _replaySpeedSlider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
             _replaySpeedSlider.onValueChanged.AddListener((float value) =>
@@ -503,7 +500,6 @@ namespace TootTally.Replays
             textOutline.effectDistance = Vector2.one / 2;
             _replayIndicatorMarquee.fontSize = 14;
             _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
-            _replayIndicatorMarquee.gameObject.SetActive(true);
         }
 
         private static void SendReplayFileToServer()

@@ -111,7 +111,6 @@ namespace TootTally.CustomLeaderboard
             _diffRating.fontSize = 20;
             _diffRating.alignment = TextAnchor.MiddleRight;
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
-            _diffRating.gameObject.SetActive(true);
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
         }

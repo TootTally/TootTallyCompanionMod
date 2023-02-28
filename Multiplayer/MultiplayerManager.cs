@@ -41,9 +41,9 @@ namespace TootTally.Multiplayer
             _state = _previousState = MultiplayerController.MultiplayerState.None;
             _isSceneActive = true;
 
-            if (Plugin.userInfo.username != "emmett" || false) //temporary
+            /*if (Plugin.userInfo.username != "emmett" || false) //temporary
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.FirstTimePopUp);
-            else
+            else*/
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.LoadHome);
         }
 

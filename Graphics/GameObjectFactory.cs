@@ -635,7 +635,7 @@ namespace TootTally.Graphics
             return multiPanel;
         }
 
-        public static GameObject CreateMultiplayerPanel(Transform canvasTransform, string name, Vector2 size, Vector2 position)
+        public static GameObject CreateEmptyMultiplayerPanel(Transform canvasTransform, string name, Vector2 size, Vector2 position)
         {
             GameObject panel = GameObject.Instantiate(_mainMultiplayerPanelPrefab, canvasTransform);
             GameObject panelbg = panel.transform.Find("Panelbg1").gameObject;
@@ -650,14 +650,39 @@ namespace TootTally.Graphics
             panelfgRectTransform.sizeDelta = size - new Vector2(4, 4);
 
             GameObject.DestroyImmediate(panel.transform.Find("top").gameObject);
-            panelfg.transform.Find("FactText").GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            panelfg.transform.Find("FactText").GetComponent<RectTransform>().sizeDelta = panelfgRectTransform.sizeDelta;
-            panelfg.transform.Find("FactText").GetComponent<Text>().text = "This is a testing text area";
-            panelfg.transform.Find("FactText").GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+            GameObject.DestroyImmediate(panelfg.transform.Find("FactText").gameObject);
 
             panel.name = name;
             panel.SetActive(true);
             return panel;
+        }
+
+        public static GameObject CreateLobbyInfoRow(Transform canvasTransform, string name, string title, int currentPlayer, int maxPlayer, string currentSong, float ping)
+        {
+            GameObject rowHolder = GameObject.Instantiate(_mainMultiplayerPanelPrefab.transform.Find("panelfg").gameObject, canvasTransform);
+            rowHolder.name = name;
+            GameObject.DestroyImmediate(rowHolder.transform.Find("FactText").gameObject);
+
+            rowHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(730, 60);
+            rowHolder.GetComponent<Image>().color = Color.green;
+
+            Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", title, Color.white);
+            lobbyTitleText.alignment = TextAnchor.UpperLeft;
+            lobbyTitleText.fontSize = 18;
+
+            Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{currentPlayer} / {maxPlayer} players", Color.white);
+            lobbyPlayerCount.alignment = TextAnchor.UpperRight;
+            lobbyPlayerCount.fontSize = 18;
+
+            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", currentSong, Color.white);
+            lobbyCurrentSongText.alignment = TextAnchor.LowerLeft;
+            lobbyCurrentSongText.fontSize = 18;
+
+            Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{ping} ms", Color.white);
+            lobbyPingText.alignment = TextAnchor.LowerRight;
+            lobbyPingText.fontSize = 18;
+
+            return rowHolder;
         }
 
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)
@@ -750,13 +775,16 @@ namespace TootTally.Graphics
 
         public static Text CreateSingleText(Transform canvasTransform, string name, string text, Color color)
         {
-            Text marqueeText = GameObject.Instantiate(_defaultText, canvasTransform);
-            marqueeText.name = name;
+            Text singleText = GameObject.Instantiate(_defaultText, canvasTransform);
+            singleText.name = name;
 
-            marqueeText.text = text;
-            marqueeText.color = color;
+            singleText.text = text;
+            singleText.color = color;
+            singleText.gameObject.GetComponent<RectTransform>().sizeDelta = canvasTransform.GetComponent<RectTransform>().sizeDelta;
 
-            return marqueeText;
+            singleText.gameObject.SetActive(true);
+
+            return singleText;
         }
 
         public static Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
