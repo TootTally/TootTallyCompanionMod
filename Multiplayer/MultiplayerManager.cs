@@ -41,9 +41,9 @@ namespace TootTally.Multiplayer
             _state = _previousState = MultiplayerController.MultiplayerState.None;
             _isSceneActive = true;
 
-            /*if (Plugin.userInfo.username != "emmett" || false) //temporary
+            if (Plugin.userInfo.username != "emmett" || false) //temporary
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.FirstTimePopUp);
-            else*/
+            else
                 UpdateMultiplayerState(MultiplayerController.MultiplayerState.LoadHome);
         }
 
@@ -75,6 +75,7 @@ namespace TootTally.Multiplayer
 
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
+
             #region MultiplayerButton
             GameObject multiplayerButton = GameObject.Instantiate(__instance.btncontainers[(int)HomeScreenButtonIndexes.Collect], mainMenu.transform);
             GameObject multiplayerHitbox = GameObject.Instantiate(mainMenu.transform.Find("Button2").gameObject, mainMenu.transform);
