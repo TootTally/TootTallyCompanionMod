@@ -19,6 +19,52 @@ namespace TootTally.Multiplayer
         private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static GameObject _activeLobbyPanel, _titlePanel, _lobbyInfoPanel, _buttonsPanel, _createLobbyPanel;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
+        private static List<SerializableClass.MultiplayerLobbyInfo> _lobbyInfoList;
+
+        #region LocalTesting
+        private static readonly SerializableClass.MultiplayerUserInfo _gristUser = new SerializableClass.MultiplayerUserInfo()
+        {
+            id = 0,
+            country = "USA",
+            rank = -1,
+            username = "gristCollector",
+            state = "null"
+        };
+
+        private static readonly SerializableClass.MultiplayerUserInfo _electrUser = new SerializableClass.MultiplayerUserInfo()
+        {
+            id = 1,
+            country = "CAD",
+            rank = 2,
+            username = "Electrostats",
+            state = "null"
+        };
+
+        private static readonly SerializableClass.MultiplayerUserInfo _gloomhonkUser = new SerializableClass.MultiplayerUserInfo()
+        {
+            id = 2,
+            country = "AUS",
+            rank = 20,
+            username = "GloomHonk",
+            state = "null"
+        };
+        private static readonly SerializableClass.MultiplayerUserInfo _lumpytfUser = new SerializableClass.MultiplayerUserInfo()
+        {
+            id = 3,
+            country = "MOM",
+            rank = 250000,
+            username = "Lumpytf",
+            state = "null"
+        };
+        private static readonly SerializableClass.MultiplayerUserInfo _jampotUser = new SerializableClass.MultiplayerUserInfo()
+        {
+            id = 4,
+            country = "DAD",
+            rank = 1,
+            username = "Jampot",
+            state = "null"
+        };
+        #endregion
 
         public MultiplayerController(PlaytestAnims __instance)
         {
@@ -38,6 +84,58 @@ namespace TootTally.Multiplayer
             _topBar = _mainPanel.transform.Find("top").gameObject;
             _topBarCanvasGroup = _topBar.GetComponent<CanvasGroup>();
             _mainTextCanvasGroup = _mainPanelFg.transform.Find("FactText").GetComponent<CanvasGroup>();
+
+            _lobbyInfoList = new List<SerializableClass.MultiplayerLobbyInfo>();
+        }
+
+        public void GetLobbyInfo()
+        {
+            _lobbyInfoList.Add(new SerializableClass.MultiplayerLobbyInfo()
+            {
+                id = 1,
+                name = "TestMulti1",
+                title = "gristCollector's Lobby",
+                maxPlayerCount = 16,
+                currentSong = "Never gonna give you up",
+                ping = 69f,
+                users = new List<SerializableClass.MultiplayerUserInfo> { _gristUser }
+            });
+            _lobbyInfoList.Add(new SerializableClass.MultiplayerLobbyInfo()
+            {
+                id = 2,
+                name = "TestMulti2",
+                title = "Electrostats's Lobby",
+                maxPlayerCount = 32,
+                currentSong = "Taps",
+                ping = 1f,
+                users = new List<SerializableClass.MultiplayerUserInfo> { _electrUser, _jampotUser }
+            });
+            _lobbyInfoList.Add(new SerializableClass.MultiplayerLobbyInfo()
+            {
+                id = 3,
+                name = "TestMulti3",
+                title = "Lumpytf's private room",
+                maxPlayerCount = 1,
+                currentSong = "Forever Alone",
+                ping = 12f,
+                users = new List<SerializableClass.MultiplayerUserInfo> { _lumpytfUser }
+            });
+            _lobbyInfoList.Add(new SerializableClass.MultiplayerLobbyInfo()
+            {
+                id = 4,
+                name = "TestMulti4",
+                title = "GloomHonk's Meme songs",
+                maxPlayerCount = 99,
+                currentSong = "tt is love tt is life",
+                ping = 224f,
+                users = new List<SerializableClass.MultiplayerUserInfo> { _gloomhonkUser }
+            });
+
+            GameObject leftPanelFG = _activeLobbyPanel.transform.Find("panelfg").gameObject;
+
+            foreach (SerializableClass.MultiplayerLobbyInfo multiLobbyInfo in _lobbyInfoList)
+                GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, $"{multiLobbyInfo.name}Lobby", multiLobbyInfo);
+
 
         }
 
@@ -75,12 +173,7 @@ namespace TootTally.Multiplayer
             VerticalLayoutGroup leftPanelLayoutGroup = _activeLobbyPanel.transform.Find("panelfg").gameObject.AddComponent<VerticalLayoutGroup>();
             leftPanelLayoutGroup.childForceExpandHeight = leftPanelLayoutGroup.childScaleHeight = leftPanelLayoutGroup.childControlHeight = false;
             leftPanelLayoutGroup.padding = new RectOffset(8, 8, 8, 8);
-            GameObject leftPanelFG = _activeLobbyPanel.transform.Find("panelfg").gameObject;
-
-            GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, "TestRow1", "gristCollector's Lobby", 1, 16, "Never gonna give you up", 69f);
-            GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, "TestRow2", "Electrostats's Lobby", 1, 32, "Taps", 1f);
-            GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, "TestRow3", "Lumpytf's private room", 1, 1, "Forever Alone", 12f);
-            GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, "TestRow4", "GloomHonk's Meme songs", 1, 99, "tt is love tt is life", 224f);
+            GetLobbyInfo();
             #endregion
 
             #region LobbyInfoPanel
@@ -162,7 +255,7 @@ namespace TootTally.Multiplayer
             if (_acceptButton != null)
                 GameObject.DestroyImmediate(_acceptButton);
             if (_declineButton != null)
-            GameObject.DestroyImmediate(_declineButton);
+                GameObject.DestroyImmediate(_declineButton);
         }
 
         public void OnExitAnimation()

@@ -191,6 +191,30 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public class MultiplayerLobbyInfo
+        {
+            public int id;
+            public string name;
+            public string title;
+            public int maxPlayerCount;
+            public string currentSong;
+            public float ping;
+            public List<MultiplayerUserInfo> users;
+        }
+
+        [Serializable]
+        public class MultiplayerUserInfo
+        {
+            public int id;
+            public string username;
+            public string country;
+            public int rank;
+            public string state; // states like "spectator" "ready" "not ready" etc.
+
+        }
+
+
+        [Serializable]
         public class ThunderstoreLatestData
         {
             public string version_number;

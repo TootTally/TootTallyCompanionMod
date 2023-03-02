@@ -657,7 +657,7 @@ namespace TootTally.Graphics
             return panel;
         }
 
-        public static GameObject CreateLobbyInfoRow(Transform canvasTransform, string name, string title, int currentPlayer, int maxPlayer, string currentSong, float ping)
+        public static GameObject CreateLobbyInfoRow(Transform canvasTransform, string name, SerializableClass.MultiplayerLobbyInfo lobbyInfo)
         {
             GameObject rowHolder = GameObject.Instantiate(_mainMultiplayerPanelPrefab.transform.Find("panelfg").gameObject, canvasTransform);
             rowHolder.name = name;
@@ -666,22 +666,22 @@ namespace TootTally.Graphics
             rowHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(730, 60);
             rowHolder.GetComponent<Image>().color = Color.gray;
 
-            Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", title, Color.white);
+            Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", lobbyInfo.title, Color.white);
             lobbyTitleText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5,-5);
             lobbyTitleText.alignment = TextAnchor.UpperLeft;
             lobbyTitleText.fontSize = 18;
 
-            Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{currentPlayer} / {maxPlayer} players", Color.white);
+            Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{lobbyInfo.users.Count} / {lobbyInfo.maxPlayerCount} players", Color.white);
             lobbyPlayerCount.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5,-5);
             lobbyPlayerCount.alignment = TextAnchor.UpperRight;
             lobbyPlayerCount.fontSize = 18;
 
-            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", currentSong, Color.white);
+            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentSong, Color.white);
             lobbyCurrentSongText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5,5);
             lobbyCurrentSongText.alignment = TextAnchor.LowerLeft;
             lobbyCurrentSongText.fontSize = 18;
 
-            Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{ping} ms", Color.white);
+            Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{lobbyInfo.ping} ms", Color.white);
             lobbyPingText.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5,5);
             lobbyPingText.alignment = TextAnchor.LowerRight;
             lobbyPingText.fontSize = 18;
