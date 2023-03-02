@@ -657,7 +657,7 @@ namespace TootTally.Graphics
             return panel;
         }
 
-        public static GameObject CreateLobbyInfoRow(Transform canvasTransform, string name, SerializableClass.MultiplayerLobbyInfo lobbyInfo)
+        public static GameObject CreateLobbyInfoRow(Transform canvasTransform, string name, SerializableClass.MultiplayerLobbyInfo lobbyInfo, Action OnRowClick)
         {
             GameObject rowHolder = GameObject.Instantiate(_mainMultiplayerPanelPrefab.transform.Find("panelfg").gameObject, canvasTransform);
             rowHolder.name = name;
@@ -685,6 +685,9 @@ namespace TootTally.Graphics
             lobbyPingText.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5,5);
             lobbyPingText.alignment = TextAnchor.LowerRight;
             lobbyPingText.fontSize = 18;
+
+            Button btn = rowHolder.AddComponent<Button>();
+            btn.onClick.AddListener(() => OnRowClick?.Invoke());
 
             return rowHolder;
         }

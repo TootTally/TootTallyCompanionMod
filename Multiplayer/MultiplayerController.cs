@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
@@ -20,6 +21,8 @@ namespace TootTally.Multiplayer
         private static GameObject _activeLobbyPanel, _titlePanel, _lobbyInfoPanel, _buttonsPanel, _createLobbyPanel;
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
         private static List<SerializableClass.MultiplayerLobbyInfo> _lobbyInfoList;
+        private static List<Text> _lobbyInfoTextList;
+        private static CustomButton _connectButton;
 
         #region LocalTesting
         private static readonly SerializableClass.MultiplayerUserInfo _gristUser = new SerializableClass.MultiplayerUserInfo()
@@ -28,7 +31,7 @@ namespace TootTally.Multiplayer
             country = "USA",
             rank = -1,
             username = "gristCollector",
-            state = "null"
+            state = "Ready"
         };
 
         private static readonly SerializableClass.MultiplayerUserInfo _electrUser = new SerializableClass.MultiplayerUserInfo()
@@ -37,7 +40,7 @@ namespace TootTally.Multiplayer
             country = "CAD",
             rank = 2,
             username = "Electrostats",
-            state = "null"
+            state = "Not Ready"
         };
 
         private static readonly SerializableClass.MultiplayerUserInfo _gloomhonkUser = new SerializableClass.MultiplayerUserInfo()
@@ -46,7 +49,7 @@ namespace TootTally.Multiplayer
             country = "AUS",
             rank = 20,
             username = "GloomHonk",
-            state = "null"
+            state = "Memeing"
         };
         private static readonly SerializableClass.MultiplayerUserInfo _lumpytfUser = new SerializableClass.MultiplayerUserInfo()
         {
@@ -54,7 +57,7 @@ namespace TootTally.Multiplayer
             country = "MOM",
             rank = 250000,
             username = "Lumpytf",
-            state = "null"
+            state = "AFK"
         };
         private static readonly SerializableClass.MultiplayerUserInfo _jampotUser = new SerializableClass.MultiplayerUserInfo()
         {
@@ -62,7 +65,7 @@ namespace TootTally.Multiplayer
             country = "DAD",
             rank = 1,
             username = "Jampot",
-            state = "null"
+            state = "Host (Song Select)"
         };
         #endregion
 
@@ -86,6 +89,8 @@ namespace TootTally.Multiplayer
             _mainTextCanvasGroup = _mainPanelFg.transform.Find("FactText").GetComponent<CanvasGroup>();
 
             _lobbyInfoList = new List<SerializableClass.MultiplayerLobbyInfo>();
+            _lobbyInfoTextList = new List<Text>();
+
         }
 
         public void GetLobbyInfo()
@@ -134,8 +139,7 @@ namespace TootTally.Multiplayer
             GameObject leftPanelFG = _activeLobbyPanel.transform.Find("panelfg").gameObject;
 
             foreach (SerializableClass.MultiplayerLobbyInfo multiLobbyInfo in _lobbyInfoList)
-                GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, $"{multiLobbyInfo.name}Lobby", multiLobbyInfo);
-
+                GameObjectFactory.CreateLobbyInfoRow(leftPanelFG.transform, $"{multiLobbyInfo.name}Lobby", multiLobbyInfo, delegate { DisplayLobbyInfo(multiLobbyInfo); });
 
         }
 
@@ -179,6 +183,9 @@ namespace TootTally.Multiplayer
             #region LobbyInfoPanel
             _lobbyInfoPanel = GameObjectFactory.CreateEmptyMultiplayerPanel(_mainPanelFg.transform, "LobbyInfoPanel", new Vector2(426, 280), new Vector2(402, -170));
             _lobbyInfoPanel.GetComponent<RectTransform>().localScale = Vector2.zero;
+            VerticalLayoutGroup lobbyInfoLayoutGroup = _lobbyInfoPanel.transform.Find("panelfg").gameObject.AddComponent<VerticalLayoutGroup>();
+            lobbyInfoLayoutGroup.childForceExpandHeight = lobbyInfoLayoutGroup.childScaleHeight = lobbyInfoLayoutGroup.childControlHeight = false;
+            lobbyInfoLayoutGroup.padding = new RectOffset(8, 8, 8, 8);
             #endregion
 
             #region ButtonsPanel
@@ -192,6 +199,26 @@ namespace TootTally.Multiplayer
 
 
             #endregion
+        }
+
+        public void DisplayLobbyInfo(SerializableClass.MultiplayerLobbyInfo lobbyInfo)
+        {
+            if (_lobbyInfoTextList.Count > 0)
+                _lobbyInfoTextList.ForEach(textObj => GameObject.DestroyImmediate(textObj.gameObject));
+            if (_connectButton != null)
+                GameObject.DestroyImmediate(_connectButton.gameObject);
+
+                _lobbyInfoTextList.Clear();
+            GameObject lobbyInfoPanelFG = _lobbyInfoPanel.transform.Find("panelfg").gameObject;
+            lobbyInfo.users.ForEach(user =>
+            {
+                Text currentText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"{user.username}TextInfo", $"#{user.rank} {user.username} : {user.state}", Color.white);
+                currentText.alignment = TextAnchor.MiddleLeft;
+                currentText.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 40);
+                _lobbyInfoTextList.Add(currentText);
+            });
+
+            _connectButton = GameObjectFactory.CreateCustomButton(lobbyInfoPanelFG.transform, Vector2.zero, Vector2.one * 50, "Connect", "ConnectButton", null);
         }
 
         public void OnCreateLobbyButtonClick()
@@ -236,9 +263,9 @@ namespace TootTally.Multiplayer
 
         public void OnAcceptButtonClick()
         {
-            MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadHome);
             AnimationManager.AddNewSizeDeltaAnimation(_acceptButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) => DestroyFactTextTopBarAndAcceptDeclineButtons());
+            MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadHome);
             _currentInstance.sfx_ok.Play();
         }
 
