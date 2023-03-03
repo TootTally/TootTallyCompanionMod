@@ -21,7 +21,8 @@ namespace TootTally.Multiplayer
         private static GameObject _activeLobbyPanel, _titlePanel, _lobbyInfoPanel, _buttonsPanel, _createLobbyPanel;
 
         private static GameObject _lobbyNameInputHolder, _lobbyPasswordInputHolder;
-        private static Text _lobbyNameText, _lobbyPasswordText;
+        private static Text _lobbyNameText, _lobbyPasswordText, _lobbyMaxPlayerText;
+        private static int _createLobbyMaxPlayerCount;
 
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
         private static List<SerializableClass.MultiplayerLobbyInfo> _lobbyInfoList;
@@ -143,10 +144,6 @@ namespace TootTally.Multiplayer
                 ping = 224f,
                 users = new List<SerializableClass.MultiplayerUserInfo> { _gloomhonkUser }
             });
-
-
-            
-
         }
 
         public void AddAcceptDeclineButtonsToPanelFG()
@@ -195,6 +192,7 @@ namespace TootTally.Multiplayer
             leftPanelLayoutGroup.childForceExpandHeight = leftPanelLayoutGroup.childScaleHeight = leftPanelLayoutGroup.childControlHeight = false;
             leftPanelLayoutGroup.padding = new RectOffset(8, 8, 8, 8);
             GetLobbyInfo();
+            RefreshAllLobbyInfo();
             #endregion
 
             #region LobbyInfoPanel
@@ -216,8 +214,7 @@ namespace TootTally.Multiplayer
             GameObject lobbyPanelFG = _createLobbyPanel.transform.Find("panelfg").gameObject;
             VerticalLayoutGroup lobbyPanelLayoutGroup = lobbyPanelFG.AddComponent<VerticalLayoutGroup>();
 
-
-            Plugin.LogInfo("creating lobbyNameText");
+            //Lobby Name Input Field
             _lobbyNameText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyNameText", $"{Plugin.userInfo.username}'s Lobby", Color.white);
             _lobbyNameInputHolder = GameObject.Instantiate(_lobbyNameText.gameObject, _lobbyNameText.transform);
             _lobbyNameInputHolder.name = "LobbyNameInput";
@@ -230,6 +227,7 @@ namespace TootTally.Multiplayer
             lobbyNameInputField.image.color = GameTheme.themeColors.leaderboard.rowEntry;
             lobbyNameInputField.text = $"{Plugin.userInfo.username}'s Lobby";
 
+            //Lobby Password Input Field
             _lobbyPasswordText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyPasswordText", $"Password", Color.white);
             _lobbyPasswordInputHolder = GameObject.Instantiate(_lobbyPasswordText.gameObject, _lobbyPasswordText.transform);
             _lobbyPasswordInputHolder.name = "LobbyPasswordInput";
@@ -242,9 +240,33 @@ namespace TootTally.Multiplayer
             lobbyPasswordInputField.image.color = GameTheme.themeColors.leaderboard.rowEntry;
             lobbyPasswordInputField.text = $"Password";
 
+            _createLobbyMaxPlayerCount = 8;
+            _lobbyMaxPlayerText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyMaxPlayerText", $"Max Player: {_createLobbyMaxPlayerCount}", Color.white);
+            _lobbyMaxPlayerText.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-250, -76), new Vector2(30, 30), "▲", "IncreaseMaxPlayerButton", OnIncreaseMaxPlayerButtonPress);
+            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-460, -76), new Vector2(30, 30), "▼", "DecreaseMaxPlayerButton", OnDecreaseMaxPlayerButtonPress);
+
+
 
 
             #endregion
+        }
+
+        public void OnIncreaseMaxPlayerButtonPress()
+        {
+            _createLobbyMaxPlayerCount++;
+            UpdateMaxPlayerText();
+        }
+
+        public void OnDecreaseMaxPlayerButtonPress()
+        {
+            _createLobbyMaxPlayerCount--;
+            UpdateMaxPlayerText();
+        }
+
+        public void UpdateMaxPlayerText()
+        {
+            _lobbyMaxPlayerText.text = $"Max Player: {_createLobbyMaxPlayerCount}";
         }
 
         public void DisplayLobbyInfo(SerializableClass.MultiplayerLobbyInfo lobbyInfo)
@@ -298,7 +320,7 @@ namespace TootTally.Multiplayer
             _lobbyInfoTextList.Clear();
             GameObject lobbyInfoPanelFG = _lobbyInfoPanel.transform.Find("panelfg").gameObject;
 
-            Text lobbyNameText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyNameInfo", $"{_lobbyNameText.name}", Color.white);
+            Text lobbyNameText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyNameInfo", $"{_lobbyNameText.text}", Color.white);
             lobbyNameText.alignment = TextAnchor.MiddleLeft;
             lobbyNameText.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 40);
             _lobbyInfoTextList.Add(lobbyNameText);
