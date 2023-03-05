@@ -154,11 +154,10 @@ namespace TootTally.Multiplayer
             _declineButtonCanvasGroup = _declineButton.AddComponent<CanvasGroup>();
         }
 
-        public void OnMultiplayerHomeScreenEnter()
+        public void OnLoadPanelsScreensState()
         {
             DestroyFactTextTopBarAndAcceptDeclineButtons();
             AddHomeScreenPanelsToMainPanel();
-            AnimateHomeScreenPanels();
         }
 
         public void RefreshAllLobbyInfo()
@@ -367,11 +366,19 @@ namespace TootTally.Multiplayer
             AnimationManager.AddNewPositionAnimation(_mainPanel, new Vector2(0, -20), 2f, new EasingHelper.SecondOrderDynamics(1.25f, 1f, 0f));
         }
 
+        public void OnEnterState()
+        {
+            if (Plugin.userInfo.username != "emmett" || false) //temporary
+                MultiplayerManager.UpdateMultiplayerState(MultiplayerController.MultiplayerState.FirstTimePopUp);
+            else
+                MultiplayerManager.UpdateMultiplayerState(MultiplayerController.MultiplayerState.LoadPanels);
+        }
+
         public void OnAcceptButtonClick()
         {
             AnimationManager.AddNewSizeDeltaAnimation(_acceptButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             AnimationManager.AddNewSizeDeltaAnimation(_declineButton, Vector2.zero, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) => DestroyFactTextTopBarAndAcceptDeclineButtons());
-            MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadHome);
+            MultiplayerManager.UpdateMultiplayerState(MultiplayerState.LoadPanels);
             _currentInstance.sfx_ok.Play();
         }
 
@@ -396,13 +403,27 @@ namespace TootTally.Multiplayer
             AnimationManager.AddNewScaleAnimation(_mainPanel, Vector2.zero, 2f, new EasingHelper.SecondOrderDynamics(.75f, 1f, 0f));
         }
 
+        public void AnimatePanelPositions(Vector2 newTitlePanelPosition, Vector2 newActiveLobbyPanelPosition, Vector2 newButtonsPanelPosition, Vector2 newLobbyInfoPanelPosition, Vector2 newCreateLobbyPanelPosition)
+        {
+            if (newTitlePanelPosition != null)
+                AnimationManager.AddNewPositionAnimation(_titlePanel, newTitlePanelPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (newActiveLobbyPanelPosition != null)
+                AnimationManager.AddNewPositionAnimation(_activeLobbyPanel, newActiveLobbyPanelPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (newButtonsPanelPosition != null)
+                AnimationManager.AddNewPositionAnimation(_buttonsPanel, newButtonsPanelPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (newLobbyInfoPanelPosition != null)
+                AnimationManager.AddNewPositionAnimation(_lobbyInfoPanel, newLobbyInfoPanelPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (newCreateLobbyPanelPosition != null)
+                AnimationManager.AddNewPositionAnimation(_createLobbyPanel, newCreateLobbyPanelPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+        }
 
 
         public enum MultiplayerState
         {
             None,
+            Enter,
             FirstTimePopUp,
-            LoadHome,
+            LoadPanels,
             Home,
             CreatingLobby,
             Lobby,

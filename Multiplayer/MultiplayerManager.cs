@@ -40,11 +40,7 @@ namespace TootTally.Multiplayer
 
             _state = _previousState = MultiplayerController.MultiplayerState.None;
             _isSceneActive = true;
-
-            if (Plugin.userInfo.username != "emmett" || false) //temporary
-                UpdateMultiplayerState(MultiplayerController.MultiplayerState.FirstTimePopUp);
-            else
-                UpdateMultiplayerState(MultiplayerController.MultiplayerState.LoadHome);
+            UpdateMultiplayerState(MultiplayerController.MultiplayerState.Enter);
         }
 
         [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
@@ -54,7 +50,12 @@ namespace TootTally.Multiplayer
             if (!_isSceneActive) return;
 
             if (Input.GetKeyDown(KeyCode.Escape) && _state != MultiplayerController.MultiplayerState.ExitScene)
-                UpdateMultiplayerState(MultiplayerController.MultiplayerState.ExitScene);
+            {
+                if (_state == MultiplayerController.MultiplayerState.CreatingLobby)
+                    UpdateMultiplayerState(MultiplayerController.MultiplayerState.Home);
+                else if (_state == MultiplayerController.MultiplayerState.Home)
+                    UpdateMultiplayerState(MultiplayerController.MultiplayerState.ExitScene);
+            }
 
         }
 
@@ -241,16 +242,22 @@ namespace TootTally.Multiplayer
             Plugin.LogInfo($"Multiplayer state changed from {_previousState} to {_state}");
             switch (_state)
             {
-                case MultiplayerController.MultiplayerState.FirstTimePopUp:
+                case MultiplayerController.MultiplayerState.Enter:
                     _multiController.EnterMainPanelAnimation();
+                    _multiController.OnEnterState();
+                    break;
+                case MultiplayerController.MultiplayerState.FirstTimePopUp:
                     _multiController.AddAcceptDeclineButtonsToPanelFG();
                     break;
-                case MultiplayerController.MultiplayerState.LoadHome:
-                    if (_previousState == MultiplayerController.MultiplayerState.None)
-                        _multiController.EnterMainPanelAnimation();
-                    _multiController.OnMultiplayerHomeScreenEnter();
+                case MultiplayerController.MultiplayerState.LoadPanels:
+                    _multiController.OnLoadPanelsScreensState();
+                    _multiController.AnimateHomeScreenPanels();
                     break;
                 case MultiplayerController.MultiplayerState.Home:
+                    _multiController.AnimatePanelPositions(new Vector2(0, 284), new Vector2(-240, -28), new Vector2(402, -170), new Vector2(402, 114), new Vector2(1041, -28));
+                    break;
+                case MultiplayerController.MultiplayerState.CreatingLobby:
+                    _multiController.AnimatePanelPositions(new Vector2(0, 284), new Vector2(-1047, -28), new Vector2(-405, -170), new Vector2(-405, 114), new Vector2(234, -28));
                     break;
                 case MultiplayerController.MultiplayerState.Lobby:
                     break;
@@ -266,6 +273,8 @@ namespace TootTally.Multiplayer
                     break;
             }
         }
+
+
 
         public static void UpdateMultiplayerState(MultiplayerController.MultiplayerState newState)
         {
