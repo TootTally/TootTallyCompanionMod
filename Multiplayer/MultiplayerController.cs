@@ -20,8 +20,8 @@ namespace TootTally.Multiplayer
         private static GameObject _mainPanel, _mainPanelFg, _mainPanelBorder, _acceptButton, _declineButton, _topBar;
         private static GameObject _activeLobbyPanel, _titlePanel, _lobbyInfoPanel, _buttonsPanel, _createLobbyPanel;
 
-        private static GameObject _lobbyNameInputHolder, _lobbyPasswordInputHolder;
-        private static Text _lobbyNameText, _lobbyPasswordText, _lobbyMaxPlayerText;
+        private static GameObject _lobbyTitleInputHolder, _lobbyPasswordInputHolder;
+        private static Text _lobbyNameTitle, _lobbyPasswordText, _lobbyMaxPlayerText;
         private static int _createLobbyMaxPlayerCount;
 
         private static CanvasGroup _acceptButtonCanvasGroup, _topBarCanvasGroup, _mainTextCanvasGroup, _declineButtonCanvasGroup;
@@ -109,8 +109,9 @@ namespace TootTally.Multiplayer
                 id = 1,
                 name = "TestMulti1",
                 title = "gristCollector's Lobby",
+                password = "",
                 maxPlayerCount = 16,
-                currentSong = "Never gonna give you up",
+                currentState = "Playing: Never gonna give you up",
                 ping = 69f,
                 users = new List<SerializableClass.MultiplayerUserInfo> { _gristUser }
             });
@@ -119,8 +120,9 @@ namespace TootTally.Multiplayer
                 id = 2,
                 name = "TestMulti2",
                 title = "Electrostats's Lobby",
+                password = "RocketLeague",
                 maxPlayerCount = 32,
-                currentSong = "Taps",
+                currentState = "Playing: Taps",
                 ping = 1f,
                 users = new List<SerializableClass.MultiplayerUserInfo> { _electrUser, _jampotUser }
             });
@@ -129,8 +131,9 @@ namespace TootTally.Multiplayer
                 id = 3,
                 name = "TestMulti3",
                 title = "Lumpytf's private room",
+                password = "",
                 maxPlayerCount = 1,
-                currentSong = "Forever Alone",
+                currentState = "Selecting Song",
                 ping = 12f,
                 users = new List<SerializableClass.MultiplayerUserInfo> { _lumpytfUser }
             });
@@ -139,8 +142,9 @@ namespace TootTally.Multiplayer
                 id = 4,
                 name = "TestMulti4",
                 title = "GloomHonk's Meme songs",
+                password = "420blazeit",
                 maxPlayerCount = 99,
-                currentSong = "tt is love tt is life",
+                currentState = "Playing: tt is love tt is life",
                 ping = 224f,
                 users = new List<SerializableClass.MultiplayerUserInfo> { _gloomhonkUser }
             });
@@ -214,17 +218,18 @@ namespace TootTally.Multiplayer
             VerticalLayoutGroup lobbyPanelLayoutGroup = lobbyPanelFG.AddComponent<VerticalLayoutGroup>();
 
             //Lobby Name Input Field
-            _lobbyNameText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyNameText", $"{Plugin.userInfo.username}'s Lobby", Color.white);
-            _lobbyNameInputHolder = GameObject.Instantiate(_lobbyNameText.gameObject, _lobbyNameText.transform);
-            _lobbyNameInputHolder.name = "LobbyNameInput";
-            GameObject.DestroyImmediate(_lobbyNameInputHolder.GetComponent<Text>());
+            _lobbyNameTitle = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyNameText", $"{Plugin.userInfo.username}'s Lobby", Color.white);
+            _lobbyTitleInputHolder = GameObject.Instantiate(_lobbyNameTitle.gameObject, _lobbyNameTitle.transform);
+            _lobbyTitleInputHolder.name = "LobbyNameInput";
+            GameObject.DestroyImmediate(_lobbyTitleInputHolder.GetComponent<Text>());
 
-            InputField lobbyNameInputField = _lobbyNameInputHolder.AddComponent<InputField>();
-            lobbyNameInputField.textComponent = _lobbyNameText;
+            InputField lobbyNameInputField = _lobbyTitleInputHolder.AddComponent<InputField>();
+            lobbyNameInputField.textComponent = _lobbyNameTitle;
             lobbyNameInputField.textComponent.alignment = TextAnchor.MiddleCenter;
-            lobbyNameInputField.image = _lobbyNameInputHolder.AddComponent<Image>();
+            lobbyNameInputField.image = _lobbyTitleInputHolder.AddComponent<Image>();
             lobbyNameInputField.image.color = GameTheme.themeColors.leaderboard.rowEntry;
             lobbyNameInputField.text = $"{Plugin.userInfo.username}'s Lobby";
+            lobbyNameInputField.onValueChanged.AddListener((sender) => UpdateCreateLobbyInfo());
 
             //Lobby Password Input Field
             _lobbyPasswordText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyPasswordText", $"Password", Color.white);
@@ -238,29 +243,21 @@ namespace TootTally.Multiplayer
             lobbyPasswordInputField.image = _lobbyPasswordInputHolder.AddComponent<Image>();
             lobbyPasswordInputField.image.color = GameTheme.themeColors.leaderboard.rowEntry;
             lobbyPasswordInputField.text = $"Password";
+            lobbyPasswordInputField.onValueChanged.AddListener((sender) => UpdateCreateLobbyInfo());
 
             _createLobbyMaxPlayerCount = 8;
             _lobbyMaxPlayerText = GameObjectFactory.CreateSingleText(lobbyPanelFG.transform, "LobbyMaxPlayerText", $"Max Player: {_createLobbyMaxPlayerCount}", Color.white);
             _lobbyMaxPlayerText.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-250, -76), new Vector2(30, 30), "▲", "IncreaseMaxPlayerButton", OnIncreaseMaxPlayerButtonPress);
-            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-460, -76), new Vector2(30, 30), "▼", "DecreaseMaxPlayerButton", OnDecreaseMaxPlayerButtonPress);
-
-
-
-
+            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-250, -76), new Vector2(30, 30), "▲", "IncreaseMaxPlayerButton", delegate { OnMaxPlayerButtonPress(1); });
+            GameObjectFactory.CreateCustomButton(_lobbyMaxPlayerText.transform, new Vector2(-460, -76), new Vector2(30, 30), "▼", "DecreaseMaxPlayerButton", delegate { OnMaxPlayerButtonPress(-1); });
             #endregion
         }
 
-        public void OnIncreaseMaxPlayerButtonPress()
+        public void OnMaxPlayerButtonPress(int countChange)
         {
-            _createLobbyMaxPlayerCount++;
+            _createLobbyMaxPlayerCount += countChange;
             UpdateMaxPlayerText();
-        }
-
-        public void OnDecreaseMaxPlayerButtonPress()
-        {
-            _createLobbyMaxPlayerCount--;
-            UpdateMaxPlayerText();
+            UpdateLobbyInfoData();
         }
 
         public void UpdateMaxPlayerText()
@@ -274,6 +271,8 @@ namespace TootTally.Multiplayer
                 _lobbyInfoTextList.ForEach(textObj => GameObject.DestroyImmediate(textObj.gameObject));
             if (_connectButton != null)
                 GameObject.DestroyImmediate(_connectButton.gameObject);
+            if (_createLobbyButton != null)
+                GameObject.DestroyImmediate(_createLobbyButton.gameObject);
 
             _lobbyInfoTextList.Clear();
             GameObject lobbyInfoPanelFG = _lobbyInfoPanel.transform.Find("panelfg").gameObject;
@@ -291,19 +290,12 @@ namespace TootTally.Multiplayer
         public void OnHostLobbyButtonClick()
         {
             MultiplayerManager.UpdateMultiplayerState(MultiplayerState.CreatingLobby);
-            GameObject leftPanelFG = _activeLobbyPanel.transform.Find("panelfg").gameObject;
-            Vector2 animationPositionOffset = Vector2.zero;
-            animationPositionOffset.x = leftPanelFG.GetComponent<RectTransform>().sizeDelta.x + 57;
-            AnimationManager.AddNewPositionAnimation(_activeLobbyPanel, _activeLobbyPanel.GetComponent<RectTransform>().anchoredPosition - animationPositionOffset, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-            AnimationManager.AddNewPositionAnimation(_buttonsPanel, _buttonsPanel.GetComponent<RectTransform>().anchoredPosition - animationPositionOffset, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-            AnimationManager.AddNewPositionAnimation(_lobbyInfoPanel, _lobbyInfoPanel.GetComponent<RectTransform>().anchoredPosition - animationPositionOffset, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-            AnimationManager.AddNewPositionAnimation(_createLobbyPanel, _createLobbyPanel.GetComponent<RectTransform>().anchoredPosition - animationPositionOffset, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-
             _createLobbyInfo = new SerializableClass.MultiplayerLobbyInfo()
             {
                 id = _lobbyInfoList.Count,
                 maxPlayerCount = 16,
-                name = _lobbyNameText.text,
+                title = _lobbyNameTitle.text,
+                currentState = "",
                 users = new List<SerializableClass.MultiplayerUserInfo>()
             };
             UpdateCreateLobbyInfo();
@@ -312,24 +304,41 @@ namespace TootTally.Multiplayer
         public void UpdateCreateLobbyInfo()
         {
             if (_lobbyInfoTextList.Count > 0)
+            {
                 _lobbyInfoTextList.ForEach(textObj => GameObject.DestroyImmediate(textObj.gameObject));
+                _lobbyInfoTextList.Clear();
+            }
+
             if (_connectButton != null)
                 GameObject.DestroyImmediate(_connectButton.gameObject);
 
-            _lobbyInfoTextList.Clear();
             GameObject lobbyInfoPanelFG = _lobbyInfoPanel.transform.Find("panelfg").gameObject;
 
-            Text lobbyNameText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyNameInfo", $"{_lobbyNameText.text}", Color.white);
+            if (_createLobbyButton == null)
+                _createLobbyButton = GameObjectFactory.CreateCustomButton(lobbyInfoPanelFG.transform, Vector2.zero, Vector2.one * 50, "Create Lobby", "CreateLobbyButton", delegate { CreateNewLobby(_createLobbyInfo); });
+
+            var lobbyTitle = _lobbyTitleInputHolder.GetComponent<InputField>().text;
+            var lobbyPassword = _lobbyPasswordInputHolder.GetComponent<InputField>().text;
+
+            Text lobbyNameText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyNameInfo", $"{lobbyTitle}", Color.white);
             lobbyNameText.alignment = TextAnchor.MiddleLeft;
             lobbyNameText.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 40);
             _lobbyInfoTextList.Add(lobbyNameText);
 
-            Text lobbyPasswordText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyPasswordInfo", $"{_lobbyPasswordText.text}", Color.white);
+            Text lobbyPasswordText = GameObjectFactory.CreateSingleText(lobbyInfoPanelFG.transform, $"CreateLobbyPasswordInfo", $"{lobbyPassword}", Color.white);
             lobbyPasswordText.alignment = TextAnchor.MiddleLeft;
             lobbyPasswordText.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 40);
             _lobbyInfoTextList.Add(lobbyPasswordText);
 
-            _createLobbyButton = GameObjectFactory.CreateCustomButton(lobbyInfoPanelFG.transform, Vector2.zero, Vector2.one * 50, "Create Lobby", "CreateLobbyButton", delegate { CreateNewLobby(_createLobbyInfo); });
+            UpdateLobbyInfoData();
+        }
+
+        public void UpdateLobbyInfoData()
+        {
+            _createLobbyInfo.maxPlayerCount = _createLobbyMaxPlayerCount;
+            _createLobbyInfo.title = _lobbyTitleInputHolder.GetComponent<InputField>().text;
+            _createLobbyInfo.password = _lobbyPasswordInputHolder.GetComponent<InputField>().text;
+            _createLobbyInfo.currentState = "Waiting for players";
         }
 
         public void CreateNewLobby(SerializableClass.MultiplayerLobbyInfo lobbyInfo)
@@ -345,14 +354,6 @@ namespace TootTally.Multiplayer
             {
                 AnimationManager.AddNewScaleAnimation(_titlePanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(_activeLobbyPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-
-                //testing button
-                /*CustomButton selectSongButton = GameObjectFactory.CreateCustomButton(leftPanel.transform, Vector2.zero, new Vector2(200, 200), "SelectSong", "SelectSongButton", delegate
-                {
-                    MultiplayerManager.UpdateMultiplayerState(MultiplayerState.SelectSong);
-                });
-                selectSongButton.GetComponent<RectTransform>().localScale = Vector2.zero;
-                AnimationManager.AddNewScaleAnimation(selectSongButton.gameObject, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));*/
 
                 AnimationManager.AddNewScaleAnimation(_buttonsPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                 AnimationManager.AddNewScaleAnimation(_lobbyInfoPanel, Vector2.one, .8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));

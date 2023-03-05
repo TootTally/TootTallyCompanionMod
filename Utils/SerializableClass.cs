@@ -196,8 +196,9 @@ namespace TootTally.Utils
             public int id;
             public string name;
             public string title;
+            public string password;
             public int maxPlayerCount;
-            public string currentSong;
+            public string currentState;
             public float ping;
             public List<MultiplayerUserInfo> users;
         }

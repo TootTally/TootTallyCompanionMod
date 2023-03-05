@@ -676,7 +676,7 @@ namespace TootTally.Graphics
             lobbyPlayerCount.alignment = TextAnchor.UpperRight;
             lobbyPlayerCount.fontSize = 18;
 
-            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentSong, Color.white);
+            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentState, Color.white);
             lobbyCurrentSongText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5,5);
             lobbyCurrentSongText.alignment = TextAnchor.LowerLeft;
             lobbyCurrentSongText.fontSize = 18;
