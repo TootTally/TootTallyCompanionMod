@@ -326,20 +326,22 @@ namespace TootTally.Replays
             var trackRef = GlobalVariables.chosen_track;
             var track = TrackLookup.lookup(trackRef);
 
-            StartAPICallCoroutine(
-                SongDataHelper.GetSongHash(track),
-                SongDataHelper.GetSongFilePath(track),
-                track is CustomTrack);
+            StartAPICallCoroutine(track);
         }
 
-        public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
+        public static void StartAPICallCoroutine(TromboneTrack track)
         {
+            var songHash = SongDataHelper.GetSongHash(track);
+            var songFilePath = SongDataHelper.GetSongFilePath(track);
+            var isCustom = track is CustomTrack;
+
             Plugin.LogInfo($"Requesting UUID for {songHash}");
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
                 {
-                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(songFilePath);
+                    // Theoretically could just simplify to GenerateBaseTmb, but that might change custom track hashes
+                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(track);
                     SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {

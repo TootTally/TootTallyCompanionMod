@@ -79,9 +79,10 @@ namespace TootTally.Utils.Helpers
             return track is CustomTrack ? CalcFileHash(GetSongFilePath(track)) : track.trackref;
         }
 
-        public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
+        public static string GenerateBaseTmb(TromboneTrack track)
         {
-            if (singleTrackData == null) singleTrackData = GlobalVariables.chosen_track_data;
+            var singleTrackData = TrackLookup.toTrackData(track);
+            var songFilePath = GetSongFilePath(track);
 
             var tmb = new SerializableClass.TMBData
             {

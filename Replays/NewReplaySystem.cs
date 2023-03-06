@@ -125,8 +125,7 @@ namespace TootTally.Replays
             }
             else
             {
-                var filePath = $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
-                var tmb = SongDataHelper.GenerateBaseTmb(filePath);
+                var tmb = SongDataHelper.GenerateBaseTmb(track);
                 songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
 
