@@ -1,12 +1,13 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Globalization;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-using System.Text;
+using BaboonAPI.Hooks.Tracks;
+using Newtonsoft.Json;
+using TrombLoader.CustomTracks;
 using TrombLoader.Helpers;
 using UnityEngine;
 
@@ -53,20 +54,30 @@ namespace TootTally.Utils.Helpers
             return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
         }
 
-        public static string GetSongFilePath(string trackRef)
+        public static string GetSongFilePath(TromboneTrack track)
         {
-            return Globals.IsCustomTrack(trackRef) ?
-                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
-                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
+            if (track is CustomTrack ct)
+            {
+                return Path.Combine(ct.folderPath, Globals.defaultChartName);
+            }
+            else
+            {
+                return $"{Application.streamingAssetsPath}/leveldata/{track.trackref}.tmb";
+            }
         }
 
         public static string GetChoosenSongHash()
         {
             string trackRef = GlobalVariables.chosen_track_data.trackref;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            return isCustom ? GetSongHash(trackRef) : trackRef;
+            var track = TrackLookup.lookup(trackRef);
+
+            return GetSongHash(track);
         }
-        public static string GetSongHash(string trackref) => SongDataHelper.CalcFileHash(GetSongFilePath(trackref));
+
+        public static string GetSongHash(TromboneTrack track)
+        {
+            return track is CustomTrack ? CalcFileHash(GetSongFilePath(track)) : track.trackref;
+        }
 
         public static string GenerateBaseTmb(string songFilePath, SingleTrackData singleTrackData = null)
         {

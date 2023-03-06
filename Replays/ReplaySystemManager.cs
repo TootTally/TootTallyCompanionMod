@@ -1,14 +1,15 @@
-﻿using BepInEx;
-using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using BaboonAPI.Hooks.Tracks;
+using BepInEx;
+using HarmonyLib;
 using TootTally.Compatibility;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
-using TrombLoader.Helpers;
+using TrombLoader.CustomTracks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Scripting;
@@ -322,12 +323,13 @@ namespace TootTally.Replays
 
         public static void SetReplayUUID()
         {
-            string trackRef = GlobalVariables.chosen_track;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
-            string songHash = isCustom ? SongDataHelper.CalcFileHash(songFilePath) : trackRef;
+            var trackRef = GlobalVariables.chosen_track;
+            var track = TrackLookup.lookup(trackRef);
 
-            StartAPICallCoroutine(songHash, songFilePath, isCustom);
+            StartAPICallCoroutine(
+                SongDataHelper.GetSongHash(track),
+                SongDataHelper.GetSongFilePath(track),
+                track is CustomTrack);
         }
 
         public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
