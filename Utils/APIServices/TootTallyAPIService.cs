@@ -1,12 +1,8 @@
-﻿using BepInEx;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using BepInEx;
+using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.Helpers;
 using UnityEngine;

@@ -1,7 +1,5 @@
-﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using HarmonyLib;
 using TootTally.CustomLeaderboard;
 using TootTally.Replays;
 using TootTally.Utils;

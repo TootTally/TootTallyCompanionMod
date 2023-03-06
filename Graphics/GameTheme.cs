@@ -1,12 +1,10 @@
-﻿using BepInEx;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Text;
+using BepInEx;
+using Newtonsoft.Json;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
-using Newtonsoft.Json;
 
 namespace TootTally.Graphics
 {

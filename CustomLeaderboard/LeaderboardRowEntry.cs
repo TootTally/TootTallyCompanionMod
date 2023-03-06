@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TootTally.Graphics;
+﻿using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
 

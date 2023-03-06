@@ -1,24 +1,12 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
-using UnityEngine;
-using UnityEngine.Networking;
-using System;
-using System.Linq;
-using System.IO;
-using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
-using TrombLoader.Helpers;
-using UnityEngine.UI;
+using TootTally.CustomLeaderboard;
+using TootTally.Discord;
 using TootTally.Graphics;
 using TootTally.Replays;
 using TootTally.Utils;
-using TootTally.CustomLeaderboard;
-using TootTally.Utils.Helpers;
-using TootTally.Discord;
-using BepInEx.Bootstrap;
 
 namespace TootTally
 {
