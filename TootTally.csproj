@@ -21,19 +21,4 @@
 	<ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
 		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<Reference Include="AutoToot">
-			<HintPath>$(TromboneChampDir)\BepInEx\plugins\AutoToot.dll</HintPath>
-		</Reference>
-		<Reference Include="HoverToot">
-			<HintPath>$(TromboneChampDir)\BepInEx\plugins\HoverToot.dll</HintPath>
-		</Reference>
-		<Reference Include="TrombSettings">
-			<HintPath>$(TromboneChampDir)\BepInEx\plugins\TrombSettings.dll</HintPath>
-		</Reference>
-		<Reference Include="DiscordSDK">
-			<HintPath>$(TromboneChampDir)\BepInEx\plugins\discord_game_sdk.dll</HintPath>
-		</Reference>
-	</ItemGroup>
 </Project>
