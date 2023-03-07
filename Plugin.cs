@@ -92,13 +92,13 @@ namespace TootTally
             {
                 if (userInfo == null)
                 {
-                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser(user =>
                     {
                         if (user != null)
                             OnUserLogin(user);
                     }));
 
-                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
+                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
                         {
@@ -114,7 +114,7 @@ namespace TootTally
             {
                 //in case they failed to login. Try logging in again
                 if (userInfo == null || userInfo.username == "Guest")
-                    Instance.StartCoroutine(TootTallyAPIService.GetUser((user) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetUser(user =>
                     {
                         if (user != null)
                             OnUserLogin(user);
@@ -124,7 +124,7 @@ namespace TootTally
             private static void OnUserLogin(SerializableClass.User user)
             {
                 userInfo = user;
-                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, (allowSubmit) =>
+                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));

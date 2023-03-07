@@ -149,7 +149,7 @@ namespace TootTally.CustomLeaderboard
 
             if (_currentLeaderboardCoroutines.Count != 0) CancelAndClearAllCoroutineInList();
 
-            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, track is CustomTrack, (songHashInDB) =>
+            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, track is CustomTrack, songHashInDB =>
             {
                 if (songHashInDB == 0)
                 {
@@ -164,7 +164,7 @@ namespace TootTally.CustomLeaderboard
                     _currentSelectedSongHash = songHashInDB;
                 _songData = null;
                 _scoreDataList = null;
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, (songData) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, songData =>
                 {
                     if (songData != null)
                     {
@@ -187,7 +187,7 @@ namespace TootTally.CustomLeaderboard
                         CancelAndClearAllCoroutineInList();
                 }));
                 Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, scoreDataList =>
                 {
                     if (scoreDataList != null)
                     {

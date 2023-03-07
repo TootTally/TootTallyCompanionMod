@@ -163,7 +163,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.GetText()).results[0];
+                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.text).results[0];
                 callback(songData);
             }
             else
@@ -183,7 +183,7 @@ namespace TootTally.Utils
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
-                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.GetText());
+                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.text);
                 foreach (SerializableClass.ScoreDataFromDB score in leaderboardInfo.results)
                 {
                     scoreList.Add(score);

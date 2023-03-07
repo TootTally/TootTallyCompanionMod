@@ -305,7 +305,7 @@ namespace TootTally.Replays
 
                 case NewReplaySystem.ReplayState.ReplayLoadNotFound:
                     PopUpNotifManager.DisplayNotif("Downloading replay...", GameTheme.themeColors.notification.defaultText);
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, uuid =>
                     {
                         ResolveLoadReplay(uuid, levelSelectControllerInstance);
                     }));
@@ -345,11 +345,11 @@ namespace TootTally.Replays
                     SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
                     }));
                 }
                 else if (songHashInDB != 0)
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
 
 
             }));
