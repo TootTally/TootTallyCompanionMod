@@ -249,11 +249,6 @@ namespace TootTally.Utils
                     hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location))
                 };
 
-                if (mod.name == "CircularBreathing")
-                {
-                    PopUpNotifManager.DisplayNotif("Circular Breathing detected!\n Uninstall the mod to submit scores on TootTally.", GameTheme.themeColors.notification.warningText, 9.5f);
-                    allowSubmit = false;
-                }
                 mods.Add(mod);
             }
 

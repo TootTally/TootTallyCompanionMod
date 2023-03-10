@@ -378,6 +378,7 @@ namespace TootTally.Replays
 
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
+            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated) return; // Don't submit anything if Circular Breathing is enabled
             if (_hasPaused) return; //Don't submit if paused during the play
             if (_replayUUID == null) return;//Dont save or upload if no UUID
 
