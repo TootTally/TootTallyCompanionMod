@@ -23,8 +23,7 @@ namespace TootTally.Compatibility
             {
                 var cbPlugin = BepInEx.Bootstrap.Chainloader.PluginInfos["CircularBreathing"];
                 var cbConfig = cbPlugin.Instance.Config;
-                Plugin.LogInfo(((bool) cbConfig["General", "Circular Breathing Enabled"].BoxedValue).ToString());
-                return true;
+                return (bool) cbConfig["General", "Circular Breathing Enabled"].BoxedValue;
             }
         }
     }
