@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace TootTally.Compatibility
 {
@@ -20,15 +21,10 @@ namespace TootTally.Compatibility
         {
             get
             {
-                Type cb = Type.GetType("CircularBreathing.Plugin, CircularBreathing");
-                if (cb == null)
-                {
-                    Plugin.Instance.Log("CircularBreathing.Plugin not found.");
-                    return false;
-                }
-                var cbActivated = cb.GetMethod("get_circularBreathingEnabled");
-                var cbConfigEntry = (BepInEx.Configuration.ConfigEntry<bool>) cbActivated.Invoke(null, null);
-                return cbConfigEntry.Value;
+                var cbPlugin = BepInEx.Bootstrap.Chainloader.PluginInfos["CircularBreathing"];
+                var cbConfig = cbPlugin.Instance.Config;
+                Plugin.LogInfo(((bool) cbConfig["General", "Circular Breathing Enabled"].BoxedValue).ToString());
+                return true;
             }
         }
     }
