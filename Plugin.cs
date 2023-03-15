@@ -10,7 +10,6 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using BepInEx.Bootstrap;
-using TootTally.Multiplayer;
 using TootTally.Graphics.Animation;
 
 namespace TootTally
@@ -72,7 +71,6 @@ namespace TootTally
             Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
             Harmony.CreateAndPatchAll(typeof(GameThemeManager));
             Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
-            Harmony.CreateAndPatchAll(typeof(MultiplayerManager));
             Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
             Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
             Harmony.CreateAndPatchAll(typeof(DiscordRPC));
@@ -86,7 +84,31 @@ namespace TootTally
 
         }
 
-        public static void AddModule(ITootTallyModule module) => tootTallyModules.Add(module);
+        public static void AddModule(ITootTallyModule module)
+        {
+            tootTallyModules.Add(module);
+            if (!module.IsConfigInitialized)
+            {
+                module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                module.IsConfigInitialized = true;
+            }
+            if (module.ModuleConfigEnabled.Value)
+                module.LoadModule();
+        }
+
+        private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
+        {
+            if (module.ModuleConfigEnabled.Value)
+            {
+                module.LoadModule();
+                PopUpNotifManager.DisplayNotif($"Module {module.Name} Enabled.", GameTheme.themeColors.notification.defaultText);
+            }
+            else
+            {
+                module.UnloadModule();
+                PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
+            }
+        }
 
         private class UserLogin
         {
@@ -121,38 +143,6 @@ namespace TootTally
                     }));
                 }
             }
-
-            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-            [HarmonyPrefix]
-            public static void OnHomeControllerStartLoadModules()
-            {
-                foreach (ITootTallyModule module in Plugin.tootTallyModules)
-                {
-                    if (!module.IsConfigInitialized)
-                    {
-                        module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
-                        module.IsConfigInitialized = true;
-                    }
-                    if (module.ModuleConfigEnabled.Value)
-                        module.LoadModule();
-                }
-
-            }
-
-            private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
-            {
-                if (module.ModuleConfigEnabled.Value)
-                {
-                    module.LoadModule();
-                    PopUpNotifManager.DisplayNotif($"Module {module.Name} Enabled.", GameTheme.themeColors.notification.defaultText);
-                }
-                else
-                {
-                    module.UnloadModule();
-                    PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
-                }
-            }
-
 
             private static List<SerializableClass.Message> _messagesReceived;
 
