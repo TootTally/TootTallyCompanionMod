@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TootTally.Utils.Helpers
+﻿namespace TootTally.Utils.Helpers
 {
     public static class GameObjectPathHelper
     {

@@ -1,14 +1,15 @@
-﻿using BepInEx;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using BaboonAPI.Hooks.Tracks;
+using BepInEx;
+using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
-using TrombLoader.Helpers;
+using TrombLoader.CustomTracks;
 using UnityEngine;
 
 namespace TootTally.Replays
@@ -114,18 +115,19 @@ namespace TootTally.Replays
 
         public string GetRecordedReplayJson(string uuid, float targetFramerate)
         {
-            string songNameLong = GlobalVariables.chosen_track_data.trackname_long;
-            string trackRef = GlobalVariables.chosen_track_data.trackref;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
+            var trackRef = GlobalVariables.chosen_track_data.trackref;
+            var track = TrackLookup.lookup(trackRef);
             string songHash;
-            if (!isCustom)
+
+            if (track is CustomTrack)
             {
-                string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
-                string tmb = SongDataHelper.GenerateBaseTmb(songFilePath);
-                songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+                songHash = SongDataHelper.GetSongHash(track);
             }
             else
-                songHash = SongDataHelper.GetSongHash(trackRef);
+            {
+                var tmb = SongDataHelper.GenerateBaseTmb(track);
+                songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
+            }
 
             string username = Plugin.userInfo.username;
 
@@ -139,7 +141,7 @@ namespace TootTally.Replays
             replayJson.endtime = endDateTimeUnix;
             replayJson.uuid = uuid;
             replayJson.input = inputType;
-            replayJson.song = songNameLong;
+            replayJson.song = track.trackname_long;
             replayJson.samplerate = targetFramerate;
             replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
             replayJson.pluginbuilddate = Plugin.BUILDDATE;
@@ -268,7 +270,7 @@ namespace TootTally.Replays
         {
             var newCursorPosition = EasingHelper.Lerp(_lastPosition, _nextPositionTarget, (_lastTiming - currentMapPosition) / (_lastTiming - _nextTimingTarget));
             SetCursorPosition(__instance, newCursorPosition);
-            __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450 
+            __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
         }
 
         private void PlaybackFrameData(float currentMapPosition, GameController __instance)
@@ -278,10 +280,10 @@ namespace TootTally.Replays
                 _lastTiming = _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder];
                 _lastPosition = _frameData[_frameIndex][(int)FrameDataStructure.PointerPosition] / 100f;
             }
-            
+
             while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex][(int)FrameDataStructure.NoteHolder]) //smaller or equal to because noteholder goes toward negative
             {
-                
+
                 if (_frameIndex < _frameData.Count - 1)
                 {
                     _nextTimingTarget = _frameData[_frameIndex + 1][(int)FrameDataStructure.NoteHolder];

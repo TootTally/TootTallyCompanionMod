@@ -1,24 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using HarmonyLib;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using TootTally.Replays;
-using TrombLoader.Helpers;
-using UnityEngine;
-using UnityEngine.Bindings;
-using UnityEngine.Networking;
-using UnityEngine.Networking.Match;
-using UnityEngine.Playables;
-using UnityEngine.SocialPlatforms.Impl;
-using UnityEngine.UI;
+using BaboonAPI.Hooks.Tracks;
 using TootTally.Graphics;
 using TootTally.Utils;
-using UnityEngine.EventSystems;
 using TootTally.Utils.Helpers;
+using TrombLoader.CustomTracks;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace TootTally.CustomLeaderboard
 {
@@ -104,7 +95,7 @@ namespace TootTally.CustomLeaderboard
             _diffRatingMaskRectangle.sizeDelta = new Vector2(0, 30);
             diffStarsHolder.AddComponent<Mask>();
             Image imageMask = diffStarsHolder.AddComponent<Image>();
-            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__? 
+            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
             _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
             _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
@@ -152,13 +143,13 @@ namespace TootTally.CustomLeaderboard
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
             _scrollAcceleration = 0;
 
-            string trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songHash = GetChoosenSongHash(trackRef);
+            var trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
+            var track = TrackLookup.lookup(trackRef);
+            var songHash = SongDataHelper.GetSongHash(track);
 
             if (_currentLeaderboardCoroutines.Count != 0) CancelAndClearAllCoroutineInList();
 
-            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, track is CustomTrack, songHashInDB =>
             {
                 if (songHashInDB == 0)
                 {
@@ -173,7 +164,7 @@ namespace TootTally.CustomLeaderboard
                     _currentSelectedSongHash = songHashInDB;
                 _songData = null;
                 _scoreDataList = null;
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, (songData) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, songData =>
                 {
                     if (songData != null)
                     {
@@ -196,7 +187,7 @@ namespace TootTally.CustomLeaderboard
                         CancelAndClearAllCoroutineInList();
                 }));
                 Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, scoreDataList =>
                 {
                     if (scoreDataList != null)
                     {
@@ -335,12 +326,6 @@ namespace TootTally.CustomLeaderboard
                 _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
         }
 
-        private static string GetChoosenSongHash(string trackRef)
-        {
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            return isCustom ? GetSongHash(trackRef) : trackRef;
-        }
-
         private void SetTabsImages()
         {
             for (int i = 0; i < 3; i++)
@@ -354,14 +339,6 @@ namespace TootTally.CustomLeaderboard
 
             }
             _tabs.SetActive(true);
-        }
-
-        private static string GetSongHash(string trackRef) => SongDataHelper.CalcFileHash(GetSongFilePath(true, trackRef));
-        private static string GetSongFilePath(bool isCustom, string trackRef)
-        {
-            return isCustom ?
-                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
-                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
         }
 
         public enum LeaderboardState
