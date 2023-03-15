@@ -2,16 +2,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Networking;
-using System;
-using System.Linq;
-using System.IO;
 using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
-using TrombLoader.Helpers;
-using UnityEngine.UI;
 using TootTally.Graphics;
 using TootTally.Replays;
 using TootTally.Utils;
@@ -19,9 +10,6 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using BepInEx.Bootstrap;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
-using UnityEngine.Events;
 using TootTally.Multiplayer;
 using TootTally.Graphics.Animation;
 
@@ -48,6 +36,10 @@ namespace TootTally
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
+        public static List<ITootTallyModule> tootTallyModules { get; private set; }
+
+        public object moduleSettings { get; private set; }
+
         public void Log(string msg)
         {
             LogInfo(msg);
@@ -69,6 +61,8 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, APIKey);
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
+            tootTallyModules = new List<ITootTallyModule>();
+            moduleSettings = OptionalTrombSettings.GetConfigPage("TootTallyModules"); // create the Modules page
 
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
@@ -92,6 +86,8 @@ namespace TootTally
 
         }
 
+        public static void AddModule(ITootTallyModule module) => tootTallyModules.Add(module);
+
         private class UserLogin
         {
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
@@ -114,9 +110,6 @@ namespace TootTally
                             }
 
                         }
-
-
-
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
@@ -128,6 +121,38 @@ namespace TootTally
                     }));
                 }
             }
+
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPrefix]
+            public static void OnHomeControllerStartLoadModules()
+            {
+                foreach (ITootTallyModule module in Plugin.tootTallyModules)
+                {
+                    if (!module.IsConfigInitialized)
+                    {
+                        module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                        module.IsConfigInitialized = true;
+                    }
+                    if (module.ModuleConfigEnabled.Value)
+                        module.LoadModule();
+                }
+
+            }
+
+            private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
+            {
+                if (module.ModuleConfigEnabled.Value)
+                {
+                    module.LoadModule();
+                    PopUpNotifManager.DisplayNotif($"Module {module.Name} Enabled.", GameTheme.themeColors.notification.defaultText);
+                }
+                else
+                {
+                    module.UnloadModule();
+                    PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
+                }
+            }
+
 
             private static List<SerializableClass.Message> _messagesReceived;
 
