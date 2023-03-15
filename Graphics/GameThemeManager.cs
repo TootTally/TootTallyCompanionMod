@@ -118,7 +118,10 @@ namespace TootTally.Graphics
                 if (Directory.Exists(sourceThemePath))
                     Directory.Move(sourceThemePath, targetThemePath);
                 else
+                {
                     Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
+                    return;
+                }
             }
 
             SetTheme(option.Theme.Value);

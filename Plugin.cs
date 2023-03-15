@@ -62,7 +62,7 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
             tootTallyModules = new List<ITootTallyModule>();
-            moduleSettings = OptionalTrombSettings.GetConfigPage("TootTallyModules"); // create the Modules page
+            moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
 
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
