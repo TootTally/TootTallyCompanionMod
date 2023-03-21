@@ -14,6 +14,14 @@ namespace TootTally.Graphics.Animation
         private static List<CustomAnimation> _animationToRemove;
         private static bool _isInitialized;
 
+        public static CustomAnimation AddNewTransformPositionAnimation(GameObject gameObject, Vector3 targetVector,
+            float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.position, targetVector, 1f, timeSpan, CustomAnimation.VectorType.TransformPosition, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+
         public static CustomAnimation AddNewPositionAnimation(GameObject gameObject, Vector2 targetVector,
             float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
@@ -34,6 +42,13 @@ namespace TootTally.Graphics.Animation
            float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, gameObject.GetComponent<RectTransform>().localScale, targetVector, 1f, timeSpan, CustomAnimation.VectorType.Scale, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+        public static CustomAnimation AddNewTransformScaleAnimation(GameObject gameObject, Vector2 targetVector,
+           float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.localScale, targetVector, 1f, timeSpan, CustomAnimation.VectorType.TransformScale, secondDegreeAnimation, true, onFinishCallback);
             AddToList(anim);
             return anim;
         }

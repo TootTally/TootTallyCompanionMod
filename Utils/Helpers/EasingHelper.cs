@@ -43,14 +43,14 @@ namespace TootTally.Utils.Helpers
         /// -------------
         public class SecondOrderDynamics
         {
-            public Vector2 startVector;
-            public Vector2 newVector, speed;
+            public Vector3 startVector;
+            public Vector3 newVector, speed;
             public float f, z, r;
 
             public SecondOrderDynamics(float f, float z, float r)
             {
                 SetConstants(f, z, r);
-                startVector = newVector = speed = Vector2.zero;
+                startVector = newVector = speed = Vector3.zero;
             }
 
 
@@ -70,12 +70,12 @@ namespace TootTally.Utils.Helpers
                 this.r = r * z / PI2f;
             }
 
-            public void SetStartVector(Vector2 startPosition) => this.startVector = newVector = startPosition;
+            public void SetStartVector(Vector3 startPosition) => this.startVector = newVector = startPosition;
 
 
-            public Vector2 GetNewVector(Vector2 destination, float deltaTime)
+            public Vector3 GetNewVector(Vector3 destination, float deltaTime)
             {
-                Vector2 estimatedVelocity = (destination - startVector) / deltaTime;
+                Vector3 estimatedVelocity = (destination - startVector) / deltaTime;
                 startVector = destination;
 
                 float z_stable = Mathf.Max(z, deltaTime * deltaTime / 2 + deltaTime * f / 2, deltaTime * f);

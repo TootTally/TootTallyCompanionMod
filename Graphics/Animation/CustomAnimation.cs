@@ -9,7 +9,7 @@ namespace TootTally.Graphics.Animation
     public class CustomAnimation
     {
         private GameObject _gameObject;
-        private Vector2 _targetVector;
+        private Vector3 _targetVector;
         private float _speedMultiplier, _timeSpan;
         private EasingHelper.SecondOrderDynamics _secondDegreeAnimation;
         private bool _disposeOnFinish;
@@ -17,7 +17,7 @@ namespace TootTally.Graphics.Animation
         private VectorType _vectorType;
         private bool _isAlreadyDisposed;
 
-        public CustomAnimation(GameObject gameObject, Vector2 startingVector, Vector2 targetVector, float speedMultiplier,
+        public CustomAnimation(GameObject gameObject, Vector3 startingVector, Vector3 targetVector, float speedMultiplier,
             float timeSpan, VectorType vectorType, EasingHelper.SecondOrderDynamics secondDegreeAnimation, bool disposeOnFinish, Action<GameObject> onFinishCallback = null)
         {
             _gameObject = gameObject;
@@ -31,9 +31,9 @@ namespace TootTally.Graphics.Animation
             _secondDegreeAnimation.SetStartVector(startingVector);
         }
 
-        public void SetStartVector(Vector2 startVector) => _secondDegreeAnimation.SetStartVector(startVector);
+        public void SetStartVector(Vector3 startVector) => _secondDegreeAnimation.SetStartVector(startVector);
 
-        public void SetTargetVector(Vector2 targetVector) => _targetVector = targetVector;
+        public void SetTargetVector(Vector3 targetVector) => _targetVector = targetVector;
 
         public void UpdateVector()
         {
@@ -59,6 +59,12 @@ namespace TootTally.Graphics.Animation
             {
                 switch (_vectorType)
                 {
+                    case VectorType.TransformScale:
+                        _gameObject.transform.localScale = _secondDegreeAnimation.GetNewVector(_targetVector, delta * _speedMultiplier);
+                        break;
+                    case VectorType.TransformPosition:
+                        _gameObject.transform.position = _secondDegreeAnimation.GetNewVector(_targetVector, delta * _speedMultiplier);
+                        break;
                     case VectorType.Position:
                         _gameObject.GetComponent<RectTransform>().anchoredPosition = _secondDegreeAnimation.GetNewVector(_targetVector, delta * _speedMultiplier);
                         break;
@@ -81,6 +87,8 @@ namespace TootTally.Graphics.Animation
 
         public enum VectorType
         {
+            TransformScale,
+            TransformPosition,
             Position,
             SizeDelta,
             Scale,
