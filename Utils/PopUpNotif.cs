@@ -23,6 +23,7 @@ namespace TootTally.Utils
         public void SetText(string message) => _text = message;
         public void SetTextSize(int size) => _textHolder.fontSize = size;
 
+        public void SetTextAlign(TextAnchor textAnchor) => _textHolder.alignment = textAnchor;
         public void UpdateText(string text) => _textHolder.text = _text = text;
         public void SetTextColor(Color color) => _textColor = color;
         public void Initialize(float lifespan, Vector2 endPosition)
