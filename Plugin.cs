@@ -57,6 +57,9 @@ namespace TootTally
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
+
+            tootTallyModules = new List<ITootTallyModule>();
+            moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
             
             GameInitializationEvent.Register(Info, TryInitialize);
         }
@@ -70,8 +73,6 @@ namespace TootTally
                 OptionalTrombSettings.Add(settings, APIKey);
                 OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
             }
-            tootTallyModules = new List<ITootTallyModule>();
-            moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
 
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
@@ -96,6 +97,7 @@ namespace TootTally
 
         public static void AddModule(ITootTallyModule module)
         {
+            if (tootTallyModules == null) LogInfo("tootTallyModules IS NULL");
             tootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
@@ -103,7 +105,9 @@ namespace TootTally
                 module.IsConfigInitialized = true;
             }
             if (module.ModuleConfigEnabled.Value)
+            {
                 module.LoadModule();
+            }
         }
 
         private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
