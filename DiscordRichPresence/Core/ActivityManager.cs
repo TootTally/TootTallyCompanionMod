@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TootTally.Discord.Core
+﻿namespace TootTally.Discord.Core
 {
     public partial class ActivityManager
     {

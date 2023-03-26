@@ -1,10 +1,7 @@
-﻿using BepInEx;
+﻿using System.IO;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;

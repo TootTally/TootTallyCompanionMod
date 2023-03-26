@@ -1,14 +1,15 @@
-﻿using BepInEx;
-using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using BaboonAPI.Hooks.Tracks;
+using BepInEx;
+using HarmonyLib;
 using TootTally.Compatibility;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
-using TrombLoader.Helpers;
+using TrombLoader.CustomTracks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Scripting;
@@ -306,7 +307,7 @@ namespace TootTally.Replays
 
                 case NewReplaySystem.ReplayState.ReplayLoadNotFound:
                     PopUpNotifManager.DisplayNotif("Downloading replay...", GameTheme.themeColors.notification.defaultText);
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, (uuid) =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadReplay(replayId, uuid =>
                     {
                         ResolveLoadReplay(uuid, levelSelectControllerInstance);
                     }));
@@ -324,30 +325,33 @@ namespace TootTally.Replays
 
         public static void SetReplayUUID()
         {
-            string trackRef = GlobalVariables.chosen_track;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songFilePath = SongDataHelper.GetSongFilePath(trackRef);
-            string songHash = isCustom ? SongDataHelper.CalcFileHash(songFilePath) : trackRef;
+            var trackRef = GlobalVariables.chosen_track;
+            var track = TrackLookup.lookup(trackRef);
 
-            StartAPICallCoroutine(songHash, songFilePath, isCustom);
+            StartAPICallCoroutine(track);
         }
 
-        public static void StartAPICallCoroutine(string songHash, string songFilePath, bool isCustom)
+        public static void StartAPICallCoroutine(TromboneTrack track)
         {
+            var songHash = SongDataHelper.GetSongHash(track);
+            var songFilePath = SongDataHelper.GetSongFilePath(track);
+            var isCustom = track is CustomTrack;
+
             Plugin.LogInfo($"Requesting UUID for {songHash}");
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
                 {
-                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(songFilePath);
+                    // Theoretically could just simplify to GenerateBaseTmb, but that might change custom track hashes
+                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(track);
                     SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
                     {
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
                     }));
                 }
                 else if (songHashInDB != 0)
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), (UUID) => _replayUUID = UUID));
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
 
 
             }));
@@ -380,6 +384,7 @@ namespace TootTally.Replays
 
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
+            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated) return; // Don't submit anything if Circular Breathing is enabled
             if (_hasPaused) return; //Don't submit if paused during the play
             if (_replayUUID == null) return;//Dont save or upload if no UUID
 

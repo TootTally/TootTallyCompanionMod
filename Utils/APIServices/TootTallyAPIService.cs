@@ -1,12 +1,8 @@
-﻿using BepInEx;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using BepInEx;
+using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.Helpers;
 using UnityEngine;
@@ -245,7 +241,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.GetText()).results[0];
+                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.text).results[0];
                 callback(songData);
             }
             else
@@ -265,7 +261,7 @@ namespace TootTally.Utils
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
-                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.GetText());
+                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.text);
                 foreach (SerializableClass.ScoreDataFromDB score in leaderboardInfo.results)
                 {
                     scoreList.Add(score);
@@ -327,12 +323,6 @@ namespace TootTally.Utils
                     hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location))
                 };
 
-                //Put banned mods here
-                if (mod.name == "CircularBreathing")
-                {
-                    PopUpNotifManager.DisplayNotif("Circular Breathing detected!\n Uninstall the mod to submit scores on TootTally.", GameTheme.themeColors.notification.warningText, 9.5f);
-                    allowSubmit = false;
-                }
                 mods.Add(mod);
             }
 

@@ -16,7 +16,7 @@ namespace TootTally
             get
             {
                 if (_enabled == null)
-                    _enabled = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("TrombSettings");
+                    _enabled = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.hypersonicsharkz.trombsettings");
                 return (bool)_enabled;
             }
         }

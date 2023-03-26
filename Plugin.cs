@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using BaboonAPI.Hooks.Initializer;
+using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -38,6 +40,7 @@ namespace TootTally
         public static List<ITootTallyModule> tootTallyModules { get; private set; }
 
         public object moduleSettings { get; private set; }
+        private Harmony _harmony;
 
         public void Log(string msg)
         {
@@ -49,11 +52,19 @@ namespace TootTally
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
 
+            _harmony = new Harmony(Info.Metadata.GUID);
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
-            object settings = OptionalTrombSettings.GetConfigPage("TootTally");
+            
+            GameInitializationEvent.Register(Info, TryInitialize);
+        }
+
+        private void TryInitialize()
+        {
+            var settings = OptionalTrombSettings.GetConfigPage("TootTally");
             if (settings != null)
             {
                 OptionalTrombSettings.Add(settings, AllowTMBUploads);
@@ -66,14 +77,14 @@ namespace TootTally
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
 
-            Harmony.CreateAndPatchAll(typeof(UserLogin));
-            Harmony.CreateAndPatchAll(typeof(AnimationManager));
-            Harmony.CreateAndPatchAll(typeof(GameObjectFactory));
-            Harmony.CreateAndPatchAll(typeof(GameThemeManager));
-            Harmony.CreateAndPatchAll(typeof(PopUpNotifManager));
-            Harmony.CreateAndPatchAll(typeof(ReplaySystemManager));
-            Harmony.CreateAndPatchAll(typeof(GlobalLeaderboardManager));
-            Harmony.CreateAndPatchAll(typeof(DiscordRPC));
+            _harmony.PatchAll(typeof(UserLogin));
+            _harmony.PatchAll(typeof(AnimationManager));
+            _harmony.PatchAll(typeof(GameObjectFactory));
+            _harmony.PatchAll(typeof(GameThemeManager));
+            _harmony.PatchAll(typeof(PopUpNotifManager));
+            _harmony.PatchAll(typeof(ReplaySystemManager));
+            _harmony.PatchAll(typeof(GlobalLeaderboardManager));
+            _harmony.PatchAll(typeof(DiscordRPC));
 
             LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             LogInfo($"Game Version: {GlobalVariables.version}");
@@ -134,7 +145,7 @@ namespace TootTally
                         }
                     }));
 
-                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion((version) =>
+                    Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
                         {
@@ -187,7 +198,7 @@ namespace TootTally
             {
                 _messagesReceived = new List<SerializableClass.Message>();
                 userInfo = user;
-                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, (allowSubmit) =>
+                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
