@@ -11,7 +11,6 @@ using TootTally.Utils;
 using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
 using TootTally.Discord;
-using BepInEx.Bootstrap;
 using TootTally.Graphics.Animation;
 
 namespace TootTally
