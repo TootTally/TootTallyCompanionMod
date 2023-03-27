@@ -39,6 +39,32 @@ namespace TootTally.Utils
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = lifespan;
         }
+        public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize)
+        {
+            this._rectTransform = gameObject.GetComponent<RectTransform>();
+            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.3f, 0.75f, 0.75f);
+            SetTransitionToNewPosition(endPosition);
+            this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<Text>();
+            _textHolder.GetComponent<RectTransform>().sizeDelta = textRectSize;
+            _textHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(.5f, 0) * textRectSize;
+            _textHolder.text = _text;
+            _textHolder.color = _textColor;
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            _lifespan = lifespan;
+        }
+        public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize, Vector2 textPosition)
+        {
+            this._rectTransform = gameObject.GetComponent<RectTransform>();
+            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.3f, 0.75f, 0.75f);
+            SetTransitionToNewPosition(endPosition);
+            this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<Text>();
+            _textHolder.GetComponent<RectTransform>().sizeDelta = textRectSize;
+            _textHolder.GetComponent<RectTransform>().anchoredPosition = textPosition;
+            _textHolder.text = _text;
+            _textHolder.color = _textColor;
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            _lifespan = lifespan;
+        }
 
         public void SetTransitionConstants(float f, float z, float r) => _secondOrderDynamic.SetConstants(f, z, r);
 
