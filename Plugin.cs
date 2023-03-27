@@ -40,6 +40,7 @@ namespace TootTally
 
         public object moduleSettings { get; private set; }
         private Harmony _harmony;
+        private object settingsPage = null;
 
         public void Log(string msg)
         {
@@ -59,6 +60,7 @@ namespace TootTally
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
 
             tootTallyModules = new List<ITootTallyModule>();
+            settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
             moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
             
             GameInitializationEvent.Register(Info, TryInitialize);
@@ -66,12 +68,11 @@ namespace TootTally
 
         private void TryInitialize()
         {
-            var settings = OptionalTrombSettings.GetConfigPage("TootTally");
-            if (settings != null)
+            if (settingsPage != null)
             {
-                OptionalTrombSettings.Add(settings, AllowTMBUploads);
-                OptionalTrombSettings.Add(settings, APIKey);
-                OptionalTrombSettings.Add(settings, ShouldDisplayToasts);
+                OptionalTrombSettings.Add(settingsPage, AllowTMBUploads);
+                OptionalTrombSettings.Add(settingsPage, APIKey);
+                OptionalTrombSettings.Add(settingsPage, ShouldDisplayToasts);
             }
 
             AssetManager.LoadAssets();
