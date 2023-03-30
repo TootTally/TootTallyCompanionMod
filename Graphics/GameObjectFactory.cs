@@ -456,7 +456,7 @@ namespace TootTally.Graphics
             Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
             title.text = "TootTally Login";
             title.color = GameTheme.themeColors.notification.defaultText;
-            subtitle.text = "This is a pop up test to Login on TootTally.";
+            subtitle.text = "This is an early version of TootTally's in-game login page.";
             subtitle.color = GameTheme.themeColors.notification.defaultText;
 
 
