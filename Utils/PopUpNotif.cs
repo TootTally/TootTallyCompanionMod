@@ -31,6 +31,7 @@ namespace TootTally.Utils
             this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<Text>();
             _textHolder.GetComponent<RectTransform>().sizeDelta = _rectTransform.sizeDelta - Vector2.one * 20;
             _textHolder.GetComponent<RectTransform>().anchoredPosition += new Vector2(1, -1) * 10;
+            _textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             _textHolder.text = _text;
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
