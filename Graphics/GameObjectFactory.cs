@@ -67,14 +67,22 @@ namespace TootTally.Graphics
         {
             if (_isLevelSelectControllerInitialized) return;
 
+            Plugin.LogInfo("Generating Slider prefab...");
             SetSliderPrefab();
+            Plugin.LogInfo("Generating VerticalSlider prefab...");
             SetVerticalSliderPrefab();
+            Plugin.LogInfo("Generating GlobalLeaderboard prefab...");
             SetSteamLeaderboardPrefab();
+            Plugin.LogInfo("Generating SingleScore prefab...");
             SetSingleScorePrefab();
+            Plugin.LogInfo("Generating Leaderboard Header prefab...");
             SetLeaderboardHeaderPrefab();
+            Plugin.LogInfo("Generating Leaderboard prefab...");
             SetLeaderboardTextPrefab();
+            Plugin.LogInfo("Generating Single Leaderboard Row prefab...");
             SetSingleRowPrefab();
             _isLevelSelectControllerInitialized = true;
+            Plugin.LogInfo("Applying theme...");
             UpdatePrefabTheme();
         }
 
