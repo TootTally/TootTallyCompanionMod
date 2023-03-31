@@ -1,7 +1,5 @@
-﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +23,9 @@ namespace TootTally.Utils
             _notifCanvas = new GameObject("NotifCanvas");
             Canvas canvas = _notifCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _notifCanvas.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = _notifCanvas.AddComponent<CanvasScaler>();
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
             GameObject.DontDestroyOnLoad(_notifCanvas);
             _activeNotificationList = new List<PopUpNotif>();

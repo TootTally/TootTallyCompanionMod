@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
 
 namespace TootTally.Utils
 {
@@ -82,13 +80,30 @@ namespace TootTally.Utils
             public string version;
             public string hash;
         }
-
+        
         [Serializable]
         public class ModInfoAPI
         {
             public string apiKey;
             public SendableModInfo[] mods;
         }
+
+        
+
+        [Serializable]
+        public class Message
+        {
+            public string author;
+            public string message;
+            public string sent_on;
+        }
+
+        [Serializable]
+        public class APIMessages
+        {
+            public List<Message> results;
+        }
+
 
         [Serializable]
         public class APISubmission
@@ -97,6 +112,27 @@ namespace TootTally.Utils
         }
 
         [Serializable]
+        public class APISignUp
+        {
+            public string username;
+            public string password;
+            public string pass_check;
+        }
+
+        [Serializable]
+        public class APILogin
+        {
+            public string username;
+            public string password;
+        }
+
+        [Serializable]
+        public class LoginToken
+        {
+            public string token;
+		}
+		
+		[Serializable]
         public class ReplayStart
         {
             public string id;
@@ -148,7 +184,34 @@ namespace TootTally.Utils
             public float tt;
             public int rank;
             public bool allowSubmit;
+            public string email;
+            public string api_key;
         }
+
+        [Serializable]
+        public class MultiplayerLobbyInfo
+        {
+            public int id;
+            public string name;
+            public string title;
+            public string password;
+            public int maxPlayerCount;
+            public string currentState;
+            public float ping;
+            public List<MultiplayerUserInfo> users;
+        }
+
+        [Serializable]
+        public class MultiplayerUserInfo
+        {
+            public int id;
+            public string username;
+            public string country;
+            public int rank;
+            public string state; // states like "spectator" "ready" "not ready" etc.
+
+        }
+
 
         [Serializable]
         public class ThunderstoreLatestData

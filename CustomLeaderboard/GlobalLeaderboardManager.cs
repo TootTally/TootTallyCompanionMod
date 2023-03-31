@@ -1,22 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using HarmonyLib;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using TootTally.Replays;
-using TrombLoader.Helpers;
 using UnityEngine;
-using UnityEngine.Bindings;
-using UnityEngine.Networking;
-using UnityEngine.Networking.Match;
-using UnityEngine.Playables;
-using UnityEngine.SocialPlatforms.Impl;
-using UnityEngine.UI;
-using TootTally.Graphics;
-using TootTally.Utils;
 
 namespace TootTally.CustomLeaderboard
 {

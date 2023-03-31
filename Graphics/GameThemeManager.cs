@@ -1,10 +1,7 @@
-﻿using BepInEx;
+﻿using System.IO;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
@@ -118,7 +115,10 @@ namespace TootTally.Graphics
                 if (Directory.Exists(sourceThemePath))
                     Directory.Move(sourceThemePath, targetThemePath);
                 else
+                {
                     Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
+                    return;
+                }
             }
 
             SetTheme(option.Theme.Value);

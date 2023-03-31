@@ -1,24 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using HarmonyLib;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using TootTally.Replays;
-using TrombLoader.Helpers;
-using UnityEngine;
-using UnityEngine.Bindings;
-using UnityEngine.Networking;
-using UnityEngine.Networking.Match;
-using UnityEngine.Playables;
-using UnityEngine.SocialPlatforms.Impl;
-using UnityEngine.UI;
+using BaboonAPI.Hooks.Tracks;
 using TootTally.Graphics;
 using TootTally.Utils;
-using UnityEngine.EventSystems;
 using TootTally.Utils.Helpers;
+using TrombLoader.CustomTracks;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace TootTally.CustomLeaderboard
 {
@@ -104,14 +95,13 @@ namespace TootTally.CustomLeaderboard
             _diffRatingMaskRectangle.sizeDelta = new Vector2(0, 30);
             diffStarsHolder.AddComponent<Mask>();
             Image imageMask = diffStarsHolder.AddComponent<Image>();
-            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__? 
+            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
             _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
             _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
             _diffRating.fontSize = 20;
             _diffRating.alignment = TextAnchor.MiddleRight;
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
-            _diffRating.gameObject.SetActive(true);
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
         }
@@ -152,20 +142,20 @@ namespace TootTally.CustomLeaderboard
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
             _scrollAcceleration = 0;
 
-            string trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            string songHash = GetChoosenSongHash(trackRef);
+            var trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
+            var track = TrackLookup.lookup(trackRef);
+            var songHash = SongDataHelper.GetSongHash(track);
 
             if (_currentLeaderboardCoroutines.Count != 0) CancelAndClearAllCoroutineInList();
 
-            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, isCustom, (songHashInDB) =>
+            _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetHashInDB(songHash, track is CustomTrack, songHashInDB =>
             {
                 if (songHashInDB == 0)
                 {
                     _errorText.text = ERROR_NO_SONGHASH_FOUND_TEXT;
                     callback(LeaderboardState.ErrorNoSongHashFound);
                     _diffRating.text = "NA";
-                    _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                    _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                     _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     return; // Skip if no song found
                 }
@@ -173,21 +163,22 @@ namespace TootTally.CustomLeaderboard
                     _currentSelectedSongHash = songHashInDB;
                 _songData = null;
                 _scoreDataList = null;
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, (songData) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetSongDataFromDB(songHashInDB, songData =>
                 {
                     if (songData != null)
                     {
                         _songData = songData;
                         _diffRating.text = _songData.difficulty.ToString("0.0");
+
                         int roundedUpStar = (int)Mathf.Clamp(_songData.difficulty + 1, 1, 10);
                         int roundedDownStar = (int)Mathf.Clamp(_songData.difficulty, 0, 9);
-                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(EasingHelper.Lerp(_starSizeDeltaPositions[roundedUpStar], _starSizeDeltaPositions[roundedDownStar], roundedUpStar - _songData.difficulty), 30);
                     }
                     else
                     {
                         _diffRating.text = "NA";
-                        _starMaskAnimation.SetStartPosition(_diffRatingMaskRectangle.sizeDelta);
+                        _starMaskAnimation.SetStartVector(_diffRatingMaskRectangle.sizeDelta);
                         _starRatingMaskSizeTarget = new Vector2(_starSizeDeltaPositions[0], 30);
                     }
 
@@ -196,7 +187,7 @@ namespace TootTally.CustomLeaderboard
                         CancelAndClearAllCoroutineInList();
                 }));
                 Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
-                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, (scoreDataList) =>
+                _currentLeaderboardCoroutines.Add(TootTallyAPIService.GetLeaderboardScoresFromDB(songHashInDB, scoreDataList =>
                 {
                     if (scoreDataList != null)
                     {
@@ -277,7 +268,7 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateStarRatingAnimation()
         {
-            _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewPosition(_starRatingMaskSizeTarget, Time.deltaTime);
+            _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewVector(_starRatingMaskSizeTarget, Time.deltaTime);
         }
 
         public bool IsMouseOver() => _raycastHitList.Count > 0;
@@ -335,12 +326,6 @@ namespace TootTally.CustomLeaderboard
                 _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
         }
 
-        private static string GetChoosenSongHash(string trackRef)
-        {
-            bool isCustom = Globals.IsCustomTrack(trackRef);
-            return isCustom ? GetSongHash(trackRef) : trackRef;
-        }
-
         private void SetTabsImages()
         {
             for (int i = 0; i < 3; i++)
@@ -354,14 +339,6 @@ namespace TootTally.CustomLeaderboard
 
             }
             _tabs.SetActive(true);
-        }
-
-        private static string GetSongHash(string trackRef) => SongDataHelper.CalcFileHash(GetSongFilePath(true, trackRef));
-        private static string GetSongFilePath(bool isCustom, string trackRef)
-        {
-            return isCustom ?
-                Path.Combine(Globals.ChartFolders[trackRef], "song.tmb") :
-                $"{Application.streamingAssetsPath}/leveldata/{trackRef}.tmb";
         }
 
         public enum LeaderboardState

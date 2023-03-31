@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TootTally.Discord.Core
+﻿namespace TootTally.Discord.Core
 {
     static class Constants
     {

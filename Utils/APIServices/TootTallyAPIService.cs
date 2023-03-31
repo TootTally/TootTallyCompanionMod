@@ -1,12 +1,8 @@
-﻿using BepInEx;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using BepInEx;
+using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.Helpers;
 using UnityEngine;
@@ -34,7 +30,7 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetUser(Action<SerializableClass.User> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromAPIKey(Action<SerializableClass.User> callback)
         {
             // TODO: Might have to redo this to follow the same pattern as SubmitScore
             var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
@@ -58,6 +54,84 @@ namespace TootTally.Utils
                 Plugin.LogInfo($"Logged in with Guest Account");
             }
             callback(user);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<SerializableClass.APIMessages> callback)
+        {
+            var webRequest = UnityWebRequest.Get($"{APIURL}/api/announcements/?apiKey={Plugin.Instance.APIKey.Value}");
+            SerializableClass.APIMessages messages;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                Plugin.LogInfo(webRequest.downloadHandler.text);
+                messages = JsonConvert.DeserializeObject<SerializableClass.APIMessages>(webRequest.downloadHandler.text);
+                if (messages.results.Count > 0)
+                    callback(messages);
+            }
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromToken(string token, Action<SerializableClass.User> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Get($"{APIURL}/auth/self/");
+            webRequest.SetRequestHeader("Authorization", $"Token {token}");
+            SerializableClass.User user;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
+                Plugin.LogInfo($"Welcome, {user.username}!");
+            }
+            else
+            {
+                user = new SerializableClass.User()
+                {
+                    username = "Guest",
+                    id = 0,
+                };
+                Plugin.LogInfo($"Logged in with Guest Account");
+            }
+            callback(user);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLoginToken(string username, string password, Action<SerializableClass.LoginToken> callback)
+        {
+            var apiObj = new SerializableClass.APILogin() { username = username, password = password };
+            var apiLogin = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/auth/token/", apiLogin);
+            SerializableClass.LoginToken token;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
+                Plugin.LogInfo($"Logged in with {token.token}!");
+            }
+            else
+            {
+                token = new SerializableClass.LoginToken()
+                {
+                    token = ""
+                };
+                Plugin.LogInfo($"Error Logging in");
+            }
+            callback(token);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SignUpRequest(string username, string password, string pass_check, Action<bool> callback)
+        {
+            var apiObj = new SerializableClass.APISignUp() { username = username, password = password, pass_check = pass_check };
+            var apiSignUp = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest($"{APIURL}/auth/signup/", apiSignUp);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, true))
+            {
+                Plugin.LogInfo($"Account {username} created!");
+                callback(true);
+            }
+            callback(false);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
@@ -167,7 +241,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, false))
             {
-                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.GetText()).results[0];
+                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.text).results[0];
                 callback(songData);
             }
             else
@@ -187,7 +261,7 @@ namespace TootTally.Utils
             {
                 List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
 
-                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.GetText());
+                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.text);
                 foreach (SerializableClass.ScoreDataFromDB score in leaderboardInfo.results)
                 {
                     scoreList.Add(score);
@@ -249,11 +323,6 @@ namespace TootTally.Utils
                     hash = SongDataHelper.CalcSHA256Hash(File.ReadAllBytes(modsDict[key].Location))
                 };
 
-                if (mod.name == "CircularBreathing")
-                {
-                    PopUpNotifManager.DisplayNotif("Circular Breathing detected!\n Uninstall the mod to submit scores on TootTally.", GameTheme.themeColors.notification.warningText, 9.5f);
-                    allowSubmit = false;
-                }
                 mods.Add(mod);
             }
 
@@ -279,7 +348,20 @@ namespace TootTally.Utils
             UploadHandler ulHandler = new UploadHandlerRaw(data);
             ulHandler.contentType = contentType;
 
+
             UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
+            return webRequest;
+        }
+        private static UnityWebRequest PostUploadRequestWithHeader(string apiLink, byte[] data, List<string[]> headers, string contentType = "application/json")
+        {
+            DownloadHandler dlHandler = new DownloadHandlerBuffer();
+            UploadHandler ulHandler = new UploadHandlerRaw(data);
+            ulHandler.contentType = contentType;
+
+
+            UnityWebRequest webRequest = new UnityWebRequest(apiLink, "POST", dlHandler, ulHandler);
+            foreach (string[] s in headers)
+                webRequest.SetRequestHeader(s[0], s[1]);
             return webRequest;
         }
 
