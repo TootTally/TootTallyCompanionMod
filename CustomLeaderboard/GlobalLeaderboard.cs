@@ -132,7 +132,7 @@ namespace TootTally.CustomLeaderboard
             GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_RANDOM").GetComponent<RectTransform>().anchoredPosition = new Vector2(-123, -7);
 
             //move btn_turbo somewhere
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_TURBO").GetComponent<RectTransform>().anchoredPosition = new Vector2(-223, -7);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_TURBO").GetComponent<RectTransform>().anchoredPosition = new Vector2(-110, 65);
 
             //Patch current slider and move it slightly above RANDOM_btn
             BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider();
