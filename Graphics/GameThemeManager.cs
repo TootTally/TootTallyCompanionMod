@@ -295,7 +295,8 @@ namespace TootTally.Graphics
             #endregion
 
             #region RandomButton
-            __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+            //TODO FIX RANDOM BUTTON
+            /*__instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
 
             GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom);
             RectTransform randomRectTransform = randomButtonPrefab.GetComponent<RectTransform>();
@@ -330,7 +331,7 @@ namespace TootTally.Graphics
             EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
             pointerExitEvent.eventID = EventTriggerType.PointerExit;
             pointerExitEvent.callback.AddListener((data) => OnPointerLeaveRandomEvent(__instance));
-            randomBtnEvents.triggers.Add(pointerExitEvent);
+            randomBtnEvents.triggers.Add(pointerExitEvent);*/
 
             #endregion
 
