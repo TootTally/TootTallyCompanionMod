@@ -523,6 +523,21 @@ namespace TootTally.Graphics
             loginButton.onClick.AddListener(delegate
             {
                 __instance.playSfx(4);// click button sfx
+                if (usernameInput.text == "" || usernameInput.text.ToLower() == "enter username")
+                {
+                    PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
+                    return;
+                }
+                if (passwordInput.text.ToLower() == "password" || passwordInput.text.Length <= 5)
+                {
+                    if (passwordInput.text.Length <= 5)
+                        PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
+                    else
+                        PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
+                    return;
+                }
+
+
                 PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
                 {
@@ -673,22 +688,22 @@ namespace TootTally.Graphics
             rowHolder.GetComponent<Image>().color = Color.gray;
 
             Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", lobbyInfo.title, Color.white);
-            lobbyTitleText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5,-5);
+            lobbyTitleText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -5);
             lobbyTitleText.alignment = TextAnchor.UpperLeft;
             lobbyTitleText.fontSize = 18;
 
             Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{lobbyInfo.users.Count} / {lobbyInfo.maxPlayerCount} players", Color.white);
-            lobbyPlayerCount.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5,-5);
+            lobbyPlayerCount.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5, -5);
             lobbyPlayerCount.alignment = TextAnchor.UpperRight;
             lobbyPlayerCount.fontSize = 18;
 
             Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentState, Color.white);
-            lobbyCurrentSongText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5,5);
+            lobbyCurrentSongText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, 5);
             lobbyCurrentSongText.alignment = TextAnchor.LowerLeft;
             lobbyCurrentSongText.fontSize = 18;
 
             Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{lobbyInfo.ping} ms", Color.white);
-            lobbyPingText.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5,5);
+            lobbyPingText.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5, 5);
             lobbyPingText.alignment = TextAnchor.LowerRight;
             lobbyPingText.fontSize = 18;
 
