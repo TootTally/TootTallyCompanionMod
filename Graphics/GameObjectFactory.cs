@@ -890,11 +890,12 @@ namespace TootTally.Graphics
             rowEntry.singleScore.transform.Find("Image").gameObject.SetActive(count % 2 == 0);
 
             var replayId = rowEntry.replayId;
-            if (replayId != "NA") //if there's a uuid, add a replay button
+            if (replayId != "" && replayId != null) //if there's a uuid, add a replay button
             {
                 CreateCustomButton(rowEntry.singleScore.transform, Vector2.zero, new Vector2(26, 26), "►", "ReplayButton",
                 delegate
                 {
+                    Plugin.LogInfo("ID:" + replayId);
                     ReplaySystemManager.ResolveLoadReplay(replayId, levelSelectControllerInstance);
                 });
             }

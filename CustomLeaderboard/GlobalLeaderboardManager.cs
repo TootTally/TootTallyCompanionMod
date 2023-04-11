@@ -85,7 +85,7 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
         [HarmonyPrefix]
         static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
-        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver();
+        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
         #endregion
 
         #region update
