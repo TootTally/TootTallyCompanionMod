@@ -28,6 +28,7 @@ namespace TootTally.Replays
         private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
+        public static float gameSpeedMultiplier;
 
         private static string _replayUUID;
         private static string _replayFileName;
@@ -70,6 +71,11 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnSetUpBGControllerRefsDelayedPostFix(BGController __instance)
         {
+            //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
+            _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
+            _currentGCInstance.musictrack.outputAudioMixerGroup.audioMixer.SetFloat("Pitch", 1f / gameSpeedMultiplier);
+            Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+
             if (_replayManagerState == ReplayManagerState.Replaying)
             {
                 try
@@ -533,7 +539,6 @@ namespace TootTally.Replays
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
             replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
-            replayBtn.GetComponent<Button>().onClick.m_PersistentCalls.Clear();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
                 _replayFileName = "TempReplay";

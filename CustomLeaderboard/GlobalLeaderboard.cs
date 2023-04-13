@@ -39,7 +39,7 @@ namespace TootTally.CustomLeaderboard
         private RectTransform _diffRatingMaskRectangle;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
         private SerializableClass.SongDataFromDB _songData;
-        private Slider _slider;
+        private Slider _slider, _gameSpeedSlider;
         private GameObject _sliderHandle;
 
         private int _currentSelectedSongHash, _localScoreId;
@@ -138,6 +138,33 @@ namespace TootTally.CustomLeaderboard
             BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider();
             GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
             GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
+
+            //Remove btn_turbo and add GameSpeed slider
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_TURBO").SetActive(false);
+            _gameSpeedSlider = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
+            _gameSpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-110, 65);
+            _gameSpeedSlider.value = 1f;
+            _gameSpeedSlider.minValue = 0.5f;
+            _gameSpeedSlider.maxValue = 2f;
+
+            GameObject gameSpeedText = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad"), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
+            gameSpeedText.name = "GameSpeedShad";
+            gameSpeedText.GetComponent<Text>().text = "Game Speed";
+            gameSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-100, 76);
+            GameObject gameSpeedTextFG = gameSpeedText.transform.Find("ScrollSpeed").gameObject;
+            gameSpeedTextFG.name = "GameSpeed";
+            gameSpeedTextFG.GetComponent<Text>().text = "Game Speed";
+
+            Text scrollSpeedSliderText = _gameSpeedSlider.transform.Find("Handle Slide Area/Handle/100%(Clone)").GetComponent<Text>(); //💀
+            scrollSpeedSliderText.text = _gameSpeedSlider.value.ToString("0.00");
+            _gameSpeedSlider.onValueChanged = new Slider.SliderEvent();
+            _gameSpeedSlider.onValueChanged.AddListener((float _value) => 
+            {
+                _gameSpeedSlider.value = Mathf.Round(_value * 20) / 20f;
+                Replays.ReplaySystemManager.gameSpeedMultiplier = _gameSpeedSlider.value;
+                scrollSpeedSliderText.text = _gameSpeedSlider.value.ToString("0.00"); 
+            });
+
         }
 
         public void UpdateLeaderboard(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)

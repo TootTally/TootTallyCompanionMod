@@ -163,6 +163,7 @@ namespace TootTally.Utils
             public string song;
             public float samplerate;
             public float scrollspeed;
+            public float gamespeedmultiplier;
             public int pluginbuilddate;
             public string gameversion;
             public string songhash;

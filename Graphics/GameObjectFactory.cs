@@ -794,6 +794,7 @@ namespace TootTally.Graphics
             slider.name = name;
             return slider;
         }
+
         public static Slider CreateSliderFromPrefab(Transform canvasTransform, string name)
         {
             Slider slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
