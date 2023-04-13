@@ -54,6 +54,9 @@ namespace TootTally.Utils
             public float aim;
             public float base_tt;
             public bool is_rated;
+            public float[] speed_diffs;
+            public float[] speed_taps;
+            public float[] speed_aim;
         }
 
         [Serializable]
@@ -163,7 +166,7 @@ namespace TootTally.Utils
             public string song;
             public float samplerate;
             public float scrollspeed;
-            public float gamespeedmultiplier;
+            public float speed;
             public int pluginbuilddate;
             public string gameversion;
             public string songhash;
