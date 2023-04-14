@@ -44,6 +44,7 @@ namespace TootTally.Utils
             public string game_version;
             public float tt;
             public bool is_rated;
+            public float replay_speed;
         }
 
         [Serializable]

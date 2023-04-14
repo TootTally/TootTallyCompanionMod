@@ -71,11 +71,6 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnSetUpBGControllerRefsDelayedPostFix(BGController __instance)
         {
-            //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
-            _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
-            _currentGCInstance.audmix.SetFloat("Pitch", 1f / gameSpeedMultiplier); //TODO not working yet
-            Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
-
             if (_replayManagerState == ReplayManagerState.Replaying)
             {
                 try
@@ -99,7 +94,16 @@ namespace TootTally.Replays
                     Plugin.LogWarning(e.ToString());
                     Plugin.LogInfo("Couldn't find VideoPlayer in background");
                 }
+                _replaySpeedSlider.value = _replay.replaySpeed;
             }
+            else
+            {
+                //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
+                _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
+                _currentGCInstance.audmix.SetFloat("Pitch", 1f / gameSpeedMultiplier); //TODO not working yet
+                Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+            }
+
 
         }
 
@@ -432,6 +436,7 @@ namespace TootTally.Replays
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
             _replaySpeedSlider.transform.SetSiblingIndex(0);
+            _replaySpeedSlider.value = gameSpeedMultiplier;
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
             sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 

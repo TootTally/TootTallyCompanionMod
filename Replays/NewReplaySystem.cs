@@ -25,6 +25,7 @@ namespace TootTally.Replays
 
         private List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>(), _tootData = new List<int[]>();
         private int[] _lastFrameData;
+        public float replaySpeed;
         private DateTimeOffset _startTime, _endTime;
 
         private bool _wasTouchScreenUsed;
@@ -249,6 +250,7 @@ namespace TootTally.Replays
             _finalTotalScore = replayJson.finalscore;
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
+            replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
 
             return ReplayState.ReplayLoadSuccess;
         }
@@ -303,7 +305,7 @@ namespace TootTally.Replays
         }
         private void PlaybackTootData(float currentMapPosition)
         {
-            if(_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
+            if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {
                 _isTooting = !_isTooting;
                 _tootIndex++;
