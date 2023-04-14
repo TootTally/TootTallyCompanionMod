@@ -161,7 +161,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
         {
-            var apiObj = new SerializableClass.ReplayUUIDSubmission() { apiKey = Plugin.Instance.APIKey.Value, songHash = songHash };
+            var apiObj = new SerializableClass.ReplayUUIDSubmission() { apiKey = Plugin.Instance.APIKey.Value, songHash = songHash, speed = Replays.ReplaySystemManager.gameSpeedMultiplier };
             var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest($"{APIURL}/api/replay/start/", apiKeyAndSongHash);
             yield return webRequest.SendWebRequest();

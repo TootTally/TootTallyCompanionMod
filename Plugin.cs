@@ -31,7 +31,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230411;
+        public const int BUILDDATE = 20230414;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }

@@ -139,6 +139,7 @@ namespace TootTally.Utils
         public class ReplayStart
         {
             public string id;
+            public string speed;
         }
 
         [Serializable]
@@ -146,6 +147,7 @@ namespace TootTally.Utils
         {
             public string apiKey;
             public string songHash;
+            public float speed;
         }
 
         [Serializable]
@@ -166,7 +168,7 @@ namespace TootTally.Utils
             public string song;
             public float samplerate;
             public float scrollspeed;
-            public float speed;
+            public float gamespeedmultiplier;
             public int pluginbuilddate;
             public string gameversion;
             public string songhash;

@@ -145,10 +145,10 @@ namespace TootTally.CustomLeaderboard
             GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_TURBO").SetActive(false);
             _gameSpeedSlider = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
             _gameSpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-110, 65);
-            _gameSpeedSlider.value = 9;
+            _gameSpeedSlider.wholeNumbers = true;
             _gameSpeedSlider.minValue = 0;
             _gameSpeedSlider.maxValue = 30;
-            _gameSpeedSlider.wholeNumbers = true;
+            _gameSpeedSlider.value = (Replays.ReplaySystemManager.gameSpeedMultiplier - .5f) / .05f;
 
             GameObject gameSpeedText = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad"), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
             gameSpeedText.name = "GameSpeedShad";
@@ -159,7 +159,7 @@ namespace TootTally.CustomLeaderboard
             gameSpeedTextFG.GetComponent<Text>().text = "Game Speed";
 
             Text scrollSpeedSliderText = _gameSpeedSlider.transform.Find("Handle Slide Area/Handle/100%(Clone)").GetComponent<Text>(); //💀
-            scrollSpeedSliderText.text = _gameSpeedSlider.value.ToString("0.00");
+            scrollSpeedSliderText.text = (_gameSpeedSlider.value * .05f + .5f).ToString("0.00");
             _gameSpeedSlider.onValueChanged = new Slider.SliderEvent();
             _gameSpeedSlider.onValueChanged.AddListener((float _value) =>
             {

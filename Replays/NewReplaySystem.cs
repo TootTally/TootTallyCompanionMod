@@ -144,7 +144,7 @@ namespace TootTally.Replays
             replayJson.song = track.trackname_long;
             replayJson.samplerate = targetFramerate;
             replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
-            replayJson.speed = ReplaySystemManager.gameSpeedMultiplier;
+            replayJson.gamespeedmultiplier = ReplaySystemManager.gameSpeedMultiplier;
             replayJson.pluginbuilddate = Plugin.BUILDDATE;
             replayJson.gameversion = GlobalVariables.version;
             replayJson.songhash = songHash;
