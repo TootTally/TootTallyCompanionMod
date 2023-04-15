@@ -146,6 +146,20 @@ namespace TootTally.Replays
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
         }
 
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+        [HarmonyPostfix]
+        public static void AddSpeedToSongName(PointSceneController __instance)
+        {
+            if (gameSpeedMultiplier != 1f)
+            {
+                Color color = Color.Lerp(new Color(.1f,.1f,.85f), Color.red, (gameSpeedMultiplier - .5f) / 1.5f);
+                string colorStringHeader = $"<Color='#{ColorUtility.ToHtmlStringRGBA(color)}'>";
+                string colorStringFoot = $"</Color>";
+                __instance.txt_trackname.supportRichText = true;
+                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier.ToString("0.00")}x){colorStringFoot}";
+            }
+        }
+
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
         public static void ReplayIndicator(PointSceneController __instance)
@@ -204,7 +218,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Paused:
                     if (_pauseArrowDestination != null)
-                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
+                        _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
         }
@@ -571,7 +585,7 @@ namespace TootTally.Replays
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
             _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
-            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
+            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0] - 1) - 37);
             return false;
         }
 

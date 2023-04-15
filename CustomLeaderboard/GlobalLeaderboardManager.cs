@@ -92,8 +92,7 @@ namespace TootTally.CustomLeaderboard
 
         private static void HideTurboButtonAfterRandomizing(LevelSelectController __instance)
         {
-            //__instance.btnturbo.setActive(false); //TODO
-            __instance.btnrandom.transform.parent.Find("btn_TURBO").gameObject.SetActive(false);
+            __instance.btnturbo.SetActive(false);
         }
         #endregion
 
