@@ -173,9 +173,10 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateStarRating()
         {
+
             if (_songData != null && _speedToDiffDict != null)
             {
-                float diff = _speedToDiffDict[(int)_gameSpeedSlider.value];
+                float diff = _songData.is_rated ? _speedToDiffDict[(int)_gameSpeedSlider.value] : _speedToDiffDict[1];
                 _diffRating.text = diff.ToString("0.0");
 
                 int roundedUpStar = (int)Mathf.Clamp(diff + 1, 1, 10);
@@ -225,20 +226,25 @@ namespace TootTally.CustomLeaderboard
                     {
                         _songData = songData;
                         _speedToDiffDict = new Dictionary<int, float>();
-                        for (int i = 0; i <= 29; i++)
+                        if (songData.is_rated)
                         {
-                            float diffIndex = (int)(i / 5f);
-                            float diffMin = diffIndex * .25f + .5f;
-                            float diffMax = (diffIndex + 1f) * .25f + .5f;
-                            float currentGameSpeed = i * .05f + .5f;
+                            for (int i = 0; i <= 29; i++)
+                            {
+                                float diffIndex = (int)(i / 5f);
+                                float diffMin = diffIndex * .25f + .5f;
+                                float diffMax = (diffIndex + 1f) * .25f + .5f;
+                                float currentGameSpeed = i * .05f + .5f;
 
-                            float by = (currentGameSpeed - diffMin) / (diffMax - diffMin);
+                                float by = (currentGameSpeed - diffMin) / (diffMax - diffMin);
 
-                            float diff = EasingHelper.Lerp(_songData.speed_diffs[(int)diffIndex], _songData.speed_diffs[(int)diffIndex + 1], by);
+                                float diff = EasingHelper.Lerp(_songData.speed_diffs[(int)diffIndex], _songData.speed_diffs[(int)diffIndex + 1], by);
 
-                            _speedToDiffDict.Add(i, diff);
+                                _speedToDiffDict.Add(i, diff);
+                            }
+                            _speedToDiffDict.Add(30, _songData.speed_diffs.Last());
                         }
-                        _speedToDiffDict.Add(30, _songData.speed_diffs.Last());
+                        else
+                            _speedToDiffDict.Add(1, _songData.difficulty);
                     }
                     else
                         _speedToDiffDict = null;
