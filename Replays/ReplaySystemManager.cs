@@ -152,7 +152,7 @@ namespace TootTally.Replays
         {
             if (gameSpeedMultiplier != 1f)
             {
-                Color color = Color.Lerp(new Color(.1f,.1f,.85f), Color.red, (gameSpeedMultiplier - .5f) / 1.5f);
+                Color color = Color.Lerp(new Color(.1f, .1f, .85f), Color.red, (gameSpeedMultiplier - .5f) / 1.5f);
                 string colorStringHeader = $"<Color='#{ColorUtility.ToHtmlStringRGBA(color)}'>";
                 string colorStringFoot = $"</Color>";
                 __instance.txt_trackname.supportRichText = true;
@@ -220,6 +220,18 @@ namespace TootTally.Replays
                     if (_pauseArrowDestination != null)
                         _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
+            }
+
+            if (__instance.noteplaying && __instance.breathcounter < 1f)
+            {
+                __instance.breathcounter -= Time.deltaTime * (1 - gameSpeedMultiplier) * 0.22f;
+            }
+            else if (!__instance.noteplaying && __instance.breathcounter > 0f)
+            {
+                if (!__instance.outofbreath)
+                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
+                else
+                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
             }
         }
 
