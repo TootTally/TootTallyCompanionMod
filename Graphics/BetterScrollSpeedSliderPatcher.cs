@@ -41,7 +41,7 @@ namespace TootTally.Graphics
             if (option.LastValue.Value < option.Min.Value || option.LastValue.Value > option.Max.Value) //Don't even try...
                 option.LastValue.Value = DEFAULT_VALUE;
 
-            Text yoinkText = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "100%").GetComponent<Text>();
+            Text yoinkText = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeed-lbl").GetComponent<Text>();
             Transform handleTransform = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider/Handle Slide Area/Handle").transform;
             handleTransform.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 
@@ -63,8 +63,7 @@ namespace TootTally.Graphics
             scrollSpeedSliderText.text = SliderValueToText(slider.value);
             slider.onValueChanged.AddListener((float _value) => { option.LastValue.Value = _value * 100f; scrollSpeedSliderText.text = SliderValueToText(_value); });
 
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "100%").gameObject.SetActive(false);
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "0").gameObject.SetActive(false);
+            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeed-lbl").gameObject.SetActive(false);
 
         }
 
