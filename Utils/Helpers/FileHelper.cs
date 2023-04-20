@@ -8,12 +8,15 @@ namespace TootTally.Utils.Helpers
     {
         public static void WriteJsonToFile(string dirName, string fileName, string jsonString)
         {
+            Plugin.DebugModeLog("Creating MemoryStream Buffer for replay creation.");
             using (var memoryStream = new MemoryStream())
             {
+                Plugin.DebugModeLog("Creating ZipArchive for replay creation.");
                 using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true, Encoding.UTF8))
                 {
                     var zipFile = zipArchive.CreateEntry(fileName);
 
+                    Plugin.DebugModeLog("Writing Zipped replay to MemoryStream Buffer.");
                     using (var entry = zipFile.Open())
                     using (var sw = new StreamWriter(entry))
                     {
@@ -21,6 +24,7 @@ namespace TootTally.Utils.Helpers
                     }
                 }
 
+                Plugin.DebugModeLog("Writing MemoryStream to File.");
                 using (var fileStream = new FileStream(dirName + fileName, FileMode.Create))
                 {
                     memoryStream.Seek(0, SeekOrigin.Begin);
