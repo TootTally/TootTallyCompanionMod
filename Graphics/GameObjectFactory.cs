@@ -389,6 +389,10 @@ namespace TootTally.Graphics
             sliderRect.sizeDelta = new Vector2(25, 745);
             sliderRect.anchoredPosition = new Vector2(300, 0);
 
+            RectTransform fillAreaRect = _verticalSliderPrefab.transform.Find("Fill Area").GetComponent<RectTransform>();
+            fillAreaRect.sizeDelta = new Vector2(-19, -2);
+            fillAreaRect.anchoredPosition = new Vector2(-5, 0);
+
             RectTransform handleSlideAreaRect = _verticalSliderPrefab.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
             RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
             handleRect.sizeDelta = new Vector2(40, 40);

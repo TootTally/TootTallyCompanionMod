@@ -428,7 +428,6 @@ namespace TootTally.Graphics
             }
             #endregion
 
-
             //CapsulesTextColor
             songyear.color = GameTheme.themeColors.leaderboard.text;
             songgenre.color = GameTheme.themeColors.leaderboard.text;

@@ -144,8 +144,9 @@ namespace TootTally.CustomLeaderboard
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<RectTransform>().anchoredPosition = new Vector2(-115, 23);
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad").GetComponent<RectTransform>().anchoredPosition = new Vector2(-112, 36);
 
-                //Remove btn_turbo and add GameSpeed slider
+                //Remove btn_TURBO + btn_PRACTICE and add GameSpeed slider
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_TURBO").SetActive(false);
+                GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "btn_PRACTICE").SetActive(false);
                 _gameSpeedSlider = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
                 _gameSpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-110, 65);
                 _gameSpeedSlider.wholeNumbers = true;
