@@ -100,12 +100,21 @@ namespace TootTally.Replays
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
-                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
                 Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
             }
-
-
         }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.fixAudioMixerStuff))]
+        [HarmonyPostfix]
+        public static void OnFixAudioMixerStuffPostFix(GameController __instance)
+        {
+            if (gameSpeedMultiplier != 1f)
+            {
+                __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
+            }
+        }
+
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
         [HarmonyPostfix]
