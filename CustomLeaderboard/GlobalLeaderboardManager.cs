@@ -81,11 +81,20 @@ namespace TootTally.CustomLeaderboard
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickNext))]
         [HarmonyPrefix]
-        static bool OnClickNextSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
+        private static bool OnClickNextSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
         [HarmonyPrefix]
-        static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
-        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver();
+        private static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
+        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
+        [HarmonyPostfix]
+
+        private static void HideTurboButtonAfterRandomizing(LevelSelectController __instance)
+        {
+            __instance.btnturbo.SetActive(false);
+            __instance.btnpractice.SetActive(false);
+        }
         #endregion
 
         #region update

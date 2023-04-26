@@ -44,6 +44,7 @@ namespace TootTally.Utils
             public string game_version;
             public float tt;
             public bool is_rated;
+            public float replay_speed;
         }
 
         [Serializable]
@@ -54,6 +55,9 @@ namespace TootTally.Utils
             public float aim;
             public float base_tt;
             public bool is_rated;
+            public float[] speed_diffs;
+            public float[] speed_taps;
+            public float[] speed_aim;
         }
 
         [Serializable]
@@ -136,6 +140,7 @@ namespace TootTally.Utils
         public class ReplayStart
         {
             public string id;
+            public string speed;
         }
 
         [Serializable]
@@ -143,6 +148,7 @@ namespace TootTally.Utils
         {
             public string apiKey;
             public string songHash;
+            public float speed;
         }
 
         [Serializable]
@@ -163,6 +169,7 @@ namespace TootTally.Utils
             public string song;
             public float samplerate;
             public float scrollspeed;
+            public float gamespeedmultiplier;
             public int pluginbuilddate;
             public string gameversion;
             public string songhash;

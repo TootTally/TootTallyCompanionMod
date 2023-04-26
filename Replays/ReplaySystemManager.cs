@@ -28,6 +28,7 @@ namespace TootTally.Replays
         private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
+        public static float gameSpeedMultiplier;
 
         private static string _replayUUID;
         private static string _replayFileName;
@@ -93,9 +94,27 @@ namespace TootTally.Replays
                     Plugin.LogWarning(e.ToString());
                     Plugin.LogInfo("Couldn't find VideoPlayer in background");
                 }
+                _replaySpeedSlider.value = _replay.replaySpeed;
             }
-
+            else
+            {
+                //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
+                _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
+                Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+            }
         }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.fixAudioMixerStuff))]
+        [HarmonyPostfix]
+        public static void OnFixAudioMixerStuffPostFix(GameController __instance)
+        {
+            if (gameSpeedMultiplier != 1f)
+            {
+                __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
+            }
+        }
+
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
         [HarmonyPostfix]
@@ -134,6 +153,20 @@ namespace TootTally.Replays
 
 
             GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+        [HarmonyPostfix]
+        public static void AddSpeedToSongName(PointSceneController __instance)
+        {
+            if (gameSpeedMultiplier != 1f)
+            {
+                Color color = Color.Lerp(new Color(.1f, .1f, .85f), Color.red, (gameSpeedMultiplier - .5f) / 1.5f);
+                string colorStringHeader = $"<Color='#{ColorUtility.ToHtmlStringRGBA(color)}'>";
+                string colorStringFoot = $"</Color>";
+                __instance.txt_trackname.supportRichText = true;
+                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier.ToString("0.00")}x){colorStringFoot}";
+            }
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
@@ -194,8 +227,20 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Paused:
                     if (_pauseArrowDestination != null)
-                    _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
+                        _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
+            }
+
+            if (__instance.noteplaying && __instance.breathcounter < 1f)
+            {
+                __instance.breathcounter -= Time.deltaTime * (1 - gameSpeedMultiplier) * 0.22f;
+            }
+            else if (!__instance.noteplaying && __instance.breathcounter > 0f)
+            {
+                if (!__instance.outofbreath)
+                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
+                else
+                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
             }
         }
 
@@ -281,6 +326,7 @@ namespace TootTally.Replays
             {
                 _replayManagerState = ReplayManagerState.None;
                 _replay = new NewReplaySystem();
+                gameSpeedMultiplier = 1f;
             }
 
             if (Plugin.userInfo != null && !_hasGreetedUser)
@@ -425,6 +471,7 @@ namespace TootTally.Replays
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
             _replaySpeedSlider.transform.SetSiblingIndex(0);
+            _replaySpeedSlider.value = gameSpeedMultiplier;
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
             sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 
@@ -533,7 +580,6 @@ namespace TootTally.Replays
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
             replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
-            replayBtn.GetComponent<Button>().onClick.m_PersistentCalls.Clear();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
                 _replayFileName = "TempReplay";
@@ -560,7 +606,7 @@ namespace TootTally.Replays
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
             _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
-            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0]-1) - 37);
+            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0] - 1) - 37);
             return false;
         }
 

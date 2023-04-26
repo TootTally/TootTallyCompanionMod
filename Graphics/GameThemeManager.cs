@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -145,226 +146,287 @@ namespace TootTally.Graphics
             }
 
             #region SongButton
-            GameObject btnBGPrefab = GameObject.Instantiate(__instance.btnbgs[0].gameObject);
-            GameObject.DestroyImmediate(btnBGPrefab.transform.Find("Image").gameObject);
-
-            for (int i = 0; i < 7; i++) //songbuttons only, not the arrow ones
+            try
             {
-                Image img = __instance.btnbgs[i];
-                img.sprite = AssetManager.GetSprite("SongButtonBackground.png");
-                img.transform.parent.Find("Text").GetComponent<Text>().color = i == 0 ? GameTheme.themeColors.songButton.textOver : GameTheme.themeColors.songButton.text;
+                GameObject btnBGPrefab = GameObject.Instantiate(__instance.btnbgs[0].gameObject);
+                GameObject.DestroyImmediate(btnBGPrefab.transform.Find("Image").gameObject);
 
-                GameObject btnBGShadow = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform.parent);
-                btnBGShadow.name = "Shadow";
-                OverwriteGameObjectSpriteAndColor(btnBGShadow, "SongButtonShadow.png", GameTheme.themeColors.songButton.shadow);
+                for (int i = 0; i < 7; i++) //songbuttons only, not the arrow ones
+                {
+                    Image img = __instance.btnbgs[i];
+                    img.sprite = AssetManager.GetSprite("SongButtonBackground.png");
+                    img.transform.parent.Find("Text").GetComponent<Text>().color = i == 0 ? GameTheme.themeColors.songButton.textOver : GameTheme.themeColors.songButton.text;
 
-                GameObject btnBGOutline = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform);
-                btnBGOutline.name = "Outline";
-                OverwriteGameObjectSpriteAndColor(btnBGOutline, "SongButtonOutline.png", i == 0 ? GameTheme.themeColors.songButton.outlineOver : GameTheme.themeColors.songButton.outline);
+                    GameObject btnBGShadow = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform.parent);
+                    btnBGShadow.name = "Shadow";
+                    OverwriteGameObjectSpriteAndColor(btnBGShadow, "SongButtonShadow.png", GameTheme.themeColors.songButton.shadow);
 
-                img.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.songButton.square;
-                img.color = GameTheme.themeColors.songButton.background;
+                    GameObject btnBGOutline = GameObject.Instantiate(btnBGPrefab, img.gameObject.transform);
+                    btnBGOutline.name = "Outline";
+                    OverwriteGameObjectSpriteAndColor(btnBGOutline, "SongButtonOutline.png", i == 0 ? GameTheme.themeColors.songButton.outlineOver : GameTheme.themeColors.songButton.outline);
+
+                    img.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.songButton.square;
+                    img.color = GameTheme.themeColors.songButton.background;
+                }
+
+                for (int i = 7; i < __instance.btnbgs.Length; i++) //these are the arrow ones :}
+                    __instance.btnbgs[i].color = GameTheme.themeColors.songButton.background;
+                GameObject.DestroyImmediate(btnBGPrefab);
             }
-
-            for (int i = 7; i < __instance.btnbgs.Length; i++) //these are the arrow ones :}
-                __instance.btnbgs[i].color = GameTheme.themeColors.songButton.background;
-            GameObject.DestroyImmediate(btnBGPrefab);
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region SongTitle
-            __instance.songtitlebar.GetComponent<Image>().color = GameTheme.themeColors.title.titleBar;
-            __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.title.titleShadow;
-            GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.title.title;
-            __instance.longsongtitle.color = GameTheme.themeColors.title.songName;
+            try
+            {
+                __instance.songtitlebar.GetComponent<Image>().color = GameTheme.themeColors.title.titleBar;
+                __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.title.titleShadow;
+                GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.title.title;
+                __instance.longsongtitle.color = GameTheme.themeColors.title.songName;
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region Lines
-            GameObject lines = __instance.btnspanel.transform.Find("RightLines").gameObject;
-            lines.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
-            LineRenderer redLine = lines.transform.Find("Red").GetComponent<LineRenderer>();
-            redLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
-            redLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
-            for (int i = 1; i < 8; i++)
+            try
             {
-                LineRenderer yellowLine = lines.transform.Find("Yellow" + i).GetComponent<LineRenderer>();
-                yellowLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
-                yellowLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
+                GameObject lines = __instance.btnspanel.transform.Find("RightLines").gameObject;
+                lines.GetComponent<RectTransform>().anchoredPosition += new Vector2(-2, 0);
+                LineRenderer redLine = lines.transform.Find("Red").GetComponent<LineRenderer>();
+                redLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
+                redLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
+                for (int i = 1; i < 8; i++)
+                {
+                    LineRenderer yellowLine = lines.transform.Find("Yellow" + i).GetComponent<LineRenderer>();
+                    yellowLine.startColor = GameTheme.themeColors.leaderboard.panelBody;
+                    yellowLine.endColor = GameTheme.themeColors.leaderboard.scoresBody;
+                }
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
             }
             #endregion
 
             #region Capsules
-            GameObject capsules = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").gameObject;
-            GameObject capsulesPrefab = GameObject.Instantiate(capsules);
+            try
+            {
+                GameObject capsules = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "capsules").gameObject;
+                GameObject capsulesPrefab = GameObject.Instantiate(capsules);
 
-            foreach (Transform t in capsulesPrefab.transform) GameObject.Destroy(t.gameObject);
-            RectTransform rectTrans = capsulesPrefab.GetComponent<RectTransform>();
-            rectTrans.localScale = Vector3.one;
-            rectTrans.anchoredPosition = Vector2.zero;
+                foreach (Transform t in capsulesPrefab.transform) GameObject.Destroy(t.gameObject);
+                RectTransform rectTrans = capsulesPrefab.GetComponent<RectTransform>();
+                rectTrans.localScale = Vector3.one;
+                rectTrans.anchoredPosition = Vector2.zero;
 
 
-            GameObject capsulesYearShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesYearShadow, "YearCapsule.png", GameTheme.themeColors.capsules.yearShadow);
-            capsulesYearShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
+                GameObject capsulesYearShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesYearShadow, "YearCapsule.png", GameTheme.themeColors.capsules.yearShadow);
+                capsulesYearShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
-            GameObject capsulesYear = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesYear, "YearCapsule.png", GameTheme.themeColors.capsules.year);
+                GameObject capsulesYear = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesYear, "YearCapsule.png", GameTheme.themeColors.capsules.year);
 
-            songyear = GameObject.Instantiate(__instance.songyear, capsulesYear.transform);
+                songyear = GameObject.Instantiate(__instance.songyear, capsulesYear.transform);
 
-            GameObject capsulesGenreShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesGenreShadow, "GenreCapsule.png", GameTheme.themeColors.capsules.genreShadow);
-            capsulesGenreShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
+                GameObject capsulesGenreShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesGenreShadow, "GenreCapsule.png", GameTheme.themeColors.capsules.genreShadow);
+                capsulesGenreShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
-            GameObject capsulesGenre = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesGenre, "GenreCapsule.png", GameTheme.themeColors.capsules.genre);
-            songgenre = GameObject.Instantiate(__instance.songgenre, capsulesGenre.transform);
+                GameObject capsulesGenre = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesGenre, "GenreCapsule.png", GameTheme.themeColors.capsules.genre);
+                songgenre = GameObject.Instantiate(__instance.songgenre, capsulesGenre.transform);
 
-            GameObject capsulesComposerShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesComposerShadow, "ComposerCapsule.png", GameTheme.themeColors.capsules.composerShadow);
-            capsulesComposerShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
+                GameObject capsulesComposerShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesComposerShadow, "ComposerCapsule.png", GameTheme.themeColors.capsules.composerShadow);
+                capsulesComposerShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
-            GameObject capsulesComposer = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesComposer, "ComposerCapsule.png", GameTheme.themeColors.capsules.composer);
-            songcomposer = GameObject.Instantiate(__instance.songcomposer, capsulesComposer.transform);
+                GameObject capsulesComposer = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesComposer, "ComposerCapsule.png", GameTheme.themeColors.capsules.composer);
+                songcomposer = GameObject.Instantiate(__instance.songcomposer, capsulesComposer.transform);
 
-            GameObject capsulesTempo = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesTempo, "BPMTimeCapsule.png", GameTheme.themeColors.capsules.tempo);
-            songtempo = GameObject.Instantiate(__instance.songtempo, capsulesTempo.transform);
-            songduration = GameObject.Instantiate(__instance.songduration, capsulesTempo.transform);
+                GameObject capsulesTempo = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesTempo, "BPMTimeCapsule.png", GameTheme.themeColors.capsules.tempo);
+                songtempo = GameObject.Instantiate(__instance.songtempo, capsulesTempo.transform);
+                songduration = GameObject.Instantiate(__instance.songduration, capsulesTempo.transform);
 
-            GameObject capsulesDescTextShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesDescTextShadow, "DescCapsule.png", GameTheme.themeColors.capsules.descriptionShadow);
-            capsulesDescTextShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
+                GameObject capsulesDescTextShadow = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesDescTextShadow, "DescCapsule.png", GameTheme.themeColors.capsules.descriptionShadow);
+                capsulesDescTextShadow.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -3);
 
-            GameObject capsulesDescText = GameObject.Instantiate(capsulesPrefab, capsules.transform);
-            OverwriteGameObjectSpriteAndColor(capsulesDescText, "DescCapsule.png", GameTheme.themeColors.capsules.description);
-            songdesctext = GameObject.Instantiate(__instance.songdesctext, capsulesDescText.transform);
+                GameObject capsulesDescText = GameObject.Instantiate(capsulesPrefab, capsules.transform);
+                OverwriteGameObjectSpriteAndColor(capsulesDescText, "DescCapsule.png", GameTheme.themeColors.capsules.description);
+                songdesctext = GameObject.Instantiate(__instance.songdesctext, capsulesDescText.transform);
 
-            GameObject.DestroyImmediate(capsules.GetComponent<Image>());
-            GameObject.DestroyImmediate(capsulesPrefab);
+                GameObject.DestroyImmediate(capsules.GetComponent<Image>());
+                GameObject.DestroyImmediate(capsulesPrefab);
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region PlayButton
-            GameObject playButtonBG = __instance.playbtn.transform.Find("BG").gameObject;
-            GameObject playBGPrefab = GameObject.Instantiate(playButtonBG, __instance.playbtn.transform);
-            foreach (Transform t in playBGPrefab.transform) GameObject.Destroy(t.gameObject);
+            try
+            {
+                GameObject playButtonBG = __instance.playbtn.transform.Find("BG").gameObject;
+                GameObject playBGPrefab = GameObject.Instantiate(playButtonBG, __instance.playbtn.transform);
+                foreach (Transform t in playBGPrefab.transform) GameObject.Destroy(t.gameObject);
 
-            GameObject playBackgroundImg = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
-            playBackgroundImg.name = "playBackground";
-            OverwriteGameObjectSpriteAndColor(playBackgroundImg, "PlayBackground.png", GameTheme.themeColors.playButton.background);
+                GameObject playBackgroundImg = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
+                playBackgroundImg.name = "playBackground";
+                OverwriteGameObjectSpriteAndColor(playBackgroundImg, "PlayBackground.png", GameTheme.themeColors.playButton.background);
 
-            GameObject playOutline = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
-            playOutline.name = "playOutline";
-            OverwriteGameObjectSpriteAndColor(playOutline, "PlayOutline.png", GameTheme.themeColors.playButton.outline);
+                GameObject playOutline = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
+                playOutline.name = "playOutline";
+                OverwriteGameObjectSpriteAndColor(playOutline, "PlayOutline.png", GameTheme.themeColors.playButton.outline);
 
-            GameObject playText = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
-            playText.name = "playText";
-            OverwriteGameObjectSpriteAndColor(playText, "PlayText.png", GameTheme.themeColors.playButton.text);
+                GameObject playText = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
+                playText.name = "playText";
+                OverwriteGameObjectSpriteAndColor(playText, "PlayText.png", GameTheme.themeColors.playButton.text);
 
-            GameObject playShadow = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
-            playShadow.name = "playShadow";
-            OverwriteGameObjectSpriteAndColor(playShadow, "PlayShadow.png", GameTheme.themeColors.playButton.shadow);
+                GameObject playShadow = GameObject.Instantiate(playBGPrefab, __instance.playbtn.transform);
+                playShadow.name = "playShadow";
+                OverwriteGameObjectSpriteAndColor(playShadow, "PlayShadow.png", GameTheme.themeColors.playButton.shadow);
 
-            GameObject.DestroyImmediate(playButtonBG);
-            GameObject.DestroyImmediate(playBGPrefab);
+                GameObject.DestroyImmediate(playButtonBG);
+                GameObject.DestroyImmediate(playBGPrefab);
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region BackButton
-            GameObject backButtonBG = __instance.backbutton.transform.Find("BG").gameObject;
-            GameObject backBGPrefab = GameObject.Instantiate(backButtonBG, __instance.backbutton.transform);
-            foreach (Transform t in backBGPrefab.transform) GameObject.Destroy(t.gameObject);
+            try
+            {
+                GameObject backButtonBG = __instance.backbutton.transform.Find("BG").gameObject;
+                GameObject backBGPrefab = GameObject.Instantiate(backButtonBG, __instance.backbutton.transform);
+                foreach (Transform t in backBGPrefab.transform) GameObject.Destroy(t.gameObject);
 
-            GameObject backBackgroundImg = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
-            backBackgroundImg.name = "backBackground";
-            OverwriteGameObjectSpriteAndColor(backBackgroundImg, "BackBackground.png", GameTheme.themeColors.backButton.background);
+                GameObject backBackgroundImg = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
+                backBackgroundImg.name = "backBackground";
+                OverwriteGameObjectSpriteAndColor(backBackgroundImg, "BackBackground.png", GameTheme.themeColors.backButton.background);
 
-            GameObject backOutline = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
-            backOutline.name = "backOutline";
-            OverwriteGameObjectSpriteAndColor(backOutline, "BackOutline.png", GameTheme.themeColors.backButton.outline);
+                GameObject backOutline = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
+                backOutline.name = "backOutline";
+                OverwriteGameObjectSpriteAndColor(backOutline, "BackOutline.png", GameTheme.themeColors.backButton.outline);
 
-            GameObject backText = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
-            backText.name = "backText";
-            OverwriteGameObjectSpriteAndColor(backText, "BackText.png", GameTheme.themeColors.backButton.text);
+                GameObject backText = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
+                backText.name = "backText";
+                OverwriteGameObjectSpriteAndColor(backText, "BackText.png", GameTheme.themeColors.backButton.text);
 
-            GameObject backShadow = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
-            backShadow.name = "backShadow";
-            OverwriteGameObjectSpriteAndColor(backShadow, "BackShadow.png", GameTheme.themeColors.backButton.shadow);
+                GameObject backShadow = GameObject.Instantiate(backBGPrefab, __instance.backbutton.transform);
+                backShadow.name = "backShadow";
+                OverwriteGameObjectSpriteAndColor(backShadow, "BackShadow.png", GameTheme.themeColors.backButton.shadow);
 
-            GameObject.DestroyImmediate(backButtonBG);
-            GameObject.DestroyImmediate(backBGPrefab);
+                GameObject.DestroyImmediate(backButtonBG);
+                GameObject.DestroyImmediate(backBGPrefab);
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region RandomButton
             //TODO FIX RANDOM BUTTON
-            /*__instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+            try
+            {
+                /*__instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
 
-            GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom);
-            RectTransform randomRectTransform = randomButtonPrefab.GetComponent<RectTransform>();
-            randomRectTransform.anchoredPosition = Vector2.zero;
-            randomRectTransform.localScale = Vector3.one;
-            GameObject.DestroyImmediate(randomButtonPrefab.GetComponent<Button>());
+                GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom);
+                RectTransform randomRectTransform = randomButtonPrefab.GetComponent<RectTransform>();
+                randomRectTransform.anchoredPosition = Vector2.zero;
+                randomRectTransform.localScale = Vector3.one;
+                GameObject.DestroyImmediate(randomButtonPrefab.GetComponent<Button>());
 
-            GameObject randomButtonBackground = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
-            randomButtonBackground.name = "RandomBackground";
-            OverwriteGameObjectSpriteAndColor(randomButtonBackground, "RandomBackground.png", GameTheme.themeColors.randomButton.background);
+                GameObject randomButtonBackground = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
+                randomButtonBackground.name = "RandomBackground";
+                OverwriteGameObjectSpriteAndColor(randomButtonBackground, "RandomBackground.png", GameTheme.themeColors.randomButton.background);
 
-            foreach (Transform t in randomButtonPrefab.transform) GameObject.DestroyImmediate(t.gameObject); // destroying text only after making our background object
+                foreach (Transform t in randomButtonPrefab.transform) GameObject.DestroyImmediate(t.gameObject); // destroying text only after making our background object
 
-            GameObject randomButtonOutline = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
-            randomButtonOutline.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1);
-            randomButtonOutline.name = "RandomOutline";
-            OverwriteGameObjectSpriteAndColor(randomButtonOutline, "RandomOutline.png", GameTheme.themeColors.randomButton.outline);
+                GameObject randomButtonOutline = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
+                randomButtonOutline.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1);
+                randomButtonOutline.name = "RandomOutline";
+                OverwriteGameObjectSpriteAndColor(randomButtonOutline, "RandomOutline.png", GameTheme.themeColors.randomButton.outline);
 
-            GameObject randomButtonIcon = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
-            randomButtonIcon.name = "RandomIcon";
-            OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", GameTheme.themeColors.randomButton.text);
+                GameObject randomButtonIcon = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
+                randomButtonIcon.name = "RandomIcon";
+                OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", GameTheme.themeColors.randomButton.text);
 
-            GameObject.DestroyImmediate(__instance.btnrandom.GetComponent<Image>());
-            GameObject.DestroyImmediate(randomButtonPrefab);
+                GameObject.DestroyImmediate(__instance.btnrandom.GetComponent<Image>());
+                GameObject.DestroyImmediate(randomButtonPrefab);
 
-            EventTrigger randomBtnEvents = __instance.btnrandom.AddComponent<EventTrigger>();
-            EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
-            pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
-            pointerEnterEvent.callback.AddListener((data) => OnPointerEnterRandomEvent(__instance));
-            randomBtnEvents.triggers.Add(pointerEnterEvent);
+                EventTrigger randomBtnEvents = __instance.btnrandom.AddComponent<EventTrigger>();
+                EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+                pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+                pointerEnterEvent.callback.AddListener((data) => OnPointerEnterRandomEvent(__instance));
+                randomBtnEvents.triggers.Add(pointerEnterEvent);
 
-            EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
-            pointerExitEvent.eventID = EventTriggerType.PointerExit;
-            pointerExitEvent.callback.AddListener((data) => OnPointerLeaveRandomEvent(__instance));
-            randomBtnEvents.triggers.Add(pointerExitEvent);*/
-
+                EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
+                pointerExitEvent.eventID = EventTriggerType.PointerExit;
+                pointerExitEvent.callback.AddListener((data) => OnPointerLeaveRandomEvent(__instance));
+                randomBtnEvents.triggers.Add(pointerExitEvent);*/
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region PointerArrow
-            GameObject arrowPointerPrefab = GameObject.Instantiate(__instance.pointerarrow.gameObject);
-            OverwriteGameObjectSpriteAndColor(__instance.pointerarrow.gameObject, "pointerBG.png", GameTheme.themeColors.pointer.background);
+            try
+            {
+                GameObject arrowPointerPrefab = GameObject.Instantiate(__instance.pointerarrow.gameObject);
+                OverwriteGameObjectSpriteAndColor(__instance.pointerarrow.gameObject, "pointerBG.png", GameTheme.themeColors.pointer.background);
 
-            GameObject arrowPointerShadow = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
-            arrowPointerShadow.name = "Shadow";
-            arrowPointerShadow.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            OverwriteGameObjectSpriteAndColor(arrowPointerShadow, "pointerShadow.png", GameTheme.themeColors.pointer.shadow);
+                GameObject arrowPointerShadow = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
+                arrowPointerShadow.name = "Shadow";
+                arrowPointerShadow.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                OverwriteGameObjectSpriteAndColor(arrowPointerShadow, "pointerShadow.png", GameTheme.themeColors.pointer.shadow);
 
-            GameObject arrowPointerPointerOutline = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
-            arrowPointerPointerOutline.name = "Outline";
-            arrowPointerPointerOutline.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            OverwriteGameObjectSpriteAndColor(arrowPointerPointerOutline, "pointerOutline.png", GameTheme.themeColors.pointer.outline);
+                GameObject arrowPointerPointerOutline = GameObject.Instantiate(arrowPointerPrefab, __instance.pointerarrow.transform);
+                arrowPointerPointerOutline.name = "Outline";
+                arrowPointerPointerOutline.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                OverwriteGameObjectSpriteAndColor(arrowPointerPointerOutline, "pointerOutline.png", GameTheme.themeColors.pointer.outline);
 
-            GameObject.DestroyImmediate(arrowPointerPrefab);
+                GameObject.DestroyImmediate(arrowPointerPrefab);
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
 
             #region Background
-            __instance.bgdots.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 165.5f);
-            __instance.bgdots.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
-            __instance.bgdots.transform.Find("Image (1)").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
-            __instance.bgdots2.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots2;
-            GameObject extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix = GameObject.Instantiate(__instance.bgdots.transform.Find("Image").gameObject, __instance.bgdots.transform.Find("Image").transform);
-            extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1010);
-            GameObject.Find("bgcamera").GetComponent<Camera>().backgroundColor = GameTheme.themeColors.background.background;
-            GameObject.Find("BG Shape").GetComponent<Image>().color = GameTheme.themeColors.background.shape;
-            GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
-            MainCanvas.transform.Find("FullScreenPanel/diamond").GetComponent<Image>().color = GameTheme.themeColors.background.diamond;
+            try
+            {
+                __instance.bgdots.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 165.5f);
+                __instance.bgdots.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+                __instance.bgdots.transform.Find("Image (1)").GetComponent<Image>().color = GameTheme.themeColors.background.dots;
+                __instance.bgdots2.transform.Find("Image").GetComponent<Image>().color = GameTheme.themeColors.background.dots2;
+                GameObject extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix = GameObject.Instantiate(__instance.bgdots.transform.Find("Image").gameObject, __instance.bgdots.transform.Find("Image").transform);
+                extraDotsBecauseGameDidntLeanTweenFarEnoughSoWeCanSeeTheEndOfTheTextureFix.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1010);
+                GameObject.Find("bgcamera").GetComponent<Camera>().backgroundColor = GameTheme.themeColors.background.background;
+                GameObject.Find("BG Shape").GetComponent<Image>().color = GameTheme.themeColors.background.shape;
+                GameObject MainCanvas = GameObject.Find("MainCanvas").gameObject;
+                MainCanvas.transform.Find("FullScreenPanel/diamond").GetComponent<Image>().color = GameTheme.themeColors.background.diamond;
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError(e.Message);
+            }
             #endregion
-
 
             //CapsulesTextColor
             songyear.color = GameTheme.themeColors.leaderboard.text;
@@ -374,6 +436,7 @@ namespace TootTally.Graphics
             songtempo.color = GameTheme.themeColors.leaderboard.text;
             songdesctext.color = GameTheme.themeColors.leaderboard.text;
             OnAdvanceSongsPostFix(__instance);
+
         }
 
         #region hoverAndUnHoverSongButtons

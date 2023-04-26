@@ -24,6 +24,10 @@ namespace TootTally
     {
         public static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
         public static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
+        public static void DebugModeLog(string msg)
+        {
+            if (Instance.DebugMode.Value) Instance.Logger.LogInfo(msg);
+        }
         public static void LogError(string msg) => Instance.Logger.LogError(msg);
         public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
 
@@ -31,10 +35,12 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230327;
+        public const int BUILDDATE = 20230420;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
+
+        public ConfigEntry<bool> DebugMode { get; private set; }
 
         public static List<ITootTallyModule> tootTallyModules { get; private set; }
 
@@ -58,11 +64,12 @@ namespace TootTally
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
+            DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
 
             tootTallyModules = new List<ITootTallyModule>();
             settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
             moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
-            
+
             GameInitializationEvent.Register(Info, TryInitialize);
         }
 
@@ -73,6 +80,7 @@ namespace TootTally
                 OptionalTrombSettings.Add(settingsPage, AllowTMBUploads);
                 OptionalTrombSettings.Add(settingsPage, APIKey);
                 OptionalTrombSettings.Add(settingsPage, ShouldDisplayToasts);
+                OptionalTrombSettings.Add(settingsPage, DebugMode);
             }
 
             AssetManager.LoadAssets();
