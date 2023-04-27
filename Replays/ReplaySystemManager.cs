@@ -91,8 +91,8 @@ namespace TootTally.Replays
                 }
                 catch (Exception e)
                 {
-                    Plugin.LogWarning(e.ToString());
-                    Plugin.LogInfo("Couldn't find VideoPlayer in background");
+                    TootTallyLogger.LogWarning(e.ToString());
+                    TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
                 _replaySpeedSlider.value = _replay.replaySpeed;
             }
@@ -100,7 +100,7 @@ namespace TootTally.Replays
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
-                Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+                TootTallyLogger.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
             }
         }
 
@@ -281,7 +281,7 @@ namespace TootTally.Replays
             {
                 case ReplayManagerState.Recording:
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
-                    Plugin.LogInfo($"UUID deleted: {_replayUUID}");
+                    TootTallyLogger.LogInfo($"UUID deleted: {_replayUUID}");
                     _replayUUID = null;
                     if (_replayFileName == null)
                         OnPauseAddReplayButton(__instance);
@@ -383,7 +383,7 @@ namespace TootTally.Replays
             var songFilePath = SongDataHelper.GetSongFilePath(track);
             var isCustom = track is CustomTrack;
 
-            Plugin.LogInfo($"Requesting UUID for {songHash}");
+            TootTallyLogger.LogInfo($"Requesting UUID for {songHash}");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
@@ -420,7 +420,7 @@ namespace TootTally.Replays
             _lastIsTooting = _hasRewindReplay = false;
             wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
-            Plugin.LogInfo("Replay Started");
+            TootTallyLogger.LogInfo("Replay Started");
         }
 
         public static void OnRecordingStop()
@@ -452,7 +452,7 @@ namespace TootTally.Replays
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.ToString());
+                TootTallyLogger.LogError(e.ToString());
             }
         }
 
@@ -568,7 +568,7 @@ namespace TootTally.Replays
             Time.timeScale = 1f;
 
             _replayManagerState = ReplayManagerState.None;
-            Plugin.LogInfo("Replay finished");
+            TootTallyLogger.LogInfo("Replay finished");
         }
 
         public static void OnPauseAddReplayButton(PauseCanvasController __instance)

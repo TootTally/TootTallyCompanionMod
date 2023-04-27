@@ -115,7 +115,7 @@ namespace TootTally.Utils.Helpers
                 tmb.notes = levelData;
             }
 
-            Plugin.LogInfo(JsonConvert.SerializeObject(tmb, new DecimalJsonConverter()));
+            TootTallyLogger.LogInfo(JsonConvert.SerializeObject(tmb, new DecimalJsonConverter()));
             return JsonConvert.SerializeObject(tmb, new DecimalJsonConverter());
         }
     }

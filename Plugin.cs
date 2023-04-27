@@ -12,6 +12,7 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using TootTally.Graphics.Animation;
+using BepInEx.Logging;
 
 namespace TootTally
 {
@@ -22,20 +23,13 @@ namespace TootTally
     [BepInDependency("TrombLoader", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
-        public static void LogDebug(string msg) => Instance.Logger.LogDebug(msg);
-        public static void LogInfo(string msg) => Instance.Logger.LogInfo(msg);
-        public static void DebugModeLog(string msg)
-        {
-            if (Instance.DebugMode.Value) Instance.Logger.LogInfo(msg);
-        }
-        public static void LogError(string msg) => Instance.Logger.LogError(msg);
-        public static void LogWarning(string msg) => Instance.Logger.LogWarning(msg);
+        public static ManualLogSource GetLogger() => Instance.Logger;
 
         public const string CONFIG_NAME = "TootTally.cfg";
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230420;
+        public const int BUILDDATE = 20230427;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -47,11 +41,6 @@ namespace TootTally
         public object moduleSettings { get; private set; }
         private Harmony _harmony;
         private object settingsPage = null;
-
-        public void Log(string msg)
-        {
-            LogInfo(msg);
-        }
 
         private void Awake()
         {
@@ -95,8 +84,8 @@ namespace TootTally
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(DiscordRPC));
 
-            LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
-            LogInfo($"Game Version: {GlobalVariables.version}");
+            TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
+            TootTallyLogger.LogInfo($"Game Version: {GlobalVariables.version}");
         }
 
         public void Update()
@@ -106,7 +95,7 @@ namespace TootTally
 
         public static void AddModule(ITootTallyModule module)
         {
-            if (tootTallyModules == null) LogInfo("tootTallyModules IS NULL");
+            if (tootTallyModules == null) TootTallyLogger.LogInfo("tootTallyModules IS NULL");
             tootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
@@ -177,7 +166,7 @@ namespace TootTally
 
                 Instance.StartCoroutine(TootTallyAPIService.GetMessageFromAPIKey((messages) =>
                 {
-                    Plugin.LogInfo("Messages received: " + messages.results.Count);
+                    TootTallyLogger.LogInfo("Messages received: " + messages.results.Count);
                     foreach (SerializableClass.Message message in messages.results)
                     {
                         if (_messagesReceived.FindAll(m => m.sent_on == message.sent_on).Count == 0)

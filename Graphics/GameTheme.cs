@@ -387,15 +387,15 @@ namespace TootTally.Graphics
                 }
                 catch (Exception ex)
                 {
-                    Plugin.LogError(ex.ToString());
-                    Plugin.LogError("Corrupted theme: " + themeFileName);
-                    Plugin.LogError("Loading default theme...");
+                    TootTallyLogger.LogError(ex.ToString());
+                    TootTallyLogger.LogError("Corrupted theme: " + themeFileName);
+                    TootTallyLogger.LogError("Loading default theme...");
                     SetDefaultTheme();
                 }
             }
             else
             {
-                Plugin.LogError("Missing theme: " + themeFileName);
+                TootTallyLogger.LogError("Missing theme: " + themeFileName);
                 SetDefaultTheme();
             }
 

@@ -112,12 +112,12 @@ namespace TootTally.Graphics
             if (!Directory.Exists(targetThemePath))
             {
                 string sourceThemePath = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Themes");
-                Plugin.LogInfo("Theme folder not found. Attempting to move folder from " + sourceThemePath + " to " + targetThemePath);
+                TootTallyLogger.LogInfo("Theme folder not found. Attempting to move folder from " + sourceThemePath + " to " + targetThemePath);
                 if (Directory.Exists(sourceThemePath))
                     Directory.Move(sourceThemePath, targetThemePath);
                 else
                 {
-                    Plugin.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
+                    TootTallyLogger.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
                     return;
                 }
             }
@@ -175,7 +175,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -189,7 +189,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -210,7 +210,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -269,7 +269,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -301,7 +301,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -333,7 +333,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -380,7 +380,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -404,7 +404,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 
@@ -424,7 +424,7 @@ namespace TootTally.Graphics
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
             #endregion
 

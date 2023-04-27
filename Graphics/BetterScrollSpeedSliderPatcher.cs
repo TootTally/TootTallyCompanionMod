@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
+using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,11 +27,11 @@ namespace TootTally.Graphics
                 LastValue = config.Bind(CONFIG_FIELD, nameof(option.LastValue), DEFAULT_VALUE)
             };
             if (option.Min.Value >= option.Max.Value)
-                Plugin.LogError("Slider MAX has to be greater than Slider MIN");
+                TootTallyLogger.LogError("Slider MAX has to be greater than Slider MIN");
             else if (option.Min.Value <= 4)
-                Plugin.LogError("Slider MIN has to be greater or equal to 5");
+                TootTallyLogger.LogError("Slider MIN has to be greater or equal to 5");
             else if (option.Max.Value >= 1000)
-                Plugin.LogError("Buddy. What are you trying to do?? You're never gonna play with 1k+ scrollspeed...");
+                TootTallyLogger.LogError("Buddy. What are you trying to do?? You're never gonna play with 1k+ scrollspeed...");
 
             if (option.Max.Value >= option.Min.Value || option.Min.Value <= 4 || option.Max.Value >= 1000)
             {

@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 using System;
 using System.Linq;
 using System.Reflection;
+using TootTally.Utils;
 
 // Credit to CripsyKevin#4931 on the modding discord for this code
 
@@ -29,7 +30,7 @@ namespace TootTally
                 trombConfig = Type.GetType("TrombSettings.TrombConfig, TrombSettings");
                 if (trombConfig == null)
                 {
-                    Plugin.Instance.Log("TrombSettings not found.");
+                    TootTallyLogger.LogInfo("TrombSettings not found.");
                     return null;
                 }
 
@@ -40,9 +41,9 @@ namespace TootTally
             }
             catch (Exception e)
             {
-                Plugin.Instance.Log("Exception trying to get config page. Reporting TrombSettings as not found.");
-                Plugin.Instance.Log(e.Message);
-                Plugin.Instance.Log(e.StackTrace);
+                TootTallyLogger.LogInfo("Exception trying to get config page. Reporting TrombSettings as not found.");
+                TootTallyLogger.LogInfo(e.Message);
+                TootTallyLogger.LogInfo(e.StackTrace);
                 return null;
             }
         }
@@ -65,13 +66,13 @@ namespace TootTally
                     addMethod.Invoke(page, new object[] { slider });
                 }
                 else
-                    Plugin.Instance.Log("Couldn't create slider!");
+                    TootTallyLogger.LogInfo("Couldn't create slider!");
             }
             catch (Exception e)
             {
-                Plugin.Instance.Log("Exception trying to create slider. Reporting TrombSettings as not found.");
-                Plugin.Instance.Log(e.Message);
-                Plugin.Instance.Log(e.StackTrace);
+                TootTallyLogger.LogInfo("Exception trying to create slider. Reporting TrombSettings as not found.");
+                TootTallyLogger.LogInfo(e.Message);
+                TootTallyLogger.LogInfo(e.StackTrace);
             }
 
         }

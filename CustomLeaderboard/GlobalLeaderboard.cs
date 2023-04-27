@@ -176,7 +176,7 @@ namespace TootTally.CustomLeaderboard
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
         }
 

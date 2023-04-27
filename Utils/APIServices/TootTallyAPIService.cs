@@ -42,7 +42,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, false))
             {
                 user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
-                Plugin.LogInfo($"Welcome, {user.username}!");
+                TootTallyLogger.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
@@ -51,7 +51,7 @@ namespace TootTally.Utils
                     username = "Guest",
                     id = 0,
                 };
-                Plugin.LogInfo($"Logged in with Guest Account");
+                TootTallyLogger.LogInfo($"Logged in with Guest Account");
             }
             callback(user);
         }
@@ -64,7 +64,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                Plugin.LogInfo(webRequest.downloadHandler.text);
+                TootTallyLogger.LogInfo(webRequest.downloadHandler.text);
                 messages = JsonConvert.DeserializeObject<SerializableClass.APIMessages>(webRequest.downloadHandler.text);
                 if (messages.results.Count > 0)
                     callback(messages);
@@ -81,7 +81,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
-                Plugin.LogInfo($"Welcome, {user.username}!");
+                TootTallyLogger.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
@@ -90,7 +90,7 @@ namespace TootTally.Utils
                     username = "Guest",
                     id = 0,
                 };
-                Plugin.LogInfo($"Logged in with Guest Account");
+                TootTallyLogger.LogInfo($"Logged in with Guest Account");
             }
             callback(user);
         }
@@ -106,7 +106,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
-                Plugin.LogInfo($"Logged in with {token.token}!");
+                TootTallyLogger.LogInfo($"Logged in with {token.token}!");
             }
             else
             {
@@ -114,7 +114,7 @@ namespace TootTally.Utils
                 {
                     token = ""
                 };
-                Plugin.LogInfo($"Error Logging in");
+                TootTallyLogger.LogInfo($"Error Logging in");
             }
             callback(token);
         }
@@ -128,7 +128,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                Plugin.LogInfo($"Account {username} created!");
+                TootTallyLogger.LogInfo($"Account {username} created!");
                 callback(true);
             }
             callback(false);
@@ -150,7 +150,7 @@ namespace TootTally.Utils
                     PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, GameTheme.themeColors.notification.warningText);
                 else
                 {
-                    Plugin.LogInfo($"Chart Sent.");
+                    TootTallyLogger.LogInfo($"Chart Sent.");
                     PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
                 }
             }
@@ -169,7 +169,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, true))
             {
                 string replayUUID = JsonConvert.DeserializeObject<SerializableClass.ReplayStart>(webRequest.downloadHandler.text).id;
-                Plugin.LogInfo("Current Replay UUID: " + replayUUID);
+                TootTallyLogger.LogInfo("Current Replay UUID: " + replayUUID);
                 callback(replayUUID);
             }
         }
@@ -182,7 +182,7 @@ namespace TootTally.Utils
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, true))
-                Plugin.LogInfo("Stopped UUID: " + replayUUID);
+                TootTallyLogger.LogInfo("Stopped UUID: " + replayUUID);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid)
@@ -206,12 +206,12 @@ namespace TootTally.Utils
             form.AddField("replayId", uuid);
             form.AddBinaryData("replayFile", replayFile);
 
-            Plugin.LogInfo($"Sending Replay for {uuid}.");
+            TootTallyLogger.LogInfo($"Sending Replay for {uuid}.");
             var webRequest = UnityWebRequest.Post(apiLink, form);
 
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, true))
-                Plugin.LogInfo($"Replay Sent.");
+                TootTallyLogger.LogInfo($"Replay Sent.");
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
@@ -226,7 +226,7 @@ namespace TootTally.Utils
             {
                 File.WriteAllBytes(replayDir + uuid + ".ttr", webRequest.downloadHandler.data);
 
-                Plugin.LogInfo("Replay Downloaded.");
+                TootTallyLogger.LogInfo("Replay Downloaded.");
                 callback(uuid);
             }
         }
@@ -336,7 +336,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                Plugin.LogInfo("Request successful");
+                TootTallyLogger.LogInfo("Request successful");
             }
             callback(allowSubmit);
         }
@@ -369,9 +369,9 @@ namespace TootTally.Utils
         {
             if (isLoggingErrors)
                 if (webRequest.isNetworkError)
-                    Plugin.LogError($"NETWORK ERROR: {webRequest.error}");
+                    TootTallyLogger.LogError($"NETWORK ERROR: {webRequest.error}");
                 else if (webRequest.isHttpError)
-                    Plugin.LogError($"HTTP ERROR {webRequest.error}");
+                    TootTallyLogger.LogError($"HTTP ERROR {webRequest.error}");
             return webRequest.isNetworkError || webRequest.isHttpError;
         }
     }

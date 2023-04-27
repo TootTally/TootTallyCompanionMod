@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using HarmonyLib;
+using TootTally.Utils;
 using UnityEngine;
 
 namespace TootTally.CustomLeaderboard
@@ -133,7 +134,7 @@ namespace TootTally.CustomLeaderboard
                     break;
 
                 case GlobalLeaderboard.LeaderboardState.ErrorUnexpected:
-                    Plugin.LogError("Unexpected Error during leaderboard Update request");
+                    TootTallyLogger.LogError("Unexpected Error during leaderboard Update request");
                     break;
             }
 

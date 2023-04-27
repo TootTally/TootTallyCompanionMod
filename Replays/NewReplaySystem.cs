@@ -50,13 +50,13 @@ namespace TootTally.Replays
             _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             _lastFrameData = new int[4];
 
-            Plugin.LogInfo("Started recording replay");
+            TootTallyLogger.LogInfo("Started recording replay");
         }
 
         public void FinalizedRecording()
         {
             _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-            Plugin.LogInfo("Replay recording finished");
+            TootTallyLogger.LogInfo("Replay recording finished");
         }
 
         public void RecordFrameData(GameController __instance)
@@ -222,12 +222,12 @@ namespace TootTally.Replays
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
             {
-                Plugin.LogInfo("Replay folder not found");
+                TootTallyLogger.LogInfo("Replay folder not found");
                 return ReplayState.ReplayLoadError;
             }
             if (!File.Exists(replayDir + replayFileName + ".ttr"))
             {
-                Plugin.LogInfo("Replay File does not exist");
+                TootTallyLogger.LogInfo("Replay File does not exist");
                 return ReplayState.ReplayLoadNotFound;
             }
 
@@ -237,9 +237,9 @@ namespace TootTally.Replays
             if (incompatibleReplayPluginBuildDate.Contains(replayJson.pluginbuilddate.ToString()))
             {
                 PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson.pluginbuilddate}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
-                Plugin.LogError("Cannot load replay:");
-                Plugin.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
-                Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
+                TootTallyLogger.LogError("Cannot load replay:");
+                TootTallyLogger.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
+                TootTallyLogger.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
                 return ReplayState.ReplayLoadErrorIncompatible;
             }
             GlobalVariables.gamescrollspeed = replayJson.scrollspeed;
@@ -337,7 +337,7 @@ namespace TootTally.Replays
         }
         public void ClearData()
         {
-            Plugin.LogInfo("Replay data cleared");
+            TootTallyLogger.LogInfo("Replay data cleared");
             _frameData.Clear();
             _noteData.Clear();
             _tootData.Clear();

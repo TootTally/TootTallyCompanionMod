@@ -1,4 +1,5 @@
 using System;
+using TootTally.Utils;
 
 namespace TootTally.Compatibility
 {
@@ -23,7 +24,7 @@ namespace TootTally.Compatibility
                 Type autotoot = Type.GetType("AutoToot.Plugin, AutoToot");
                 if (autotoot == null)
                 {
-                    Plugin.Instance.Log("AutoToot.Plugin not found.");
+                    TootTallyLogger.LogInfo("AutoToot.Plugin not found.");
                     return false;
                 }
                 var wasautoused = autotoot.GetMethod("get_WasAutoUsed");

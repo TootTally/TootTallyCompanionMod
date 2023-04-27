@@ -1,4 +1,5 @@
 using System;
+using TootTally.Utils;
 
 namespace TootTally.Compatibility
 {
@@ -23,7 +24,7 @@ namespace TootTally.Compatibility
                 Type hovertoot = Type.GetType("HoverToot.Plugin, HoverToot");
                 if (hovertoot == null)
                 {
-                    Plugin.Instance.Log("HoverToot.Plugin not found.");
+                    TootTallyLogger.LogInfo("HoverToot.Plugin not found.");
                     return false;
                 }
                 var washoverused = hovertoot.GetMethod("get_DidToggleThisSong");

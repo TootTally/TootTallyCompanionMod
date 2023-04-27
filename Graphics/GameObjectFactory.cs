@@ -67,22 +67,22 @@ namespace TootTally.Graphics
         {
             if (_isLevelSelectControllerInitialized) return;
 
-            Plugin.LogInfo("Generating Slider prefab...");
+            TootTallyLogger.DebugModeLog("Generating Slider prefab...");
             SetSliderPrefab();
-            Plugin.LogInfo("Generating VerticalSlider prefab...");
+            TootTallyLogger.DebugModeLog("Generating VerticalSlider prefab...");
             SetVerticalSliderPrefab();
-            Plugin.LogInfo("Generating GlobalLeaderboard prefab...");
+            TootTallyLogger.DebugModeLog("Generating GlobalLeaderboard prefab...");
             SetSteamLeaderboardPrefab();
-            Plugin.LogInfo("Generating SingleScore prefab...");
+            TootTallyLogger.DebugModeLog("Generating SingleScore prefab...");
             SetSingleScorePrefab();
-            Plugin.LogInfo("Generating Leaderboard Header prefab...");
+            TootTallyLogger.DebugModeLog("Generating Leaderboard Header prefab...");
             SetLeaderboardHeaderPrefab();
-            Plugin.LogInfo("Generating Leaderboard prefab...");
+            TootTallyLogger.DebugModeLog("Generating Leaderboard prefab...");
             SetLeaderboardTextPrefab();
-            Plugin.LogInfo("Generating Single Leaderboard Row prefab...");
+            TootTallyLogger.DebugModeLog("Generating Single Leaderboard Row prefab...");
             SetSingleRowPrefab();
             _isLevelSelectControllerInitialized = true;
-            Plugin.LogInfo("Applying theme...");
+            TootTallyLogger.DebugModeLog("Applying theme...");
             UpdatePrefabTheme();
         }
 
@@ -900,7 +900,7 @@ namespace TootTally.Graphics
                 CreateCustomButton(rowEntry.singleScore.transform, Vector2.zero, new Vector2(26, 26), "►", "ReplayButton",
                 delegate
                 {
-                    Plugin.LogInfo("ID:" + replayId);
+                    TootTallyLogger.LogInfo("ID:" + replayId);
                     ReplaySystemManager.ResolveLoadReplay(replayId, levelSelectControllerInstance);
                 });
             }
