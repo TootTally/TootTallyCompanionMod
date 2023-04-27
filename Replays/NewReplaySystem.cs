@@ -152,8 +152,15 @@ namespace TootTally.Replays
             replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
             replayJson.maxcombo = _maxCombo;
 
-            var noteJudgmentData = new List<int>();
-            noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
+            var noteJudgmentData = new List<int>
+            {
+                _scores_A,
+                _scores_B,
+                _scores_C,
+                _scores_D,
+                _scores_F
+            };
+
             replayJson.finalnotetallies = noteJudgmentData.ToArray();
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);

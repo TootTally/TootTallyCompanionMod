@@ -28,7 +28,7 @@ namespace TootTally.Utils.Helpers
                     }
 
                     TootTallyLogger.DebugModeLog("Writing MemoryStream to File.");
-                    using (var fileStream = new FileStream(dirName + fileName, FileMode.Create))
+                    using (var fileStream = new FileStream(dirName + fileName, FileMode.CreateNew))
                     {
                         memoryStream.Seek(0, SeekOrigin.Begin);
                         memoryStream.CopyTo(fileStream);

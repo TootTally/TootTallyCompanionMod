@@ -18,7 +18,7 @@ namespace TootTally.Utils
         public static void DebugModeLog(string msg)
         {
             if (Plugin.Instance.DebugMode.Value)
-                Plugin.GetLogger().LogInfo(msg);
+                Plugin.GetLogger().LogInfo("DEBUG: " + msg);
         }
 
         public static void LogError(string msg)
