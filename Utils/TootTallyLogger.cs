@@ -61,11 +61,11 @@ namespace TootTally.Utils
         private static void OnLogEvent(object sender, LogEventArgs e)
         {
             var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
-            File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
+            File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]_[{e.Source.SourceName}]_({e.Level}): {e.Data}\n");
             if ((sender as ManualLogSource) != Plugin.GetLogger())
             {
                 var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, e.Source.SourceName + ".log");
-                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
+                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}]_[{e.Source.SourceName}]_({e.Level}): {e.Data}\n");
             }
         }
 

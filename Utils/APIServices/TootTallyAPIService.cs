@@ -64,7 +64,6 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, true))
             {
-                TootTallyLogger.LogInfo(webRequest.downloadHandler.text);
                 messages = JsonConvert.DeserializeObject<SerializableClass.APIMessages>(webRequest.downloadHandler.text);
                 if (messages.results.Count > 0)
                     callback(messages);
