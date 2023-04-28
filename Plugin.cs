@@ -72,6 +72,7 @@ namespace TootTally
                 OptionalTrombSettings.Add(settingsPage, DebugMode);
             }
 
+            TootTallyLogger.Initialize();
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
 
@@ -105,6 +106,7 @@ namespace TootTally
             if (module.ModuleConfigEnabled.Value)
             {
                 module.LoadModule();
+                TootTallyLogger.AddLoggerToListener(module.GetLogger);
             }
         }
 
@@ -113,11 +115,13 @@ namespace TootTally
             if (module.ModuleConfigEnabled.Value)
             {
                 module.LoadModule();
+                TootTallyLogger.AddLoggerToListener(module.GetLogger);
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Enabled.", GameTheme.themeColors.notification.defaultText);
             }
             else
             {
                 module.UnloadModule();
+                TootTallyLogger.RemoveLoggerFromListener(module.GetLogger);
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
             }
         }

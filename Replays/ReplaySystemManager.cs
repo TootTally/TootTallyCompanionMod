@@ -428,11 +428,34 @@ namespace TootTally.Replays
             _replay.FinalizedRecording();
             _replayManagerState = ReplayManagerState.None;
 
-            if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
-            if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
-            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated) return; // Don't submit anything if Circular Breathing is enabled
-            if (_hasPaused) return; //Don't submit if paused during the play
-            if (_replayUUID == null) return;//Dont save or upload if no UUID
+            if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed)
+            {
+                TootTallyLogger.DebugModeLog("AutoToot used, skipping replay submission.");
+                return; // Don't submit anything if AutoToot was used.
+            }
+            if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong)
+            {
+                TootTallyLogger.DebugModeLog("HoverToot used, skipping replay submission.");
+                return; // Don't submit anything if HoverToot was used.
+            }
+            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated)
+            {
+                PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
+                TootTallyLogger.DebugModeLog("CircularBreathing used, skipping replay submission.");
+                return; // Don't submit anything if Circular Breathing is enabled
+            }
+            if (_hasPaused)
+            {
+                TootTallyLogger.DebugModeLog("Paused during gameplay, skipping replay submission.");
+                return; //Don't submit if paused during the play
+            }
+
+            if (_replayUUID == null)
+            {
+                TootTallyLogger.DebugModeLog("Replay UUID was null, skipping replay submission.");
+                return; //Dont save or upload if no UUID
+            }
+
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest" && Plugin.userInfo.allowSubmit) //Don't upload if logged in as a Guest or doesn't allowSubmit
@@ -441,18 +464,23 @@ namespace TootTally.Replays
 
         private static void SaveReplayToFile()
         {
-            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays");
+            TootTallyLogger.DebugModeLog("Replay directory: " + replayDir);
 
             // Create Replays directory in case it doesn't exist
-            if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
+            if (!Directory.Exists(replayDir))
+            {
+                TootTallyLogger.DebugModeLog("Replay directory not found. Creating new Replay folder directory.");
+                Directory.CreateDirectory(replayDir);
+            }
 
             try
             {
-                FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+                FileHelper.WriteJsonToFile(replayDir + "\\", _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
             }
             catch (Exception e)
             {
-                TootTallyLogger.LogError(e.ToString());
+                TootTallyLogger.LogError(e.Message);
             }
         }
 
