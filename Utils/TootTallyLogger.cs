@@ -50,7 +50,7 @@ namespace TootTally.Utils
         internal static void AddLoggerToListener(ManualLogSource logger)
         {
             logger.LogEvent += OnLogEvent;
-            CreateLogFileIfNotExist(logger.SourceName);
+            ClearOrCreateLogFile(logger.SourceName);
         }
 
         internal static void RemoveLoggerFromListener(ManualLogSource logger)
@@ -61,11 +61,11 @@ namespace TootTally.Utils
         private static void OnLogEvent(object sender, LogEventArgs e)
         {
             var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
-            File.AppendAllText(filePath, $"[{DateTime.Now.ToString("HH:mm:ss")}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
+            File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
             if ((sender as ManualLogSource) != Plugin.GetLogger())
             {
                 var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, e.Source.SourceName + ".log");
-                File.AppendAllText(sourceFilePath, $"[{DateTime.Now.ToString("HH:mm:ss")}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
+                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}][{e.Source.SourceName}]({e.Level}): {e.Data}\n");
             }
         }
 
@@ -88,7 +88,7 @@ namespace TootTally.Utils
             logger.LogWarning(msg);
         }
 
-        public static void CreateLogFileIfNotExist(string logFileName)
+        public static void ClearOrCreateLogFile(string logFileName)
         {
             var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, logFileName + ".log");
             if (File.Exists(sourceFilePath))
