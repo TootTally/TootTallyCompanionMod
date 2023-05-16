@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -112,6 +113,17 @@ namespace TootTally.Replays
             {
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
                 _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
+            }
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.startDance))]
+        [HarmonyPostfix]
+        public static void OnGameControllerStartDanceFixSpeedBackup(GameController __instance)
+        {
+            if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
+            {
+                _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
+                TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }
         }
 
