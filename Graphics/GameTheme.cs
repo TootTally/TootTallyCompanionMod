@@ -737,6 +737,8 @@ namespace TootTally.Graphics
             public Color outlineOver;
             public Color text;
             public Color textOver;
+            public Color shadow;
+            public Color shadowOver;
         }
 
         public class ReplayButtonColors
@@ -797,6 +799,7 @@ namespace TootTally.Graphics
             public Color titleBar;
             public Color title;
             public Color titleShadow;
+            public Color outline;
         }
 
         public class ThemeColors

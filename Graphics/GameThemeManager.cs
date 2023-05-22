@@ -186,6 +186,7 @@ namespace TootTally.Graphics
                 __instance.scenetitle.GetComponent<Text>().color = GameTheme.themeColors.title.titleShadow;
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "title/GameObject").GetComponent<Text>().color = GameTheme.themeColors.title.title;
                 __instance.longsongtitle.color = GameTheme.themeColors.title.songName;
+                __instance.longsongtitle.GetComponent<Outline>().effectColor = GameTheme.themeColors.title.outline;
             }
             catch (Exception e)
             {
@@ -341,28 +342,30 @@ namespace TootTally.Graphics
             //TODO FIX RANDOM BUTTON
             try
             {
-                /*__instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+                __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+                __instance.btnrandom.transform.Find("icon").GetComponent<Image>().color = GameTheme.themeColors.randomButton.text;
+                __instance.btnrandom.transform.Find("btn-shadow").GetComponent<Image>().color = GameTheme.themeColors.randomButton.shadow;
 
-                GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom);
+                GameObject randomButtonPrefab = GameObject.Instantiate(__instance.btnrandom.transform.Find("btn").gameObject);
                 RectTransform randomRectTransform = randomButtonPrefab.GetComponent<RectTransform>();
                 randomRectTransform.anchoredPosition = Vector2.zero;
                 randomRectTransform.localScale = Vector3.one;
-                GameObject.DestroyImmediate(randomButtonPrefab.GetComponent<Button>());
+                GameObject.DestroyImmediate(__instance.btnrandom.transform.Find("btn").gameObject);
 
                 GameObject randomButtonBackground = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
                 randomButtonBackground.name = "RandomBackground";
                 OverwriteGameObjectSpriteAndColor(randomButtonBackground, "RandomBackground.png", GameTheme.themeColors.randomButton.background);
-
-                foreach (Transform t in randomButtonPrefab.transform) GameObject.DestroyImmediate(t.gameObject); // destroying text only after making our background object
+                __instance.btnrandom.transform.Find("Text").SetParent(randomButtonBackground.transform);
+                __instance.btnrandom.transform.Find("icon").SetParent(randomButtonBackground.transform);
 
                 GameObject randomButtonOutline = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
                 randomButtonOutline.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1);
                 randomButtonOutline.name = "RandomOutline";
                 OverwriteGameObjectSpriteAndColor(randomButtonOutline, "RandomOutline.png", GameTheme.themeColors.randomButton.outline);
 
-                GameObject randomButtonIcon = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
+                /*GameObject randomButtonIcon = GameObject.Instantiate(randomButtonPrefab, __instance.btnrandom.transform);
                 randomButtonIcon.name = "RandomIcon";
-                OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", GameTheme.themeColors.randomButton.text);
+                OverwriteGameObjectSpriteAndColor(randomButtonIcon, "RandomIcon.png", GameTheme.themeColors.randomButton.text);*/
 
                 GameObject.DestroyImmediate(__instance.btnrandom.GetComponent<Image>());
                 GameObject.DestroyImmediate(randomButtonPrefab);
@@ -376,11 +379,11 @@ namespace TootTally.Graphics
                 EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
                 pointerExitEvent.eventID = EventTriggerType.PointerExit;
                 pointerExitEvent.callback.AddListener((data) => OnPointerLeaveRandomEvent(__instance));
-                randomBtnEvents.triggers.Add(pointerExitEvent);*/
+                randomBtnEvents.triggers.Add(pointerExitEvent);
             }
             catch (Exception e)
             {
-                TootTallyLogger.LogError(e.Message);
+                TootTallyLogger.LogError("THEME CRASH: " + e.Message);
             }
             #endregion
 
@@ -529,15 +532,17 @@ namespace TootTally.Graphics
             __instance.hoversfx.Play();
             __instance.btnrandom.transform.Find("RandomBackground").GetComponent<Image>().color = GameTheme.themeColors.randomButton.backgroundOver;
             __instance.btnrandom.transform.Find("RandomOutline").GetComponent<Image>().color = GameTheme.themeColors.randomButton.outlineOver;
-            __instance.btnrandom.transform.Find("RandomIcon").GetComponent<Image>().color = GameTheme.themeColors.randomButton.textOver;
-            __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.textOver;
+            __instance.btnrandom.transform.Find("RandomBackground/icon").GetComponent<Image>().color = GameTheme.themeColors.randomButton.textOver;
+            __instance.btnrandom.transform.Find("RandomBackground/Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.textOver;
+            __instance.btnrandom.transform.Find("btn-shadow").GetComponent<Image>().color = GameTheme.themeColors.randomButton.shadowOver;
         }
         public static void OnPointerLeaveRandomEvent(LevelSelectController __instance)
         {
             __instance.btnrandom.transform.Find("RandomBackground").GetComponent<Image>().color = GameTheme.themeColors.randomButton.background;
             __instance.btnrandom.transform.Find("RandomOutline").GetComponent<Image>().color = GameTheme.themeColors.randomButton.outline;
-            __instance.btnrandom.transform.Find("RandomIcon").GetComponent<Image>().color = GameTheme.themeColors.randomButton.text;
-            __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+            __instance.btnrandom.transform.Find("RandomBackground/icon").GetComponent<Image>().color = GameTheme.themeColors.randomButton.text;
+            __instance.btnrandom.transform.Find("RandomBackground/Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
+            __instance.btnrandom.transform.Find("btn-shadow").GetComponent<Image>().color = GameTheme.themeColors.randomButton.shadow;
         }
 
         #endregion
