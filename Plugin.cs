@@ -83,6 +83,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
+            _harmony.PatchAll(typeof(TootTallySettings));
             _harmony.PatchAll(typeof(DiscordRPC));
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");

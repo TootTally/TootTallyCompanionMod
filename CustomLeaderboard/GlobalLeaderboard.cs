@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TootTally.Graphics;
+using TootTally.Graphics.Animation;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
@@ -33,7 +34,7 @@ namespace TootTally.CustomLeaderboard
         private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
         private List<RaycastResult> _raycastHitList;
 
-        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly;
+        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopup;
         private Text _errorText, _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
         private RectTransform _diffRatingMaskRectangle;
@@ -124,10 +125,9 @@ namespace TootTally.CustomLeaderboard
 
         public void CustomizeGameMenuUI()
         {
-            //fuck that useless Dial
             try
             {
-
+                //fuck that useless Dial
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
 
                 //move capsules to the left
@@ -173,6 +173,18 @@ namespace TootTally.CustomLeaderboard
                     UpdateStarRating();
                 });
 
+                _profilePopup = GameObjectFactory.CreateCustomButton(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform, new Vector2(265, -420), new Vector2(300, 150), "This is a test", "ProfilePopup").gameObject;
+
+                EventTrigger profilePopupEvents = _profilePopup.gameObject.AddComponent<EventTrigger>();
+                EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+                pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+                pointerEnterEvent.callback.AddListener((data) => OnPointerEnterProfilePopUp());
+                profilePopupEvents.triggers.Add(pointerEnterEvent);
+
+                EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
+                pointerExitEvent.eventID = EventTriggerType.PointerExit;
+                pointerExitEvent.callback.AddListener((data) => OnPointerExitProfilePopUp());
+                profilePopupEvents.triggers.Add(pointerExitEvent);
             }
             catch (Exception e)
             {
@@ -180,7 +192,16 @@ namespace TootTally.CustomLeaderboard
             }
         }
 
-        public void UpdateStarRating()
+        private void OnPointerEnterProfilePopUp()
+        {
+            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(-1, -298), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+        }
+        private void OnPointerExitProfilePopUp()
+        {
+            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(265, -420), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+        }
+
+        private void UpdateStarRating()
         {
 
             if (_songData != null && _speedToDiffDict != null)
