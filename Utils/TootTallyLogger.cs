@@ -21,8 +21,9 @@ namespace TootTally.Utils
             var logFilePath = Path.Combine(folderPath, TOOTTALLY_LOG_FILE_NAME);
             if (!Directory.Exists(folderPath))
             {
+                LogInfo("Couldn't find logs folder, generating folder...");
                 Directory.CreateDirectory(folderPath);
-            } 
+            }
             AddLoggerToListener(Plugin.GetLogger());
         }
 
@@ -41,7 +42,7 @@ namespace TootTally.Utils
         {
             Plugin.GetLogger().LogError(msg);
         }
-        
+
         internal static void LogWarning(string msg)
         {
             Plugin.GetLogger().LogWarning(msg);
@@ -49,8 +50,8 @@ namespace TootTally.Utils
 
         internal static void AddLoggerToListener(ManualLogSource logger)
         {
-            logger.LogEvent += OnLogEvent;
             ClearOrCreateLogFile(logger.SourceName);
+            logger.LogEvent += OnLogEvent;
         }
 
         internal static void RemoveLoggerFromListener(ManualLogSource logger)
@@ -61,6 +62,9 @@ namespace TootTally.Utils
         private static void OnLogEvent(object sender, LogEventArgs e)
         {
             var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
+            if (!File.Exists(filePath))
+                File.Create(filePath);
+
             File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]_({e.Level})_[{e.Source.SourceName}]: {e.Data}\n");
             if ((sender as ManualLogSource) != Plugin.GetLogger())
             {

@@ -57,6 +57,22 @@ namespace TootTally.Utils
             callback(user);
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromID(int id, Action<SerializableClass.User> callback)
+        {
+            var query = $"{APIURL}/api/profile/{id}";
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+            SerializableClass.User user;
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
+                TootTallyLogger.LogInfo($"Welcome, {user.username}!");
+                callback(user);
+            }
+        }
+
+
         public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<SerializableClass.APIMessages> callback)
         {
             var query = $"{APIURL}/api/announcements/?apiKey={Plugin.Instance.APIKey.Value}";

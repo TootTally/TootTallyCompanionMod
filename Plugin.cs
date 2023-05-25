@@ -29,7 +29,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230520;
+        public const int BUILDDATE = 20230525;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -48,6 +48,7 @@ namespace TootTally
             Instance = this;
 
             _harmony = new Harmony(Info.Metadata.GUID);
+            TootTallyLogger.Initialize();
 
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
@@ -58,6 +59,9 @@ namespace TootTally
             tootTallyModules = new List<ITootTallyModule>();
             settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
             moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
+
+           
+
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
@@ -72,7 +76,6 @@ namespace TootTally
                 OptionalTrombSettings.Add(settingsPage, DebugMode);
             }
 
-            TootTallyLogger.Initialize();
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
 
@@ -83,8 +86,10 @@ namespace TootTally
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
-            _harmony.PatchAll(typeof(TootTallySettings));
+            //_harmony.PatchAll(typeof(TootTallySettings));
             _harmony.PatchAll(typeof(DiscordRPC));
+
+          
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {GlobalVariables.version}");

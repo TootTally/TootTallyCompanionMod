@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
+using TMPro;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Utils;
@@ -35,7 +36,8 @@ namespace TootTally.CustomLeaderboard
         private List<RaycastResult> _raycastHitList;
 
         private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopup;
-        private Text _errorText, _diffRating;
+        private Text _errorText;
+        private TMP_Text _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
         private RectTransform _diffRatingMaskRectangle;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
@@ -101,9 +103,10 @@ namespace TootTally.CustomLeaderboard
             imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
             _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
-            _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating.outlineWidth = 0.2f;
             _diffRating.fontSize = 20;
-            _diffRating.alignment = TextAnchor.MiddleRight;
+            _diffRating.alignment = TextAlignmentOptions.MidlineRight;
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
@@ -173,7 +176,25 @@ namespace TootTally.CustomLeaderboard
                     UpdateStarRating();
                 });
 
-                _profilePopup = GameObjectFactory.CreateCustomButton(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform, new Vector2(265, -420), new Vector2(300, 150), "This is a test", "ProfilePopup").gameObject;
+                _profilePopup = GameObjectFactory.CreateCustomButton(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform, new Vector2(265, -420), new Vector2(300, 150), "", "ProfilePopup").gameObject;
+                GameObject.DestroyImmediate(_profilePopup.transform.Find("Text").gameObject);
+
+                GameObject titlebarPrefab = GameObject.Instantiate(_levelSelectControllerInstance.songtitlebar);
+                titlebarPrefab.name = "titlebarPrefab";
+                titlebarPrefab.GetComponent<RectTransform>().eulerAngles = Vector3.zero;
+                titlebarPrefab.GetComponent<RectTransform>().localScale = Vector3.one;
+
+                HorizontalLayoutGroup horizontalLayoutGroup = _profilePopup.AddComponent<HorizontalLayoutGroup>();
+                horizontalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
+                horizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = true;
+
+                GameObject mainPanel = GameObject.Instantiate(titlebarPrefab, _profilePopup.transform);
+                VerticalLayoutGroup verticalLayoutGroup = mainPanel.AddComponent<VerticalLayoutGroup>();
+                verticalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
+                verticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = true;
+
 
                 EventTrigger profilePopupEvents = _profilePopup.gameObject.AddComponent<EventTrigger>();
                 EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
@@ -185,6 +206,12 @@ namespace TootTally.CustomLeaderboard
                 pointerExitEvent.eventID = EventTriggerType.PointerExit;
                 pointerExitEvent.callback.AddListener((data) => OnPointerExitProfilePopUp());
                 profilePopupEvents.triggers.Add(pointerExitEvent);
+
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
+                {
+                    GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)" , GameTheme.themeColors.leaderboard.text);
+                }));
             }
             catch (Exception e)
             {
@@ -194,7 +221,7 @@ namespace TootTally.CustomLeaderboard
 
         private void OnPointerEnterProfilePopUp()
         {
-            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(-1, -298), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(-6, -296), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
         }
         private void OnPointerExitProfilePopUp()
         {
