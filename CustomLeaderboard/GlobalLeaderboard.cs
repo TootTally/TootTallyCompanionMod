@@ -160,7 +160,7 @@ namespace TootTally.CustomLeaderboard
                 GameObject gameSpeedText = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad"), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
                 gameSpeedText.name = "GameSpeedShad";
                 gameSpeedText.GetComponent<Text>().text = "Game Speed";
-                gameSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-100, 76);
+                gameSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-108, 78);
                 GameObject gameSpeedTextFG = gameSpeedText.transform.Find("ScrollSpeed").gameObject;
                 gameSpeedTextFG.name = "GameSpeed";
                 gameSpeedTextFG.GetComponent<Text>().text = "Game Speed";
@@ -209,8 +209,9 @@ namespace TootTally.CustomLeaderboard
 
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
                 {
-                    GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
-                    GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)" , GameTheme.themeColors.leaderboard.text);
+                    var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)" , GameTheme.themeColors.leaderboard.text);
+                    _profilePopup.GetComponent<Button>().onClick.AddListener(() => { t.outlineWidth += 0.01f; t2.outlineWidth += 0.02f; });
                 }));
             }
             catch (Exception e)

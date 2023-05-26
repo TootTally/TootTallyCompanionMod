@@ -62,7 +62,6 @@ namespace TootTally.Replays
                 SetReplayUI(__instance);
             }
 
-            __instance.notescoresamples = 0; //Temporary fix for a glitch
             GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
             _pausePointerAnimation = new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0.85f);
 
@@ -538,13 +537,12 @@ namespace TootTally.Replays
             floatingSpeedText.fontSize = 14;
             floatingSpeedText.alignment = TextAlignmentOptions.Center;
             floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
-            floatingSpeedText.GetComponent<Outline>().effectDistance = Vector2.one / 3f;
+            //floatingSpeedText.outlineWidth = 0.2f; //doesnt work... still dont know why
 
             //Text inside the slider
             TMP_Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
             replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
-            GameObject.Destroy(replaySpeedSliderText.GetComponent<Outline>());
             replaySpeedSliderText.alignment = TextAlignmentOptions.Center;
             //replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
             //replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
@@ -609,11 +607,10 @@ namespace TootTally.Replays
         {
             _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(canvasTransform, "ReplayMarquee", "", new Color(1f, 1f, 1f, 0.75f));
             _replayIndicatorMarquee.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 60);
-            Outline textOutline = _replayIndicatorMarquee.GetComponent<Outline>();
-            textOutline.effectDistance = Vector2.one / 2;
+            //_replayIndicatorMarquee.outlineWidth = 0.2f //doesn't work... don't know why.
             _replayIndicatorMarquee.fontSize = 14;
             _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
-            //_replayIndicatorMarquee.verticalOverflow = VerticalWrapMode.Overflow;
+            _replayIndicatorMarquee.enableWordWrapping = true;
         }
 
         private static void SendReplayFileToServer()
@@ -635,13 +632,13 @@ namespace TootTally.Replays
 
         public static void OnPauseAddReplayButton(PauseCanvasController __instance)
         {
-            __instance.panelrect.sizeDelta = new Vector2(290, 198);
-            GameObject exitbtn = __instance.panelobj.transform.Find("ButtonRetry").gameObject;
-            GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform);
+            __instance.panelrect.sizeDelta = new Vector2(290, 220);
+            GameObject exitbtn = __instance.panelobj.transform.Find("buttons/ButtonRetry").gameObject;
+            GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform.Find("buttons"));
 
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
-            replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+            //replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
             replayBtn.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
@@ -651,13 +648,13 @@ namespace TootTally.Replays
                 TootTallyLogger.DebugModeLog("TempReplay Loaded");
                 _currentGCInstance.pauseRetryLevel();*/
             });
-            GameObject replayText = GameObject.Instantiate(__instance.panelobj.transform.Find("REST").gameObject, replayBtn.transform);
+            Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";
-            replayText.GetComponent<Text>().supportRichText = true;
-            replayText.GetComponent<Text>().text = "View Replay";
-            replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+            replayText.supportRichText = true;
+            replayText.text = "View Replay";
+            replayText.alignment = TextAnchor.MiddleCenter;
             replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 44);
+            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(205, 44);
 
             EventTrigger replayBtnEvent = replayBtn.AddComponent<EventTrigger>();
             EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
@@ -667,23 +664,25 @@ namespace TootTally.Replays
             _pauseArrowDestination = new Vector2(28, -37);
         }
 
-        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverPauseBtn))]
+        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverButton))]
         [HarmonyPrefix]
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
             _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
-            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0] - 1) - 37);
+            _pauseArrowDestination = new Vector2(25, -46 * ((int)__args[0] - 1) - 73);
             return false;
         }
 
         public static void OnPauseChangeButtonText(PauseCanvasController __instance)
         {
+            GameObject resumebtn = __instance.panelobj.transform.Find("buttons/ButtonResume").gameObject;
+            resumebtn.transform.Find("RESUME").GetComponent<Text>().text = "Resume Replay";
 
-            __instance.panelobj.transform.Find("ButtonExit").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(8, 0);
-            __instance.panelobj.transform.Find("REST").gameObject.GetComponent<Text>().text = "Exit Replay";
+            GameObject exitbtn = __instance.panelobj.transform.Find("buttons/ButtonExit").gameObject;
+            exitbtn.transform.Find("EXIT").GetComponent<Text>().text = "Exit Replay";
 
-            __instance.panelobj.transform.Find("ButtonRetry").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(38, 0); ;
-            __instance.panelobj.transform.Find("CONT").gameObject.GetComponent<Text>().text = "Restart Replay";
+            GameObject retrybtn = __instance.panelobj.transform.Find("buttons/ButtonRetry").gameObject;
+            retrybtn.transform.Find("RETRY").GetComponent<Text>().text = "Restart Replay";
             _pauseArrowDestination = new Vector2(28, -37);
         }
 

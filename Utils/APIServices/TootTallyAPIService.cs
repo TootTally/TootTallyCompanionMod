@@ -125,7 +125,6 @@ namespace TootTally.Utils
             if (!HasError(webRequest, query))
             {
                 token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
-                TootTallyLogger.LogInfo($"Logged in with {token.token}!");
             }
             else
             {
