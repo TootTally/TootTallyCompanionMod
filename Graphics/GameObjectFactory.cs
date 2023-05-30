@@ -142,12 +142,23 @@ namespace TootTally.Graphics
 
             GameObject textHolder = GameObject.Instantiate(headerCreditText);
             textHolder.name = "defaultTextPrefab";
-            textHolder.SetActive(false);
+            textHolder.SetActive(true);
             GameObject.DestroyImmediate(textHolder.GetComponent<Text>());
             _multicoloreTextPrefab = textHolder.AddComponent<TextMeshProUGUI>();
             _multicoloreTextPrefab.fontSize = 22;
             _multicoloreTextPrefab.text = "defaultText";
             _multicoloreTextPrefab.font = TMP_FontAsset.CreateFontAsset(headerCreditText.GetComponent<Text>().font);
+            try
+            {
+                _multicoloreTextPrefab.outlineColor = new Color32(0, 0, 0, 1);
+                _multicoloreTextPrefab.outlineWidth = 0.2f;
+                TootTallyLogger.LogInfo("MultiColore Outline success");
+            }
+            catch (Exception e)
+            {
+                TootTallyLogger.LogError(e.Message);
+            }
+
             _multicoloreTextPrefab.alignment = TextAlignmentOptions.Center;
             _multicoloreTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
             _multicoloreTextPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
@@ -162,18 +173,19 @@ namespace TootTally.Graphics
 
             GameObject textHolder = GameObject.Instantiate(advancePanelText);
             textHolder.name = "ComfortaaTextPrefab";
-            textHolder.SetActive(false);
+            textHolder.SetActive(true);
             GameObject.DestroyImmediate(textHolder.GetComponent<Text>());
             _comfortaaTextPrefab = textHolder.AddComponent<TextMeshProUGUI>();
             _comfortaaTextPrefab.fontSize = 22;
             _comfortaaTextPrefab.text = "DefaultText";
             _comfortaaTextPrefab.font = TMP_FontAsset.CreateFontAsset(advancePanelText.GetComponent<Text>().font);
-            _comfortaaTextPrefab.fontSharedMaterial.color = Color.white;
             try
             {
                 _comfortaaTextPrefab.outlineColor = Color.black;
                 _comfortaaTextPrefab.outlineWidth = 0.2f;
-            }catch(Exception e)
+                TootTallyLogger.LogInfo("Comfortaa Outline success");
+            }
+            catch (Exception e)
             {
                 TootTallyLogger.LogError(e.Message);
             }
@@ -182,6 +194,7 @@ namespace TootTally.Graphics
             _comfortaaTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
             _comfortaaTextPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             _comfortaaTextPrefab.richText = true;
+            _comfortaaTextPrefab.enableWordWrapping = false;
             GameObject.DontDestroyOnLoad(_comfortaaTextPrefab);
         }
 
@@ -209,7 +222,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_popUpNotifPrefab);
         }
 
-        
+
 
         public static void SetCustomButtonPrefab()
         {
@@ -381,6 +394,7 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.name = "LeaderboardHeaderPrefab";
             _leaderboardHeaderPrefab.alignment = TextAlignmentOptions.Center;
             _leaderboardHeaderPrefab.maskable = true;
+            _leaderboardHeaderPrefab.enableWordWrapping = false;
             _leaderboardHeaderPrefab.gameObject.SetActive(true);
 
             GameObject.DestroyImmediate(tempHeaderTxt.gameObject);
@@ -394,7 +408,10 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.name = "LeaderboardTextPrefab";
             _leaderboardTextPrefab.alignment = TextAlignmentOptions.Center;
             _leaderboardTextPrefab.maskable = true;
+            _leaderboardTextPrefab.enableWordWrapping = false;
             _leaderboardTextPrefab.gameObject.SetActive(true);
+            _leaderboardTextPrefab.color = Color.white;
+
 
             DestroyNumNameScoreFromSingleScorePrefab();
 
@@ -825,6 +842,23 @@ namespace TootTally.Graphics
             }
         }
 
+        public static GameObject CreateDefaultPanel(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string name)
+        {
+            GameObject panel = GameObject.Instantiate(_panelBodyPrefab, canvasTransform);
+            panel.name = name;
+            RectTransform rectTransform = panel.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+            rectTransform.localScale = Vector2.one * .5f;
+
+            DestroyFromParent(panel, "scoreboard");
+            DestroyFromParent(panel, "tabs");
+            DestroyFromParent(panel, "errors");
+            DestroyFromParent(panel, "LeaderboardVerticalSlider");
+
+            return panel;
+        }
+
         public static GameObject CreateSteamLeaderboardFromPrefab(Transform canvasTransform, string name)
         {
             GameObject steamLeaderboard = GameObject.Instantiate(_steamLeaderboardPrefab, canvasTransform);
@@ -846,14 +880,24 @@ namespace TootTally.Graphics
             return slider;
         }
 
-        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Color color)
+        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Color color, TextFont textFont = TextFont.Comfortaa)
         {
-            TMP_Text singleText = GameObject.Instantiate(_multicoloreTextPrefab, canvasTransform);
+            TMP_Text singleText;
+            switch (textFont)
+            {
+                case TextFont.Multicolore:
+                    singleText = GameObject.Instantiate(_multicoloreTextPrefab, canvasTransform);
+                    break;
+                default:
+                    singleText = GameObject.Instantiate(_comfortaaTextPrefab, canvasTransform);
+                    break;
+            }
             singleText.name = name;
 
             singleText.text = text;
             singleText.color = color;
             singleText.gameObject.GetComponent<RectTransform>().sizeDelta = canvasTransform.GetComponent<RectTransform>().sizeDelta;
+            singleText.enableWordWrapping = true;
 
             singleText.gameObject.SetActive(true);
 
@@ -962,5 +1006,11 @@ namespace TootTally.Graphics
         #endregion
 
         public static void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+
+        public enum TextFont
+        {
+            Comfortaa,
+            Multicolore
+        }
     }
 }

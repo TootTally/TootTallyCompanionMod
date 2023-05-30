@@ -206,7 +206,7 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo("Stopped UUID: " + replayUUID);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid, Action<SerializableClass.ReplaySubmissionReply> callback)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
 
@@ -232,7 +232,12 @@ namespace TootTally.Utils
 
             yield return webRequest.SendWebRequest();
             if (!HasError(webRequest, query))
+            {
                 TootTallyLogger.LogInfo($"Replay Sent.");
+                callback(JsonConvert.DeserializeObject<SerializableClass.ReplaySubmissionReply>(webRequest.downloadHandler.text));
+            }
+            else
+                callback(null);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)

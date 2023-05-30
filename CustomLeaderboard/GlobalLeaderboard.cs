@@ -102,7 +102,7 @@ namespace TootTally.CustomLeaderboard
             Image imageMask = diffStarsHolder.AddComponent<Image>();
             imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
-            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
+            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
             _diffRating.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
             _diffRating.outlineWidth = 0.2f;
             _diffRating.fontSize = 20;

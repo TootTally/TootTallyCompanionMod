@@ -24,6 +24,8 @@ namespace TootTally.Replays
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
+        private const float SWIRLY_SPEED = 0.5f;
+
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused, _hasRewindReplay;
@@ -40,13 +42,14 @@ namespace TootTally.Replays
         private static Slider _replaySpeedSlider, _replayTimestampSlider;
         private static VideoPlayer _videoPlayer;
         private static TMP_Text _replayIndicatorMarquee;
-        private static Vector3 _marqueeScroll = new Vector3(60, 0, 0);
-        private static Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
+        private static readonly Vector3 _marqueeScroll = new Vector3(60, 0, 0);
+        private static readonly Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
         private static GameController _currentGCInstance;
         private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
 
+        private static GameObject _loadingSwirly, _tootTallyScorePanel;
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -187,7 +190,7 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPostfix]
-        public static void AddSpeedToSongName(PointSceneController __instance)
+        public static void SetPointSceneControllerCustomUI(PointSceneController __instance)
         {
             if (gameSpeedMultiplier != 1f)
             {
@@ -197,7 +200,41 @@ namespace TootTally.Replays
                 __instance.txt_trackname.supportRichText = true;
                 __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier.ToString("0.00")}x){colorStringFoot}";
             }
+
+            __instance.bigscoreobj.gameObject.SetActive(false);
+            GameObject lowerRightPanel = __instance.yellowwave.transform.parent.gameObject;
+            GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-b").gameObject);
+            GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-r").gameObject);
+            lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
+            lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
+            lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
+
+            GameObject UICanvas = lowerRightPanel.transform.parent.gameObject;
+            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(261, -40), new Vector2(430, 500), "TootTallyScorePanel");
+            _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
+            VerticalLayoutGroup vertLayout = _tootTallyScorePanel.AddComponent<VerticalLayoutGroup>();
+            vertLayout.padding = new RectOffset(2, 2, 2, 2);
+            vertLayout.childAlignment = TextAnchor.MiddleCenter;
+            vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
+            _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
+
         }
+        public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
+
+        public static void UpdateLoadingSwirlyAnimation()
+        {
+            if (_loadingSwirly != null)
+                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
+        [HarmonyPostfix]
+        public static void OnPointSceneControllerUpdateDoSwirlyAnimation()
+        {
+            UpdateLoadingSwirlyAnimation();
+        }
+
+
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
@@ -246,7 +283,7 @@ namespace TootTally.Replays
                     _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
-                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f? $" [{gameSpeedMultiplier.ToString("0.00")}]":"");
+                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier.ToString("0.00")}]" : "");
                     }
                     _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll * Time.deltaTime;
                     if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
@@ -616,7 +653,34 @@ namespace TootTally.Replays
         private static void SendReplayFileToServer()
         {
             //Using replayUUID as a name
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
+            {
+                if (replaySubmissionReply == null)
+                {
+                    HideLoadingSwirly();
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Score submission disabled for that map.", GameTheme.themeColors.leaderboard.text);
+                    return;
+                }
+                if (replaySubmissionReply.tt != 0)
+                {
+                    HideLoadingSwirly();
+                    var displayMessage = "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!\n" : "\n");
+                    displayMessage += $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt\n";
+                    if (replaySubmissionReply.isBestPlay)
+                        displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{replaySubmissionReply.ranking - Plugin.userInfo.rank})";
+                    PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    if (replaySubmissionReply.isBestPlay)
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{replaySubmissionReply.ranking - Plugin.userInfo.rank})", GameTheme.themeColors.leaderboard.text);
+                }
+                else
+                {
+                    HideLoadingSwirly();
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Map not rated, no data found.", GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"Score position: #{replaySubmissionReply.position}", GameTheme.themeColors.leaderboard.text);
+                }
+            }));
         }
 
         public static void OnReplayingStop()
