@@ -64,12 +64,16 @@ namespace TootTally.Utils
             var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
             if (!File.Exists(filePath))
                 File.Create(filePath);
-
-            File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]_({e.Level})_[{e.Source.SourceName}]: {e.Data}\n");
+            var level = e.Level.ToString();
+            var source = e.Source.SourceName;
+            if (source == "TootTally")
+                File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[Core] {e.Data}\n");
+            else
+                File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
             if ((sender as ManualLogSource) != Plugin.GetLogger())
             {
                 var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, e.Source.SourceName + ".log");
-                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}]_({e.Level})_[{e.Source.SourceName}]: {e.Data}\n");
+                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
             }
         }
 

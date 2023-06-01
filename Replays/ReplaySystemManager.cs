@@ -75,7 +75,10 @@ namespace TootTally.Replays
         public static void OnGameControllerPlaySongSetReplayStartTime()
         {
             if (_replay != null)
+            {
+                SetReplayUUID();
                 _replay.SetStartTime();
+            }
 
         }
 
@@ -198,25 +201,41 @@ namespace TootTally.Replays
                 string colorStringHeader = $"<Color='#{ColorUtility.ToHtmlStringRGBA(color)}'>";
                 string colorStringFoot = $"</Color>";
                 __instance.txt_trackname.supportRichText = true;
-                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier.ToString("0.00")}x){colorStringFoot}";
+                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier:0.00}x){colorStringFoot}";
             }
 
-            __instance.bigscoreobj.gameObject.SetActive(false);
+            //__instance.bigscoreobj.gameObject.SetActive(false);
             GameObject lowerRightPanel = __instance.yellowwave.transform.parent.gameObject;
-            GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-b").gameObject);
-            GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-r").gameObject);
-            lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
-            lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
-            lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
+            try
+            {
+                GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-b").gameObject);
+                GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-r").gameObject);
+            }
+            catch (Exception e)
+            {
+                TootTallyLogger.LogWarning("Objects rule-b or rule-r couldn't be found.");
+            }
+            //lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
+            //lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
+            //lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
 
             GameObject UICanvas = lowerRightPanel.transform.parent.gameObject;
-            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(261, -40), new Vector2(430, 500), "TootTallyScorePanel");
+
+            GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(365, -23), new Vector2(56, 112), "ScorePanelHitbox");
+            GameObjectFactory.CreateSingleText(ttHitbox.transform, "ScorePanelHitboxText", "<", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
+            GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
+
+            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");           
             _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
             VerticalLayoutGroup vertLayout = _tootTallyScorePanel.AddComponent<VerticalLayoutGroup>();
             vertLayout.padding = new RectOffset(2, 2, 2, 2);
             vertLayout.childAlignment = TextAnchor.MiddleCenter;
             vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
             _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
+
+            
+
+            new SlideTooltip(ttHitbox, panelBody, new Vector2(750, 0), new Vector2(225, 0));
 
         }
         public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
@@ -463,6 +482,8 @@ namespace TootTally.Replays
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
                     }));
                 }
+                else if (songHashInDB == 0)
+                    _replayUUID = null;
                 else if (songHashInDB != 0)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
 
@@ -472,7 +493,6 @@ namespace TootTally.Replays
 
         public static void OnRecordingStart(GameController __instance)
         {
-            SetReplayUUID();
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server

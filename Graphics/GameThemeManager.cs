@@ -69,6 +69,9 @@ namespace TootTally.Graphics
                 case ThemeTypes.Perandus:
                     GameTheme.SetCustomTheme("Perandus");
                     break;
+                case ThemeTypes.Pride:
+                    GameTheme.SetCustomTheme("Pride");
+                    break;
                 case ThemeTypes.Samuran:
                     GameTheme.SetCustomTheme("Samuran");
                     break;
@@ -622,6 +625,7 @@ namespace TootTally.Graphics
             Lavender,
             NightRider,
             Perandus,
+            Pride,
             Samuran,
             Random,
         }

@@ -35,7 +35,7 @@ namespace TootTally.CustomLeaderboard
         private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
         private List<RaycastResult> _raycastHitList;
 
-        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopup;
+        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopupLoadingSwirly, _profilePopup;
         private Text _errorText;
         private TMP_Text _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
@@ -176,57 +176,47 @@ namespace TootTally.CustomLeaderboard
                     UpdateStarRating();
                 });
 
-                _profilePopup = GameObjectFactory.CreateCustomButton(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform, new Vector2(265, -420), new Vector2(300, 150), "", "ProfilePopup").gameObject;
-                GameObject.DestroyImmediate(_profilePopup.transform.Find("Text").gameObject);
-
                 GameObject titlebarPrefab = GameObject.Instantiate(_levelSelectControllerInstance.songtitlebar);
                 titlebarPrefab.name = "titlebarPrefab";
                 titlebarPrefab.GetComponent<RectTransform>().eulerAngles = Vector3.zero;
                 titlebarPrefab.GetComponent<RectTransform>().localScale = Vector3.one;
+                titlebarPrefab.GetComponent<Image>().color = new Color(0, 0, 0, 0.001f);
 
-                HorizontalLayoutGroup horizontalLayoutGroup = _profilePopup.AddComponent<HorizontalLayoutGroup>();
+                GameObject fullScreenPanelCanvas = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH);
+
+                GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(381, -207), new Vector2(72, 72), "ProfilePopupHitbox");
+                GameObjectFactory.CreateSingleText(ttHitbox.transform, "ProfilePopupHitboxText", "P", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
+                GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
+
+                _profilePopup = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(525, -300), new Vector2(450, 270), "TootTallyScorePanel");
+                _profilePopupLoadingSwirly = _profilePopup.transform.Find("loadingspinner_parent").gameObject;
+
+                var scoresbody = _profilePopup.transform.Find("scoresbody").gameObject;
+
+                HorizontalLayoutGroup horizontalLayoutGroup = scoresbody.AddComponent<HorizontalLayoutGroup>();
                 horizontalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
                 horizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
                 horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = true;
 
-                GameObject mainPanel = GameObject.Instantiate(titlebarPrefab, _profilePopup.transform);
+                GameObject mainPanel = GameObject.Instantiate(titlebarPrefab, scoresbody.transform);
                 VerticalLayoutGroup verticalLayoutGroup = mainPanel.AddComponent<VerticalLayoutGroup>();
                 verticalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
                 verticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
                 verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = true;
 
-
-                EventTrigger profilePopupEvents = _profilePopup.gameObject.AddComponent<EventTrigger>();
-                EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
-                pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
-                pointerEnterEvent.callback.AddListener((data) => OnPointerEnterProfilePopUp());
-                profilePopupEvents.triggers.Add(pointerEnterEvent);
-
-                EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
-                pointerExitEvent.eventID = EventTriggerType.PointerExit;
-                pointerExitEvent.callback.AddListener((data) => OnPointerExitProfilePopUp());
-                profilePopupEvents.triggers.Add(pointerExitEvent);
-
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
                 {
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
-                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)" , GameTheme.themeColors.leaderboard.text);
-                    _profilePopup.GetComponent<Button>().onClick.AddListener(() => { t.outlineWidth += 0.01f; t2.outlineWidth += 0.02f; });
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)", GameTheme.themeColors.leaderboard.text);
+                    _profilePopupLoadingSwirly.gameObject.SetActive(false);
                 }));
+
+                new SlideTooltip(ttHitbox, _profilePopup, new Vector2(525, -300), new Vector2(282, -155));
             }
             catch (Exception e)
             {
                 TootTallyLogger.LogError(e.Message);
             }
-        }
-
-        private void OnPointerEnterProfilePopUp()
-        {
-            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(-6, -296), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-        }
-        private void OnPointerExitProfilePopUp()
-        {
-            AnimationManager.AddNewPositionAnimation(_profilePopup, new Vector2(265, -420), 0.7f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
         }
 
         private void UpdateStarRating()
@@ -449,6 +439,9 @@ namespace TootTally.CustomLeaderboard
         {
             if (_loadingSwirly != null)
                 _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            if (_profilePopupLoadingSwirly != null)
+                _profilePopupLoadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+
         }
 
         private void SetTabsImages()

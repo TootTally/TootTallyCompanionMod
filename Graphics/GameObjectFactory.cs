@@ -9,7 +9,6 @@ using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.TextCore;
 using UnityEngine.UI;
 
 namespace TootTally.Graphics
@@ -148,16 +147,13 @@ namespace TootTally.Graphics
             _multicoloreTextPrefab.fontSize = 22;
             _multicoloreTextPrefab.text = "defaultText";
             _multicoloreTextPrefab.font = TMP_FontAsset.CreateFontAsset(headerCreditText.GetComponent<Text>().font);
-            try
-            {
-                _multicoloreTextPrefab.outlineColor = new Color32(0, 0, 0, 1);
-                _multicoloreTextPrefab.outlineWidth = 0.2f;
-                TootTallyLogger.LogInfo("MultiColore Outline success");
-            }
-            catch (Exception e)
-            {
-                TootTallyLogger.LogError(e.Message);
-            }
+            TootTallyLogger.LogInfo($"altrasRenderMode: {_multicoloreTextPrefab.font.atlasRenderMode}");
+            TootTallyLogger.LogInfo($"atlasPadding: {_multicoloreTextPrefab.font.atlasPadding}");
+
+            _multicoloreTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .25f);
+            _multicoloreTextPrefab.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            _multicoloreTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, .25f);
+            _multicoloreTextPrefab.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, GameTheme.themeColors.leaderboard.textOutline);
 
             _multicoloreTextPrefab.alignment = TextAlignmentOptions.Center;
             _multicoloreTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
@@ -179,16 +175,11 @@ namespace TootTally.Graphics
             _comfortaaTextPrefab.fontSize = 22;
             _comfortaaTextPrefab.text = "DefaultText";
             _comfortaaTextPrefab.font = TMP_FontAsset.CreateFontAsset(advancePanelText.GetComponent<Text>().font);
-            try
-            {
-                _comfortaaTextPrefab.outlineColor = Color.black;
-                _comfortaaTextPrefab.outlineWidth = 0.2f;
-                TootTallyLogger.LogInfo("Comfortaa Outline success");
-            }
-            catch (Exception e)
-            {
-                TootTallyLogger.LogError(e.Message);
-            }
+
+            _comfortaaTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .25f);
+            _comfortaaTextPrefab.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            _comfortaaTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, .25f);
+            _comfortaaTextPrefab.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, GameTheme.themeColors.leaderboard.textOutline);
 
             _comfortaaTextPrefab.alignment = TextAlignmentOptions.Center;
             _comfortaaTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
