@@ -49,7 +49,6 @@ namespace TootTally
 
             _harmony = new Harmony(Info.Metadata.GUID);
             TootTallyLogger.Initialize();
-
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
@@ -59,9 +58,6 @@ namespace TootTally
             tootTallyModules = new List<ITootTallyModule>();
             settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
             moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
-
-           
-
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }

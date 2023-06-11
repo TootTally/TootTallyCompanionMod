@@ -32,7 +32,7 @@ namespace TootTally.Replays
         private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
-        public static float gameSpeedMultiplier;
+        public static float gameSpeedMultiplier = 1f;
 
         private static string _replayUUID;
         private static string _replayFileName;
@@ -57,6 +57,12 @@ namespace TootTally.Replays
         public static void GameControllerPostfixPatch(GameController __instance)
         {
             _currentGCInstance = __instance;
+            if (__instance.freeplay)
+            {
+                gameSpeedMultiplier = 1f;
+                return;
+            }
+
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
             else
