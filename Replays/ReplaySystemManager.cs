@@ -59,7 +59,7 @@ namespace TootTally.Replays
             _currentGCInstance = __instance;
             if (__instance.freeplay)
             {
-                gameSpeedMultiplier = 1f;
+                gameSpeedMultiplier = __instance.smooth_scrolling_move_mult = 1f;
                 return;
             }
 
@@ -130,6 +130,7 @@ namespace TootTally.Replays
             else
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
+                _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
                 TootTallyLogger.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
             }
@@ -141,6 +142,7 @@ namespace TootTally.Replays
         {
             if (gameSpeedMultiplier != 1f)
             {
+                __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
                 _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
             }
@@ -152,6 +154,7 @@ namespace TootTally.Replays
         {
             if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
             {
+                __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
                 TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }

@@ -147,8 +147,6 @@ namespace TootTally.Graphics
             _multicoloreTextPrefab.fontSize = 22;
             _multicoloreTextPrefab.text = "defaultText";
             _multicoloreTextPrefab.font = TMP_FontAsset.CreateFontAsset(headerCreditText.GetComponent<Text>().font);
-            TootTallyLogger.LogInfo($"altrasRenderMode: {_multicoloreTextPrefab.font.atlasRenderMode}");
-            TootTallyLogger.LogInfo($"atlasPadding: {_multicoloreTextPrefab.font.atlasPadding}");
 
             _multicoloreTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .25f);
             _multicoloreTextPrefab.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
