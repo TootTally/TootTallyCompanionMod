@@ -14,7 +14,7 @@ namespace TootTally.Graphics
     public class SlideTooltip
     {
         private GameObject _hitboxGameObject;
-        private CustomAnimation _enterAnimation;
+        private CustomAnimation _enterAnimation, _exitAnimation;
 
         public GameObject tooltipGameObject;
         private Vector2 _startPosition, _targetPosition;
@@ -46,11 +46,17 @@ namespace TootTally.Graphics
 
         private void OnPointerEnterHitbox()
         {
-            AnimationManager.AddNewPositionAnimation(tooltipGameObject, _targetPosition, 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (_exitAnimation != null)
+                AnimationManager.RemoveFromList(_exitAnimation);
+            _exitAnimation = null;
+            _enterAnimation = AnimationManager.AddNewPositionAnimation(tooltipGameObject, _targetPosition, 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
         }
         private void OnPointerExitHitbox()
         {
-            AnimationManager.AddNewPositionAnimation(tooltipGameObject, _startPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            if (_enterAnimation != null)
+                AnimationManager.RemoveFromList(_enterAnimation);
+            _enterAnimation = null;
+            _exitAnimation = AnimationManager.AddNewPositionAnimation(tooltipGameObject, _startPosition, 1.2f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
         }
     }
 }

@@ -220,7 +220,7 @@ namespace TootTally.Replays
                 GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-b").gameObject);
                 GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-r").gameObject);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 TootTallyLogger.LogWarning("Objects rule-b or rule-r couldn't be found.");
             }
@@ -693,15 +693,16 @@ namespace TootTally.Replays
                 if (replaySubmissionReply.tt != 0)
                 {
                     HideLoadingSwirly();
+                    var rankDiff = Math.Abs(replaySubmissionReply.ranking - Plugin.userInfo.rank);
                     var displayMessage = "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!\n" : "\n");
                     displayMessage += $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt\n";
                     if (replaySubmissionReply.isBestPlay)
-                        displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{replaySubmissionReply.ranking - Plugin.userInfo.rank})";
+                        displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})";
                     PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
                     if (replaySubmissionReply.isBestPlay)
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{replaySubmissionReply.ranking - Plugin.userInfo.rank})", GameTheme.themeColors.leaderboard.text);
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})", GameTheme.themeColors.leaderboard.text);
                 }
                 else
                 {
