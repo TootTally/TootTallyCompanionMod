@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using TootTally.Discord.Core;
+using TootTally.Utils;
 
 namespace TootTally.Discord
 {
@@ -19,12 +20,12 @@ namespace TootTally.Discord
             try
             {
                 _discord = new Core.Discord(clientId, (ulong)CreateFlags.NoRequireDiscord);
-                _discord.SetLogHook(LogLevel.Error, (level, message) => Plugin.LogError($"[{level.ToString()}] {message}"));
+                _discord.SetLogHook(LogLevel.Error, (level, message) => TootTallyLogger.LogError($"[{level.ToString()}] {message}"));
                 _actMan = _discord.GetActivityManager();
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.ToString());
+                TootTallyLogger.LogError(e.ToString());
             }
 
         }
@@ -149,7 +150,7 @@ namespace TootTally.Discord
                 _actMan.UpdateActivity(_act, (result) =>
                 {
                     if (result != Result.Ok)
-                        Plugin.LogInfo("Discord: Something went wrong: " + result.ToString());
+                        TootTallyLogger.LogInfo("Discord: Something went wrong: " + result.ToString());
                 });
                 try
                 {
@@ -157,7 +158,7 @@ namespace TootTally.Discord
                 }
                 catch (Exception e)
                 {
-                    Plugin.LogError(e.ToString());
+                    TootTallyLogger.LogError(e.ToString());
                     _discord.Dispose();
                     _discord = null;
                 }

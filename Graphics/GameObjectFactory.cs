@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using HarmonyLib;
+using TMPro;
 using TootTally.CustomLeaderboard;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
@@ -14,7 +16,7 @@ namespace TootTally.Graphics
     public static class GameObjectFactory
     {
         private static CustomButton _buttonPrefab;
-        private static Text _defaultText, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
+        private static TextMeshProUGUI _multicoloreTextPrefab, _comfortaaTextPrefab, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static Slider _verticalSliderPrefab, _sliderPrefab;
         private static PopUpNotif _popUpNotifPrefab;
 
@@ -56,7 +58,8 @@ namespace TootTally.Graphics
 
             if (_isHomeControllerInitialized) return;
 
-            SetDefaultTextPrefab();
+            SetMulticoloreTextPrefab();
+            SetComfortaaTextPrefab();
             SetNotificationPrefab();
             SetCustomButtonPrefab();
             _isHomeControllerInitialized = true;
@@ -67,22 +70,22 @@ namespace TootTally.Graphics
         {
             if (_isLevelSelectControllerInitialized) return;
 
-            Plugin.LogInfo("Generating Slider prefab...");
+            TootTallyLogger.DebugModeLog("Generating Slider prefab...");
             SetSliderPrefab();
-            Plugin.LogInfo("Generating VerticalSlider prefab...");
+            TootTallyLogger.DebugModeLog("Generating VerticalSlider prefab...");
             SetVerticalSliderPrefab();
-            Plugin.LogInfo("Generating GlobalLeaderboard prefab...");
+            TootTallyLogger.DebugModeLog("Generating GlobalLeaderboard prefab...");
             SetSteamLeaderboardPrefab();
-            Plugin.LogInfo("Generating SingleScore prefab...");
+            TootTallyLogger.DebugModeLog("Generating SingleScore prefab...");
             SetSingleScorePrefab();
-            Plugin.LogInfo("Generating Leaderboard Header prefab...");
+            TootTallyLogger.DebugModeLog("Generating Leaderboard Header prefab...");
             SetLeaderboardHeaderPrefab();
-            Plugin.LogInfo("Generating Leaderboard prefab...");
+            TootTallyLogger.DebugModeLog("Generating Leaderboard prefab...");
             SetLeaderboardTextPrefab();
-            Plugin.LogInfo("Generating Single Leaderboard Row prefab...");
+            TootTallyLogger.DebugModeLog("Generating Single Leaderboard Row prefab...");
             SetSingleRowPrefab();
             _isLevelSelectControllerInitialized = true;
-            Plugin.LogInfo("Applying theme...");
+            TootTallyLogger.DebugModeLog("Applying theme...");
             UpdatePrefabTheme();
         }
 
@@ -131,24 +134,59 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_mainMultiplayerPanelPrefab);
         }
 
-        public static void SetDefaultTextPrefab()
+        public static void SetMulticoloreTextPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject headerCreditText = mainCanvas.transform.Find("FullCreditsPanel/header-credits/Text").gameObject;
 
             GameObject textHolder = GameObject.Instantiate(headerCreditText);
             textHolder.name = "defaultTextPrefab";
-            textHolder.AddComponent<Outline>();
-            textHolder.SetActive(false);
-            _defaultText = textHolder.GetComponent<Text>();
-            _defaultText.fontSize = 22;
-            _defaultText.alignment = TextAnchor.MiddleCenter;
-            _defaultText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            _defaultText.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
-            _defaultText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            _defaultText.supportRichText = true;
-            GameObject.DontDestroyOnLoad(_defaultText);
+            textHolder.SetActive(true);
+            GameObject.DestroyImmediate(textHolder.GetComponent<Text>());
+            _multicoloreTextPrefab = textHolder.AddComponent<TextMeshProUGUI>();
+            _multicoloreTextPrefab.fontSize = 22;
+            _multicoloreTextPrefab.text = "defaultText";
+            _multicoloreTextPrefab.font = TMP_FontAsset.CreateFontAsset(headerCreditText.GetComponent<Text>().font);
+
+            _multicoloreTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .25f);
+            _multicoloreTextPrefab.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            _multicoloreTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, .25f);
+            _multicoloreTextPrefab.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, GameTheme.themeColors.leaderboard.textOutline);
+
+            _multicoloreTextPrefab.alignment = TextAlignmentOptions.Center;
+            _multicoloreTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
+            _multicoloreTextPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            _multicoloreTextPrefab.richText = true;
+            GameObject.DontDestroyOnLoad(_multicoloreTextPrefab);
         }
+
+        public static void SetComfortaaTextPrefab()
+        {
+            GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+            GameObject advancePanelText = mainCanvas.transform.Find("AdvancedInfoPanel/primary-content/intro/copy").gameObject;
+
+            GameObject textHolder = GameObject.Instantiate(advancePanelText);
+            textHolder.name = "ComfortaaTextPrefab";
+            textHolder.SetActive(true);
+            GameObject.DestroyImmediate(textHolder.GetComponent<Text>());
+            _comfortaaTextPrefab = textHolder.AddComponent<TextMeshProUGUI>();
+            _comfortaaTextPrefab.fontSize = 22;
+            _comfortaaTextPrefab.text = "DefaultText";
+            _comfortaaTextPrefab.font = TMP_FontAsset.CreateFontAsset(advancePanelText.GetComponent<Text>().font);
+
+            _comfortaaTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, .25f);
+            _comfortaaTextPrefab.fontMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            _comfortaaTextPrefab.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, .25f);
+            _comfortaaTextPrefab.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, GameTheme.themeColors.leaderboard.textOutline);
+
+            _comfortaaTextPrefab.alignment = TextAlignmentOptions.Center;
+            _comfortaaTextPrefab.GetComponent<RectTransform>().sizeDelta = textHolder.GetComponent<RectTransform>().sizeDelta;
+            _comfortaaTextPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            _comfortaaTextPrefab.richText = true;
+            _comfortaaTextPrefab.enableWordWrapping = false;
+            GameObject.DontDestroyOnLoad(_comfortaaTextPrefab);
+        }
+
         public static void SetNotificationPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
@@ -163,7 +201,7 @@ namespace TootTally.Graphics
             popUpNorifRectTransform.anchoredPosition = new Vector2(695, -700);
             popUpNorifRectTransform.sizeDelta = new Vector2(450, 200);
 
-            Text notifText = GameObject.Instantiate(_defaultText, _popUpNotifPrefab.transform);
+            TMP_Text notifText = GameObject.Instantiate(_multicoloreTextPrefab, _popUpNotifPrefab.transform);
             notifText.name = "NotifText";
             notifText.gameObject.GetComponent<RectTransform>().sizeDelta = popUpNorifRectTransform.sizeDelta;
             notifText.gameObject.SetActive(true);
@@ -172,6 +210,9 @@ namespace TootTally.Graphics
 
             GameObject.DontDestroyOnLoad(_popUpNotifPrefab);
         }
+
+
+
         public static void SetCustomButtonPrefab()
         {
             GameObject settingBtn = _settingsGraphics.transform.Find("GRAPHICS/btn_opengraphicspanel").gameObject;
@@ -337,42 +378,50 @@ namespace TootTally.Graphics
 
         public static void SetLeaderboardHeaderPrefab()
         {
-            _leaderboardHeaderPrefab = GameObject.Instantiate(_singleScorePrefab.transform.Find("Num").GetComponent<Text>());
-            _leaderboardHeaderPrefab.alignment = TextAnchor.MiddleCenter;
-            _leaderboardHeaderPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
+            Text tempHeaderTxt = GameObject.Instantiate(_singleScorePrefab.transform.Find("Num").GetComponent<Text>());
+            _leaderboardHeaderPrefab = GameObject.Instantiate(_comfortaaTextPrefab);
+            _leaderboardHeaderPrefab.name = "LeaderboardHeaderPrefab";
+            _leaderboardHeaderPrefab.alignment = TextAlignmentOptions.Center;
             _leaderboardHeaderPrefab.maskable = true;
-            Outline outline = _leaderboardHeaderPrefab.gameObject.AddComponent<Outline>();
+            _leaderboardHeaderPrefab.enableWordWrapping = false;
+            _leaderboardHeaderPrefab.gameObject.SetActive(true);
 
+            GameObject.DestroyImmediate(tempHeaderTxt.gameObject);
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
         }
 
         public static void SetLeaderboardTextPrefab()
         {
-            _leaderboardTextPrefab = GameObject.Instantiate(_singleScorePrefab.transform.Find("Name").GetComponent<Text>());
-            _leaderboardTextPrefab.alignment = TextAnchor.MiddleCenter;
-            _leaderboardTextPrefab.horizontalOverflow = HorizontalWrapMode.Overflow;
+            Text tempTxt = GameObject.Instantiate(_singleScorePrefab.transform.Find("Name").GetComponent<Text>());
+            _leaderboardTextPrefab = GameObject.Instantiate(_comfortaaTextPrefab);
+            _leaderboardTextPrefab.name = "LeaderboardTextPrefab";
+            _leaderboardTextPrefab.alignment = TextAlignmentOptions.Center;
             _leaderboardTextPrefab.maskable = true;
-            Outline outline = _leaderboardTextPrefab.gameObject.AddComponent<Outline>();
+            _leaderboardTextPrefab.enableWordWrapping = false;
+            _leaderboardTextPrefab.gameObject.SetActive(true);
+            _leaderboardTextPrefab.color = Color.white;
+
 
             DestroyNumNameScoreFromSingleScorePrefab();
 
+            GameObject.DestroyImmediate(tempTxt.gameObject);
             GameObject.DontDestroyOnLoad(_leaderboardTextPrefab.gameObject);
         }
 
         public static void SetSingleRowPrefab()
         {
             _singleRowPrefab = _singleScorePrefab.AddComponent<LeaderboardRowEntry>();
-            Text rank = GameObject.Instantiate(_leaderboardHeaderPrefab, _singleScorePrefab.transform);
+            TMP_Text rank = GameObject.Instantiate(_leaderboardHeaderPrefab, _singleScorePrefab.transform);
             rank.name = "rank";
-            Text username = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
+            TMP_Text username = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
             username.name = "username";
-            Text score = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
+            TMP_Text score = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
             score.name = "score";
-            Text percent = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
+            TMP_Text percent = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
             percent.name = "percent";
-            Text grade = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
+            TMP_Text grade = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
             grade.name = "grade";
-            Text maxcombo = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
+            TMP_Text maxcombo = GameObject.Instantiate(_leaderboardTextPrefab, _singleScorePrefab.transform);
             maxcombo.name = "maxcombo";
             _singleRowPrefab.ConstructLeaderboardEntry(_singleScorePrefab, rank, username, score, percent, grade, maxcombo, false);
             _singleRowPrefab.singleScore.name = "singleRowPrefab";
@@ -691,24 +740,24 @@ namespace TootTally.Graphics
             rowHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(730, 60);
             rowHolder.GetComponent<Image>().color = Color.gray;
 
-            Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", lobbyInfo.title, Color.white);
+            TMP_Text lobbyTitleText = CreateSingleText(rowHolder.transform, $"{name}TitleText", lobbyInfo.title, Color.white);
             lobbyTitleText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, -5);
-            lobbyTitleText.alignment = TextAnchor.UpperLeft;
+            lobbyTitleText.alignment = TextAlignmentOptions.TopLeft;
             lobbyTitleText.fontSize = 18;
 
-            Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{lobbyInfo.users.Count} / {lobbyInfo.maxPlayerCount} players", Color.white);
+            TMP_Text lobbyPlayerCount = CreateSingleText(rowHolder.transform, $"{name}PlayerCountText", $"{lobbyInfo.users.Count} / {lobbyInfo.maxPlayerCount} players", Color.white);
             lobbyPlayerCount.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5, -5);
-            lobbyPlayerCount.alignment = TextAnchor.UpperRight;
+            lobbyPlayerCount.alignment = TextAlignmentOptions.TopRight;
             lobbyPlayerCount.fontSize = 18;
 
-            Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentState, Color.white);
+            TMP_Text lobbyCurrentSongText = CreateSingleText(rowHolder.transform, $"{name}CurrentSongText", lobbyInfo.currentState, Color.white);
             lobbyCurrentSongText.GetComponent<RectTransform>().anchoredPosition += new Vector2(5, 5);
-            lobbyCurrentSongText.alignment = TextAnchor.LowerLeft;
+            lobbyCurrentSongText.alignment = TextAlignmentOptions.BottomLeft;
             lobbyCurrentSongText.fontSize = 18;
 
-            Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{lobbyInfo.ping} ms", Color.white);
+            TMP_Text lobbyPingText = CreateSingleText(rowHolder.transform, $"{name}PingText", $"{lobbyInfo.ping} ms", Color.white);
             lobbyPingText.GetComponent<RectTransform>().anchoredPosition += new Vector2(-5, 5);
-            lobbyPingText.alignment = TextAnchor.LowerRight;
+            lobbyPingText.alignment = TextAlignmentOptions.BottomRight;
             lobbyPingText.fontSize = 18;
 
             Button btn = rowHolder.AddComponent<Button>();
@@ -751,8 +800,8 @@ namespace TootTally.Graphics
             {
                 _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Text>().color = GameTheme.themeColors.notification.defaultText;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<Outline>().effectColor = GameTheme.themeColors.notification.textOutline;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
             }
 
             if (_isLevelSelectControllerInitialized)
@@ -770,19 +819,33 @@ namespace TootTally.Graphics
                 _panelBodyPrefab.transform.Find("scoresbody").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.scoresBody;
                 _singleRowPrefab.UpdateTheme();
 
-                Outline outline = _leaderboardTextPrefab.gameObject.GetComponent<Outline>();
-                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
                 _leaderboardTextPrefab.color = GameTheme.themeColors.leaderboard.text;
-                outline = _leaderboardHeaderPrefab.gameObject.GetComponent<Outline>();
-                outline.effectColor = GameTheme.themeColors.leaderboard.textOutline;
+                _leaderboardTextPrefab.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
                 _leaderboardHeaderPrefab.color = GameTheme.themeColors.leaderboard.headerText;
-
+                _leaderboardHeaderPrefab.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
 
                 _sliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
                 _verticalSliderPrefab.transform.Find("Handle").gameObject.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
                 _verticalSliderPrefab.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
                 _verticalSliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
             }
+        }
+
+        public static GameObject CreateDefaultPanel(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string name)
+        {
+            GameObject panel = GameObject.Instantiate(_panelBodyPrefab, canvasTransform);
+            panel.name = name;
+            RectTransform rectTransform = panel.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+            rectTransform.localScale = Vector2.one * .5f;
+
+            DestroyFromParent(panel, "scoreboard");
+            DestroyFromParent(panel, "tabs");
+            DestroyFromParent(panel, "errors");
+            DestroyFromParent(panel, "LeaderboardVerticalSlider");
+
+            return panel;
         }
 
         public static GameObject CreateSteamLeaderboardFromPrefab(Transform canvasTransform, string name)
@@ -806,23 +869,33 @@ namespace TootTally.Graphics
             return slider;
         }
 
-        public static Text CreateSingleText(Transform canvasTransform, string name, string text, Color color)
+        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Color color, TextFont textFont = TextFont.Comfortaa)
         {
-            Text singleText = GameObject.Instantiate(_defaultText, canvasTransform);
+            TMP_Text singleText;
+            switch (textFont)
+            {
+                case TextFont.Multicolore:
+                    singleText = GameObject.Instantiate(_multicoloreTextPrefab, canvasTransform);
+                    break;
+                default:
+                    singleText = GameObject.Instantiate(_comfortaaTextPrefab, canvasTransform);
+                    break;
+            }
             singleText.name = name;
 
             singleText.text = text;
             singleText.color = color;
             singleText.gameObject.GetComponent<RectTransform>().sizeDelta = canvasTransform.GetComponent<RectTransform>().sizeDelta;
+            singleText.enableWordWrapping = true;
 
             singleText.gameObject.SetActive(true);
 
             return singleText;
         }
 
-        public static Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
+        public static TMP_Text CreateDoubleText(Transform canvasTransform, string name, string text, Color color)
         {
-            Text doubledText = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
+            TMP_Text doubledText = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
             doubledText.name = name;
 
             doubledText.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
@@ -833,9 +906,9 @@ namespace TootTally.Graphics
             return doubledText;
         }
 
-        public static Text CreateTripleText(Transform canvasTransform, string name, string text, Color color)
+        public static TMP_Text CreateTripleText(Transform canvasTransform, string name, string text, Color color)
         {
-            Text tripledText = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
+            TMP_Text tripledText = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
             tripledText.name = name;
 
             tripledText.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
@@ -843,7 +916,7 @@ namespace TootTally.Graphics
             tripledText.text = text;
 
 
-            Text tripledTextSecondLayer = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
+            TMP_Text tripledTextSecondLayer = GameObject.Instantiate(_leaderboardTextPrefab, canvasTransform);
             tripledTextSecondLayer.name = name + "SecondLayer";
 
             tripledTextSecondLayer.GetComponent<RectTransform>().sizeDelta = new Vector2(40, 35);
@@ -900,7 +973,7 @@ namespace TootTally.Graphics
                 CreateCustomButton(rowEntry.singleScore.transform, Vector2.zero, new Vector2(26, 26), "►", "ReplayButton",
                 delegate
                 {
-                    Plugin.LogInfo("ID:" + replayId);
+                    TootTallyLogger.LogInfo("ID:" + replayId);
                     ReplaySystemManager.ResolveLoadReplay(replayId, levelSelectControllerInstance);
                 });
             }
@@ -922,5 +995,11 @@ namespace TootTally.Graphics
         #endregion
 
         public static void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+
+        public enum TextFont
+        {
+            Comfortaa,
+            Multicolore
+        }
     }
 }

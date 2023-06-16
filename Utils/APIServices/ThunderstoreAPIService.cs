@@ -26,9 +26,9 @@ namespace TootTally.Utils
         {
             if (isLoggingErrors)
                 if (webRequest.isNetworkError)
-                    Plugin.LogError($"NETWORK ERROR: {webRequest.error}");
+                    TootTallyLogger.LogError($"NETWORK ERROR: {webRequest.error}");
                 else if (webRequest.isHttpError)
-                    Plugin.LogError($"HTTP ERROR {webRequest.error}");
+                    TootTallyLogger.LogError($"HTTP ERROR {webRequest.error}");
             return webRequest.isNetworkError || webRequest.isHttpError;
         }
     }

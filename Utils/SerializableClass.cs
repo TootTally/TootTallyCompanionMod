@@ -84,7 +84,7 @@ namespace TootTally.Utils
             public string version;
             public string hash;
         }
-        
+
         [Serializable]
         public class ModInfoAPI
         {
@@ -92,7 +92,7 @@ namespace TootTally.Utils
             public SendableModInfo[] mods;
         }
 
-        
+
 
         [Serializable]
         public class Message
@@ -134,9 +134,9 @@ namespace TootTally.Utils
         public class LoginToken
         {
             public string token;
-		}
-		
-		[Serializable]
+        }
+
+        [Serializable]
         public class ReplayStart
         {
             public string id;
@@ -181,6 +181,15 @@ namespace TootTally.Utils
             public List<int[]> tootdata;
         }
 
+        [Serializable]
+        public class ReplaySubmissionReply
+        {
+            public string replayUrl;
+            public float tt;
+            public bool isBestPlay;
+            public int position;
+            public int ranking;
+        }
 
         [Serializable]
         public class User
@@ -219,6 +228,7 @@ namespace TootTally.Utils
 
         }
 
+        
 
         [Serializable]
         public class ThunderstoreLatestData

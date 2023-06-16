@@ -1,10 +1,12 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using HarmonyLib;
+using TMPro;
 using TootTally.Compatibility;
 using TootTally.Graphics;
 using TootTally.Utils;
@@ -22,13 +24,15 @@ namespace TootTally.Replays
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
 
+        private const float SWIRLY_SPEED = 0.5f;
+
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused, _hasRewindReplay;
         private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
 
         private static float _elapsedTime;
-        public static float gameSpeedMultiplier;
+        public static float gameSpeedMultiplier = 1f;
 
         private static string _replayUUID;
         private static string _replayFileName;
@@ -37,14 +41,15 @@ namespace TootTally.Replays
         private static ReplayManagerState _replayManagerState;
         private static Slider _replaySpeedSlider, _replayTimestampSlider;
         private static VideoPlayer _videoPlayer;
-        private static Text _replayIndicatorMarquee;
-        private static Vector3 _marqueeScroll = new Vector3(60, 0, 0);
-        private static Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
+        private static TMP_Text _replayIndicatorMarquee;
+        private static readonly Vector3 _marqueeScroll = new Vector3(60, 0, 0);
+        private static readonly Vector3 _marqueeStartingPosition = new Vector3(500, -100, 100);
         private static GameController _currentGCInstance;
         private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
 
+        private static GameObject _loadingSwirly, _tootTallyScorePanel;
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -52,6 +57,12 @@ namespace TootTally.Replays
         public static void GameControllerPostfixPatch(GameController __instance)
         {
             _currentGCInstance = __instance;
+            if (__instance.freeplay)
+            {
+                gameSpeedMultiplier = __instance.smooth_scrolling_move_mult = 1f;
+                return;
+            }
+
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
             else
@@ -60,9 +71,29 @@ namespace TootTally.Replays
                 SetReplayUI(__instance);
             }
 
-            __instance.notescoresamples = 0; //Temporary fix for a glitch
             GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
             _pausePointerAnimation = new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0.85f);
+
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.playsong))]
+        [HarmonyPostfix]
+        public static void OnGameControllerPlaySongSetReplayStartTime()
+        {
+            if (_replay != null)
+            {
+                SetReplayUUID();
+                _replay.SetStartTime();
+            }
+
+        }
+
+        [HarmonyPatch(typeof(CurtainController), nameof(CurtainController.closeCurtain))]
+        [HarmonyPostfix]
+        public static void OnCurtainControllerCloseCurtainSetReplayEndTime()
+        {
+            if (_replay != null)
+                _replay.SetEndTime();
 
         }
 
@@ -91,16 +122,17 @@ namespace TootTally.Replays
                 }
                 catch (Exception e)
                 {
-                    Plugin.LogWarning(e.ToString());
-                    Plugin.LogInfo("Couldn't find VideoPlayer in background");
+                    TootTallyLogger.LogWarning(e.ToString());
+                    TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
-                _replaySpeedSlider.value = _replay.replaySpeed;
+                //_replaySpeedSlider.value = _replay.replaySpeed;
             }
             else
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
+                _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
-                Plugin.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+                TootTallyLogger.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
             }
         }
 
@@ -110,8 +142,21 @@ namespace TootTally.Replays
         {
             if (gameSpeedMultiplier != 1f)
             {
+                __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
                 _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
+            }
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.startDance))]
+        [HarmonyPostfix]
+        public static void OnGameControllerStartDanceFixSpeedBackup(GameController __instance)
+        {
+            if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
+            {
+                __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
+                _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
+                TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }
         }
 
@@ -157,7 +202,7 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPostfix]
-        public static void AddSpeedToSongName(PointSceneController __instance)
+        public static void SetPointSceneControllerCustomUI(PointSceneController __instance)
         {
             if (gameSpeedMultiplier != 1f)
             {
@@ -165,9 +210,59 @@ namespace TootTally.Replays
                 string colorStringHeader = $"<Color='#{ColorUtility.ToHtmlStringRGBA(color)}'>";
                 string colorStringFoot = $"</Color>";
                 __instance.txt_trackname.supportRichText = true;
-                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier.ToString("0.00")}x){colorStringFoot}";
+                __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier:0.00}x){colorStringFoot}";
             }
+
+            //__instance.bigscoreobj.gameObject.SetActive(false);
+            GameObject lowerRightPanel = __instance.yellowwave.transform.parent.gameObject;
+            try
+            {
+                GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-b").gameObject);
+                GameObject.DestroyImmediate(lowerRightPanel.transform.Find("rule-r").gameObject);
+            }
+            catch (Exception)
+            {
+                TootTallyLogger.LogWarning("Objects rule-b or rule-r couldn't be found.");
+            }
+            //lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
+            //lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
+            //lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
+
+            GameObject UICanvas = lowerRightPanel.transform.parent.gameObject;
+
+            GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(365, -23), new Vector2(56, 112), "ScorePanelHitbox");
+            GameObjectFactory.CreateSingleText(ttHitbox.transform, "ScorePanelHitboxText", "<", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
+            GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
+
+            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");           
+            _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
+            VerticalLayoutGroup vertLayout = _tootTallyScorePanel.AddComponent<VerticalLayoutGroup>();
+            vertLayout.padding = new RectOffset(2, 2, 2, 2);
+            vertLayout.childAlignment = TextAnchor.MiddleCenter;
+            vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
+            _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
+
+            
+
+            new SlideTooltip(ttHitbox, panelBody, new Vector2(750, 0), new Vector2(225, 0));
+
         }
+        public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
+
+        public static void UpdateLoadingSwirlyAnimation()
+        {
+            if (_loadingSwirly != null)
+                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+        }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
+        [HarmonyPostfix]
+        public static void OnPointSceneControllerUpdateDoSwirlyAnimation()
+        {
+            UpdateLoadingSwirlyAnimation();
+        }
+
+
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
@@ -214,10 +309,9 @@ namespace TootTally.Replays
             {
                 case ReplayManagerState.Replaying:
                     _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
-                    __instance.currentnotesound.pitch = Mathf.Clamp(__instance.currentnotesound.pitch * __instance.musictrack.pitch, 0.5f * __instance.musictrack.pitch, 2f * __instance.musictrack.pitch);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
-                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}";
+                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier.ToString("0.00")}]" : "");
                     }
                     _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll * Time.deltaTime;
                     if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
@@ -281,7 +375,7 @@ namespace TootTally.Replays
             {
                 case ReplayManagerState.Recording:
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.OnReplayStopUUID(SongDataHelper.GetChoosenSongHash(), _replayUUID));
-                    Plugin.LogInfo($"UUID deleted: {_replayUUID}");
+                    TootTallyLogger.LogInfo($"UUID deleted: {_replayUUID}");
                     _replayUUID = null;
                     if (_replayFileName == null)
                         OnPauseAddReplayButton(__instance);
@@ -348,6 +442,7 @@ namespace TootTally.Replays
             {
                 case NewReplaySystem.ReplayState.ReplayLoadSuccess:
                     _replayFileName = replayId;
+                    gameSpeedMultiplier = _replay.GetReplaySpeed;
                     levelSelectControllerInstance.playbtn.onClick?.Invoke();
                     break;
 
@@ -383,7 +478,7 @@ namespace TootTally.Replays
             var songFilePath = SongDataHelper.GetSongFilePath(track);
             var isCustom = track is CustomTrack;
 
-            Plugin.LogInfo($"Requesting UUID for {songHash}");
+            TootTallyLogger.LogInfo($"Requesting UUID for {songHash}");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
                 if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
@@ -396,6 +491,8 @@ namespace TootTally.Replays
                         Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
                     }));
                 }
+                else if (songHashInDB == 0)
+                    _replayUUID = null;
                 else if (songHashInDB != 0)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
 
@@ -405,7 +502,6 @@ namespace TootTally.Replays
 
         public static void OnRecordingStart(GameController __instance)
         {
-            SetReplayUUID();
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 120 || Application.targetFrameRate < 1 ? 120 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
@@ -420,19 +516,41 @@ namespace TootTally.Replays
             _lastIsTooting = _hasRewindReplay = false;
             wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
-            Plugin.LogInfo("Replay Started");
+            TootTallyLogger.LogInfo("Replay Started");
         }
 
         public static void OnRecordingStop()
         {
-            _replay.FinalizedRecording();
             _replayManagerState = ReplayManagerState.None;
 
-            if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed) return; // Don't submit anything if AutoToot was used.
-            if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong) return; // Don't submit anything if HoverToot was used.
-            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated) return; // Don't submit anything if Circular Breathing is enabled
-            if (_hasPaused) return; //Don't submit if paused during the play
-            if (_replayUUID == null) return;//Dont save or upload if no UUID
+            if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed)
+            {
+                TootTallyLogger.DebugModeLog("AutoToot used, skipping replay submission.");
+                return; // Don't submit anything if AutoToot was used.
+            }
+            if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong)
+            {
+                TootTallyLogger.DebugModeLog("HoverToot used, skipping replay submission.");
+                return; // Don't submit anything if HoverToot was used.
+            }
+            if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated)
+            {
+                PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
+                TootTallyLogger.DebugModeLog("CircularBreathing used, skipping replay submission.");
+                return; // Don't submit anything if Circular Breathing is enabled
+            }
+            if (_hasPaused)
+            {
+                TootTallyLogger.DebugModeLog("Paused during gameplay, skipping replay submission.");
+                return; //Don't submit if paused during the play
+            }
+
+            if (_replayUUID == null)
+            {
+                TootTallyLogger.DebugModeLog("Replay UUID was null, skipping replay submission.");
+                return; //Dont save or upload if no UUID
+            }
+
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest" && Plugin.userInfo.allowSubmit) //Don't upload if logged in as a Guest or doesn't allowSubmit
@@ -441,18 +559,23 @@ namespace TootTally.Replays
 
         private static void SaveReplayToFile()
         {
-            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
+            string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays");
+            TootTallyLogger.DebugModeLog("Replay directory: " + replayDir);
 
             // Create Replays directory in case it doesn't exist
-            if (!Directory.Exists(replayDir)) Directory.CreateDirectory(replayDir);
+            if (!Directory.Exists(replayDir))
+            {
+                TootTallyLogger.DebugModeLog("Replay directory not found. Creating new Replay folder directory.");
+                Directory.CreateDirectory(replayDir);
+            }
 
             try
             {
-                FileHelper.WriteJsonToFile(replayDir, _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+                FileHelper.WriteJsonToFile(replayDir + "\\", _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.ToString());
+                TootTallyLogger.LogError(e.Message);
             }
         }
 
@@ -471,25 +594,24 @@ namespace TootTally.Replays
             _replaySpeedSlider = GameObjectFactory.CreateSliderFromPrefab(canvasTransform, "SpeedSlider");
             _replaySpeedSlider.gameObject.AddComponent<GraphicRaycaster>();
             _replaySpeedSlider.transform.SetSiblingIndex(0);
-            _replaySpeedSlider.value = gameSpeedMultiplier;
+            _replaySpeedSlider.value = 1;
             GameObject sliderHandle = _replaySpeedSlider.transform.Find("Handle Slide Area/Handle").gameObject;
             sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.handle;
 
             //Text above the slider
-            Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
+            TMP_Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
             floatingSpeedText.fontSize = 14;
-            floatingSpeedText.alignment = TextAnchor.MiddleCenter;
+            floatingSpeedText.alignment = TextAlignmentOptions.Center;
             floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
-            floatingSpeedText.GetComponent<Outline>().effectDistance = Vector2.one / 3f;
+            //floatingSpeedText.outlineWidth = 0.2f; //doesnt work... still dont know why
 
             //Text inside the slider
-            Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
+            TMP_Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
             replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
-            GameObject.Destroy(replaySpeedSliderText.GetComponent<Outline>());
-            replaySpeedSliderText.alignment = TextAnchor.MiddleCenter;
-            replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
-            replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
+            replaySpeedSliderText.alignment = TextAlignmentOptions.Center;
+            //replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            //replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
             replaySpeedSliderText.fontSize = 8;
             replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             replaySpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
@@ -497,9 +619,11 @@ namespace TootTally.Replays
             _replaySpeedSlider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
             _replaySpeedSlider.onValueChanged.AddListener((float value) =>
             {
-                __instance.musictrack.pitch = _replaySpeedSlider.value;
+                __instance.musictrack.pitch = _replaySpeedSlider.value * gameSpeedMultiplier;
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
+                __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / (_replaySpeedSlider.value * gameSpeedMultiplier));
                 EventSystem.current.SetSelectedGameObject(null);
             });
 
@@ -548,16 +672,45 @@ namespace TootTally.Replays
         private static void SetReplayMarquees(Transform canvasTransform)
         {
             _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(canvasTransform, "ReplayMarquee", "", new Color(1f, 1f, 1f, 0.75f));
-            Outline textOutline = _replayIndicatorMarquee.GetComponent<Outline>();
-            textOutline.effectDistance = Vector2.one / 2;
+            _replayIndicatorMarquee.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 60);
+            //_replayIndicatorMarquee.outlineWidth = 0.2f //doesn't work... don't know why.
             _replayIndicatorMarquee.fontSize = 14;
             _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
+            _replayIndicatorMarquee.enableWordWrapping = true;
         }
 
         private static void SendReplayFileToServer()
         {
             //Using replayUUID as a name
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID));
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
+            {
+                if (replaySubmissionReply == null)
+                {
+                    HideLoadingSwirly();
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Score submission disabled for that map.", GameTheme.themeColors.leaderboard.text);
+                    return;
+                }
+                if (replaySubmissionReply.tt != 0)
+                {
+                    HideLoadingSwirly();
+                    var rankDiff = Math.Abs(replaySubmissionReply.ranking - Plugin.userInfo.rank);
+                    var displayMessage = "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!\n" : "\n");
+                    displayMessage += $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt\n";
+                    if (replaySubmissionReply.isBestPlay)
+                        displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})";
+                    PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    if (replaySubmissionReply.isBestPlay)
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})", GameTheme.themeColors.leaderboard.text);
+                }
+                else
+                {
+                    HideLoadingSwirly();
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Map not rated, no data found.", GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"Score position: #{replaySubmissionReply.position}", GameTheme.themeColors.leaderboard.text);
+                }
+            }));
         }
 
         public static void OnReplayingStop()
@@ -568,30 +721,34 @@ namespace TootTally.Replays
             Time.timeScale = 1f;
 
             _replayManagerState = ReplayManagerState.None;
-            Plugin.LogInfo("Replay finished");
+            TootTallyLogger.LogInfo("Replay finished");
         }
 
         public static void OnPauseAddReplayButton(PauseCanvasController __instance)
         {
-            __instance.panelrect.sizeDelta = new Vector2(290, 198);
-            GameObject exitbtn = __instance.panelobj.transform.Find("ButtonRetry").gameObject;
-            GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform);
+            __instance.panelrect.sizeDelta = new Vector2(290, 220);
+            GameObject exitbtn = __instance.panelobj.transform.Find("buttons/ButtonRetry").gameObject;
+            GameObject replayBtn = GameObject.Instantiate(exitbtn, __instance.panelobj.transform.Find("buttons"));
 
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
-            replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+            //replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
+            replayBtn.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
-                _replayFileName = "TempReplay";
+                PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
+                /*_replayFileName = "TempReplay";
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
-                _currentGCInstance.pauseRetryLevel();
+                TootTallyLogger.DebugModeLog("TempReplay Loaded");
+                _currentGCInstance.pauseRetryLevel();*/
             });
-            GameObject replayText = GameObject.Instantiate(__instance.panelobj.transform.Find("REST").gameObject, replayBtn.transform);
+            Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";
-            replayText.GetComponent<Text>().text = "View Replay";
-            replayText.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+            replayText.supportRichText = true;
+            replayText.text = "View Replay";
+            replayText.alignment = TextAnchor.MiddleCenter;
             replayText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 44);
+            replayText.GetComponent<RectTransform>().sizeDelta = new Vector2(205, 44);
 
             EventTrigger replayBtnEvent = replayBtn.AddComponent<EventTrigger>();
             EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
@@ -601,23 +758,25 @@ namespace TootTally.Replays
             _pauseArrowDestination = new Vector2(28, -37);
         }
 
-        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverPauseBtn))]
+        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.mouseOverButton))]
         [HarmonyPrefix]
         public static bool OnPauseMenuButtonOver(PauseCanvasController __instance, object[] __args)
         {
             _pausePointerAnimation.SetStartVector(__instance.pausearrowr.anchoredPosition);
-            _pauseArrowDestination = new Vector2(28, -44 * ((int)__args[0] - 1) - 37);
+            _pauseArrowDestination = new Vector2(25, -46 * ((int)__args[0] - 1) - 73);
             return false;
         }
 
         public static void OnPauseChangeButtonText(PauseCanvasController __instance)
         {
+            GameObject resumebtn = __instance.panelobj.transform.Find("buttons/ButtonResume").gameObject;
+            resumebtn.transform.Find("RESUME").GetComponent<Text>().text = "Resume Replay";
 
-            __instance.panelobj.transform.Find("ButtonExit").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(8, 0);
-            __instance.panelobj.transform.Find("REST").gameObject.GetComponent<Text>().text = "Exit Replay";
+            GameObject exitbtn = __instance.panelobj.transform.Find("buttons/ButtonExit").gameObject;
+            exitbtn.transform.Find("EXIT").GetComponent<Text>().text = "Exit Replay";
 
-            __instance.panelobj.transform.Find("ButtonRetry").gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(38, 0); ;
-            __instance.panelobj.transform.Find("CONT").gameObject.GetComponent<Text>().text = "Restart Replay";
+            GameObject retrybtn = __instance.panelobj.transform.Find("buttons/ButtonRetry").gameObject;
+            retrybtn.transform.Find("RETRY").GetComponent<Text>().text = "Restart Replay";
             _pauseArrowDestination = new Vector2(28, -37);
         }
 

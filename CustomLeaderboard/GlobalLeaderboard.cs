@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
+using TMPro;
 using TootTally.Graphics;
+using TootTally.Graphics.Animation;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
@@ -33,8 +35,9 @@ namespace TootTally.CustomLeaderboard
         private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
         private List<RaycastResult> _raycastHitList;
 
-        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly;
-        private Text _errorText, _diffRating;
+        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopupLoadingSwirly, _profilePopup;
+        private Text _errorText;
+        private TMP_Text _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
         private RectTransform _diffRatingMaskRectangle;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
@@ -99,10 +102,11 @@ namespace TootTally.CustomLeaderboard
             Image imageMask = diffStarsHolder.AddComponent<Image>();
             imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
-            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text);
-            _diffRating.gameObject.GetComponent<Outline>().effectColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
+            _diffRating.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
+            _diffRating.outlineWidth = 0.2f;
             _diffRating.fontSize = 20;
-            _diffRating.alignment = TextAnchor.MiddleRight;
+            _diffRating.alignment = TextAlignmentOptions.MidlineRight;
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
@@ -124,10 +128,9 @@ namespace TootTally.CustomLeaderboard
 
         public void CustomizeGameMenuUI()
         {
-            //fuck that useless Dial
             try
             {
-
+                //fuck that useless Dial
                 GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Dial").gameObject.SetActive(false);
 
                 //move capsules to the left
@@ -157,7 +160,7 @@ namespace TootTally.CustomLeaderboard
                 GameObject gameSpeedText = GameObject.Instantiate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "ScrollSpeedShad"), GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH).transform);
                 gameSpeedText.name = "GameSpeedShad";
                 gameSpeedText.GetComponent<Text>().text = "Game Speed";
-                gameSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-100, 76);
+                gameSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-108, 78);
                 GameObject gameSpeedTextFG = gameSpeedText.transform.Find("ScrollSpeed").gameObject;
                 gameSpeedTextFG.name = "GameSpeed";
                 gameSpeedTextFG.GetComponent<Text>().text = "Game Speed";
@@ -173,14 +176,50 @@ namespace TootTally.CustomLeaderboard
                     UpdateStarRating();
                 });
 
+                GameObject titlebarPrefab = GameObject.Instantiate(_levelSelectControllerInstance.songtitlebar);
+                titlebarPrefab.name = "titlebarPrefab";
+                titlebarPrefab.GetComponent<RectTransform>().eulerAngles = Vector3.zero;
+                titlebarPrefab.GetComponent<RectTransform>().localScale = Vector3.one;
+                titlebarPrefab.GetComponent<Image>().color = new Color(0, 0, 0, 0.001f);
+
+                GameObject fullScreenPanelCanvas = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH);
+
+                GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(381, -207), new Vector2(72, 72), "ProfilePopupHitbox");
+                GameObjectFactory.CreateSingleText(ttHitbox.transform, "ProfilePopupHitboxText", "P", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
+                GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
+
+                _profilePopup = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(525, -300), new Vector2(450, 270), "TootTallyScorePanel");
+                _profilePopupLoadingSwirly = _profilePopup.transform.Find("loadingspinner_parent").gameObject;
+
+                var scoresbody = _profilePopup.transform.Find("scoresbody").gameObject;
+
+                HorizontalLayoutGroup horizontalLayoutGroup = scoresbody.AddComponent<HorizontalLayoutGroup>();
+                horizontalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
+                horizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = true;
+
+                GameObject mainPanel = GameObject.Instantiate(titlebarPrefab, scoresbody.transform);
+                VerticalLayoutGroup verticalLayoutGroup = mainPanel.AddComponent<VerticalLayoutGroup>();
+                verticalLayoutGroup.padding = new RectOffset(2, 2, 2, 2);
+                verticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = true;
+
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
+                {
+                    var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)", GameTheme.themeColors.leaderboard.text);
+                    _profilePopupLoadingSwirly.gameObject.SetActive(false);
+                }));
+
+                new SlideTooltip(ttHitbox, _profilePopup, new Vector2(525, -300), new Vector2(282, -155));
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                TootTallyLogger.LogError(e.Message);
             }
         }
 
-        public void UpdateStarRating()
+        private void UpdateStarRating()
         {
 
             if (_songData != null && _speedToDiffDict != null)
@@ -400,6 +439,9 @@ namespace TootTally.CustomLeaderboard
         {
             if (_loadingSwirly != null)
                 _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            if (_profilePopupLoadingSwirly != null)
+                _profilePopupLoadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+
         }
 
         private void SetTabsImages()

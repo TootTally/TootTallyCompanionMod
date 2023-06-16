@@ -25,7 +25,8 @@ namespace TootTally.Replays
 
         private List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>(), _tootData = new List<int[]>();
         private int[] _lastFrameData;
-        public float replaySpeed;
+        private float _replaySpeed;
+        public float GetReplaySpeed { get => _replaySpeed; }
         private DateTimeOffset _startTime, _endTime;
 
         private bool _wasTouchScreenUsed;
@@ -47,16 +48,21 @@ namespace TootTally.Replays
         {
             _scores_A = _scores_B = _scores_C = _scores_D = 0;
             _maxCombo = 0;
-            _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
             _lastFrameData = new int[4];
 
-            Plugin.LogInfo("Started recording replay");
+            TootTallyLogger.LogInfo("Started recording replay");
         }
 
-        public void FinalizedRecording()
+        public void SetStartTime()
+        {
+            _startTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
+            TootTallyLogger.LogInfo($"Replay started recording at {_startTime}");
+        }
+
+        public void SetEndTime()
         {
             _endTime = new DateTimeOffset(DateTime.Now.ToUniversalTime());
-            Plugin.LogInfo("Replay recording finished");
+            TootTallyLogger.LogInfo($"Replay recording finished at {_endTime}");
         }
 
         public void RecordFrameData(GameController __instance)
@@ -152,8 +158,15 @@ namespace TootTally.Replays
             replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
             replayJson.maxcombo = _maxCombo;
 
-            var noteJudgmentData = new List<int>();
-            noteJudgmentData.Add(_scores_A); noteJudgmentData.Add(_scores_B); noteJudgmentData.Add(_scores_C); noteJudgmentData.Add(_scores_D); noteJudgmentData.Add(_scores_F);
+            var noteJudgmentData = new List<int>
+            {
+                _scores_A,
+                _scores_B,
+                _scores_C,
+                _scores_D,
+                _scores_F
+            };
+
             replayJson.finalnotetallies = noteJudgmentData.ToArray();
             OptimizeNoteData(ref _noteData);
             OptimizeTootData(ref _tootData);
@@ -222,12 +235,12 @@ namespace TootTally.Replays
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
             if (!Directory.Exists(replayDir))
             {
-                Plugin.LogInfo("Replay folder not found");
+                TootTallyLogger.LogInfo("Replay folder not found");
                 return ReplayState.ReplayLoadError;
             }
             if (!File.Exists(replayDir + replayFileName + ".ttr"))
             {
-                Plugin.LogInfo("Replay File does not exist");
+                TootTallyLogger.LogInfo("Replay File does not exist");
                 return ReplayState.ReplayLoadNotFound;
             }
 
@@ -237,9 +250,9 @@ namespace TootTally.Replays
             if (incompatibleReplayPluginBuildDate.Contains(replayJson.pluginbuilddate.ToString()))
             {
                 PopUpNotifManager.DisplayNotif($"Replay incompatible:\nReplay Build Date is {replayJson.pluginbuilddate}\nCurrent Build Date is {Plugin.BUILDDATE}", GameTheme.themeColors.notification.errorText);
-                Plugin.LogError("Cannot load replay:");
-                Plugin.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
-                Plugin.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
+                TootTallyLogger.LogError("Cannot load replay:");
+                TootTallyLogger.LogError("   Replay Build Date is " + replayJson.pluginbuilddate);
+                TootTallyLogger.LogError("   Current Plugin Build Date " + Plugin.BUILDDATE);
                 return ReplayState.ReplayLoadErrorIncompatible;
             }
             GlobalVariables.gamescrollspeed = replayJson.scrollspeed;
@@ -250,7 +263,7 @@ namespace TootTally.Replays
             _finalTotalScore = replayJson.finalscore;
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
-            replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
+            _replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
 
             return ReplayState.ReplayLoadSuccess;
         }
@@ -337,7 +350,7 @@ namespace TootTally.Replays
         }
         public void ClearData()
         {
-            Plugin.LogInfo("Replay data cleared");
+            TootTallyLogger.LogInfo("Replay data cleared");
             _frameData.Clear();
             _noteData.Clear();
             _tootData.Clear();

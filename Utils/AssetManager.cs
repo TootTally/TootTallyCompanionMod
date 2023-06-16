@@ -71,7 +71,7 @@ namespace TootTally.Utils
         public static void DownloadAssetFromServer(string apiLink, string assetDir, string assetName)
         {
             coroutineCount++;
-            Plugin.LogInfo("Downloading asset " + assetName);
+            TootTallyLogger.LogInfo("Downloading asset " + assetName);
             string assetPath = Path.Combine(assetDir, assetName);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadTextureFromServer(apiLink, assetPath, success =>
                 {
@@ -87,7 +87,7 @@ namespace TootTally.Utils
                 coroutineCount--;
                 if (texture != null)
                 {
-                    Plugin.LogInfo("Asset " + assetName + " Reloaded");
+                    TootTallyLogger.LogInfo("Asset " + assetName + " Reloaded");
                     textureDictionary.Add(assetName, texture);
                 }
                 if (coroutineCount == 0)
@@ -95,12 +95,12 @@ namespace TootTally.Utils
                     List<string> missingAssetList = GetMissingAssetsName();
                     if (missingAssetList.Count > 0)
                     {
-                        Plugin.LogError("Missing Asset(s):");
+                        TootTallyLogger.LogError("Missing Asset(s):");
                         foreach (string missingAsset in missingAssetList)
-                            Plugin.LogError("    " + missingAsset);
+                            TootTallyLogger.LogError("    " + missingAsset);
                     }
                     else
-                        Plugin.LogInfo("All Assets Loaded Correctly");
+                        TootTallyLogger.LogInfo("All Assets Loaded Correctly");
                 }
             }));
         }
