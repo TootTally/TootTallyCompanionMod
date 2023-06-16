@@ -13,6 +13,7 @@ using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using TootTally.Graphics.Animation;
 using BepInEx.Logging;
+using TootTally.Utils.TootTallySettings;
 
 namespace TootTally
 {
@@ -82,7 +83,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
-            //_harmony.PatchAll(typeof(TootTallySettings));
+            _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(DiscordRPC));
 
           

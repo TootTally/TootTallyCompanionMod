@@ -24,6 +24,6 @@
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(TromboneTootDir) != ''">
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)"/>
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)" />
 	</Target>
 </Project>
