@@ -43,9 +43,10 @@ namespace TootTally.Utils.TootTallySettings
             _settingPanelGridHolder = _mainSettingPanel.transform.Find("SettingsPanelGridHolder").gameObject;
 
             TootTallySettingPage tootTallyPage = AddNewPage("TootTally", "TootTally");
+            tootTallyPage.AddSlider("SliderTest", 350, "Test Slider");
             tootTallyPage.AddButton("testButton", new Vector2(250, 100), "testButton", () =>
             {
-                tootTallyPage.AddButton("DynamicButton", new Vector2(250, 100), "Dynamic Test");
+                tootTallyPage.AddSlider("SliderTest", 350, "Test Slider");
             });
 
             ShowMainSettingPanel();
@@ -83,7 +84,10 @@ namespace TootTally.Utils.TootTallySettings
         public static void RemovePage(TootTallySettingPage page)
         {
             page.OnPageRemove();
-            _settingPageList.Remove(page);
+            if (_settingPageList.Contains(page))
+                _settingPageList.Remove(page);
+            else
+                TootTallyLogger.LogInfo($"Page {page.name} couldn't be found.");
         }
 
         public static void ShowMainSettingPanel()

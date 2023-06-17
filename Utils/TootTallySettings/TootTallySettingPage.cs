@@ -61,7 +61,8 @@ namespace TootTally.Utils.TootTallySettings
             _fullPanel.SetActive(false);
         }
 
-        public BaseTootTallySettingObject AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick));
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
+        public TootTallySettingSlider AddSlider(string name, float length, string text) => AddSettingObjectToList(new TootTallySettingSlider(this, name, length, text)) as TootTallySettingSlider;
 
     }
 }

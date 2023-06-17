@@ -9,24 +9,33 @@ using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
-using static Mono.Security.X509.X520;
 
 namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
 {
     public static class TootTallySettingObjectFactory
     {
+        private static GameObject _mainCanvas;
         private static GameObject _panelPrefab;
+        private static Slider _sliderPrefab;
         private static bool _isInitialized;
 
         public static void Initialize(HomeController __instance)
         {
             if (_isInitialized) return;
 
-            GameObject mainCanvas = GameObject.Find("MainCanvas");
-            var mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
+            _mainCanvas = GameObject.Find("MainCanvas");
+            SetPanelPrefab();
+            SetSliderPrefab(__instance);
 
-            var mainPanel = GameObject.Instantiate(mainCanvas.transform.Find("SettingsPanel").gameObject, mainMenu.transform);
-            mainPanel.name = "TootTallySettingsPanel";
+            _isInitialized = true;
+        }
+
+        public static void SetPanelPrefab()
+        {
+            var mainMenu = _mainCanvas.transform.Find("MainMenu").gameObject;
+
+            var mainPanel = GameObject.Instantiate(_mainCanvas.transform.Find("SettingsPanel").gameObject, mainMenu.transform);
+            mainPanel.name = "TootTallySettingsPanelPrefab";
             mainPanel.GetComponent<Image>().color = new Color(0, .2f, 0, 0); //Hide box
 
             int childCount = mainPanel.transform.childCount - 1;
@@ -52,8 +61,23 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             _panelPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
             GameObject.DontDestroyOnLoad(_panelPrefab);
+        }
 
-            _isInitialized = true;
+        public static void SetSliderPrefab(HomeController __instance)
+        {
+            _sliderPrefab = GameObject.Instantiate(__instance.fullsettingspanel.transform.Find("Settings/AUDIO/master_volume/SET_sld_volume").GetComponent<Slider>());
+            _sliderPrefab.name = "TootTallySettingsSliderPrefab";
+            var handle = _sliderPrefab.transform.Find("Handle Slide Area/Handle");
+            var scrollSpeedSliderText = GameObjectFactory.CreateSingleText(handle, "SliderHandleText", "1", GameTheme.themeColors.scrollSpeedSlider.text);
+            scrollSpeedSliderText.text = "50";
+
+            _sliderPrefab.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
+            _sliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
+            _sliderPrefab.minValue = 0;
+            _sliderPrefab.maxValue = 1;
+            _sliderPrefab.value = .5f;
+
+            GameObject.DontDestroyOnLoad(_sliderPrefab);
         }
 
         public static GameObject CreateMainSettingPanel(Transform canvasTransform)
@@ -88,9 +112,18 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = false;
             verticalLayoutGroup.childScaleHeight = verticalLayoutGroup.childScaleWidth = false;
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
+            verticalLayoutGroup.spacing = 20f;
             GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
 
             return panel;
+        }
+
+        public static Slider CreateSlider(Transform canvasTransform, string name)
+        {
+            var slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
+            slider.name = name;
+
+            return slider;
         }
     }
 }
