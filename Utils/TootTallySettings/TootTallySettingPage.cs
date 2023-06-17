@@ -18,25 +18,13 @@ namespace TootTally.Utils.TootTallySettings
         private List<BaseTootTallySettingObject> _settingObjectList;
         private GameObject _fullPanel;
         public GameObject gridPanel;
-        private VerticalLayoutGroup _verticalLayoutGroup;
-        public TootTallySettingPage(string pageName)
+        public TootTallySettingPage(string pageName, string headerName)
         {
             this.name = pageName;
 
             _settingObjectList = new List<BaseTootTallySettingObject>();
-            _fullPanel = GameObject.Instantiate(TootTallySettingsManager.GetPanelPrefab, GameObject.Find("MainCanvas").transform);
-            _fullPanel.name = $"{pageName}Page";
-            _fullPanel.transform.Find("TootTallySettingsHeader").GetComponent<TMP_Text>().text = name;
+            _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, pageName, headerName);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
-            _verticalLayoutGroup = gridPanel.AddComponent<VerticalLayoutGroup>();
-            _verticalLayoutGroup.childAlignment = TextAnchor.UpperLeft;
-            _verticalLayoutGroup.childControlHeight = _verticalLayoutGroup.childControlWidth = false;
-            _verticalLayoutGroup.childForceExpandHeight = _verticalLayoutGroup.childForceExpandWidth = false;
-            _verticalLayoutGroup.childScaleHeight = _verticalLayoutGroup.childScaleWidth = false;
-            _verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
-            GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{pageName}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
-            
-
         }
 
         public void OnPageAdd()
