@@ -17,6 +17,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
         private static GameObject _mainCanvas;
         private static GameObject _panelPrefab;
         private static Slider _sliderPrefab;
+        private static Toggle _togglePrefab;
         private static bool _isInitialized;
 
         public static void Initialize(HomeController __instance)
@@ -26,11 +27,12 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             _mainCanvas = GameObject.Find("MainCanvas");
             SetPanelPrefab();
             SetSliderPrefab(__instance);
+            SetTogglePrefab(__instance);
 
             _isInitialized = true;
         }
 
-        public static void SetPanelPrefab()
+        private static void SetPanelPrefab()
         {
             var mainMenu = _mainCanvas.transform.Find("MainMenu").gameObject;
 
@@ -63,13 +65,15 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             GameObject.DontDestroyOnLoad(_panelPrefab);
         }
 
-        public static void SetSliderPrefab(HomeController __instance)
+        private static void SetSliderPrefab(HomeController __instance)
         {
             _sliderPrefab = GameObject.Instantiate(__instance.fullsettingspanel.transform.Find("Settings/AUDIO/master_volume/SET_sld_volume").GetComponent<Slider>());
             _sliderPrefab.name = "TootTallySettingsSliderPrefab";
             var handle = _sliderPrefab.transform.Find("Handle Slide Area/Handle");
             var scrollSpeedSliderText = GameObjectFactory.CreateSingleText(handle, "SliderHandleText", "1", GameTheme.themeColors.scrollSpeedSlider.text);
             scrollSpeedSliderText.text = "50";
+
+            _sliderPrefab.onValueChanged = new Slider.SliderEvent();
 
             _sliderPrefab.fillRect.gameObject.GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.fill;
             _sliderPrefab.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.scrollSpeedSlider.background;
@@ -78,6 +82,14 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             _sliderPrefab.value = .5f;
 
             GameObject.DontDestroyOnLoad(_sliderPrefab);
+        }
+
+        private static void SetTogglePrefab(HomeController __instance)
+        {
+            _togglePrefab = GameObject.Instantiate(__instance.set_tog_accessb_jumpscare);
+            _togglePrefab.name = "TootTallySettingsTogglePrefab";
+
+            GameObject.DontDestroyOnLoad(_togglePrefab);
         }
 
         public static GameObject CreateMainSettingPanel(Transform canvasTransform)
@@ -98,7 +110,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             return panel;
         }
 
-        public static GameObject CreateSettingPanel(Transform canvasTransform, string name, string headerText)
+        public static GameObject CreateSettingPanel(Transform canvasTransform, string name, string headerText, float elementSpacing)
         {
             var panel = GameObject.Instantiate(_panelPrefab, canvasTransform);
             panel.name = $"TootTally{name}Panel";
@@ -112,7 +124,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = false;
             verticalLayoutGroup.childScaleHeight = verticalLayoutGroup.childScaleWidth = false;
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
-            verticalLayoutGroup.spacing = 20f;
+            verticalLayoutGroup.spacing = elementSpacing;
             GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
 
             return panel;
@@ -125,5 +137,19 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
 
             return slider;
         }
+
+        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text)
+        {
+            var toggle = GameObject.Instantiate(_togglePrefab, canvasTransform);
+            toggle.transform.Find("Label").GetComponent<Text>().text = text;
+            RectTransform rect = toggle.GetComponent<RectTransform>();
+            rect.pivot = Vector3.zero;
+            rect.anchoredPosition = Vector3.zero;
+            rect.sizeDelta = size;
+            toggle.name = name;
+
+            return toggle;
+        }
+
     }
 }

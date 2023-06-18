@@ -42,13 +42,25 @@ namespace TootTally.Utils.TootTallySettings
 
             _settingPanelGridHolder = _mainSettingPanel.transform.Find("SettingsPanelGridHolder").gameObject;
 
-            TootTallySettingPage tootTallyPage = AddNewPage("TootTally", "TootTally");
-            tootTallyPage.AddSlider("SliderTest", 350, "Test Slider");
-            tootTallyPage.AddButton("testButton", new Vector2(250, 100), "testButton", () =>
+            TootTallySettingPage tootTallyPage = AddNewPage("TootTally", "TootTally", 40);
+            tootTallyPage.AddLabel("Label1", "main page", 60, TMPro.FontStyles.Underline | TMPro.FontStyles.UpperCase);
+            tootTallyPage.AddToggle("ToggleDisplayToasts", new Vector2(350, 50), "DISPLAY TOASTS");
+            tootTallyPage.AddToggle("ToggleDebugMode", new Vector2(350, 50), "DEBUG MODE");
+            tootTallyPage.AddToggle("ToggleTrombColor", new Vector2(350, 50), "CUSTOM TROMB COLOR", (value) =>
             {
-                tootTallyPage.AddSlider("SliderTest", 350, "Test Slider");
+                if (value)
+                {
+                    tootTallyPage.AddSlider("TrombRedSlider", 200, "Red");
+                    tootTallyPage.AddSlider("TrombGreenSlider", 200, "Green");
+                    tootTallyPage.AddSlider("TrombBlueSlider", 200, "Blue");
+                }
+                else
+                {
+                    tootTallyPage.RemoveSettingObjectFromList("TrombRedSlider");
+                    tootTallyPage.RemoveSettingObjectFromList("TrombGreenSlider");
+                    tootTallyPage.RemoveSettingObjectFromList("TrombBlueSlider");
+                }
             });
-
             ShowMainSettingPanel();
         }
 
@@ -64,9 +76,9 @@ namespace TootTally.Utils.TootTallySettings
                 ReturnToMainMenu();
         }
 
-        public static TootTallySettingPage AddNewPage(string pageName, string headerText)
+        public static TootTallySettingPage AddNewPage(string pageName, string headerText, float elementSpacing)
         {
-            var page = new TootTallySettingPage(pageName, headerText);
+            var page = new TootTallySettingPage(pageName, headerText, elementSpacing);
             page.OnPageAdd();
             _settingPageList.Add(page);
 

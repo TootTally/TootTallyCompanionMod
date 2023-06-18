@@ -13,7 +13,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             button = GameObjectFactory.CreateCustomButton(page.gridPanel.transform, Vector2.zero, size, text, name, OnClick);
         }
 
-        protected override void Dispose()
+        public override void Dispose()
         {
             GameObject.DestroyImmediate(button.gameObject);
         }

@@ -30,7 +30,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230614;
+        public const int BUILDDATE = 20230617;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -184,6 +184,10 @@ namespace TootTally
                     }
                 }));
             }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
+            [HarmonyPrefix]
+            public static bool GetRidOfResync() => false;
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
