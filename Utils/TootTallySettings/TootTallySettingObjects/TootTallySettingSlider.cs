@@ -16,19 +16,20 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
     {
         public Slider slider;
         public TMP_Text label;
-        public TootTallySettingSlider(TootTallySettingPage page, string name, float length, string text) :base(name, page)
+        public TootTallySettingSlider(TootTallySettingPage page, string name, float min, float max, float length, string text, bool integerOnly) : base(name, page)
         {
-            slider = TootTallySettingObjectFactory.CreateSlider(page.gridPanel.transform, name);
+            slider = TootTallySettingObjectFactory.CreateSlider(page.gridPanel.transform, name, min, max, integerOnly);
             slider.GetComponent<RectTransform>().sizeDelta = new Vector2(length, 20);
             var handleText = slider.transform.Find("Handle Slide Area/Handle/SliderHandleText").GetComponent<TMP_Text>();
             handleText.rectTransform.anchoredPosition = Vector2.zero;
             handleText.rectTransform.sizeDelta = new Vector2(35, 0);
+            handleText.fontSize = 10;
             slider.onValueChanged.AddListener((float _value) => { handleText.text = SliderValueToText(_value); });
             label = GameObjectFactory.CreateSingleText(slider.transform, $"{name}Label", text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = new Vector2(0, 35);
             label.alignment = TextAlignmentOptions.TopLeft;
         }
-        public static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
+        public static string SliderValueToText(float value) => $"{value:0:00}";
 
         public override void Dispose()
         {

@@ -126,14 +126,51 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
             verticalLayoutGroup.spacing = elementSpacing;
             GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
+            TootTallySettingObjectFactory.CreateVerticalSlider(panel.transform, $"{name}VerticalSlider", new Vector2(-200, -66), new Vector2(20, 1080), 0, 100, false);
 
             return panel;
         }
 
-        public static Slider CreateSlider(Transform canvasTransform, string name)
+        public static Slider CreateSlider(Transform canvasTransform, string name, float min, float max, bool integerOnly)
         {
             var slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
             slider.name = name;
+            slider.minValue = min;
+            slider.maxValue = max;
+            slider.wholeNumbers = integerOnly;
+
+            return slider;
+        }
+
+        public static Slider CreateVerticalSlider(Transform canvasTransform, string name, Vector2 position, Vector2 size, float min, float max, bool integerOnly)
+        {
+            var slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
+            slider.direction = Slider.Direction.TopToBottom;
+            slider.name = name;
+            
+
+            RectTransform sliderRect = slider.GetComponent<RectTransform>();
+            sliderRect.sizeDelta = size;
+            sliderRect.anchoredPosition = position;
+            sliderRect.anchorMin = Vector2.one;
+
+            RectTransform fillAreaRect = sliderRect.transform.Find("Fill Area").GetComponent<RectTransform>();
+            fillAreaRect.sizeDelta = new Vector2(-19, -2);
+            fillAreaRect.anchoredPosition = new Vector2(-5, 0);
+
+            RectTransform handleSlideAreaRect = sliderRect.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
+            RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(20, 40);
+            handleRect.pivot = Vector2.zero;
+            handleRect.anchorMin = new Vector2(0, .5f);
+            handleRect.anchorMax = Vector2.one / 2f;
+            RectTransform backgroundSliderRect = slider.transform.Find("Background").GetComponent<RectTransform>();
+            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
+            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+
+            slider.minValue = min;
+            slider.maxValue = max;
+            slider.wholeNumbers = integerOnly;
 
             return slider;
         }

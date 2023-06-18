@@ -50,9 +50,9 @@ namespace TootTally.Utils.TootTallySettings
             {
                 if (value)
                 {
-                    tootTallyPage.AddSlider("TrombRedSlider", 200, "Red");
-                    tootTallyPage.AddSlider("TrombGreenSlider", 200, "Green");
-                    tootTallyPage.AddSlider("TrombBlueSlider", 200, "Blue");
+                    tootTallyPage.AddSlider("TrombRedSlider",0,1, 200, "Red", false);
+                    tootTallyPage.AddSlider("TrombGreenSlider", 0, 1, 200, "Green", false);
+                    tootTallyPage.AddSlider("TrombBlueSlider", 0, 1, 200, "Blue", false);
                 }
                 else
                 {

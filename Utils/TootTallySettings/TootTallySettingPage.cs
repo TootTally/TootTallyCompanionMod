@@ -80,7 +80,7 @@ namespace TootTally.Utils.TootTallySettings
         }
 
         public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
-        public TootTallySettingSlider AddSlider(string name, float length, string text) => AddSettingObjectToList(new TootTallySettingSlider(this, name, length, text)) as TootTallySettingSlider;
+        public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, integerOnly)) as TootTallySettingSlider;
         public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, onValueChange)) as TootTallySettingToggle;
 
         public TootTallySettingLabel AddLabel(string name, string text, float fontSize, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddSettingObjectToList(new TootTallySettingLabel(this, name, text, fontSize, fontStyles, align)) as TootTallySettingLabel;
