@@ -1,12 +1,12 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using Rewired.UI.ControlMapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
-using TootTally.Utils.TootTallySettings.TootTallySetting;
-using TootTally.Utils.TootTallySettings.TootTallySettingObjects;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -15,15 +15,23 @@ namespace TootTally.Utils.TootTallySettings
 {
     public class TootTallySettingPage
     {
-        public string name;
+        public static readonly Vector2 DEFAULT_OBJECT_SIZE = new Vector2(350, 50);
+        public static readonly float DEFAULT_SLIDER_LENGTH = 250;
+        public static readonly float DEFAULT_HEADER_FONTSIZE = 40;
+        public static readonly float DEFAULT_FONTSIZE = 20;
+
+        public string name, headerName;
+        public float elementSpacing;
         private List<BaseTootTallySettingObject> _settingObjectList;
         private GameObject _fullPanel;
         public GameObject gridPanel;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing)
         {
             this.name = pageName;
-
+            this.headerName = headerName;
+            this.elementSpacing = elementSpacing;
             _settingObjectList = new List<BaseTootTallySettingObject>();
+
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, pageName, headerName, elementSpacing);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
         }
@@ -80,10 +88,19 @@ namespace TootTally.Utils.TootTallySettings
         }
 
         public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
+
         public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, integerOnly)) as TootTallySettingSlider;
+        public TootTallySettingSlider AddSlider(string name, float min, float max, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, integerOnly);
+
         public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, onValueChange)) as TootTallySettingToggle;
+        public TootTallySettingToggle AddToggle(string name, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, onValueChange);
+
+        public TootTallySettingDropdown AddDropdown(string name) => AddSettingObjectToList(new TootTallySettingDropdown(this, name)) as TootTallySettingDropdown;
 
         public TootTallySettingLabel AddLabel(string name, string text, float fontSize, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddSettingObjectToList(new TootTallySettingLabel(this, name, text, fontSize, fontStyles, align)) as TootTallySettingLabel;
+        public TootTallySettingLabel AddLabel(string name, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddLabel(name, name, DEFAULT_FONTSIZE, fontStyles, align);
+
 
     }
 }

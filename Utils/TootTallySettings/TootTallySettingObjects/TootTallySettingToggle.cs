@@ -1,10 +1,9 @@
 ﻿using System.Threading.Tasks;
-using TootTally.Utils.TootTallySettings.TootTallySetting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
+namespace TootTally.Utils.TootTallySettings
 {
     public class TootTallySettingToggle : BaseTootTallySettingObject
     {

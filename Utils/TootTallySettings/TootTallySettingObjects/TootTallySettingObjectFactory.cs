@@ -10,7 +10,7 @@ using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
+namespace TootTally.Utils.TootTallySettings
 {
     public static class TootTallySettingObjectFactory
     {
@@ -18,6 +18,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
         private static GameObject _panelPrefab;
         private static Slider _sliderPrefab;
         private static Toggle _togglePrefab;
+        private static Dropdown _dropdownPrefab;
         private static bool _isInitialized;
 
         public static void Initialize(HomeController __instance)
@@ -28,6 +29,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             SetPanelPrefab();
             SetSliderPrefab(__instance);
             SetTogglePrefab(__instance);
+            SetDropdownPrefab(__instance);
 
             _isInitialized = true;
         }
@@ -92,6 +94,16 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             GameObject.DontDestroyOnLoad(_togglePrefab);
         }
 
+        private static void SetDropdownPrefab(HomeController __instance)
+        {
+            _dropdownPrefab = GameObject.Instantiate(__instance.set_drp_antialiasing);
+            _dropdownPrefab.name = "TootTallySettingsDropdownPrefab";
+            _dropdownPrefab.onValueChanged = new Dropdown.DropdownEvent();
+            _dropdownPrefab.ClearOptions();
+
+            GameObject.DontDestroyOnLoad(_dropdownPrefab);
+        }
+
         public static GameObject CreateMainSettingPanel(Transform canvasTransform)
         {
             var panel = GameObject.Instantiate(_panelPrefab, canvasTransform);
@@ -135,8 +147,8 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
         {
             var slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
             slider.name = name;
-            slider.minValue = min;
             slider.maxValue = max;
+            slider.minValue = min;
             slider.wholeNumbers = integerOnly;
 
             return slider;
@@ -159,14 +171,16 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             fillAreaRect.anchoredPosition = new Vector2(-5, 0);
 
             RectTransform handleSlideAreaRect = sliderRect.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
+            handleSlideAreaRect.sizeDelta = new Vector2(0, sliderRect.sizeDelta.y / -2f);
             RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
-            handleRect.sizeDelta = new Vector2(20, 40);
+            handleRect.anchoredPosition = new Vector2(-5, -3);
+            handleRect.sizeDelta = new Vector2(0, 20);
             handleRect.pivot = Vector2.zero;
-            handleRect.anchorMin = new Vector2(0, .5f);
-            handleRect.anchorMax = Vector2.one / 2f;
             RectTransform backgroundSliderRect = slider.transform.Find("Background").GetComponent<RectTransform>();
             backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
             backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
+
+            GameObject.DestroyImmediate(handleRect.gameObject.transform.Find("SliderHandleText").gameObject);
 
             slider.minValue = min;
             slider.maxValue = max;
@@ -186,6 +200,15 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             toggle.name = name;
 
             return toggle;
+        }
+
+        public static Dropdown CreateDropdown(Transform canvasTransform, string name)
+        {
+            var dropdown = GameObject.Instantiate(_dropdownPrefab, canvasTransform);
+            dropdown.name = name;
+
+            return dropdown;
+
         }
 
     }

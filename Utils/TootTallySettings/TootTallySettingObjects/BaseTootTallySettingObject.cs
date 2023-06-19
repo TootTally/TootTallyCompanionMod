@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySetting
+namespace TootTally.Utils.TootTallySettings
 {
     public abstract class BaseTootTallySettingObject
     {

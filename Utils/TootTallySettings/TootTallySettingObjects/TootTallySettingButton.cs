@@ -1,9 +1,8 @@
 ﻿using System;
 using TootTally.Graphics;
-using TootTally.Utils.TootTallySettings.TootTallySetting;
 using UnityEngine;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
+namespace TootTally.Utils.TootTallySettings
 {
     public class TootTallySettingButton : BaseTootTallySettingObject
     {

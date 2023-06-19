@@ -5,12 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
-using TootTally.Utils.TootTallySettings.TootTallySetting;
 using UnityEngine;
 using UnityEngine.UI;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
+namespace TootTally.Utils.TootTallySettings
 {
     public class TootTallySettingSlider : BaseTootTallySettingObject
     {
@@ -29,7 +28,18 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             label.rectTransform.anchoredPosition = new Vector2(0, 35);
             label.alignment = TextAlignmentOptions.TopLeft;
         }
-        public static string SliderValueToText(float value) => $"{value:0:00}";
+        public string SliderValueToText(float value)
+        {
+            string text;
+
+            if (slider.minValue == 0 && slider.maxValue == 1)
+                text = ((int)(value * 100)).ToString() + "%";
+            else if (slider.wholeNumbers)
+                text = value.ToString();
+            else
+                text = $"{value:0:0}";
+            return text;
+        }
 
         public override void Dispose()
         {

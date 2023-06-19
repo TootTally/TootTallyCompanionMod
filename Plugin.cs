@@ -43,13 +43,18 @@ namespace TootTally
         private Harmony _harmony;
         private object settingsPage = null;
 
+        private TootTallySettingPage _tootTallyMainPage;
+        private TootTallySettingPage _tootTallyModulePage;
+
         private void Awake()
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
 
             _harmony = new Harmony(Info.Metadata.GUID);
+            _harmony.PatchAll(typeof(TootTallySettingsManager));
             TootTallyLogger.Initialize();
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
@@ -59,6 +64,9 @@ namespace TootTally
             tootTallyModules = new List<ITootTallyModule>();
             settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
             moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
+
+            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f);
+            _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f);
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
@@ -73,6 +81,13 @@ namespace TootTally
                 OptionalTrombSettings.Add(settingsPage, DebugMode);
             }
 
+            if (_tootTallyMainPage != null)
+            {
+                _tootTallyMainPage.AddToggle("AllowTmbUploads");
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts");
+                _tootTallyMainPage.AddToggle("DebugMode");
+            }
+
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
 
@@ -83,7 +98,6 @@ namespace TootTally
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
-            _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(DiscordRPC));
 
           

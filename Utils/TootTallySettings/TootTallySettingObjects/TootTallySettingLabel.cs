@@ -1,9 +1,8 @@
 ﻿using TMPro;
 using TootTally.Graphics;
-using TootTally.Utils.TootTallySettings.TootTallySetting;
 using UnityEngine;
 
-namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
+namespace TootTally.Utils.TootTallySettings
 {
     public class TootTallySettingLabel : BaseTootTallySettingObject
     {
@@ -18,6 +17,9 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             label.fontStyle = fontStyles;
             label.alignment = align;
         }
+
+        public void SetText(string text) =>
+            label.text = text;
 
         public override void Dispose()
         {
