@@ -19,6 +19,8 @@ namespace TootTally.Utils.TootTallySettings
             _fontSize = fontSize;
             _fontStyles = fontStyles;
             _align = align;
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
         public override void Initialize()
         {
@@ -29,6 +31,7 @@ namespace TootTally.Utils.TootTallySettings
             label.fontSize = _fontSize;
             label.fontStyle = _fontStyles;
             label.alignment = _align;
+            base.Initialize();
         }
 
         public void SetText(string text) =>

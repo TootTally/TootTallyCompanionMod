@@ -85,6 +85,21 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("AllowTmbUploads");
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts");
                 _tootTallyMainPage.AddToggle("DebugMode");
+                _tootTallyMainPage.AddToggle("ToggleTrombColor", (value) =>
+                {
+                    if (value)
+                    {
+                        _tootTallyMainPage.AddSlider("TrombRedSlider", 0, 1, false);
+                        _tootTallyMainPage.AddSlider("TrombGreenSlider", 0, 1, false);
+                        _tootTallyMainPage.AddSlider("TrombBlueSlider", 0, 1, false);
+                    }
+                    else
+                    {
+                        _tootTallyMainPage.RemoveSettingObjectFromList("TrombRedSlider");
+                        _tootTallyMainPage.RemoveSettingObjectFromList("TrombGreenSlider");
+                        _tootTallyMainPage.RemoveSettingObjectFromList("TrombBlueSlider");
+                    }
+                });
             }
 
             AssetManager.LoadAssets();

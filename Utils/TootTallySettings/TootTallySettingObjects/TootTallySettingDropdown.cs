@@ -13,6 +13,8 @@ namespace TootTally.Utils.TootTallySettings
         public Dropdown dropdown;
         public TootTallySettingDropdown(TootTallySettingPage page, string name) : base(name, page)
         {
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
         public override void Initialize()
         {
@@ -22,6 +24,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             if (name.Length != 0)
                 dropdown.AddOptions(name.ToList());
+            base.Initialize();
         }
 
         public override void Dispose()

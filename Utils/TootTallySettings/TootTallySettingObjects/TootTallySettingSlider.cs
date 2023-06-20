@@ -26,6 +26,8 @@ namespace TootTally.Utils.TootTallySettings
             _length = length;
             _text = text;
             _integerOnly = integerOnly;
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
 
         public override void Initialize()
@@ -40,6 +42,7 @@ namespace TootTally.Utils.TootTallySettings
             label = GameObjectFactory.CreateSingleText(slider.transform, $"{name}Label", _text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = new Vector2(0, 35);
             label.alignment = TextAlignmentOptions.TopLeft;
+            base.Initialize();
         }
 
         public string SliderValueToText(float value)

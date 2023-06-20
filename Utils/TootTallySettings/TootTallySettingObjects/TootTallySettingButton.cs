@@ -18,6 +18,8 @@ namespace TootTally.Utils.TootTallySettings
             _size = size;
             _text = text;
             _onClick = onClick;
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
 
         public override void Initialize()

@@ -18,8 +18,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             this.name = name;
             _page = page;
-            if (TootTallySettingsManager.isInitialized)
-                Initialize();
+            //Wish I could put Initialize call here but calling virtual function from the constructor is PepegaMonkeyBrainMoment :tf:
         }
 
         public virtual void Initialize()

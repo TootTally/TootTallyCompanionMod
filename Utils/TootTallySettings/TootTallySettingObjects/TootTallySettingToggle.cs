@@ -19,6 +19,8 @@ namespace TootTally.Utils.TootTallySettings
             _size = size;
             _text = text;
             _onValueChange = onValueChange;
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
 
         public override void Initialize()
@@ -27,6 +29,7 @@ namespace TootTally.Utils.TootTallySettings
             toggle.onValueChanged = new Toggle.ToggleEvent();
             if (_onValueChange != null)
                 toggle.onValueChanged.AddListener(_onValueChange);
+            base.Initialize();
         }
 
         public override void Dispose()
