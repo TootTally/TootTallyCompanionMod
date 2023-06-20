@@ -11,13 +11,22 @@ namespace TootTally.Utils.TootTallySettings
     {
         public bool isDisposed;
         public string name;
-        private TootTallySettingPage _page;
+        public bool isInitialized;
+
+        protected TootTallySettingPage _page;
         public BaseTootTallySettingObject(string name, TootTallySettingPage page)
         {
             this.name = name;
             _page = page;
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
         }
 
+        public virtual void Initialize()
+        {
+            isInitialized = true;
+        }
+        
         public void Remove()
         {
             Dispose();

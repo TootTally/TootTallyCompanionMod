@@ -52,7 +52,6 @@ namespace TootTally
             Instance = this;
 
             _harmony = new Harmony(Info.Metadata.GUID);
-            _harmony.PatchAll(typeof(TootTallySettingsManager));
             TootTallyLogger.Initialize();
 
             // Config
@@ -94,6 +93,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(AnimationManager));
             _harmony.PatchAll(typeof(GameObjectFactory));
+            _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));

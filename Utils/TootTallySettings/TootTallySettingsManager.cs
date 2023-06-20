@@ -16,17 +16,24 @@ namespace TootTally.Utils.TootTallySettings
     public static class TootTallySettingsManager
     {
         private const string MAIN_MENU_PATH = "MainCanvas/MainMenu";
+        public static bool isInitialized;
+
         private static GameObject _mainMenu, _mainSettingPanel, _settingPanelGridHolder;
+        public static Transform GetSettingPanelGridHolderTransform { get => _settingPanelGridHolder.transform; }
+        
         private static GameObject _sliderPrefab;
         private static List<TootTallySettingPage> _settingPageList;
         private static TootTallySettingPage _currentActivePage;
+
+        static TootTallySettingsManager()
+        {
+            _settingPageList = new List<TootTallySettingPage>();
+        }
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
         static public void OnHomeControllerStartAddSettingsPage(HomeController __instance)
         {
-            _settingPageList = new List<TootTallySettingPage>();
-
             TootTallySettingObjectFactory.Initialize(__instance);
 
             GameObject mainCanvas = GameObject.Find("MainCanvas");
@@ -41,6 +48,10 @@ namespace TootTally.Utils.TootTallySettings
 
             _settingPanelGridHolder = _mainSettingPanel.transform.Find("SettingsPanelGridHolder").gameObject;
             ShowMainSettingPanel();
+
+            _settingPageList.ForEach(page => page.Initialize());
+            isInitialized = true;
+
         }
 
         private static void UpdateHexLabel(float r, float g, float b, TootTallySettingLabel label)
@@ -73,15 +84,15 @@ namespace TootTally.Utils.TootTallySettings
             page.OnPageAdd();
             _settingPageList.Add(page);
 
-            GameObjectFactory.CreateCustomButton(_settingPanelGridHolder.transform, Vector2.zero, new Vector2(250, 60), pageName, $"Open{pageName}Button", delegate
-            {
-                _currentActivePage?.Hide();
-                _currentActivePage = page;
-                HideMainSettingPanel();
-                page.Show();
-            });
-
             return page;
+        }
+
+        public static void SwitchActivePage(TootTallySettingPage page)
+        {
+            _currentActivePage?.Hide();
+            _currentActivePage = page;
+            HideMainSettingPanel();
+            page.Show();
         }
 
         public static void RemovePage(TootTallySettingPage page)

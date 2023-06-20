@@ -20,6 +20,8 @@ namespace TootTally.Utils.TootTallySettings
         public static readonly float DEFAULT_HEADER_FONTSIZE = 40;
         public static readonly float DEFAULT_FONTSIZE = 20;
 
+        public bool isInitialized;
+
         public string name, headerName;
         public float elementSpacing;
         private List<BaseTootTallySettingObject> _settingObjectList;
@@ -31,9 +33,16 @@ namespace TootTally.Utils.TootTallySettings
             this.headerName = headerName;
             this.elementSpacing = elementSpacing;
             _settingObjectList = new List<BaseTootTallySettingObject>();
+            if (TootTallySettingsManager.isInitialized)
+                Initialize();
+        }
 
-            _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, pageName, headerName, elementSpacing);
+        public void Initialize()
+        {
+            _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
+            GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this));
+            _settingObjectList.ForEach(obj => obj.Initialize());
         }
 
         public void OnPageAdd()

@@ -13,9 +13,11 @@ namespace TootTally.Utils.TootTallySettings
         public Dropdown dropdown;
         public TootTallySettingDropdown(TootTallySettingPage page, string name) : base(name, page)
         {
-            dropdown = TootTallySettingObjectFactory.CreateDropdown(page.gridPanel.transform, name);
         }
-
+        public override void Initialize()
+        {
+            dropdown = TootTallySettingObjectFactory.CreateDropdown(_page.gridPanel.transform, name);
+        }
         public void AddOptions(params string[] name)
         {
             if (name.Length != 0)
