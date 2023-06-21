@@ -43,8 +43,8 @@ namespace TootTally
         private Harmony _harmony;
         private object settingsPage = null;
 
-        private TootTallySettingPage _tootTallyMainPage;
-        private TootTallySettingPage _tootTallyModulePage;
+        private static TootTallySettingPage _tootTallyMainPage;
+        private static TootTallySettingPage _tootTallyModulePage;
 
         private void Awake()
         {
@@ -82,10 +82,10 @@ namespace TootTally
 
             if (_tootTallyMainPage != null)
             {
-                _tootTallyMainPage.AddToggle("AllowTmbUploads");
-                _tootTallyMainPage.AddToggle("ShouldDisplayToasts");
-                _tootTallyMainPage.AddToggle("DebugMode");
-                _tootTallyMainPage.AddToggle("ToggleTrombColor", (value) =>
+                _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads.Value);
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts.Value);
+                _tootTallyMainPage.AddToggle("DebugMode", DebugMode.Value);
+                _tootTallyMainPage.AddToggle("ToggleTrombColor", false, (value) =>
                 {
                     if (value)
                     {
@@ -115,7 +115,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(DiscordRPC));
 
-          
+
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {GlobalVariables.version}");
@@ -133,6 +133,8 @@ namespace TootTally
             if (!module.IsConfigInitialized)
             {
                 module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled.Value, (value) => module.ModuleConfigEnabled.Value = value); // Holy shit this sucks why did I do this LMFAO
+
                 module.IsConfigInitialized = true;
             }
             if (module.ModuleConfigEnabled.Value)

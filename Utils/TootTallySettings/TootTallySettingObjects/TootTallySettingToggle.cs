@@ -14,10 +14,12 @@ namespace TootTally.Utils.TootTallySettings
         private Vector2 _size;
         private string _text;
         private UnityAction<bool> _onValueChange;
-        public TootTallySettingToggle(TootTallySettingPage page, string name, Vector2 size, string text, UnityAction<bool> onValueChange) : base(name, page)
+        private bool _defaultValue;
+        public TootTallySettingToggle(TootTallySettingPage page, string name, Vector2 size, string text, bool defaultValue, UnityAction<bool> onValueChange) : base(name, page)
         {
             _size = size;
             _text = text;
+            _defaultValue = defaultValue;
             _onValueChange = onValueChange;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
@@ -25,7 +27,7 @@ namespace TootTally.Utils.TootTallySettings
 
         public override void Initialize()
         {
-            toggle = TootTallySettingObjectFactory.CreateToggle(_page.gridPanel.transform, name, _size, _text);
+            toggle = TootTallySettingObjectFactory.CreateToggle(_page.gridPanel.transform, name, _size, _text, _defaultValue);
             toggle.onValueChanged = new Toggle.ToggleEvent();
             if (_onValueChange != null)
                 toggle.onValueChanged.AddListener(_onValueChange);

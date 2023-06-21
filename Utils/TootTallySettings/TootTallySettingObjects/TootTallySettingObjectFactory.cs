@@ -189,7 +189,7 @@ namespace TootTally.Utils.TootTallySettings
             return slider;
         }
 
-        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text)
+        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, bool value)
         {
             var toggle = GameObject.Instantiate(_togglePrefab, canvasTransform);
             toggle.transform.Find("Label").GetComponent<Text>().text = text;
@@ -198,6 +198,7 @@ namespace TootTally.Utils.TootTallySettings
             rect.anchoredPosition = Vector3.zero;
             rect.sizeDelta = size;
             toggle.name = name;
+            toggle.isOn = value;
 
             return toggle;
         }

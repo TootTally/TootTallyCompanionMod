@@ -32,7 +32,7 @@ namespace TootTally.Utils.TootTallySettings
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
-        static public void OnHomeControllerStartAddSettingsPage(HomeController __instance)
+        static public void InitializeTootTallySettingsManager(HomeController __instance)
         {
             TootTallySettingObjectFactory.Initialize(__instance);
 

@@ -102,8 +102,8 @@ namespace TootTally.Utils.TootTallySettings
         public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, integerOnly)) as TootTallySettingSlider;
         public TootTallySettingSlider AddSlider(string name, float min, float max, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, integerOnly);
 
-        public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, onValueChange)) as TootTallySettingToggle;
-        public TootTallySettingToggle AddToggle(string name, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, onValueChange);
+        public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, bool defaultValue, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, defaultValue, onValueChange)) as TootTallySettingToggle;
+        public TootTallySettingToggle AddToggle(string name, bool defaultValue, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, defaultValue, onValueChange);
 
         public TootTallySettingDropdown AddDropdown(string name) => AddSettingObjectToList(new TootTallySettingDropdown(this, name)) as TootTallySettingDropdown;
 

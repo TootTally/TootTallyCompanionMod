@@ -61,20 +61,30 @@ namespace TootTally.Utils
 
         private static void OnLogEvent(object sender, LogEventArgs e)
         {
-            var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
-            if (!File.Exists(filePath))
-                File.Create(filePath);
-            var level = e.Level.ToString();
-            var source = e.Source.SourceName;
-            if (source == "TootTally")
-                File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[Core] {e.Data}\n");
-            else
-                File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
-            if ((sender as ManualLogSource) != Plugin.GetLogger())
+            try
             {
-                var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, e.Source.SourceName + ".log");
-                File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
+                var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
+                if (!File.Exists(filePath))
+                    File.Create(filePath);
+                var level = e.Level.ToString();
+                var source = e.Source.SourceName;
+                if (source == "TootTally")
+                    File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[Core] {e.Data}\n");
+                else
+                    File.AppendAllText(filePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
+                if ((sender as ManualLogSource) != Plugin.GetLogger())
+                {
+                    var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, e.Source.SourceName + ".log");
+                    File.AppendAllText(sourceFilePath, $"[{DateTime.Now:HH:mm:ss}]   {level,-8}[{source.Remove(0, 10)}] {e.Data}\n");
+                }
             }
+            catch (Exception ex)
+            {
+                Plugin.GetLogger().LogError("TootTally Logger couldn't write the log.");
+                Plugin.GetLogger().LogError(ex.Message);
+                Plugin.GetLogger().LogError(ex.StackTrace);
+            }
+
         }
 
         public static void LogInfo(ManualLogSource logger, string msg)
