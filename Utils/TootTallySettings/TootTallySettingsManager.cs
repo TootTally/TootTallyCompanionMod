@@ -18,6 +18,8 @@ namespace TootTally.Utils.TootTallySettings
         private const string MAIN_MENU_PATH = "MainCanvas/MainMenu";
         public static bool isInitialized;
 
+        private static HomeController _currentInstance;
+
         private static GameObject _mainMenu, _mainSettingPanel, _settingPanelGridHolder;
         public static Transform GetSettingPanelGridHolderTransform { get => _settingPanelGridHolder.transform; }
         
@@ -34,6 +36,8 @@ namespace TootTally.Utils.TootTallySettings
         [HarmonyPostfix]
         static public void InitializeTootTallySettingsManager(HomeController __instance)
         {
+            _currentInstance = __instance;
+
             TootTallySettingObjectFactory.Initialize(__instance);
 
             GameObject mainCanvas = GameObject.Find("MainCanvas");
@@ -116,6 +120,7 @@ namespace TootTally.Utils.TootTallySettings
 
         public static void ReturnToMainMenu()
         {
+            _currentInstance.tryToSaveSettings();
             AnimationManager.AddNewPositionAnimation(_mainMenu, Vector2.zero, 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
         }
 

@@ -53,7 +53,7 @@ namespace TootTally.Utils.TootTallySettings
             settingPanelGridHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -200);
             settingPanelGridHolder.GetComponent<Image>().color = new Color(.2f, 0, 0, 0); //Hide box
 
-            var headerText = GameObjectFactory.CreateSingleText(mainPanel.transform, "TootTallySettingsHeader", "TootTally Settings", GameTheme.themeColors.leaderboard.text);
+            var headerText = GameObjectFactory.CreateSingleText(mainPanel.transform, "TootTallySettingsHeader", "TootTally Settings (BETA)", GameTheme.themeColors.leaderboard.text);
             headerText.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 475);
             headerText.fontSize = 80;
             headerText.fontStyle = TMPro.FontStyles.Bold | TMPro.FontStyles.UpperCase;

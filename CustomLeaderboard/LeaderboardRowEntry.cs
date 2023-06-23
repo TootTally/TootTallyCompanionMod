@@ -55,7 +55,8 @@ namespace TootTally.CustomLeaderboard
         public void UpdateTheme()
         {
             imageStrip.color = GameTheme.themeColors.leaderboard.rowEntry;
-            rank.color = username.color = score.color = percent.color = grade.color = maxcombo.color = GameTheme.themeColors.leaderboard.headerText;
+            rank.color = GameTheme.themeColors.leaderboard.headerText;
+            username.color = score.color = percent.color = grade.color = maxcombo.color = GameTheme.themeColors.leaderboard.text;
             rank.outlineColor = username.outlineColor = score.outlineColor = percent.outlineColor = grade.outlineColor = maxcombo.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
         }
     }

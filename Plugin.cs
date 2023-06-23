@@ -14,6 +14,7 @@ using TootTally.Discord;
 using TootTally.Graphics.Animation;
 using BepInEx.Logging;
 using TootTally.Utils.TootTallySettings;
+using Mono.Security.X509.Extensions;
 
 namespace TootTally
 {
@@ -216,9 +217,21 @@ namespace TootTally
                 }));
             }
 
+            private static bool _hasSyncedOnce = false;
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
+            [HarmonyPostfix]
+            public static void ResetSyncFlag() => _hasSyncedOnce = false;
+
+
             [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
             [HarmonyPrefix]
-            public static bool GetRidOfResync() => false;
+            public static bool SyncOnlyOnce()
+            {
+                var previousSync = _hasSyncedOnce;
+                _hasSyncedOnce = true;
+                return !previousSync;
+            }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
