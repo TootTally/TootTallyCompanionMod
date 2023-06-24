@@ -32,6 +32,5 @@ namespace TootTally.Utils.TootTallySettings
             GameObject.DestroyImmediate(button.gameObject);
         }
 
-        
     }
 }

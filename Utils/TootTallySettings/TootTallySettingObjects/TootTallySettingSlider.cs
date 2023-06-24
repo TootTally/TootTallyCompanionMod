@@ -15,16 +15,17 @@ namespace TootTally.Utils.TootTallySettings
         public Slider slider;
         public TMP_Text label;
 
-        private float _min, _max, _length;
+        private float _min, _max, _length, _defaultValue;
         private string _text;
         private bool _integerOnly;
 
-        public TootTallySettingSlider(TootTallySettingPage page, string name, float min, float max, float length, string text, bool integerOnly) : base(name, page)
+        public TootTallySettingSlider(TootTallySettingPage page, string name, float min, float max, float length, string text, float defaultValue, bool integerOnly) : base(name, page)
         {
             _min = min;
             _max = max;
             _length = length;
             _text = text;
+            _defaultValue = defaultValue;
             _integerOnly = integerOnly;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
@@ -39,6 +40,7 @@ namespace TootTally.Utils.TootTallySettings
             handleText.rectTransform.sizeDelta = new Vector2(35, 0);
             handleText.fontSize = 10;
             slider.onValueChanged.AddListener((float _value) => { handleText.text = SliderValueToText(_value); });
+            slider.value = _defaultValue;
             label = GameObjectFactory.CreateSingleText(slider.transform, $"{name}Label", _text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = new Vector2(0, 35);
             label.alignment = TextAlignmentOptions.TopLeft;

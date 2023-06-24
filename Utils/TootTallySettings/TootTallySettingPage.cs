@@ -1,15 +1,10 @@
-﻿using JetBrains.Annotations;
-using Rewired.UI.ControlMapper;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
 {
@@ -99,13 +94,13 @@ namespace TootTally.Utils.TootTallySettings
         public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
         public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
 
-        public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, integerOnly)) as TootTallySettingSlider;
-        public TootTallySettingSlider AddSlider(string name, float min, float max, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, integerOnly);
+        public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, float defaultValue, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, defaultValue, integerOnly)) as TootTallySettingSlider;
+        public TootTallySettingSlider AddSlider(string name, float min, float max, float defaultValue, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, defaultValue, integerOnly);
 
         public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, bool defaultValue, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, defaultValue, onValueChange)) as TootTallySettingToggle;
         public TootTallySettingToggle AddToggle(string name, bool defaultValue, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, defaultValue, onValueChange);
 
-        public TootTallySettingDropdown AddDropdown(string name) => AddSettingObjectToList(new TootTallySettingDropdown(this, name)) as TootTallySettingDropdown;
+        public TootTallySettingDropdown AddDropdown(string name, string defaultValue, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, defaultValue, optionValues)) as TootTallySettingDropdown;
 
         public TootTallySettingLabel AddLabel(string name, string text, float fontSize, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddSettingObjectToList(new TootTallySettingLabel(this, name, text, fontSize, fontStyles, align)) as TootTallySettingLabel;
         public TootTallySettingLabel AddLabel(string name, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddLabel(name, name, DEFAULT_FONTSIZE, fontStyles, align);

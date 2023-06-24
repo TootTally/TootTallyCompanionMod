@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
+using TootTally.Utils.TootTallySettings;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -111,6 +114,7 @@ namespace TootTally.Graphics
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombGreen);
                 OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
             }
+
             string targetThemePath = Path.Combine(Paths.BepInExRootPath, "Themes");
             if (!Directory.Exists(targetThemePath))
             {
@@ -123,6 +127,34 @@ namespace TootTally.Graphics
                     TootTallyLogger.LogError("Source Theme Folder Not Found. Cannot Create Theme Folder. Download the mod again to fix the issue.");
                     return;
                 }
+            }
+
+            TootTallySettingPage mainPage = TootTallySettingsManager.GetSettingPageByName("TootTally");
+            var filePaths = Directory.GetFiles(targetThemePath);
+            List<string> fileNames = new List<string>();
+            filePaths.ToList().ForEach(path => fileNames.Add(Path.GetFileNameWithoutExtension(path)));
+            mainPage.AddDropdown("Themes", option.Theme.ToString(), fileNames.ToArray()); //Have to fix dropdown default value not working
+            mainPage.AddToggle("ToggleTrombColor", option.CustomTrombColor.Value, (value) =>
+            {
+                if (value)
+                {
+                    mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed.Value, false);
+                    mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen.Value, false);
+                    mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue.Value, false);
+                }
+                else
+                {
+                    mainPage.RemoveSettingObjectFromList("TrombRedSlider");
+                    mainPage.RemoveSettingObjectFromList("TrombGreenSlider");
+                    mainPage.RemoveSettingObjectFromList("TrombBlueSlider");
+                }
+            });
+
+            if (option.CustomTrombColor.Value)
+            {
+                mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed.Value, false);
+                mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen.Value, false);
+                mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue.Value, false);
             }
 
             SetTheme(option.Theme.Value);
