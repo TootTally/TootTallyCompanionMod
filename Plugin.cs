@@ -85,7 +85,8 @@ namespace TootTally
             {
                 _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads.Value);
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts.Value);
-                _tootTallyMainPage.AddToggle("DebugMode", DebugMode.Value);       
+                _tootTallyMainPage.AddToggle("DebugMode", DebugMode.Value);
+                _tootTallyMainPage.AddTextField("TestInputField", "Testing");
             }
 
             AssetManager.LoadAssets();

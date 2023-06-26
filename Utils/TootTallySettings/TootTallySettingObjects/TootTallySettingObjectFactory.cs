@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rewired.UI.ControlMapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,7 @@ namespace TootTally.Utils.TootTallySettings
         private static Slider _sliderPrefab;
         private static Toggle _togglePrefab;
         private static Dropdown _dropdownPrefab;
+        private static TMP_InputField _inputFieldPrefab;
         private static bool _isInitialized;
 
         public static void Initialize(HomeController __instance)
@@ -30,6 +32,7 @@ namespace TootTally.Utils.TootTallySettings
             SetSliderPrefab(__instance);
             SetTogglePrefab(__instance);
             SetDropdownPrefab(__instance);
+            SetInputFieldPrefab(__instance);
 
             _isInitialized = true;
         }
@@ -102,6 +105,21 @@ namespace TootTally.Utils.TootTallySettings
             _dropdownPrefab.ClearOptions();
 
             GameObject.DontDestroyOnLoad(_dropdownPrefab);
+        }
+
+        private static void SetInputFieldPrefab(HomeController __instance)
+        {
+            var inputHolder = new GameObject("InputFieldHolder");
+            var inputImageHolder = GameObject.Instantiate(inputHolder, inputHolder.transform);
+            inputImageHolder.name = "Image";
+
+            _inputFieldPrefab = inputHolder.AddComponent<TMP_InputField>();
+
+            _inputFieldPrefab.image = inputImageHolder.AddComponent<Image>();
+            RectTransform rect = inputImageHolder.GetComponent<RectTransform>();
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(350,50);
+            
         }
 
         public static GameObject CreateMainSettingPanel(Transform canvasTransform)
@@ -210,6 +228,16 @@ namespace TootTally.Utils.TootTallySettings
 
             return dropdown;
 
+        }
+
+        public static TMP_InputField CreateInputField(Transform canvasTransform, string name, Vector2 size, string text)
+        {
+            var inputField = GameObject.Instantiate(_inputFieldPrefab, canvasTransform);
+            inputField.name = name;
+            inputField.textComponent = GameObjectFactory.CreateSingleText(canvasTransform, $"{name}Label", "", GameTheme.themeColors.leaderboard.text);
+            inputField.text = text;
+
+            return inputField;
         }
 
     }

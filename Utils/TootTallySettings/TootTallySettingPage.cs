@@ -102,6 +102,9 @@ namespace TootTally.Utils.TootTallySettings
 
         public TootTallySettingDropdown AddDropdown(string name, string defaultValue, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, defaultValue, optionValues)) as TootTallySettingDropdown;
 
+        public TootTallySettingTextField AddTextField(string name, Vector2 size, string defaultValue) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, defaultValue)) as TootTallySettingTextField;
+        public TootTallySettingTextField AddTextField(string name, string defaultValue) => AddSettingObjectToList(new TootTallySettingTextField(this, name, DEFAULT_OBJECT_SIZE, defaultValue)) as TootTallySettingTextField;
+
         public TootTallySettingLabel AddLabel(string name, string text, float fontSize, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddSettingObjectToList(new TootTallySettingLabel(this, name, text, fontSize, fontStyles, align)) as TootTallySettingLabel;
         public TootTallySettingLabel AddLabel(string name, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddLabel(name, name, DEFAULT_FONTSIZE, fontStyles, align);
 
