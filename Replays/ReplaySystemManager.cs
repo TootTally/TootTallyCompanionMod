@@ -351,6 +351,12 @@ namespace TootTally.Replays
                 else
                     __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
             }
+            if (__instance.breathcounter >= 1f) { __instance.breathcounter = .99f; }
+            /*
+             * Refer to this function where the outOfBreath detection happens... no idea why there's a breathcount < 1f if statement
+             * Token: 0x06000268 RID: 616 RVA: 0x000260D8 File Offset: 0x000242D8
+            */
+
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
@@ -756,7 +762,7 @@ namespace TootTally.Replays
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
                 TootTallyLogger.DebugModeLog("TempReplay Loaded");
                 _currentGCInstance.pauseRetryLevel();*/
-            });
+        });
             Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";
             replayText.supportRichText = true;
