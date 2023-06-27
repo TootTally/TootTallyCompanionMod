@@ -95,7 +95,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(AnimationManager));
             _harmony.PatchAll(typeof(GameObjectFactory));
-            _harmony.PatchAll(typeof(TootTallySettingsManager));
+            //_harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
@@ -201,22 +201,6 @@ namespace TootTally
                         }
                     }
                 }));
-            }
-
-            private static bool _hasSyncedOnce = false;
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
-            [HarmonyPostfix]
-            public static void ResetSyncFlag() => _hasSyncedOnce = false;
-
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
-            [HarmonyPrefix]
-            public static bool SyncOnlyOnce()
-            {
-                var previousSync = _hasSyncedOnce;
-                _hasSyncedOnce = true;
-                return !previousSync;
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]

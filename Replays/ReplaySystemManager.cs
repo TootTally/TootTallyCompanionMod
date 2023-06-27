@@ -125,7 +125,6 @@ namespace TootTally.Replays
                     TootTallyLogger.LogWarning(e.ToString());
                     TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
-                //_replaySpeedSlider.value = _replay.replaySpeed;
             }
             else
             {
@@ -179,6 +178,22 @@ namespace TootTally.Replays
             if (!__result && !_hasReleaseToot) //If joseph is holding the key before the song start
                 _hasReleaseToot = true;
             _lastIsTooting = __result;
+        }
+
+        private static bool _hasSyncedOnce;
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
+        [HarmonyPostfix]
+        public static void ResetSyncFlag() => _hasSyncedOnce = false;
+
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
+        [HarmonyPrefix]
+        public static bool SyncOnlyOnce()
+        {
+            var previousSync = _hasSyncedOnce;
+            _hasSyncedOnce = true;
+            return !previousSync;
         }
 
 
@@ -602,16 +617,13 @@ namespace TootTally.Replays
             TMP_Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
             floatingSpeedText.fontSize = 14;
             floatingSpeedText.alignment = TextAlignmentOptions.Center;
-            floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
-            //floatingSpeedText.outlineWidth = 0.2f; //doesnt work... still dont know why
+            floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-2, 30);
 
             //Text inside the slider
             TMP_Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
-            replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 5);
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
-            replaySpeedSliderText.alignment = TextAlignmentOptions.Center;
-            //replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
-            //replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
+            replaySpeedSliderText.alignment = TextAlignmentOptions.Top;
             replaySpeedSliderText.fontSize = 8;
             replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             replaySpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
@@ -648,6 +660,8 @@ namespace TootTally.Replays
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                _hasSyncedOnce = false;
+                _currentGCInstance.syncTrackPositions((float)__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
