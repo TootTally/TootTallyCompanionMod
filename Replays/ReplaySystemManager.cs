@@ -540,29 +540,30 @@ namespace TootTally.Replays
 
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed)
             {
-                TootTallyLogger.DebugModeLog("AutoToot used, skipping replay submission.");
+                TootTallyLogger.LogInfo("AutoToot used, skipping replay submission.");
                 return; // Don't submit anything if AutoToot was used.
             }
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong)
             {
-                TootTallyLogger.DebugModeLog("HoverToot used, skipping replay submission.");
+                TootTallyLogger.LogInfo("HoverToot used, skipping replay submission.");
                 return; // Don't submit anything if HoverToot was used.
             }
             if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated)
             {
                 PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
-                TootTallyLogger.DebugModeLog("CircularBreathing used, skipping replay submission.");
+                TootTallyLogger.LogInfo("CircularBreathing used, skipping replay submission.");
                 return; // Don't submit anything if Circular Breathing is enabled
             }
             if (_hasPaused)
             {
-                TootTallyLogger.DebugModeLog("Paused during gameplay, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("Pausing not allowed, Score submission disabled.", GameTheme.themeColors.notification.warningText);
+                TootTallyLogger.LogInfo("Paused during gameplay, skipping replay submission.");
                 return; //Don't submit if paused during the play
             }
 
             if (_replayUUID == null)
             {
-                TootTallyLogger.DebugModeLog("Replay UUID was null, skipping replay submission.");
+                TootTallyLogger.LogInfo("Replay UUID was null, skipping replay submission.");
                 return; //Dont save or upload if no UUID
             }
 
