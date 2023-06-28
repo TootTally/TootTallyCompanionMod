@@ -339,18 +339,19 @@ namespace TootTally.Replays
                         _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
-
+            float value = 0;
             if (__instance.noteplaying && __instance.breathcounter < 1f)
             {
-                __instance.breathcounter -= Time.deltaTime * (1 - gameSpeedMultiplier) * 0.22f;
+                value = Time.deltaTime * (1 - gameSpeedMultiplier) * -0.22f;
             }
             else if (!__instance.noteplaying && __instance.breathcounter > 0f)
             {
                 if (!__instance.outofbreath)
-                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
+                    value = Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
                 else
-                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
+                    value = Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
             }
+            __instance.breathcounter += value;
             if (__instance.breathcounter >= 1f) { __instance.breathcounter = .99f; }
             /*
              * Refer to this function where the outOfBreath detection happens... no idea why there's a breathcount < 1f if statement

@@ -576,12 +576,12 @@ namespace TootTally.Graphics
             loginButton.onClick.AddListener(delegate
             {
                 __instance.playSfx(4);// click button sfx
-                if (usernameInput.text == "" || usernameInput.text.ToLower() == "enter username")
+                if (usernameInput.text == "" || usernameInput.text.Contains("username"))
                 {
                     PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
                     return;
                 }
-                if (passwordInput.text.ToLower() == "password" || passwordInput.text.Length <= 5)
+                if (!passwordInput.text.Contains("password") || passwordInput.text.Length <= 5)
                 {
                     if (passwordInput.text.Length <= 5)
                         PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);

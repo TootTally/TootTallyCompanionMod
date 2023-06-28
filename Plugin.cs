@@ -31,7 +31,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230627;
+        public const int BUILDDATE = 20230628;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -86,7 +86,6 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads.Value);
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts.Value);
                 _tootTallyMainPage.AddToggle("DebugMode", DebugMode.Value);
-                _tootTallyMainPage.AddTextField("TestInputField", "Testing");
             }
 
             AssetManager.LoadAssets();
@@ -95,8 +94,8 @@ namespace TootTally
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(AnimationManager));
             _harmony.PatchAll(typeof(GameObjectFactory));
-            //_harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(GameThemeManager));
+            _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
