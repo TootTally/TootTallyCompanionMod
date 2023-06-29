@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BepInEx.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,17 +16,18 @@ namespace TootTally.Utils.TootTallySettings
         public Slider slider;
         public TMP_Text label;
 
-        private float _min, _max, _length, _defaultValue;
+        private float _min, _max, _length;
         private string _text;
         private bool _integerOnly;
+        private ConfigEntry<float> _config;
 
-        public TootTallySettingSlider(TootTallySettingPage page, string name, float min, float max, float length, string text, float defaultValue, bool integerOnly) : base(name, page)
+        public TootTallySettingSlider(TootTallySettingPage page, string name, float min, float max, float length, string text, ConfigEntry<float> config, bool integerOnly) : base(name, page)
         {
             _min = min;
             _max = max;
             _length = length;
             _text = text;
-            _defaultValue = defaultValue;
+            _config = config;
             _integerOnly = integerOnly;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
@@ -39,8 +41,8 @@ namespace TootTally.Utils.TootTallySettings
             handleText.rectTransform.anchoredPosition = Vector2.zero;
             handleText.rectTransform.sizeDelta = new Vector2(35, 0);
             handleText.fontSize = 10;
-            slider.onValueChanged.AddListener((float _value) => { handleText.text = SliderValueToText(_value); });
-            slider.value = _defaultValue;
+            slider.onValueChanged.AddListener((value) => { handleText.text = SliderValueToText(value); _config.Value = value; });
+            slider.value = _config.Value;
             label = GameObjectFactory.CreateSingleText(slider.transform, $"{name}Label", _text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = new Vector2(0, 35);
             label.alignment = TextAlignmentOptions.TopLeft;

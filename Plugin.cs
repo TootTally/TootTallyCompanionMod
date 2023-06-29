@@ -62,30 +62,19 @@ namespace TootTally
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
 
             tootTallyModules = new List<ITootTallyModule>();
-            settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
-            moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
-
-            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f);
-            _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f);
+            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f,.1f,.1f,.3f));
+            _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
 
         private void TryInitialize()
         {
-            if (settingsPage != null)
-            {
-                OptionalTrombSettings.Add(settingsPage, AllowTMBUploads);
-                OptionalTrombSettings.Add(settingsPage, APIKey);
-                OptionalTrombSettings.Add(settingsPage, ShouldDisplayToasts);
-                OptionalTrombSettings.Add(settingsPage, DebugMode);
-            }
-
             if (_tootTallyMainPage != null)
             {
-                _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads.Value);
-                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts.Value);
-                _tootTallyMainPage.AddToggle("DebugMode", DebugMode.Value);
+                _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads);
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
+                _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
             }
 
             AssetManager.LoadAssets();
@@ -119,7 +108,7 @@ namespace TootTally
             if (!module.IsConfigInitialized)
             {
                 module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
-                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled.Value, (value) => module.ModuleConfigEnabled.Value = value); // Holy shit this sucks why did I do this LMFAO
+                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
 
                 module.IsConfigInitialized = true;
             }

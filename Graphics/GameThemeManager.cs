@@ -17,72 +17,32 @@ namespace TootTally.Graphics
     public static class GameThemeManager
     {
         private const string CONFIG_FIELD = "Themes";
-        private const ThemeTypes DEFAULT_THEME = ThemeTypes.Default;
+        private const string DEFAULT_THEME = "Default";
         public static Text songyear, songgenre, songcomposer, songtempo, songduration, songdesctext;
         public static Options option;
-        private static ThemeTypes _currentTheme;
+        private static string _currentTheme;
         private static bool _isInitialized;
 
-        //can very well be optimized but fuck it xd
-        public static void SetTheme(ThemeTypes themeType)
+        public static void SetTheme(string themeName)
         {
-            _currentTheme = themeType;
+            _currentTheme = themeName;
             GameTheme.isDefault = false;
-            switch (themeType)
+            switch (themeName)
             {
-                case ThemeTypes.Day:
+                case "Day":
                     GameTheme.SetDayTheme();
                     break;
-                case ThemeTypes.Night:
+                case "Night":
                     GameTheme.SetNightTheme();
                     break;
-                case ThemeTypes.Aradigm:
-                    GameTheme.SetCustomTheme("Aradigm");
-                    break;
-                case ThemeTypes.Citrus:
-                    GameTheme.SetCustomTheme("Citrus");
-                    break;
-                case ThemeTypes.Custom:
-                    GameTheme.SetCustomTheme("Custom");
-                    break;
-                case ThemeTypes.Electro:
-                    GameTheme.SetCustomTheme("Electro");
-                    break;
-                case ThemeTypes.Gloomhonk:
-                    GameTheme.SetCustomTheme("Gloomhonk");
-                    break;
-                case ThemeTypes.Guardie:
-                    GameTheme.SetCustomTheme("Guardie");
-                    break;
-                case ThemeTypes.Jeff:
-                    GameTheme.SetCustomTheme("Jeff");
-                    break;
-                case ThemeTypes.JoeSickPack:
-                    GameTheme.SetCustomTheme("Joes Sick pack");
-                    break;
-                case ThemeTypes.Katiny:
-                    GameTheme.SetCustomTheme("Katiny");
-                    break;
-                case ThemeTypes.Lavender:
-                    GameTheme.SetCustomTheme("Lavender");
-                    break;
-                case ThemeTypes.NightRider:
-                    GameTheme.SetCustomTheme("Night Rider");
-                    break;
-                case ThemeTypes.Perandus:
-                    GameTheme.SetCustomTheme("Perandus");
-                    break;
-                case ThemeTypes.Pride:
-                    GameTheme.SetCustomTheme("Pride");
-                    break;
-                case ThemeTypes.Samuran:
-                    GameTheme.SetCustomTheme("Samuran");
-                    break;
-                case ThemeTypes.Random:
+                case "Random":
                     GameTheme.SetRandomTheme();
                     break;
-                default:
+                case "Default":
                     GameTheme.SetDefaultTheme();
+                    break;
+                default:
+                    GameTheme.SetCustomTheme(themeName);
                     break;
             }
             GameObjectFactory.UpdatePrefabTheme();
@@ -97,23 +57,13 @@ namespace TootTally.Graphics
 
             option = new Options()
             {
-                Theme = config.Bind(CONFIG_FIELD, nameof(option.Theme), DEFAULT_THEME),
+                Theme = config.Bind(CONFIG_FIELD, "ThemeName", DEFAULT_THEME.ToString()),
                 CustomTrombColor = config.Bind(CONFIG_FIELD, "Custom Tromb Color", false),
                 TrombRed = config.Bind(CONFIG_FIELD, "Tromb Red", 1f),
                 TrombGreen = config.Bind(CONFIG_FIELD, "Tromb Green", 1f),
                 TrombBlue = config.Bind(CONFIG_FIELD, "Tromb Blue", 1f),
             };
             config.SettingChanged += Config_SettingChanged;
-
-            object settings = OptionalTrombSettings.GetConfigPage("TootTally");
-            if (settings != null)
-            {
-                OptionalTrombSettings.Add(settings, option.Theme);
-                OptionalTrombSettings.Add(settings, option.CustomTrombColor);
-                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombRed);
-                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombGreen);
-                OptionalTrombSettings.AddSlider(settings, 0, 1, .001f, false, option.TrombBlue);
-            }
 
             string targetThemePath = Path.Combine(Paths.BepInExRootPath, "Themes");
             if (!Directory.Exists(targetThemePath))
@@ -132,15 +82,17 @@ namespace TootTally.Graphics
             TootTallySettingPage mainPage = TootTallySettingsManager.GetSettingPageByName("TootTally");
             var filePaths = Directory.GetFiles(targetThemePath);
             List<string> fileNames = new List<string>();
+            fileNames.AddRange(new string[] { "Day", "Night", "Random", "Default" });
             filePaths.ToList().ForEach(path => fileNames.Add(Path.GetFileNameWithoutExtension(path)));
-            mainPage.AddDropdown("Themes", option.Theme.ToString(), fileNames.ToArray()); //Have to fix dropdown default value not working
-            mainPage.AddToggle("ToggleTrombColor", option.CustomTrombColor.Value, (value) =>
+            mainPage.AddDropdown("Themes", option.Theme, fileNames.ToArray()); //Have to fix dropdown default value not working
+            mainPage.AddButton("ResetThemeButton", new Vector2(350, 50), "Refresh Theme", RefreshTheme);
+            mainPage.AddToggle("ToggleTrombColor", option.CustomTrombColor, (value) =>
             {
                 if (value)
                 {
-                    mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed.Value, false);
-                    mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen.Value, false);
-                    mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue.Value, false);
+                    mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed, false);
+                    mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen, false);
+                    mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue, false);
                 }
                 else
                 {
@@ -152,9 +104,9 @@ namespace TootTally.Graphics
 
             if (option.CustomTrombColor.Value)
             {
-                mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed.Value, false);
-                mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen.Value, false);
-                mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue.Value, false);
+                mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed, false);
+                mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen, false);
+                mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue, false);
             }
 
             SetTheme(option.Theme.Value);
@@ -167,6 +119,12 @@ namespace TootTally.Graphics
 
             SetTheme(option.Theme.Value);
             PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
+        }
+
+        private static void RefreshTheme()
+        {
+            SetTheme(_currentTheme);
+            PopUpNotifManager.DisplayNotif("Theme refreshed!", GameTheme.themeColors.notification.defaultText);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -633,33 +591,11 @@ namespace TootTally.Graphics
 
         public class Options
         {
-            public ConfigEntry<ThemeTypes> Theme { get; set; }
+            public ConfigEntry<string> Theme { get; set; }
             public ConfigEntry<bool> CustomTrombColor { get; set; }
             public ConfigEntry<float> TrombRed { get; set; }
             public ConfigEntry<float> TrombGreen { get; set; }
             public ConfigEntry<float> TrombBlue { get; set; }
-        }
-
-        public enum ThemeTypes
-        {
-            Default,
-            Day,
-            Night,
-            Custom,
-            Aradigm,
-            Citrus,
-            Electro,
-            Gloomhonk,
-            Guardie,
-            Jeff,
-            JoeSickPack,
-            Katiny,
-            Lavender,
-            NightRider,
-            Perandus,
-            Pride,
-            Samuran,
-            Random,
         }
     }
 }

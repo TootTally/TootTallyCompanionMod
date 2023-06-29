@@ -75,7 +75,7 @@ namespace TootTally.Utils.TootTallySettings
                 ReturnToMainMenu();
         }
 
-        public static TootTallySettingPage AddNewPage(string pageName, string headerText, float elementSpacing)
+        public static TootTallySettingPage AddNewPage(string pageName, string headerText, float elementSpacing, Color bgColor)
         {
             var page = GetSettingPageByName(pageName);
             if (page != null)
@@ -84,7 +84,7 @@ namespace TootTally.Utils.TootTallySettings
                 return page;
             }
 
-            page = new TootTallySettingPage(pageName, headerText, elementSpacing);
+            page = new TootTallySettingPage(pageName, headerText, elementSpacing, bgColor);
             page.OnPageAdd();
             _settingPageList.Add(page);
 

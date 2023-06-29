@@ -1,4 +1,5 @@
-﻿using Rewired.UI.ControlMapper;
+﻿using BepInEx.Configuration;
+using Rewired.UI.ControlMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,6 @@ using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
-using static Mono.Security.X509.X520;
 
 namespace TootTally.Utils.TootTallySettings
 {
@@ -54,12 +54,15 @@ namespace TootTally.Utils.TootTallySettings
             settingPanelGridHolder.name = "SettingsPanelGridHolder";
             settingPanelGridHolder.SetActive(true);
 
-            settingPanelGridHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -200);
+            settingPanelGridHolder.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             settingPanelGridHolder.GetComponent<Image>().color = new Color(.2f, 0, 0, 0); //Hide box
+
+            var contentSizeFitter = settingPanelGridHolder.AddComponent<ContentSizeFitter>(); //To set the rectTransform.size dynamically
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var headerText = GameObjectFactory.CreateSingleText(mainPanel.transform, "TootTallySettingsHeader", "TootTally Settings (BETA)", GameTheme.themeColors.leaderboard.text);
             headerText.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 475);
-            headerText.fontSize = 80;
+            headerText.fontSize = 72;
             headerText.fontStyle = TMPro.FontStyles.Bold | TMPro.FontStyles.UpperCase;
             headerText.alignment = TMPro.TextAlignmentOptions.Top;
 
@@ -94,6 +97,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             _togglePrefab = GameObject.Instantiate(__instance.set_tog_accessb_jumpscare);
             _togglePrefab.name = "TootTallySettingsTogglePrefab";
+            _togglePrefab.onValueChanged = new Toggle.ToggleEvent();
 
             GameObject.DontDestroyOnLoad(_togglePrefab);
         }
@@ -158,19 +162,21 @@ namespace TootTally.Utils.TootTallySettings
             gridLayoutGroup.childAlignment = TextAnchor.UpperLeft;
             gridLayoutGroup.cellSize = new Vector2(250, 80);
 
-            GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Back", "TTSettingsBackButton", TootTallySettingsManager.OnBackButtonClick);
+            GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-50, -66), new Vector2(250, 80), "Back", "TTSettingsBackButton", TootTallySettingsManager.OnBackButtonClick);
 
             return panel;
         }
 
-        public static GameObject CreateSettingPanel(Transform canvasTransform, string name, string headerText, float elementSpacing)
+        public static GameObject CreateSettingPanel(Transform canvasTransform, string name, string headerText, float elementSpacing, Color bgColor)
         {
             var panel = GameObject.Instantiate(_panelPrefab, canvasTransform);
             panel.name = $"TootTally{name}Panel";
+            panel.GetComponent<Image>().color = bgColor;
 
             panel.transform.Find("TootTallySettingsHeader").GetComponent<TMP_Text>().text = headerText;
 
             var gridPanel = panel.transform.Find("SettingsPanelGridHolder").gameObject;
+            
             var verticalLayoutGroup = gridPanel.AddComponent<VerticalLayoutGroup>();
             verticalLayoutGroup.childAlignment = TextAnchor.UpperLeft;
             verticalLayoutGroup.childControlHeight = verticalLayoutGroup.childControlWidth = false;
@@ -179,9 +185,17 @@ namespace TootTally.Utils.TootTallySettings
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
             verticalLayoutGroup.spacing = elementSpacing;
             GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
-            TootTallySettingObjectFactory.CreateVerticalSlider(panel.transform, $"{name}VerticalSlider", new Vector2(-200, -66), new Vector2(20, 1080), 0, 100, false);
+            Slider slider = TootTallySettingObjectFactory.CreateVerticalSlider(panel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
+
+            slider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, slider.value); });
 
             return panel;
+        }
+
+        private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
+        {
+            var gridPanelRect = gridPanel.GetComponent<RectTransform>();
+            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, -value * gridPanelRect.sizeDelta.y);
         }
 
         public static Slider CreateSlider(Transform canvasTransform, string name, float min, float max, bool integerOnly)
@@ -195,42 +209,26 @@ namespace TootTally.Utils.TootTallySettings
             return slider;
         }
 
-        public static Slider CreateVerticalSlider(Transform canvasTransform, string name, Vector2 position, Vector2 size, float min, float max, bool integerOnly)
+        public static Slider CreateVerticalSlider(Transform canvasTransform, string name, Vector2 position, Vector2 size)
         {
             var slider = GameObject.Instantiate(_sliderPrefab, canvasTransform);
-            slider.direction = Slider.Direction.TopToBottom;
             slider.name = name;
-            
 
             RectTransform sliderRect = slider.GetComponent<RectTransform>();
             sliderRect.sizeDelta = size;
             sliderRect.anchoredPosition = position;
-            sliderRect.anchorMin = Vector2.one;
+            sliderRect.eulerAngles = new Vector3(0, 0, -90);
 
-            RectTransform fillAreaRect = sliderRect.transform.Find("Fill Area").GetComponent<RectTransform>();
-            fillAreaRect.sizeDelta = new Vector2(-19, -2);
-            fillAreaRect.anchoredPosition = new Vector2(-5, 0);
+            GameObject.DestroyImmediate(slider.transform.Find("Handle Slide Area/Handle/SliderHandleText").gameObject);
 
-            RectTransform handleSlideAreaRect = sliderRect.transform.Find("Handle Slide Area").GetComponent<RectTransform>();
-            handleSlideAreaRect.sizeDelta = new Vector2(0, sliderRect.sizeDelta.y / -2f);
-            RectTransform handleRect = handleSlideAreaRect.gameObject.transform.Find("Handle").GetComponent<RectTransform>();
-            handleRect.anchoredPosition = new Vector2(-5, -3);
-            handleRect.sizeDelta = new Vector2(0, 20);
-            handleRect.pivot = Vector2.zero;
-            RectTransform backgroundSliderRect = slider.transform.Find("Background").GetComponent<RectTransform>();
-            backgroundSliderRect.anchoredPosition = new Vector2(-5, backgroundSliderRect.anchoredPosition.y);
-            backgroundSliderRect.sizeDelta = new Vector2(-10, backgroundSliderRect.sizeDelta.y);
-
-            GameObject.DestroyImmediate(handleRect.gameObject.transform.Find("SliderHandleText").gameObject);
-
-            slider.minValue = min;
-            slider.maxValue = max;
-            slider.wholeNumbers = integerOnly;
+            slider.minValue = slider.value = 0;
+            slider.maxValue = 1;
+            slider.wholeNumbers = false;
 
             return slider;
         }
 
-        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, bool value)
+        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, ConfigEntry<bool> config)
         {
             var toggle = GameObject.Instantiate(_togglePrefab, canvasTransform);
             toggle.transform.Find("Label").GetComponent<Text>().text = text;
@@ -239,7 +237,8 @@ namespace TootTally.Utils.TootTallySettings
             rect.anchoredPosition = Vector3.zero;
             rect.sizeDelta = size;
             toggle.name = name;
-            toggle.isOn = value;
+            toggle.isOn = config.Value;
+            toggle.onValueChanged.AddListener((value) => config.Value = value);
 
             return toggle;
         }

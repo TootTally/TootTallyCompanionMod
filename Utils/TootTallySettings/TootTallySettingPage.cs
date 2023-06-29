@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BepInEx.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -22,11 +23,13 @@ namespace TootTally.Utils.TootTallySettings
         private List<BaseTootTallySettingObject> _settingObjectList;
         private GameObject _fullPanel;
         public GameObject gridPanel;
-        public TootTallySettingPage(string pageName, string headerName, float elementSpacing)
+        private Color _bgColor;
+        public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
         {
             this.name = pageName;
             this.headerName = headerName;
             this.elementSpacing = elementSpacing;
+            _bgColor = bgColor;
             _settingObjectList = new List<BaseTootTallySettingObject>();
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
@@ -34,7 +37,7 @@ namespace TootTally.Utils.TootTallySettings
 
         public void Initialize()
         {
-            _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing);
+            _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
             GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this));
             _settingObjectList.ForEach(obj => obj.Initialize());
@@ -94,13 +97,13 @@ namespace TootTally.Utils.TootTallySettings
         public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
         public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
 
-        public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, float defaultValue, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, defaultValue, integerOnly)) as TootTallySettingSlider;
-        public TootTallySettingSlider AddSlider(string name, float min, float max, float defaultValue, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, defaultValue, integerOnly);
+        public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, ConfigEntry<float> config, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, config, integerOnly)) as TootTallySettingSlider;
+        public TootTallySettingSlider AddSlider(string name, float min, float max, ConfigEntry<float> config, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, config, integerOnly);
 
-        public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, bool defaultValue, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, defaultValue, onValueChange)) as TootTallySettingToggle;
-        public TootTallySettingToggle AddToggle(string name, bool defaultValue, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, defaultValue, onValueChange);
+        public TootTallySettingToggle AddToggle(string name, Vector2 size, string text, ConfigEntry<bool> config, UnityAction<bool> onValueChange = null) => AddSettingObjectToList(new TootTallySettingToggle(this, name, size, text, config, onValueChange)) as TootTallySettingToggle;
+        public TootTallySettingToggle AddToggle(string name, ConfigEntry<bool> config, UnityAction<bool> onValueChange = null) => AddToggle(name, DEFAULT_OBJECT_SIZE, name, config, onValueChange);
 
-        public TootTallySettingDropdown AddDropdown(string name, string defaultValue, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, defaultValue, optionValues)) as TootTallySettingDropdown;
+        public TootTallySettingDropdown AddDropdown(string name, ConfigEntry<string> config, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, config, optionValues)) as TootTallySettingDropdown;
 
         public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, isPassword)) as TootTallySettingTextField;
         public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false) => AddSettingObjectToList(new TootTallySettingTextField(this, name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword)) as TootTallySettingTextField;
