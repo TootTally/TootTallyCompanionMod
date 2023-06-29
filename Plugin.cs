@@ -21,7 +21,6 @@ namespace TootTally
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("AutoToot", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("org.crispykevin.hovertoot", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("TrombSettings", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("TrombLoader", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
