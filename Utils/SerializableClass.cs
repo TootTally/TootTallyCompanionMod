@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Steamworks;
+using System;
 using System.Collections.Generic;
 
 namespace TootTally.Utils
@@ -161,6 +162,7 @@ namespace TootTally.Utils
         [Serializable]
         public class ReplayData
         {
+            public string version;
             public string username;
             public string starttime;
             public string endtime;
@@ -170,6 +172,8 @@ namespace TootTally.Utils
             public float samplerate;
             public float scrollspeed;
             public float gamespeedmultiplier;
+            public string gamemodifiers;
+            public float audiolatency;
             public int pluginbuilddate;
             public string gameversion;
             public string songhash;

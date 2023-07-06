@@ -399,16 +399,12 @@ namespace TootTally.Utils
 
         private static bool HasError(UnityWebRequest webRequest, string query)
         {
+            if (webRequest.isNetworkError || webRequest.isHttpError)
+                TootTallyLogger.LogError($"QUERY ERROR: {query}");
             if (webRequest.isNetworkError)
-            {
-                TootTallyLogger.LogError($"QUERY ERROR: {query}");
                 TootTallyLogger.LogError($"NETWORK ERROR: {webRequest.error}");
-            }
-            else if (webRequest.isHttpError)
-            {
-                TootTallyLogger.LogError($"QUERY ERROR: {query}");
+            if (webRequest.isHttpError)
                 TootTallyLogger.LogError($"HTTP ERROR {webRequest.error}");
-            }
 
             return webRequest.isNetworkError || webRequest.isHttpError;
         }

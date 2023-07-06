@@ -326,7 +326,7 @@ namespace TootTally.Replays
                     _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
-                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier.ToString("0.00")}]" : "");
+                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier:0.00}x]" : "");
                     }
                     _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll * Time.deltaTime;
                     if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
