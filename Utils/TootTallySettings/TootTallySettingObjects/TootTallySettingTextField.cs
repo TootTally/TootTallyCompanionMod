@@ -22,13 +22,13 @@ namespace TootTally.Utils.TootTallySettings
         private Vector2 _size;
         public Action<string> onValueChanged, onEditEnd, onSubmit, onSelect, onDeselect;
 
-        public TootTallySettingTextField(TootTallySettingPage page, string name, Vector2 size, float fontSize, string defaultValue, bool isPassword, Action<string> onValueChanged = null) : base(name, page)
+        public TootTallySettingTextField(TootTallySettingPage page, string name, Vector2 size, float fontSize, string defaultValue, bool isPassword, Action<string> onSubmit = null) : base(name, page)
         {
             _defaultValue = defaultValue;
             _size = size;
             _fontSize = fontSize;
             _isPassword = isPassword;
-            this.onValueChanged = onValueChanged;
+            this.onSubmit = onSubmit;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
         }
