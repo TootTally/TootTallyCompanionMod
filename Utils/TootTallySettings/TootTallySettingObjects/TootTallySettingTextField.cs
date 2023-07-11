@@ -20,7 +20,7 @@ namespace TootTally.Utils.TootTallySettings
         private float _fontSize;
         private bool _isPassword;
         private Vector2 _size;
-        private Action<string> _onValueChanged;
+        public Action<string> onValueChanged, onEditEnd, onSubmit, onSelect, onDeselect;
 
         public TootTallySettingTextField(TootTallySettingPage page, string name, Vector2 size, float fontSize, string defaultValue, bool isPassword, Action<string> onValueChanged = null) : base(name, page)
         {
@@ -28,7 +28,7 @@ namespace TootTally.Utils.TootTallySettings
             _size = size;
             _fontSize = fontSize;
             _isPassword = isPassword;
-            _onValueChanged = onValueChanged;
+            this.onValueChanged = onValueChanged;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
         }
@@ -38,8 +38,17 @@ namespace TootTally.Utils.TootTallySettings
             inputField = TootTallySettingObjectFactory.CreateInputField(_page.gridPanel.transform, name, _size, _fontSize, _defaultValue, _isPassword);
             label = inputField.textComponent;
             inputField.onValueChanged.AddListener(OnInputFieldTextChangeResizeBox);
-            if (_onValueChanged != null)
-                inputField.onValueChanged.AddListener(_onValueChanged.Invoke);
+            if (onValueChanged != null)
+                inputField.onValueChanged.AddListener(onValueChanged.Invoke);
+            if (onEditEnd != null)
+                inputField.onEndEdit.AddListener(onEditEnd.Invoke);
+            if (onSubmit != null)
+                inputField.onSubmit.AddListener(onSubmit.Invoke);
+            if (onSelect != null)
+                inputField.onSelect.AddListener(onSelect.Invoke);
+            if (onDeselect != null)
+                inputField.onDeselect.AddListener(onDeselect.Invoke);
+
             base.Initialize();
         }
 
