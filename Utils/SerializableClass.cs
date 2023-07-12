@@ -59,6 +59,11 @@ namespace TootTally.Utils
             public float[] speed_diffs;
             public float[] speed_taps;
             public float[] speed_aim;
+            public string name;
+            public string short_name;
+            public string author;
+            public string download;
+            public string charter;
         }
 
         [Serializable]
@@ -206,6 +211,12 @@ namespace TootTally.Utils
             public bool allowSubmit;
             public string email;
             public string api_key;
+        }
+
+        [Serializable]
+        public class TwitchAccessToken
+        {
+            public string access_token;
         }
 
         [Serializable]

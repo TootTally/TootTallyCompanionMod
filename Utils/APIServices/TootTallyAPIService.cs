@@ -299,6 +299,25 @@ namespace TootTally.Utils
 
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetValidTwitchAccessToken(Action<SerializableClass.TwitchAccessToken> callback)
+        {
+            string query = $"{APIURL}/api/twitch/self/";
+            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest(query, apiKey);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest)) {
+                var token_info = JsonConvert.DeserializeObject<SerializableClass.TwitchAccessToken>(webRequest.downloadHandler.text);
+                callback(token_info);
+            }
+            else {
+                TootTallyLogger.LogError($"Could not get active access token.");
+                PopUpNotifManager.DisplayNotif("Could not get active access token, please re-authorize TootTally on Twitch", GameTheme.themeColors.notification.warningText, 10f);
+                callback(null);
+            }
+        }
+
         //Unused for now because we're storing textures locally, but could be useful in the future...
         public static IEnumerator<UnityWebRequestAsyncOperation> LoadTextureFromServer(string query, Action<Texture2D> callback)
         {
