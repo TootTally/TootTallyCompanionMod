@@ -36,6 +36,7 @@ namespace TootTally
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public ConfigEntry<bool> DebugMode { get; private set; }
+        public ConfigEntry<bool> ShowLeaderboard { get; private set; }
 
         public static List<ITootTallyModule> tootTallyModules { get; private set; }
 
@@ -59,6 +60,7 @@ namespace TootTally
             AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
+            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
 
             tootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f,.1f,.1f,.3f));
@@ -74,6 +76,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads);
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
                 _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
+                _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
             }
 
             AssetManager.LoadAssets();
