@@ -64,6 +64,7 @@ namespace TootTally.Utils
             public string author;
             public string download;
             public string charter;
+            public string track_ref;
         }
 
         [Serializable]
