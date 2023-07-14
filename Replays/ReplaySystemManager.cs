@@ -191,8 +191,10 @@ namespace TootTally.Replays
         [HarmonyPrefix]
         public static bool SyncOnlyOnce()
         {
+            if (Plugin.Instance.SyncDuringSong.Value) return true; //always sync if enabled
+
             var previousSync = _hasSyncedOnce;
-            _hasSyncedOnce = true;
+            _hasSyncedOnce = false; 
             return !previousSync;
         }
 

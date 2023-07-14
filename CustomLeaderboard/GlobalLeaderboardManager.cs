@@ -18,6 +18,8 @@ namespace TootTally.CustomLeaderboard
         static void OnLevelSelectControllerStartPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             _hasLeaderboardFinishedLoading = false;
+            if (!Plugin.Instance.ShowLeaderboard.Value) return;
+
             globalLeaderboard = new GlobalLeaderboard();
             globalLeaderboard.Initialize(__instance);
 
@@ -86,13 +88,14 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
         [HarmonyPrefix]
         private static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
-        private static bool ShouldScrollSongs() => !globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
+        private static bool ShouldScrollSongs() => globalLeaderboard == null || (!globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f); //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
         [HarmonyPostfix]
 
         private static void HideTurboButtonAfterRandomizing(LevelSelectController __instance)
         {
+            if (globalLeaderboard == null) return;
             __instance.btnturbo.SetActive(false);
             __instance.btnpractice.SetActive(false);
         }
@@ -106,15 +109,15 @@ namespace TootTally.CustomLeaderboard
             if (_hasLeaderboardFinishedLoading)
             {
                 _hasLeaderboardFinishedLoading = false;
-                globalLeaderboard.ShowLoadingSwirly();
-                globalLeaderboard.HideSlider();
-                globalLeaderboard.HideErrorText();
-                globalLeaderboard.ClearLeaderboard();
+                globalLeaderboard?.ShowLoadingSwirly();
+                globalLeaderboard?.HideSlider();
+                globalLeaderboard?.HideErrorText();
+                globalLeaderboard?.ClearLeaderboard();
             }
 
             if (__instance.randomizing) return; //Do nothing if randomizing
 
-            globalLeaderboard.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
+            globalLeaderboard?.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
         }
 
         private static void OnUpdateLeaderboardCallback(GlobalLeaderboard.LeaderboardState state)
@@ -143,7 +146,7 @@ namespace TootTally.CustomLeaderboard
                 _hasLeaderboardFinishedLoading = true;
                 globalLeaderboard.HideLoadingSwirly();
             }
-            
+
         }
 
         #endregion

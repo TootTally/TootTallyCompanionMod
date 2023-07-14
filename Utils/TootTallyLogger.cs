@@ -14,11 +14,13 @@ namespace TootTally.Utils
     {
         private const string TOOTTALLY_LOG_FOLDER = "Logs";
         private const string TOOTTALLY_LOG_FILE_NAME = "TootTally.log";
+        private static List<string> _initializedLogs;
 
         public static void Initialize()
         {
             var folderPath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER);
             var logFilePath = Path.Combine(folderPath, TOOTTALLY_LOG_FILE_NAME);
+            _initializedLogs = new List<string>();
             if (!Directory.Exists(folderPath))
             {
                 LogInfo("Couldn't find logs folder, generating folder...");
@@ -87,31 +89,16 @@ namespace TootTally.Utils
 
         }
 
-        public static void LogInfo(ManualLogSource logger, string msg)
-        {
-            logger.LogInfo(msg);
-        }
-        public static void DebugModeLog(ManualLogSource logger, string msg)
-        {
-            if (Plugin.Instance.DebugMode.Value)
-                logger.LogDebug(msg);
-        }
-        public static void LogError(ManualLogSource logger, string msg)
-        {
-            logger.LogError(msg);
-        }
-
-        public static void LogWarning(ManualLogSource logger, string msg)
-        {
-            logger.LogWarning(msg);
-        }
-
         public static void ClearOrCreateLogFile(string logFileName)
         {
             var sourceFilePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, logFileName + ".log");
-            if (File.Exists(sourceFilePath))
-                File.Delete(sourceFilePath);
-            File.Create(sourceFilePath);
+            if (!_initializedLogs.Contains(sourceFilePath))
+            {
+                if (File.Exists(sourceFilePath))
+                    File.Delete(sourceFilePath);
+                File.Create(sourceFilePath);
+                _initializedLogs.Add(sourceFilePath);
+            }
         }
 
     }
