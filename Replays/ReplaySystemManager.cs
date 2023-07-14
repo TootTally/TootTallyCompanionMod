@@ -184,7 +184,11 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
         [HarmonyPostfix]
-        public static void ResetSyncFlag() => _hasSyncedOnce = false;
+        public static void ResetSyncFlag()
+        {
+            TootTallyLogger.LogInfo("Sync:" + Plugin.Instance.SyncDuringSong.Value);
+            _hasSyncedOnce = false;
+        }
 
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
@@ -194,7 +198,7 @@ namespace TootTally.Replays
             if (Plugin.Instance.SyncDuringSong.Value) return true; //always sync if enabled
 
             var previousSync = _hasSyncedOnce;
-            _hasSyncedOnce = false; 
+            _hasSyncedOnce = true; 
             return !previousSync;
         }
 
