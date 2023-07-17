@@ -39,8 +39,6 @@ namespace TootTally
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
         public ConfigEntry<bool> SyncDuringSong { get; private set; }
 
-        private GameObject _panel;
-
         public static List<ITootTallyModule> tootTallyModules { get; private set; }
 
         public object moduleSettings { get; private set; }
@@ -104,19 +102,6 @@ namespace TootTally
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F8))
-            {
-                if (_panel == null)
-                {
-                    _panel = GameObjectFactory.CreateOverlayPanel(GameObject.Find("NotifCanvas").transform, Vector2.zero, new Vector2(1920, 1080), "OverlayPanel");
-                }
-                else
-                {
-                    GameObject.DestroyImmediate(_panel);
-                    _panel = null;
-                }
-            }
-
 
         }
 
