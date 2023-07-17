@@ -2,12 +2,14 @@
 using HarmonyLib;
 using TootTally.Graphics;
 using UnityEngine;
+using UnityEngine.Networking.Match;
 using UnityEngine.UI;
 
 namespace TootTally.Utils
 {
     public static class PopUpNotifManager
     {
+        private static List<PopUpNotif> _toAddNotificationList;
         private static List<PopUpNotif> _activeNotificationList;
         private static List<PopUpNotif> _toRemoveNotificationList;
         private static GameObject _notifCanvas;
@@ -28,6 +30,7 @@ namespace TootTally.Utils
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
             GameObject.DontDestroyOnLoad(_notifCanvas);
+            _toAddNotificationList = new List<PopUpNotif>();
             _activeNotificationList = new List<PopUpNotif>();
             _toRemoveNotificationList = new List<PopUpNotif>();
             IsInitialized = true;
@@ -39,7 +42,7 @@ namespace TootTally.Utils
             {
                 PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
                 notif.Initialize(lifespan, new Vector2(695, -400));
-                _activeNotificationList.Add(notif);
+                _toAddNotificationList.Add(notif);
                 OnNotifCountChangeSetNewPosition();
             }
         }
@@ -58,6 +61,12 @@ namespace TootTally.Utils
         [HarmonyPostfix]
         public static void Update()
         {
+            if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
+            {
+                _activeNotificationList.AddRange(_toAddNotificationList);
+                _toAddNotificationList.Clear();
+            }
+
             if (_activeNotificationList != null)
                 _activeNotificationList.ForEach(notif => notif.Update());
             if (_toRemoveNotificationList != null && _toRemoveNotificationList.Count > 0)

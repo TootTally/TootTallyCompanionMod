@@ -1,4 +1,6 @@
-﻿using TMPro;
+﻿using Steamworks;
+using System;
+using TMPro;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +39,7 @@ namespace TootTally.Utils
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = lifespan;
+            gameObject.SetActive(true);
         }
         public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize)
         {
@@ -50,6 +53,7 @@ namespace TootTally.Utils
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = lifespan;
+            gameObject.SetActive(true);
         }
         public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize, Vector2 textPosition)
         {
@@ -63,6 +67,7 @@ namespace TootTally.Utils
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = lifespan;
+            gameObject.SetActive(true);
         }
 
         public void SetTransitionConstants(float f, float z, float r) => _secondOrderDynamic.SetConstants(f, z, r);

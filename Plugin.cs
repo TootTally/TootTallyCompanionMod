@@ -39,6 +39,8 @@ namespace TootTally
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
         public ConfigEntry<bool> SyncDuringSong { get; private set; }
 
+        private GameObject _panel;
+
         public static List<ITootTallyModule> tootTallyModules { get; private set; }
 
         public object moduleSettings { get; private set; }
@@ -65,7 +67,7 @@ namespace TootTally
             SyncDuringSong = Config.Bind("General", "Sync During Song", false, "Allow the game to sync during a song, may cause lags but prevent desyncs.");
 
             tootTallyModules = new List<ITootTallyModule>();
-            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f,.1f,.1f,.3f));
+            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
             _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
 
             GameInitializationEvent.Register(Info, TryInitialize);
@@ -102,6 +104,19 @@ namespace TootTally
 
         public void Update()
         {
+            if (Input.GetKeyDown(KeyCode.F8))
+            {
+                if (_panel == null)
+                {
+                    _panel = GameObjectFactory.CreateOverlayPanel(GameObject.Find("NotifCanvas").transform, Vector2.zero, new Vector2(1920, 1080), "OverlayPanel");
+                }
+                else
+                {
+                    GameObject.DestroyImmediate(_panel);
+                    _panel = null;
+                }
+            }
+
 
         }
 
