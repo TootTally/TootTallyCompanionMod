@@ -159,7 +159,7 @@ namespace TootTally.Replays
             replayJson.audiolatency = GlobalVariables.localsettings.latencyadjust;
             replayJson.gamemodifiers = "None";
             replayJson.pluginbuilddate = Plugin.BUILDDATE;
-            replayJson.gameversion = GlobalVariables.version;
+            replayJson.gameversion = Application.version;
             replayJson.songhash = songHash;
             replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
             replayJson.maxcombo = _maxCombo;

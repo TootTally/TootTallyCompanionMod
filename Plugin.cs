@@ -97,7 +97,7 @@ namespace TootTally
 
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
-            TootTallyLogger.LogInfo($"Game Version: {GlobalVariables.version}");
+            TootTallyLogger.LogInfo($"Game Version: {Application.version}");
         }
 
         public void Update()
