@@ -43,7 +43,6 @@ namespace TootTally.Utils
                 PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
                 notif.Initialize(lifespan, new Vector2(695, -400));
                 _toAddNotificationList.Add(notif);
-                OnNotifCountChangeSetNewPosition();
             }
         }
 
@@ -64,6 +63,7 @@ namespace TootTally.Utils
             if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
             {
                 _activeNotificationList.AddRange(_toAddNotificationList);
+                OnNotifCountChangeSetNewPosition();
                 _toAddNotificationList.Clear();
             }
 
