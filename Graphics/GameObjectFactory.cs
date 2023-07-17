@@ -453,6 +453,7 @@ namespace TootTally.Graphics
             _overlayPanelPrefab.name = "OverlayPanelPrefab";
             _overlayPanelPrefab.transform.localScale = Vector3.one;
             _overlayPanelPrefab.SetActive(false);
+            _overlayPanelPrefab.GetComponent<RectTransform>().sizeDelta = new Vector2(1920, 1080);
 
             GameObject fsLatencyPanel = _overlayPanelPrefab.transform.Find("FSLatencyPanel").gameObject;
             fsLatencyPanel.SetActive(true);
@@ -470,18 +471,18 @@ namespace TootTally.Graphics
             subtitle.color = GameTheme.themeColors.notification.defaultText;
 
 
-            GameObject loginPage = latencyFGPanel.transform.Find("page1").gameObject;
-            GameObject.DestroyImmediate(loginPage.GetComponent<HorizontalLayoutGroup>());
-            VerticalLayoutGroup vgroup = loginPage.AddComponent<VerticalLayoutGroup>();
+            GameObject mainPage = latencyFGPanel.transform.Find("page1").gameObject;
+            GameObject.DestroyImmediate(mainPage.GetComponent<HorizontalLayoutGroup>());
+            VerticalLayoutGroup vgroup = mainPage.AddComponent<VerticalLayoutGroup>();
             vgroup.childForceExpandHeight = vgroup.childScaleHeight = vgroup.childControlHeight = false;
             vgroup.childForceExpandWidth = vgroup.childScaleWidth = vgroup.childControlWidth = false;
-            vgroup.padding.left = (int)(loginPage.GetComponent<RectTransform>().sizeDelta.x / 2) - 125;
+            vgroup.padding.left = (int)(mainPage.GetComponent<RectTransform>().sizeDelta.x / 2) - 125;
             vgroup.spacing = 20;
-            loginPage.name = "MainPage";
+            mainPage.name = "MainPage";
 
-            DestroyFromParent(loginPage,"col1");
-            DestroyFromParent(loginPage,"col2");
-            DestroyFromParent(loginPage,"col3");
+            DestroyFromParent(mainPage, "col1");
+            DestroyFromParent(mainPage, "col2");
+            DestroyFromParent(mainPage, "col3");
             DestroyFromParent(latencyFGPanel, "CloseBtn");
             DestroyFromParent(latencyFGPanel, "NEXT");
 
@@ -695,12 +696,17 @@ namespace TootTally.Graphics
             return loginPanelPopup;
         }
 
-        public static GameObject CreateOverlayPanel(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string name)
+        public static GameObject CreateOverlayPanel(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, float borderThiccness, string name)
         {
             GameObject overlayPanel = GameObject.Instantiate(_overlayPanelPrefab, canvasTransform);
             overlayPanel.name = name;
-            overlayPanel.GetComponent<RectTransform>().sizeDelta = size;
-            overlayPanel.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
+            var fgRect = overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").GetComponent<RectTransform>();
+            var bgRect = overlayPanel.transform.Find("FSLatencyPanel/LatencyBG").GetComponent<RectTransform>();
+            fgRect.sizeDelta = size;
+            fgRect.anchoredPosition = anchoredPosition;
+            bgRect.sizeDelta = size + (Vector2.one * borderThiccness);
+            bgRect.anchoredPosition = anchoredPosition;
+            overlayPanel.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             overlayPanel.SetActive(true);
 
             return overlayPanel;
