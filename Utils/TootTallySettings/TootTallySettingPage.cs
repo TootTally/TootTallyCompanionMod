@@ -21,6 +21,7 @@ namespace TootTally.Utils.TootTallySettings
         public string name, headerName;
         public float elementSpacing;
         private List<BaseTootTallySettingObject> _settingObjectList;
+        private GameObject _pageButton;
         private GameObject _fullPanel;
         public GameObject gridPanel;
         private Color _bgColor;
@@ -39,7 +40,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
-            GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this));
+            _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
             _settingObjectList.ForEach(obj => obj.Initialize());
         }
 
@@ -55,6 +56,8 @@ namespace TootTally.Utils.TootTallySettings
             {
                 obj.Remove();
             });
+            GameObject.DestroyImmediate(_fullPanel);
+            GameObject.DestroyImmediate(_pageButton);
         }
 
         public void RemoveSettingObjectFromList(string name)
@@ -80,6 +83,11 @@ namespace TootTally.Utils.TootTallySettings
         {
             _settingObjectList.Add(settingObject);
             return settingObject;
+        }
+
+        public void Remove()
+        {
+            TootTallySettingsManager.RemovePage(this);
         }
 
         public BaseTootTallySettingObject GetSettingObjectByName(string name) => _settingObjectList.Find(obj => obj.name == name);
