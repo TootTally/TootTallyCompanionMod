@@ -58,10 +58,6 @@ namespace TootTally.Graphics
             option = new Options()
             {
                 Theme = config.Bind(CONFIG_FIELD, "ThemeName", DEFAULT_THEME.ToString()),
-                CustomTrombColor = config.Bind(CONFIG_FIELD, "Custom Tromb Color", false),
-                TrombRed = config.Bind(CONFIG_FIELD, "Tromb Red", 1f),
-                TrombGreen = config.Bind(CONFIG_FIELD, "Tromb Green", 1f),
-                TrombBlue = config.Bind(CONFIG_FIELD, "Tromb Blue", 1f),
             };
             config.SettingChanged += Config_SettingChanged;
 
@@ -86,28 +82,6 @@ namespace TootTally.Graphics
             filePaths.ToList().ForEach(path => fileNames.Add(Path.GetFileNameWithoutExtension(path)));
             mainPage.AddDropdown("Themes", option.Theme, fileNames.ToArray()); //Have to fix dropdown default value not working
             mainPage.AddButton("ResetThemeButton", new Vector2(350, 50), "Refresh Theme", RefreshTheme);
-            mainPage.AddToggle("ToggleTrombColor", option.CustomTrombColor, (value) =>
-            {
-                if (value)
-                {
-                    mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed, false);
-                    mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen, false);
-                    mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue, false);
-                }
-                else
-                {
-                    mainPage.RemoveSettingObjectFromList("TrombRedSlider");
-                    mainPage.RemoveSettingObjectFromList("TrombGreenSlider");
-                    mainPage.RemoveSettingObjectFromList("TrombBlueSlider");
-                }
-            });
-
-            if (option.CustomTrombColor.Value)
-            {
-                mainPage.AddSlider("TrombRedSlider", 0, 1, option.TrombRed, false);
-                mainPage.AddSlider("TrombGreenSlider", 0, 1, option.TrombGreen, false);
-                mainPage.AddSlider("TrombBlueSlider", 0, 1, option.TrombBlue, false);
-            }
 
             SetTheme(option.Theme.Value);
             _isInitialized = true;
@@ -575,13 +549,13 @@ namespace TootTally.Graphics
                 sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
         }
 
-        [HarmonyPatch(typeof(HumanPuppetController), nameof(HumanPuppetController.setTextures))]
+        /*[HarmonyPatch(typeof(HumanPuppetController), nameof(HumanPuppetController.setTextures))]
         [HarmonyPostfix]
         public static void Test(HumanPuppetController __instance)
         {
             if (option.CustomTrombColor.Value)
                 __instance.trombmaterials[__instance.trombone_texture_index].SetColor("_Color", new Color(option.TrombRed.Value, option.TrombGreen.Value, option.TrombBlue.Value));
-        }
+        }*/
 
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
         {
@@ -592,10 +566,6 @@ namespace TootTally.Graphics
         public class Options
         {
             public ConfigEntry<string> Theme { get; set; }
-            public ConfigEntry<bool> CustomTrombColor { get; set; }
-            public ConfigEntry<float> TrombRed { get; set; }
-            public ConfigEntry<float> TrombGreen { get; set; }
-            public ConfigEntry<float> TrombBlue { get; set; }
         }
     }
 }
