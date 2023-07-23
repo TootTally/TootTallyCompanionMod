@@ -10,6 +10,7 @@ using TootTally.Utils.Helpers;
 using TootTally.Graphics;
 using TootTally.Utils;
 using System.Runtime.CompilerServices;
+using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -25,6 +26,10 @@ namespace TootTally.TootTallyOverlay
 
         private static RectTransform _containerRect;
 
+        private static List<GameObject> _userObjectList;
+
+        private static bool _showAllSUsers;
+
         private void Awake()
         {
             if (_isInitialized) return;
@@ -35,6 +40,7 @@ namespace TootTally.TootTallyOverlay
             CanvasScaler scaler = _overlayCanvas.AddComponent<CanvasScaler>();
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            _userObjectList = new List<GameObject>();
 
             GameObject.DontDestroyOnLoad(_overlayCanvas);
 
@@ -48,16 +54,19 @@ namespace TootTally.TootTallyOverlay
             GameObject.DestroyImmediate(_overlayPanelContainer.GetComponent<VerticalLayoutGroup>());
             var gridLayoutGroup = _overlayPanelContainer.AddComponent<GridLayoutGroup>();
             gridLayoutGroup.padding = new RectOffset(20, 20, 20, 20);
+            gridLayoutGroup.spacing = new Vector2(5, 5);
+            gridLayoutGroup.cellSize = new Vector2(240, 80);
             gridLayoutGroup.childAlignment = TextAnchor.UpperLeft;
             _overlayPanelContainer.transform.parent.gameObject.AddComponent<Mask>();
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "subtitle");
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "title");
-            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform.parent, "title", "BonerBuddies", GameTheme.themeColors.leaderboard.text);
+            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform.parent, "title", "BonerBuddies (BETA TEST)", GameTheme.themeColors.leaderboard.text);
             text.raycastTarget = false;
             text.alignment = TMPro.TextAlignmentOptions.Top;
-            text.rectTransform.pivot = new Vector2(0,.5f);
+            text.rectTransform.pivot = new Vector2(0, .5f);
             text.rectTransform.sizeDelta = new Vector2(1700, 800);
             text.fontSize = 60f;
+            text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
             _isInitialized = true;
@@ -72,7 +81,13 @@ namespace TootTally.TootTallyOverlay
                 TogglePanel();
 
             if (Input.GetKeyDown(KeyCode.F3))
-                GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform, Vector2.zero, new Vector2(30, 30), "Test", "testButton", () => { PopUpNotifManager.DisplayNotif("button pressed", Color.white); });
+            {
+                _showAllSUsers = !_showAllSUsers;
+                UpdateUsers();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F5))
+                UpdateUsers();
 
             if (_isPanelActive && Input.mouseScrollDelta.y != 0)
                 _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, _containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f);
@@ -98,8 +113,52 @@ namespace TootTally.TootTallyOverlay
                         _overlayPanel.SetActive(_isPanelActive);
                 });
                 if (_isPanelActive)
+                {
                     _overlayPanel.SetActive(_isPanelActive);
+                    UpdateUsers();
+                }
+                else
+                    ClearUsers();
             }
+        }
+
+        public static void UpdateUsers()
+        {
+            if (_isPanelActive)
+                if (_showAllSUsers)
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetAllUsers(OnUpdateUsersResponses));
+                else
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLatestOnlineUsers(OnUpdateUsersResponses));
+        }
+
+        private static void OnUpdateUsersResponses(List<User> users)
+        {
+            ClearUsers();
+            users.ForEach(user =>
+            {
+                _userObjectList.Add(GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform, Vector2.zero, new Vector2(30, 60), $"{user.username}\n{GetStatusString(user.status)}", $"{user.username}Button", () => PopUpNotifManager.DisplayNotif($"id: {user.id}\nname: {user.username}\ntt: {user.tt}\n#{user.rank}\nstatus: {user.status}", GameTheme.themeColors.notification.defaultText)).gameObject);
+            });
+        }
+
+        private static string GetStatusString(string status)
+        {
+            switch (status)
+            {
+                case "Offline":
+                    return $"<size=16><color=red>{status}</color></size>";
+
+                case "Idle":
+                    return $"<size=16><color=yellow>{status}</color></size>";
+
+                default:
+                    return $"<size=16><color=green>{status}</color></size>";
+            }
+        }
+
+        public static void ClearUsers()
+        {
+            _userObjectList.ForEach(DestroyImmediate);
+            _userObjectList.Clear();
         }
 
         public static void Dispose()

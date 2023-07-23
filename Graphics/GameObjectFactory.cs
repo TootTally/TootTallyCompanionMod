@@ -176,14 +176,14 @@ namespace TootTally.Graphics
             var tempBtn = gameObjectHolder.GetComponent<Button>();
             var oldBtnColors = tempBtn.colors;
 
-
             UnityEngine.Object.DestroyImmediate(tempBtn);
 
             var myBtn = gameObjectHolder.AddComponent<Button>();
             myBtn.colors = oldBtnColors;
 
+
             _buttonPrefab = gameObjectHolder.AddComponent<CustomButton>();
-            _buttonPrefab.ConstructNewButton(gameObjectHolder.GetComponent<Button>(), gameObjectHolder.GetComponent<RectTransform>(), gameObjectHolder.GetComponentInChildren<Text>());
+            _buttonPrefab.ConstructNewButton(gameObjectHolder.GetComponent<Button>(), gameObjectHolder.GetComponentInChildren<Text>());
 
             gameObjectHolder.SetActive(false);
 
@@ -717,7 +717,6 @@ namespace TootTally.Graphics
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
-            newButton.gameObject.SetActive(true);
             ColorBlock btnColors = newButton.button.colors;
             btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
             btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
@@ -738,6 +737,7 @@ namespace TootTally.Graphics
 
             newButton.button.onClick.AddListener(() => onClick?.Invoke());
 
+            newButton.gameObject.SetActive(true);
             return newButton;
         }
 

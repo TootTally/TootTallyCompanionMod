@@ -88,14 +88,13 @@ namespace TootTally
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
             _harmony.PatchAll(typeof(UserLogin));
-            _harmony.PatchAll(typeof(AnimationManager));
             _harmony.PatchAll(typeof(GameObjectFactory));
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(TootTallySettingsManager));
-            _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
+            _harmony.PatchAll(typeof(UserStatusUpdater));
             
             //Managers
             gameObject.AddComponent<PopUpNotifManager>();

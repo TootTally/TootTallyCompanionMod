@@ -139,7 +139,7 @@ namespace TootTally.Utils.APIServices
         public class APIHeartbeat
         {
             public string apiKey;
-            public int statusID;
+            public int status;
         }
 
         [Serializable]
@@ -232,6 +232,8 @@ namespace TootTally.Utils.APIServices
             public bool allowSubmit;
             public string email;
             public string api_key;
+            public string status;
+            public string currently_playing;
         }
 
         [Serializable]

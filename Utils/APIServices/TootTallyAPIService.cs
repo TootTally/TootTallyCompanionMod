@@ -392,9 +392,9 @@ namespace TootTally.Utils
             callback(allowSubmit);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int statusID, Action callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int status, Action callback)
         {
-            APIHeartbeat heartbeat = new APIHeartbeat() { apiKey = Plugin.Instance.APIKey.Value, statusID = statusID };
+            APIHeartbeat heartbeat = new APIHeartbeat() { apiKey = Plugin.Instance.APIKey.Value, status = status };
 
             string query = $"{APIURL}/api/profile/heartbeat/";
             var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(heartbeat));
@@ -415,16 +415,33 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, query))
             {
-                var userList = JsonConvert.DeserializeObject<List<User>>(webRequest.downloadHandler.text);
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
                 callback(userList);
             }
             else
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string filter, Action<List<User>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetAllUsers(Action<List<User>> callback)
         {
-            string query = $"{APIURL}/api/users/search/filter={filter}";
+            string query = $"{APIURL}/api/users/";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string username, Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/search/?username={username}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 
