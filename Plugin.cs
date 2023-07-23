@@ -17,6 +17,7 @@ using TootTally.Utils.TootTallySettings;
 using Mono.Security.X509.Extensions;
 using System;
 using TootTally.Utils.APIServices;
+using TootTally.TootTallyOverlay;
 
 namespace TootTally
 {
@@ -104,7 +105,7 @@ namespace TootTally
 
         public void Update()
         {
-
+            TootTallyOverlayManager.Update();
         }
 
         public static void AddModule(ITootTallyModule module)
@@ -164,7 +165,6 @@ namespace TootTally
                         if (user != null)
                         {
                             OnUserLogin(user);
-
                             if (user.id == 0)
                             {
                                 GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
@@ -232,6 +232,7 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
+                TootTallyOverlayManager.Initialize();
             }
 
             public enum userStatus

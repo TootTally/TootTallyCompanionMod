@@ -934,7 +934,6 @@ namespace TootTally.Graphics
             notif.name = name;
             notif.SetTextColor(textColor);
             notif.SetText(text);
-            TootTallyLogger.LogInfo("T: " + text);
 
             return notif;
         }

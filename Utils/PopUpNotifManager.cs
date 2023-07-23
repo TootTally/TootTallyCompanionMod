@@ -40,6 +40,8 @@ namespace TootTally.Utils
         {
             if (Plugin.Instance.ShouldDisplayToasts.Value)
             {
+                _notifCanvas.SetActive(false);
+                _notifCanvas.SetActive(true);//reset the order to make sure its on top
                 PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
                 notif.Initialize(lifespan, new Vector2(695, -400));
                 _toAddNotificationList.Add(notif);
