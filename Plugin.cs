@@ -15,6 +15,7 @@ using TootTally.Graphics.Animation;
 using BepInEx.Logging;
 using TootTally.Utils.TootTallySettings;
 using Mono.Security.X509.Extensions;
+using System;
 
 namespace TootTally
 {
@@ -111,15 +112,25 @@ namespace TootTally
             tootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
-                module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
-                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
+                    module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                    _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
 
-                module.IsConfigInitialized = true;
+                    module.IsConfigInitialized = true;
+                
             }
             if (module.ModuleConfigEnabled.Value)
             {
-                module.LoadModule();
-                TootTallyLogger.AddLoggerToListener(module.GetLogger);
+                try
+                {
+                    module.LoadModule();
+                    TootTallyLogger.AddLoggerToListener(module.GetLogger);
+                }
+                catch (Exception e)
+                {
+                    TootTallyLogger.LogError($"Module {module.Name} couldn't be loaded.");
+                    TootTallyLogger.LogError(e.Message);
+                    TootTallyLogger.LogError(e.StackTrace);
+                }
             }
         }
 
