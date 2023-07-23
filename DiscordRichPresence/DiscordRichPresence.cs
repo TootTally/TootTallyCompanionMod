@@ -2,10 +2,11 @@ using System;
 using HarmonyLib;
 using TootTally.Discord.Core;
 using TootTally.Utils;
+using UnityEngine;
 
 namespace TootTally.Discord
 {
-    public static class DiscordRPC
+    public class DiscordRPCManager : MonoBehaviour
     {
         public static string[] Statuses = { "Main Menu", "Choosing a song", "Tooting up a storm", "Watching a replay", "Celebrating a successful play" };
         private const long clientId = 1067808791330029589;
@@ -14,6 +15,8 @@ namespace TootTally.Discord
         private static Activity _act;
         private static string _username;
         private static int _ranking;
+
+        private void Awake() => InitRPC();
 
         private static void InitRPC()
         {
@@ -141,9 +144,7 @@ namespace TootTally.Discord
             SetActivity(GameStatus.PointScreen);
         }
 
-        [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
-        [HarmonyPostfix]
-        public static void RunDiscordCallbacks()
+        private void Update()
         {
             if (_discord != null)
             {

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TootTally.Graphics.Animation
 {
-    public static class AnimationManager
+    public class AnimationManager : MonoBehaviour
     {
         private static List<CustomAnimation> _animationList;
         private static List<CustomAnimation> _animationToAdd;
@@ -61,9 +61,7 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-        [HarmonyPostfix]
-        public static void Initialize()
+        private void Awake()
         {
             if (_isInitialized) return;
 
@@ -76,9 +74,7 @@ namespace TootTally.Graphics.Animation
         public static void AddToList(CustomAnimation anim) => _animationToAdd.Add(anim);
         public static void RemoveFromList(CustomAnimation anim) => _animationToRemove.Add(anim);
 
-        [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
-        [HarmonyPostfix]
-        public static void Update()
+        private void Update()
         {
             if (!_isInitialized) return;
 

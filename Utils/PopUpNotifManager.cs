@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace TootTally.Utils
 {
-    public static class PopUpNotifManager
+    public class PopUpNotifManager : MonoBehaviour
     {
         private static List<PopUpNotif> _toAddNotificationList;
         private static List<PopUpNotif> _activeNotificationList;
@@ -15,10 +15,7 @@ namespace TootTally.Utils
         private static GameObject _notifCanvas;
         private static bool IsInitialized;
 
-
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-        [HarmonyPostfix]
-        public static void Initialize(HomeController __instance)
+        private void Awake()
         {
             if (IsInitialized) return;
 
@@ -38,6 +35,8 @@ namespace TootTally.Utils
 
         public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)
         {
+            if (!IsInitialized) return;
+
             if (Plugin.Instance.ShouldDisplayToasts.Value)
             {
                 _notifCanvas.SetActive(false);
@@ -58,10 +57,10 @@ namespace TootTally.Utils
             }
         }
 
-        [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
-        [HarmonyPostfix]
-        public static void Update()
+        private void Update()
         {
+            if (!IsInitialized) return;
+
             if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
             {
                 _activeNotificationList.AddRange(_toAddNotificationList);

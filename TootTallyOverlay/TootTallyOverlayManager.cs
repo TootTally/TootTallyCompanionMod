@@ -9,10 +9,11 @@ using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using TootTally.Graphics;
 using TootTally.Utils;
+using System.Runtime.CompilerServices;
 
 namespace TootTally.TootTallyOverlay
 {
-    public static class TootTallyOverlayManager
+    public class TootTallyOverlayManager : MonoBehaviour
     {
         private static bool _isPanelActive;
         private static bool _isInitialized;
@@ -24,7 +25,7 @@ namespace TootTally.TootTallyOverlay
 
         private static RectTransform _containerRect;
 
-        public static void Initialize()
+        private void Awake()
         {
             if (_isInitialized) return;
 
@@ -63,7 +64,7 @@ namespace TootTally.TootTallyOverlay
             PopUpNotifManager.DisplayNotif("BonerBuddies Panel Initialized!", GameTheme.themeColors.notification.defaultText);
         }
 
-        public static void Update()
+        private void Update()
         {
             if (!_isInitialized) return;
 

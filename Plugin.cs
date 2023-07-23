@@ -95,17 +95,15 @@ namespace TootTally
             _harmony.PatchAll(typeof(PopUpNotifManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
-            _harmony.PatchAll(typeof(DiscordRPC));
-
-
+            _harmony.PatchAll(typeof(DiscordRPCManager));
+            
+            //Managers
+            gameObject.AddComponent<PopUpNotifManager>();
+            gameObject.AddComponent<AnimationManager>();
+            gameObject.AddComponent<DiscordRPCManager>();
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {Application.version}");
-        }
-
-        public void Update()
-        {
-            TootTallyOverlayManager.Update();
         }
 
         public static void AddModule(ITootTallyModule module)
@@ -201,7 +199,7 @@ namespace TootTally
                         if (_messagesReceived.FindAll(m => m.sent_on == message.sent_on).Count == 0)
                         {
                             _messagesReceived.Add(message);
-                            PopUpNotifManager.DisplayNotif($"<size=14>From:{message.author} ({message.sent_on})</size>\n{message.message}", GameTheme.themeColors.notification.defaultText, 12f);
+                            PopUpNotifManager.DisplayNotif($"<size=14>From:{message.author} ({message.sent_on})</size>\n{message.message}", GameTheme.themeColors.notification.defaultText, 16f);
                         }
                     }
                 }));
@@ -232,16 +230,12 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
-                TootTallyOverlayManager.Initialize();
+                Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
+                Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
+                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
-            public enum userStatus
-            {
-                Online = 0, //if none of the under, default to this
-                Idle = 1,
-                MainMenu = 2,
-                BrowsingSongs = 3,
-            }
+
         }
     }
 }
