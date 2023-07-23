@@ -16,6 +16,7 @@ using BepInEx.Logging;
 using TootTally.Utils.TootTallySettings;
 using Mono.Security.X509.Extensions;
 using System;
+using TootTally.Utils.APIServices;
 
 namespace TootTally
 {
@@ -231,6 +232,14 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
+            }
+
+            public enum userStatus
+            {
+                Online = 0, //if none of the under, default to this
+                Idle = 1,
+                MainMenu = 2,
+                BrowsingSongs = 3,
             }
         }
     }

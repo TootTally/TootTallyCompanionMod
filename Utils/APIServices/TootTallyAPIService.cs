@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
+using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.Utils
 {
@@ -307,11 +310,13 @@ namespace TootTally.Utils
             var webRequest = PostUploadRequest(query, apiKey);
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest)) {
+            if (!HasError(webRequest))
+            {
                 var token_info = JsonConvert.DeserializeObject<SerializableClass.TwitchAccessToken>(webRequest.downloadHandler.text);
                 callback(token_info);
             }
-            else {
+            else
+            {
                 TootTallyLogger.LogError($"Could not get active access token.");
                 PopUpNotifManager.DisplayNotif("Could not get active access token, please re-authorize TootTally on Twitch", GameTheme.themeColors.notification.warningText, 10f);
                 callback(null);
@@ -385,6 +390,114 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo("Request successful");
             }
             callback(allowSubmit);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int statusID, Action callback)
+        {
+            APIHeartbeat heartbeat = new APIHeartbeat() { apiKey = Plugin.Instance.APIKey.Value, statusID = statusID };
+
+            string query = $"{APIURL}/api/profile/heartbeat/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(heartbeat));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback();
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLatestOnlineUsers(Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/latest";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<List<User>>(webRequest.downloadHandler.text);
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string filter, Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/search/filter={filter}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFriendList(Action<List<User>> callback)
+        {
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+
+            string query = $"{APIURL}/api/friends/list/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineFriends(Action<List<User>> callback)
+        {
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+
+            string query = $"{APIURL}/api/friends/online/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddFriend(int userID, Action<bool> callback)
+        {
+
+            APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
+
+            string query = $"{APIURL}/api/friends/add/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+            callback(HasError(webRequest, query));
+        }
+        public static IEnumerator<UnityWebRequestAsyncOperation> RemoveFriend(int userID, Action<bool> callback)
+        {
+
+            APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
+
+            string query = $"{APIURL}/api/friends/remove/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+            callback(HasError(webRequest, query));
         }
 
         private static UnityWebRequest PostUploadRequest(string query, byte[] data, string contentType = "application/json")

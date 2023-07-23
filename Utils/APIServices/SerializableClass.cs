@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TootTally.Utils
+namespace TootTally.Utils.APIServices
 {
     public static class SerializableClass
     {
@@ -115,11 +115,31 @@ namespace TootTally.Utils
             public List<Message> results;
         }
 
+        [Serializable]
+        public class APIUsers
+        {
+            public List<User> results;
+        }
+
 
         [Serializable]
         public class APISubmission
         {
             public string apiKey;
+        }
+
+        [Serializable]
+        public class APIFriendSubmission
+        {
+            public string apiKey;
+            public int userID;
+        }
+
+        [Serializable]
+        public class APIHeartbeat
+        {
+            public string apiKey;
+            public int statusID;
         }
 
         [Serializable]
@@ -241,10 +261,9 @@ namespace TootTally.Utils
             public string country;
             public int rank;
             public string state; // states like "spectator" "ready" "not ready" etc.
-
         }
 
-        
+
 
         [Serializable]
         public class ThunderstoreLatestData
