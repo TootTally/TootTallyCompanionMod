@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Cryptography;
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
@@ -11,6 +12,7 @@ using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static Mono.Security.X509.X520;
 
 namespace TootTally.Graphics
 {
@@ -25,7 +27,7 @@ namespace TootTally.Graphics
         private static GameObject _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
 
-        private static GameObject _overlayPanelPrefab;
+        private static GameObject _overlayPanelPrefab, _userCardPrefab;
 
         private static bool _isHomeControllerInitialized;
         private static bool _isLevelSelectControllerInitialized;
@@ -59,6 +61,7 @@ namespace TootTally.Graphics
             SetNotificationPrefab();
             SetCustomButtonPrefab();
             SetOverlayPanelPrefab();
+            SetUserCardPrefab();
             _isHomeControllerInitialized = true;
             UpdatePrefabTheme();
         }
@@ -463,6 +466,11 @@ namespace TootTally.Graphics
 
             GameObject latencyFGPanel = fsLatencyPanel.transform.Find("LatencyFG").gameObject; //this where most objects are located
             latencyFGPanel.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+            DestroyFromParent(latencyFGPanel, "page2");
+            DestroyFromParent(latencyFGPanel, "page3");
+            DestroyFromParent(latencyFGPanel, "page4");
+            DestroyFromParent(latencyFGPanel, "page5");
+            DestroyFromParent(latencyFGPanel, "PREV");
 
             Text title = latencyFGPanel.transform.Find("title").gameObject.GetComponent<Text>();
             Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
@@ -490,9 +498,104 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_overlayPanelPrefab);
         }
 
+
+        public static void SetUserCardPrefab()
+        {
+            _userCardPrefab = GameObject.Instantiate(_overlayPanelPrefab.transform.Find("FSLatencyPanel").gameObject);
+            _userCardPrefab.name = "UserCardPrefab";
+            _userCardPrefab.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+
+
+            var fgRect = _userCardPrefab.transform.Find("LatencyFG").GetComponent<RectTransform>();
+            var bgRect = _userCardPrefab.transform.Find("LatencyBG").GetComponent<RectTransform>();
+            fgRect.GetComponent<Image>().maskable = bgRect.GetComponent<Image>().maskable = true;
+            var size = new Vector2(360, 100);
+            fgRect.sizeDelta = size;
+            fgRect.anchoredPosition = Vector2.zero;
+            bgRect.sizeDelta = size + (Vector2.one * 5f);
+            bgRect.anchoredPosition = Vector2.zero;
+            _userCardPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+            var horizontalContentHolder = fgRect.gameObject;
+            DestroyFromParent(horizontalContentHolder, "title");
+            DestroyFromParent(horizontalContentHolder, "subtitle");
+
+            var horizontalLayoutGroup = horizontalContentHolder.AddComponent<HorizontalLayoutGroup>();
+            horizontalLayoutGroup.padding = new RectOffset(5, 5, 5, 5);
+            horizontalLayoutGroup.spacing = 20f;
+            horizontalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+            horizontalLayoutGroup.childControlHeight = horizontalLayoutGroup.childControlWidth = true;
+            horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = false;
+
+
+
+            var contentHolderLeft = horizontalContentHolder.transform.Find("MainPage").gameObject;
+            contentHolderLeft.name = "LeftContent";
+
+            var verticalLayoutGroup = contentHolderLeft.GetComponent<VerticalLayoutGroup>();
+            verticalLayoutGroup.padding = new RectOffset(5, 5, 5, 5);
+            verticalLayoutGroup.spacing = 4f;
+            verticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+            verticalLayoutGroup.childControlHeight = verticalLayoutGroup.childControlWidth = true;
+            verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = true;
+
+            var contentHolderRight = GameObject.Instantiate(contentHolderLeft, horizontalContentHolder.transform);
+            contentHolderRight.name = "RightContent";
+            var verticalLayoutGroupRight = contentHolderRight.GetComponent<VerticalLayoutGroup>();
+            verticalLayoutGroupRight.childControlHeight = verticalLayoutGroupRight.childControlWidth = false;
+            verticalLayoutGroupRight.childForceExpandHeight = verticalLayoutGroupRight.childForceExpandWidth = false;
+
+            var temp = new GameObject("PFPPrefab", typeof(Image));
+            var image = temp.GetComponent<Image>();
+            image.maskable = true;
+            image.preserveAspect = true;
+            image.sprite = AssetManager.GetSprite("icon.png");
+            var layoutElement = temp.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = layoutElement.preferredWidth = 96;
+            var pfp = GameObject.Instantiate(temp, horizontalContentHolder.transform);
+            pfp.transform.SetSiblingIndex(0);
+            pfp.name = "PFP";
+            GameObject.DestroyImmediate(temp);
+
+            GameObject.DontDestroyOnLoad(_userCardPrefab);
+            _userCardPrefab.SetActive(false);
+        }
+
         #endregion
 
         #region Create Objects
+
+        public static GameObject CreateUserCard(Transform canvasTransform, SerializableClass.User user, string status)
+        {
+            GameObject card = GameObject.Instantiate(_userCardPrefab, canvasTransform);
+            card.name = $"{user.username}UserCard";
+            card.SetActive(true);
+
+            var leftContent = card.transform.Find("LatencyFG/LeftContent").gameObject;
+
+            var pfp = leftContent.transform.parent.Find("PFP").GetComponent<Image>();
+            if (user.picture != null)
+                AssetManager.GetProfilePictureByID(user.id, (sprite) => pfp.sprite = sprite);
+
+            var t1 = CreateSingleText(leftContent.transform, "Name", $"{user.username}", GameTheme.themeColors.leaderboard.text);
+            var t2= CreateSingleText(leftContent.transform, "Status", $"{status}", GameTheme.themeColors.leaderboard.text);
+            t1.enableWordWrapping = t2.enableWordWrapping = false;
+            t1.overflowMode = t2.overflowMode = TextOverflowModes.Ellipsis;
+
+            var rightContent = card.transform.Find("LatencyFG/RightContent").gameObject;
+            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { OnAddButtonPress(user); });
+            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "-", "RemoveFriendButton", delegate { OnRemoveButtonPress(user); });
+            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { OpenUserProfile(user.id); });
+
+            return card;
+        }
+
+        private static void OnAddButtonPress(SerializableClass.User user) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.AddFriend(user.id, OnFriendResponse));
+        private static void OnRemoveButtonPress(SerializableClass.User user) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
+        private static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
+        private static void OnFriendResponse(bool value) => PopUpNotifManager.DisplayNotif(value ? "Request success" : "Request failed", GameTheme.themeColors.notification.defaultText);
 
         public static GameObject CreateLoginPanel(HomeController __instance)
         {
@@ -937,6 +1040,7 @@ namespace TootTally.Graphics
 
             return notif;
         }
+
 
         #endregion
 

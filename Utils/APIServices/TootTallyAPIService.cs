@@ -18,6 +18,7 @@ namespace TootTally.Utils
         public const string APIURL = "https://toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
+        public const string PFPURL = "https://cdn.toottally.com/profile/";
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
@@ -333,6 +334,18 @@ namespace TootTally.Utils
                 callback(DownloadHandlerTexture.GetContent(webRequest));
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoadPFPFromServer(int userID, Action<Texture2D> callback)
+        {
+            var query = PFPURL + userID + ".png";
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(query);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback(DownloadHandlerTexture.GetContent(webRequest));
+            else
+                callback(null);
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadTextureFromServer(string query, string outputPath, Action<bool> callback)
         {
             UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(query);
@@ -392,7 +405,7 @@ namespace TootTally.Utils
             callback(allowSubmit);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int status, Action callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int status, Action callback = null)
         {
             APIHeartbeat heartbeat = new APIHeartbeat() { apiKey = Plugin.Instance.APIKey.Value, status = status };
 
@@ -402,7 +415,7 @@ namespace TootTally.Utils
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
-                callback();
+                callback?.Invoke();
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLatestOnlineUsers(Action<List<User>> callback)
@@ -422,7 +435,7 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetAllUsers(Action<List<User>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFirstPageUsers(Action<List<User>> callback)
         {
             string query = $"{APIURL}/api/users/";
 
@@ -437,6 +450,31 @@ namespace TootTally.Utils
             }
             else
                 callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetAllUsersUpToPageID(int pageID, Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/";
+            List<User> userList = new List<User>();
+
+            for (int i = 1; i < pageID; i++)
+            {
+                UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+                yield return webRequest.SendWebRequest();
+
+                if (!HasError(webRequest, query))
+                {
+                    var response = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text);
+                    userList.AddRange(response.results);
+                    query = response.next;
+                }
+                else
+                    callback(null);
+            }
+
+            callback(userList);
+
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string username, Action<List<User>> callback)
@@ -461,7 +499,7 @@ namespace TootTally.Utils
 
             APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
 
-            string query = $"{APIURL}/api/friends/list/";
+            string query = $"{APIURL}/api/friends/all/";
             var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
             UnityWebRequest webRequest = PostUploadRequest(query, data);
             yield return webRequest.SendWebRequest();
@@ -494,18 +532,20 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddFriend(int userID, Action<bool> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddFriend(int userID, Action<bool> callback = null)
         {
-
             APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
 
             string query = $"{APIURL}/api/friends/add/";
             var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
             UnityWebRequest webRequest = PostUploadRequest(query, data);
             yield return webRequest.SendWebRequest();
-            callback(HasError(webRequest, query));
+            if (!HasError(webRequest, query))
+                callback(true);
+            else
+                callback(false);
         }
-        public static IEnumerator<UnityWebRequestAsyncOperation> RemoveFriend(int userID, Action<bool> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> RemoveFriend(int userID, Action<bool> callback = null)
         {
 
             APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
@@ -514,7 +554,10 @@ namespace TootTally.Utils
             var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
             UnityWebRequest webRequest = PostUploadRequest(query, data);
             yield return webRequest.SendWebRequest();
-            callback(HasError(webRequest, query));
+            if (!HasError(webRequest, query))
+                callback(true);
+            else
+                callback(false);
         }
 
         private static UnityWebRequest PostUploadRequest(string query, byte[] data, string contentType = "application/json")

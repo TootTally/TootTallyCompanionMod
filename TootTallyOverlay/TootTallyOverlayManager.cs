@@ -11,11 +11,13 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using System.Runtime.CompilerServices;
 using static TootTally.Utils.APIServices.SerializableClass;
+using UnityEngine.UIElements;
 
 namespace TootTally.TootTallyOverlay
 {
     public class TootTallyOverlayManager : MonoBehaviour
     {
+
         private static bool _isPanelActive;
         private static bool _isInitialized;
         private static GameObject _overlayCanvas;
@@ -28,7 +30,9 @@ namespace TootTally.TootTallyOverlay
 
         private static List<GameObject> _userObjectList;
 
-        private static bool _showAllSUsers;
+        private static bool _showAllSUsers, _showFriends;
+
+        private static float _scrollAcceleration;
 
         private void Awake()
         {
@@ -55,12 +59,12 @@ namespace TootTally.TootTallyOverlay
             var gridLayoutGroup = _overlayPanelContainer.AddComponent<GridLayoutGroup>();
             gridLayoutGroup.padding = new RectOffset(20, 20, 20, 20);
             gridLayoutGroup.spacing = new Vector2(5, 5);
-            gridLayoutGroup.cellSize = new Vector2(240, 80);
-            gridLayoutGroup.childAlignment = TextAnchor.UpperLeft;
+            gridLayoutGroup.cellSize = new Vector2(380, 120);
+            gridLayoutGroup.childAlignment = TextAnchor.UpperCenter;
             _overlayPanelContainer.transform.parent.gameObject.AddComponent<Mask>();
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "subtitle");
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "title");
-            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform.parent, "title", "BonerBuddies (BETA TEST)", GameTheme.themeColors.leaderboard.text);
+            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform.parent, "title", "TromBuddies (EARLY ACCESS)", GameTheme.themeColors.leaderboard.text);
             text.raycastTarget = false;
             text.alignment = TMPro.TextAlignmentOptions.Top;
             text.rectTransform.pivot = new Vector2(0, .5f);
@@ -70,7 +74,7 @@ namespace TootTally.TootTallyOverlay
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
             _isInitialized = true;
-            PopUpNotifManager.DisplayNotif("BonerBuddies Panel Initialized!", GameTheme.themeColors.notification.defaultText);
+            PopUpNotifManager.DisplayNotif("TromBuddies Panel Initialized!", GameTheme.themeColors.notification.defaultText);
         }
 
         private void Update()
@@ -78,19 +82,44 @@ namespace TootTally.TootTallyOverlay
             if (!_isInitialized) return;
 
             if (Input.GetKeyDown(KeyCode.F2))
+            {
+                UserStatusManager.ResetTimerAndWakeUpIfIdle();
                 TogglePanel();
+            }
+
+            if (!_isPanelActive) return;
 
             if (Input.GetKeyDown(KeyCode.F3))
             {
                 _showAllSUsers = !_showAllSUsers;
+                PopUpNotifManager.DisplayNotif(_showAllSUsers ? "Showing all users" : "Showing online users", GameTheme.themeColors.notification.defaultText);
+                UpdateUsers();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F4))
+            {
+                _showFriends = !_showFriends;
+                PopUpNotifManager.DisplayNotif(_showFriends ? "Showing friends only" : "Showing non-friend users", GameTheme.themeColors.notification.defaultText);
                 UpdateUsers();
             }
 
             if (Input.GetKeyDown(KeyCode.F5))
                 UpdateUsers();
 
-            if (_isPanelActive && Input.mouseScrollDelta.y != 0)
-                _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, _containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f);
+            if (Input.mouseScrollDelta.y != 0)
+                AddScrollAcceleration(Input.mouseScrollDelta.y * 1.5f);
+            UpdateScrolling();
+        }
+
+        private static void AddScrollAcceleration(float value)
+        {
+            _scrollAcceleration -= value / Time.deltaTime;
+        }
+
+        private static void UpdateScrolling()
+        {
+            _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Math.Max(_containerRect.anchoredPosition.y + (_scrollAcceleration * Time.deltaTime), 0));
+            _scrollAcceleration *= 133f * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
         }
 
         public static void TogglePanel()
@@ -125,33 +154,42 @@ namespace TootTally.TootTallyOverlay
         public static void UpdateUsers()
         {
             if (_isPanelActive)
-                if (_showAllSUsers)
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetAllUsers(OnUpdateUsersResponses));
+                if (_showFriends && _showAllSUsers)
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFriendList(OnUpdateUsersResponse));
+                else if (_showAllSUsers)
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetAllUsersUpToPageID(3, OnUpdateUsersResponse));
+                else if (_showFriends)
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetOnlineFriends(OnUpdateUsersResponse));
                 else
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLatestOnlineUsers(OnUpdateUsersResponses));
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLatestOnlineUsers(OnUpdateUsersResponse));
+
+
         }
 
-        private static void OnUpdateUsersResponses(List<User> users)
+        private static void OnUpdateUsersResponse(List<User> users)
         {
             ClearUsers();
             users.ForEach(user =>
             {
-                _userObjectList.Add(GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform, Vector2.zero, new Vector2(30, 60), $"{user.username}\n{GetStatusString(user.status)}", $"{user.username}Button", () => PopUpNotifManager.DisplayNotif($"id: {user.id}\nname: {user.username}\ntt: {user.tt}\n#{user.rank}\nstatus: {user.status}", GameTheme.themeColors.notification.defaultText)).gameObject);
+                _userObjectList.Add(GameObjectFactory.CreateUserCard(_overlayPanelContainer.transform, user, GetStatusString(user)));
             });
         }
 
-        private static string GetStatusString(string status)
+        private static string GetStatusString(User user)
         {
-            switch (status)
+            switch (user.status)
             {
                 case "Offline":
-                    return $"<size=16><color=red>{status}</color></size>";
+                    return $"<size=16><color=red>{user.status}</color></size>";
 
                 case "Idle":
-                    return $"<size=16><color=yellow>{status}</color></size>";
+                    return $"<size=16><color=yellow>{user.status}</color></size>";
 
                 default:
-                    return $"<size=16><color=green>{status}</color></size>";
+                    if (user.currently_playing != null)
+                        return $"<size=16><color=green>{user.status}\n{user.currently_playing[0].short_name}</color></size>";
+                    else
+                        return $"<size=16><color=green>{user.status}</color></size>";
             }
         }
 

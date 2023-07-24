@@ -1,6 +1,7 @@
 ﻿using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace TootTally.Utils.APIServices
 {
@@ -118,6 +119,7 @@ namespace TootTally.Utils.APIServices
         [Serializable]
         public class APIUsers
         {
+            public string next;
             public List<User> results;
         }
 
@@ -233,7 +235,8 @@ namespace TootTally.Utils.APIServices
             public string email;
             public string api_key;
             public string status;
-            public string currently_playing;
+            public string picture;
+            public SongDataFromDB[] currently_playing;
         }
 
         [Serializable]

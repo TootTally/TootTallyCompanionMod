@@ -14,7 +14,7 @@ namespace TootTally.TootTallyOverlay
         private const float DEFAULT_TIMER_VALUE = 5f;
         private static float _timer;
         private static bool _isTimerReady;
-        private static UserStatus _currentStatus, _lastStatus;
+        private static UserStatus _currentStatus, _lastStatus, _preIdleStatus;
         private static int _heartbeatCount;
         private static bool _isInitialized;
 
@@ -42,6 +42,13 @@ namespace TootTally.TootTallyOverlay
 
             _currentStatus = newStatus;
             OnTimerEnd();
+            ResetTimerAndWakeUpIfIdle();
+        }
+
+        public static void ResetTimerAndWakeUpIfIdle()
+        {
+            _heartbeatCount = 0;
+            if (_currentStatus == UserStatus.Idle) SetUserStatus(_preIdleStatus);
         }
 
         private static void OnTimerEnd()
@@ -65,14 +72,17 @@ namespace TootTally.TootTallyOverlay
             {
                 _heartbeatCount++;
                 if (_heartbeatCount >= 60)
+                {
+                    _preIdleStatus = _currentStatus;
                     SetUserStatus(UserStatus.Idle);
+                }
             }
             _lastStatus = _currentStatus;
         }
 
         public static void ResetTimer()
         {
-            _timer = DEFAULT_TIMER_VALUE;
+            _timer = _currentStatus == UserStatus.Idle ? DEFAULT_TIMER_VALUE * 8f : DEFAULT_TIMER_VALUE;
             _isTimerReady = true;
         }
 

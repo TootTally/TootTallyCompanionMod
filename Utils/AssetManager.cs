@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using UnityEngine;
 
@@ -41,6 +43,7 @@ namespace TootTally.Utils
             "CollectButtonV2.png",
             "MultiText.png",
             "CollectButtonOutline.png",
+            "icon.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
@@ -103,6 +106,21 @@ namespace TootTally.Utils
                         TootTallyLogger.LogInfo("All Assets Loaded Correctly");
                 }
             }));
+        }
+
+        public static void GetProfilePictureByID(int userID, Action<Sprite> callback)
+        {
+            if (!textureDictionary.ContainsKey(userID.ToString()))
+            {
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadPFPFromServer(userID, (texture) =>
+                {
+                    textureDictionary.Add(userID.ToString(), texture);
+                    callback(GetSprite(userID.ToString()));
+                }));
+            }
+            else
+                callback(GetSprite(userID.ToString()));
+
         }
 
         public static List<string> GetMissingAssetsName()

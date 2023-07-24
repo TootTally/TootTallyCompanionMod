@@ -28,9 +28,16 @@ namespace TootTally.TootTallyOverlay
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
-        public static void SetLevelSelectUserStatus()
+        public static void SetLevelSelectUserStatusOnAdvanceSongs()
         {
             UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.BrowsingSongs);
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
+        [HarmonyPostfix]
+        public static void SetLevelSelectUserStatus()
+        {
+            UserStatusManager.ResetTimerAndWakeUpIfIdle();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
