@@ -71,6 +71,8 @@ namespace TootTally.TootTallyOverlay
             text.rectTransform.sizeDelta = new Vector2(1700, 800);
             text.fontSize = 60f;
             text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(180, 60), "Close", "CloseTromBuddiesButton", TogglePanel);
+
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
             _isInitialized = true;
