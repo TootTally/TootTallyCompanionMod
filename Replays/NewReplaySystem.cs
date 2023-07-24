@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Management.Instrumentation;
 using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
@@ -13,6 +12,7 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace TootTally.Replays
 {
@@ -72,6 +72,7 @@ namespace TootTally.Replays
         public void RecordFrameData(GameController __instance)
         {
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
+
             float noteHolderPosition = __instance.noteholderr.anchoredPosition.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
             float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
             float mousePosX = Input.mousePosition.x;
@@ -145,7 +146,7 @@ namespace TootTally.Replays
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
 
-            string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
+            string inputType = GetInputTypeString();
             var replayJson = new SerializableClass.ReplayData();
             replayJson.version = REPLAY_VERSION;
             replayJson.username = username;
@@ -185,7 +186,14 @@ namespace TootTally.Replays
 
             return JsonConvert.SerializeObject(replayJson);
         }
-
+        private string GetInputTypeString()
+        {
+            if (_wasTabletUsed)
+                return "Tablet";
+            else if (_wasTouchScreenUsed)
+                return "Touch";
+            return "Mouse";
+        }
         private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
 
         private static void OptimizeTootData(ref List<int[]> rawReplayTootData)
