@@ -42,7 +42,8 @@ namespace TootTally.TootTallyOverlay
 
             _currentStatus = newStatus;
             OnTimerEnd();
-            ResetTimerAndWakeUpIfIdle();
+            if (newStatus != UserStatus.Idle)
+                ResetTimerAndWakeUpIfIdle();
         }
 
         public static void ResetTimerAndWakeUpIfIdle()
