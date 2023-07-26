@@ -151,10 +151,8 @@ namespace TootTally.TootTallyOverlay
             _isPanelActive = !_isPanelActive;
             if (_overlayPanel != null)
             {
-                if (_panelAnimationBG != null)
-                    _panelAnimationBG.Dispose();
-                if (_panelAnimationFG != null)
-                    _panelAnimationFG.Dispose();
+                _panelAnimationBG?.Dispose();
+                _panelAnimationFG?.Dispose();
                 var targetVector = _isPanelActive ? Vector2.one : Vector2.zero;
                 var animationTime = _isPanelActive ? 1f : 0.45f;
                 var secondDegreeAnimationFG = _isPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
