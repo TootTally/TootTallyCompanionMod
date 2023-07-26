@@ -34,7 +34,12 @@ namespace TootTally.TootTallyOverlay
         private void Awake()
         {
             if (_isInitialized) return;
+            Initialize();
+            PopUpNotifManager.DisplayNotif("TromBuddies Panel Initialized!", GameTheme.themeColors.notification.defaultText);
+        }
 
+        private static void Initialize()
+        {
             _overlayCanvas = new GameObject("TootTallyOverlayCanvas");
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -61,19 +66,21 @@ namespace TootTally.TootTallyOverlay
             _overlayPanelContainer.transform.parent.gameObject.AddComponent<Mask>();
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "subtitle");
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "title");
-            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform.parent, "title", "TromBuddies (EARLY ACCESS)", GameTheme.themeColors.leaderboard.text);
+            var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform, "title", "TromBuddies (EARLY ACCESS)", GameTheme.themeColors.leaderboard.text);
+            var layoutElement = text.gameObject.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
             text.raycastTarget = false;
             text.alignment = TMPro.TextAlignmentOptions.Top;
+            text.rectTransform.anchoredPosition = new Vector2(0, 15);
             text.rectTransform.pivot = new Vector2(0, .5f);
             text.rectTransform.sizeDelta = new Vector2(1700, 800);
             text.fontSize = 60f;
             text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
-            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(180, 60), "Close", "CloseTromBuddiesButton", (sender) => TogglePanel());
+            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(60, 60), "X", "CloseTromBuddiesButton", (sender) => TogglePanel());
 
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
             _isInitialized = true;
-            PopUpNotifManager.DisplayNotif("TromBuddies Panel Initialized!", GameTheme.themeColors.notification.defaultText);
         }
 
         private void Update()
@@ -95,7 +102,7 @@ namespace TootTally.TootTallyOverlay
             });
 
             if (Input.mouseScrollDelta.y != 0)
-                AddScrollAcceleration(Input.mouseScrollDelta.y * 1.5f);
+                AddScrollAcceleration(Input.mouseScrollDelta.y * 2f);
             UpdateScrolling();
         }
 
@@ -133,7 +140,10 @@ namespace TootTally.TootTallyOverlay
         private static void UpdateScrolling()
         {
             _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Math.Max(_containerRect.anchoredPosition.y + (_scrollAcceleration * Time.deltaTime), 0));
-            _scrollAcceleration *= 133f * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
+            if (_containerRect.anchoredPosition.y <= 0)
+                _scrollAcceleration = 0;
+            else
+                _scrollAcceleration -= (_scrollAcceleration * 10f) * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
         }
 
         public static void TogglePanel()
@@ -167,8 +177,9 @@ namespace TootTally.TootTallyOverlay
 
         public static void UpdateUsers()
         {
-            _isUpdating = true;
             if (_isPanelActive)
+            {
+                _isUpdating = true;
                 if (_showFriends && _showAllSUsers)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFriendList(OnUpdateUsersResponse));
                 else if (_showAllSUsers)
@@ -177,6 +188,8 @@ namespace TootTally.TootTallyOverlay
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetOnlineFriends(OnUpdateUsersResponse));
                 else
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLatestOnlineUsers(OnUpdateUsersResponse));
+            }
+
 
 
         }
@@ -219,13 +232,20 @@ namespace TootTally.TootTallyOverlay
         {
             if (value)
                 UpdateUsers();
-                PopUpNotifManager.DisplayNotif(value ? "Friend list updated." : "Action couldn't be done.", GameTheme.themeColors.notification.defaultText);
+            PopUpNotifManager.DisplayNotif(value ? "Friend list updated." : "Action couldn't be done.", GameTheme.themeColors.notification.defaultText);
         }
 
         public static void ClearUsers()
         {
             _userObjectList.ForEach(DestroyImmediate);
             _userObjectList.Clear();
+        }
+
+        public static void UpdateTheme()
+        {
+            if (!_isInitialized) return;
+            Dispose();
+            Initialize();
         }
 
         public static void Dispose()

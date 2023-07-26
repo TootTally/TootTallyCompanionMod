@@ -88,7 +88,7 @@ namespace TootTally.Graphics
 
         #region SetPrefabs
 
-        public static void SetMulticoloreTextPrefab()
+        private static void SetMulticoloreTextPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject headerCreditText = mainCanvas.transform.Find("FullCreditsPanel/header-credits/Text").gameObject;
@@ -114,7 +114,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_multicoloreTextPrefab);
         }
 
-        public static void SetComfortaaTextPrefab()
+        private static void SetComfortaaTextPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject advancePanelText = mainCanvas.transform.Find("AdvancedInfoPanel/primary-content/intro/copy").gameObject;
@@ -141,7 +141,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_comfortaaTextPrefab);
         }
 
-        public static void SetNotificationPrefab()
+        private static void SetNotificationPrefab()
         {
             GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
             GameObject bufferPanel = mainCanvas.transform.Find("SettingsPanel/buffer_panel/window border").gameObject;
@@ -167,7 +167,7 @@ namespace TootTally.Graphics
 
 
 
-        public static void SetCustomButtonPrefab()
+        private static void SetCustomButtonPrefab()
         {
             GameObject settingBtn = _settingsGraphics.transform.Find("GRAPHICS/btn_opengraphicspanel").gameObject;
 
@@ -190,7 +190,7 @@ namespace TootTally.Graphics
             UnityEngine.Object.DontDestroyOnLoad(gameObjectHolder);
         }
 
-        public static void SetSteamLeaderboardPrefab()
+        private static void SetSteamLeaderboardPrefab()
         {
             GameObject camerapopups = GameObject.Find("Camera-Popups").gameObject;
             GameObject steamLeaderboardCanvas = camerapopups.transform.Find("LeaderboardCanvas").gameObject;
@@ -212,7 +212,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_steamLeaderboardPrefab);
         }
 
-        public static void SetPanelBodyInSteamLeaderboard()
+        private static void SetPanelBodyInSteamLeaderboard()
         {
             _panelBodyPrefab = _steamLeaderboardPrefab.transform.Find("PanelBody").gameObject;
             _panelBodyPrefab.SetActive(true);
@@ -236,7 +236,7 @@ namespace TootTally.Graphics
             AddSliderInPanelBody();
         }
 
-        public static void SetTabsInPanelBody()
+        private static void SetTabsInPanelBody()
         {
             GameObject tabs = _panelBodyPrefab.transform.Find("tabs").gameObject;
             tabs.SetActive(false); //Hide until icons are loaded
@@ -263,7 +263,7 @@ namespace TootTally.Graphics
             tabsRectTransform.sizeDelta = new Vector2(-676, 280);
         }
 
-        public static void SetErrorsInPanelBody()
+        private static void SetErrorsInPanelBody()
         {
             GameObject errorsHolder = _panelBodyPrefab.transform.Find("errors").gameObject;
 
@@ -277,7 +277,7 @@ namespace TootTally.Graphics
             errorsHolder.transform.Find("error_noleaderboard").gameObject.SetActive(true);
         }
 
-        public static void SetScoreboardInPanelBody()
+        private static void SetScoreboardInPanelBody()
         {
             GameObject scoresbody = _panelBodyPrefab.transform.Find("scoresbody").gameObject;
 
@@ -293,19 +293,19 @@ namespace TootTally.Graphics
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
         }
 
-        public static void SetSwirlyInPanelBody()
+        private static void SetSwirlyInPanelBody()
         {
             GameObject loadingSwirly = _panelBodyPrefab.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
             loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
             loadingSwirly.SetActive(true);
         }
 
-        public static void AddSliderInPanelBody()
+        private static void AddSliderInPanelBody()
         {
             CreateVerticalSliderFromPrefab(_panelBodyPrefab.transform, "LeaderboardVerticalSlider");
         }
 
-        public static void SetSingleScorePrefab()
+        private static void SetSingleScorePrefab()
         {
             GameObject singleScore = _panelBodyPrefab.transform.Find("scoreboard/SingleScore").gameObject;
             _singleScorePrefab = GameObject.Instantiate(singleScore);
@@ -330,7 +330,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_singleScorePrefab.gameObject);
         }
 
-        public static void SetLeaderboardHeaderPrefab()
+        private static void SetLeaderboardHeaderPrefab()
         {
             Text tempHeaderTxt = GameObject.Instantiate(_singleScorePrefab.transform.Find("Num").GetComponent<Text>());
             _leaderboardHeaderPrefab = GameObject.Instantiate(_comfortaaTextPrefab);
@@ -344,7 +344,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
         }
 
-        public static void SetLeaderboardTextPrefab()
+        private static void SetLeaderboardTextPrefab()
         {
             Text tempTxt = GameObject.Instantiate(_singleScorePrefab.transform.Find("Name").GetComponent<Text>());
             _leaderboardTextPrefab = GameObject.Instantiate(_comfortaaTextPrefab);
@@ -362,7 +362,7 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_leaderboardTextPrefab.gameObject);
         }
 
-        public static void SetSingleRowPrefab()
+        private static void SetSingleRowPrefab()
         {
             _singleRowPrefab = _singleScorePrefab.AddComponent<LeaderboardRowEntry>();
             TMP_Text rank = GameObject.Instantiate(_leaderboardHeaderPrefab, _singleScorePrefab.transform);
@@ -381,7 +381,7 @@ namespace TootTally.Graphics
             _singleRowPrefab.singleScore.name = "singleRowPrefab";
         }
 
-        public static void SetVerticalSliderPrefab()
+        private static void SetVerticalSliderPrefab()
         {
             Slider defaultSlider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
 
@@ -417,7 +417,7 @@ namespace TootTally.Graphics
 
             GameObject.DontDestroyOnLoad(_verticalSliderPrefab);
         }
-        public static void SetSliderPrefab()
+        private static void SetSliderPrefab()
         {
             Slider defaultSlider = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "Slider").GetComponent<Slider>(); //yoink
 
@@ -441,14 +441,14 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_sliderPrefab);
         }
 
-        public static void DestroyNumNameScoreFromSingleScorePrefab()
+        private static void DestroyNumNameScoreFromSingleScorePrefab()
         {
             DestroyFromParent(_singleScorePrefab, "Num");
             DestroyFromParent(_singleScorePrefab, "Name");
             DestroyFromParent(_singleScorePrefab, "Score");
         }
 
-        public static void SetOverlayPanelPrefab()
+        private static void SetOverlayPanelPrefab()
         {
             _overlayPanelPrefab = GameObject.Instantiate(_creditPanel);
             _overlayPanelPrefab.name = "OverlayPanelPrefab";
@@ -496,7 +496,7 @@ namespace TootTally.Graphics
         }
 
 
-        public static void SetUserCardPrefab()
+        private static void SetUserCardPrefab()
         {
             _userCardPrefab = GameObject.Instantiate(_overlayPanelPrefab.transform.Find("FSLatencyPanel").gameObject);
             _userCardPrefab.name = "UserCardPrefab";
@@ -620,7 +620,7 @@ namespace TootTally.Graphics
         }
 
         private static void TintImage(Image image, Color tint, float percent) =>
-            image.color = new Color(image.color.r + tint.r * percent, image.color.g + tint.g * percent, image.color.b + tint.b * percent);
+            image.color = new Color(image.color.r * (1f-percent) + tint.r * percent, image.color.g * (1f - percent) + tint.g * percent, image.color.b * (1f - percent) + tint.b * percent);
 
         private static Color UserFriendStatusToColor(string status) =>
             status switch
@@ -885,6 +885,13 @@ namespace TootTally.Graphics
                 _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
                 _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
                 _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
+
+                _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+                _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+                _userCardPrefab.transform.Find("LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+                _userCardPrefab.transform.Find("LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
+                TootTallyOverlayManager.UpdateTheme();
             }
 
             if (_isLevelSelectControllerInitialized)
