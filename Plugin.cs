@@ -14,7 +14,6 @@ using TootTally.Discord;
 using TootTally.Graphics.Animation;
 using BepInEx.Logging;
 using TootTally.Utils.TootTallySettings;
-using Mono.Security.X509.Extensions;
 using System;
 using TootTally.Utils.APIServices;
 using TootTally.TootTallyOverlay;
@@ -83,7 +82,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
                 _tootTallyMainPage.AddToggle("SyncDuringSong", SyncDuringSong);
-                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", (sender) => TootTallyOverlayManager.TogglePanel());
             }
 
             AssetManager.LoadAssets();

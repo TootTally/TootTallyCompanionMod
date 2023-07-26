@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TootTally.Graphics;
-using TootTally.Utils;
+﻿using TootTally.Utils;
 using UnityEngine;
 
 namespace TootTally.TootTallyOverlay
@@ -62,7 +56,8 @@ namespace TootTally.TootTallyOverlay
         {
             ResetTimer();
             HandleHeartBeatCounter();
-            TootTallyOverlayManager.UpdateUsers();
+            if (_heartbeatCount % 2 == 0) //reduce frequency of refresh
+                TootTallyOverlayManager.UpdateUsers();
         }
 
         public static void HandleHeartBeatCounter()

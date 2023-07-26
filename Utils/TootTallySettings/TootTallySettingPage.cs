@@ -1,7 +1,6 @@
 ﻿using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
@@ -40,7 +39,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
-            _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
+            _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", (sender) => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
             _settingObjectList.ForEach(obj => obj.Initialize());
         }
 
@@ -102,8 +101,8 @@ namespace TootTally.Utils.TootTallySettings
             _fullPanel.SetActive(false);
         }
 
-        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
-        public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action<CustomButton> OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Action<CustomButton> OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
 
         public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, ConfigEntry<float> config, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, config, integerOnly)) as TootTallySettingSlider;
         public TootTallySettingSlider AddSlider(string name, float min, float max, ConfigEntry<float> config, bool integerOnly) => AddSlider(name, min, max, DEFAULT_SLIDER_LENGTH, name, config, integerOnly);

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
@@ -420,7 +419,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLatestOnlineUsers(Action<List<User>> callback)
         {
-            string query = $"{APIURL}/api/users/latest";
+            string query = $"{APIURL}/api/users/latest/?userID={Plugin.userInfo.id}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 
@@ -437,7 +436,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetFirstPageUsers(Action<List<User>> callback)
         {
-            string query = $"{APIURL}/api/users/";
+            string query = $"{APIURL}/api/users/?userID={Plugin.userInfo.id}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 
@@ -454,7 +453,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetAllUsersUpToPageID(int pageID, Action<List<User>> callback)
         {
-            string query = $"{APIURL}/api/users/";
+            string query = $"{APIURL}/api/users/?userID={Plugin.userInfo.id}";
             List<User> userList = new List<User>();
 
             for (int i = 1; i < pageID; i++)
@@ -479,7 +478,7 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string username, Action<List<User>> callback)
         {
-            string query = $"{APIURL}/api/users/search/?username={username}";
+            string query = $"{APIURL}/api/users/search/?username={username}?userID={Plugin.userInfo.id}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 

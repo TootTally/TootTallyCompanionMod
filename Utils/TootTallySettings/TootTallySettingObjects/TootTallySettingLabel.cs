@@ -1,5 +1,4 @@
-﻿using System;
-using TMPro;
+﻿using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using TootTally.Graphics;
 using UnityEngine;
 
@@ -11,9 +10,9 @@ namespace TootTally.Utils.TootTallySettings
 
         private Vector2 _size;
         private string _text;
-        private Action _onClick;
+        private Action<CustomButton> _onClick;
 
-        public TootTallySettingButton(TootTallySettingPage page, string name, Vector2 size, string text, Action onClick = null) : base(name, page)
+        public TootTallySettingButton(TootTallySettingPage page, string name, Vector2 size, string text, Action<CustomButton> onClick = null) : base(name, page)
         {
             _size = size;
             _text = text;

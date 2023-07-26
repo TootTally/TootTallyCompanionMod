@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Linq;
-using System.Security.Cryptography;
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
+using TootTally.TootTallyOverlay;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static Mono.Security.X509.X520;
 
 namespace TootTally.Graphics
 {
@@ -512,7 +509,7 @@ namespace TootTally.Graphics
             var size = new Vector2(360, 100);
             fgRect.sizeDelta = size;
             fgRect.anchoredPosition = Vector2.zero;
-            bgRect.sizeDelta = size + (Vector2.one * 5f);
+            bgRect.sizeDelta = size + (Vector2.one * 10f);
             bgRect.anchoredPosition = Vector2.zero;
             _userCardPrefab.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
@@ -545,17 +542,35 @@ namespace TootTally.Graphics
             verticalLayoutGroupRight.childControlHeight = verticalLayoutGroupRight.childControlWidth = false;
             verticalLayoutGroupRight.childForceExpandHeight = verticalLayoutGroupRight.childForceExpandWidth = false;
 
-            var temp = new GameObject("PFPPrefab", typeof(Image));
-            var image = temp.GetComponent<Image>();
-            image.maskable = true;
-            image.preserveAspect = true;
-            image.sprite = AssetManager.GetSprite("icon.png");
-            var layoutElement = temp.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = layoutElement.preferredWidth = 96;
-            var pfp = GameObject.Instantiate(temp, horizontalContentHolder.transform);
+            var outlineTemp = new GameObject("PFPPrefab", typeof(Image));
+            var outlineImage = outlineTemp.GetComponent<Image>();
+            outlineImage.maskable = true;
+            outlineImage.preserveAspect = true;
+
+            var maskTemp = GameObject.Instantiate(outlineTemp, outlineTemp.transform);
+            maskTemp.name = "ImageMask";
+            var pfpTemp = GameObject.Instantiate(maskTemp, maskTemp.transform);
+            pfpTemp.name = "Image";
+
+            var mask = maskTemp.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+
+            var maskImage = maskTemp.GetComponent<Image>();
+            maskImage.sprite = AssetManager.GetSprite("PfpMask.png");
+            maskTemp.GetComponent<RectTransform>().sizeDelta = new Vector2(90, 90);
+
+            var pfpImage = pfpTemp.GetComponent<Image>();
+            outlineTemp.transform.SetSiblingIndex(0);
+            //outlineImage.sprite = AssetManager.GetSprite("PfpMask.png");
+            outlineImage.enabled = false;
+            pfpImage.sprite = AssetManager.GetSprite("icon.png");
+
+            var layoutElement = outlineTemp.AddComponent<LayoutElement>();
+            layoutElement.minHeight = layoutElement.minWidth = 96;
+            var pfp = GameObject.Instantiate(outlineTemp, horizontalContentHolder.transform);
             pfp.transform.SetSiblingIndex(0);
             pfp.name = "PFP";
-            GameObject.DestroyImmediate(temp);
+            GameObject.DestroyImmediate(outlineTemp);
 
             GameObject.DontDestroyOnLoad(_userCardPrefab);
             _userCardPrefab.SetActive(false);
@@ -573,29 +588,47 @@ namespace TootTally.Graphics
 
             var leftContent = card.transform.Find("LatencyFG/LeftContent").gameObject;
 
-            var pfp = leftContent.transform.parent.Find("PFP").GetComponent<Image>();
+            var pfp = leftContent.transform.parent.Find("PFP/ImageMask/Image").GetComponent<Image>();
             if (user.picture != null)
                 AssetManager.GetProfilePictureByID(user.id, (sprite) => pfp.sprite = sprite);
 
+
             var t1 = CreateSingleText(leftContent.transform, "Name", $"{user.username}", GameTheme.themeColors.leaderboard.text);
-            var t2= CreateSingleText(leftContent.transform, "Status", $"{status}", GameTheme.themeColors.leaderboard.text);
+            var t2 = CreateSingleText(leftContent.transform, "Status", $"{status}", GameTheme.themeColors.leaderboard.text);
             t1.enableWordWrapping = t2.enableWordWrapping = false;
             t1.overflowMode = t2.overflowMode = TextOverflowModes.Ellipsis;
 
             var rightContent = card.transform.Find("LatencyFG/RightContent").gameObject;
-            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { OnAddButtonPress(user); });
-            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "-", "RemoveFriendButton", delegate { OnRemoveButtonPress(user); });
-            CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { OpenUserProfile(user.id); });
+
+            if (user.id != Plugin.userInfo.id)
+            {
+                var bgColor = card.transform.Find("LatencyBG").GetComponent<Image>().color = UserFriendStatusToColor(user.friend_status);
+                TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), bgColor, .1f);
+                if (user.friend_status == "Friend" || user.friend_status == "Mutuals")
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "-", "RemoveFriendButton", (sender) => { TootTallyOverlayManager.OnRemoveButtonPress(user); });
+                else
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", (sender) => { TootTallyOverlayManager.OnAddButtonPress(user); });
+                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", (sender) => { TootTallyOverlayManager.OpenUserProfile(user.id); });
+            }
+            else
+            {
+                card.transform.Find("LatencyBG").GetComponent<Image>().color = Color.cyan;
+                TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), Color.cyan, .1f);
+            }
 
             return card;
         }
 
-        private static void OnAddButtonPress(SerializableClass.User user) =>
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.AddFriend(user.id, OnFriendResponse));
-        private static void OnRemoveButtonPress(SerializableClass.User user) =>
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
-        private static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
-        private static void OnFriendResponse(bool value) => PopUpNotifManager.DisplayNotif(value ? "Request success" : "Request failed", GameTheme.themeColors.notification.defaultText);
+        private static void TintImage(Image image, Color tint, float percent) =>
+            image.color = new Color(image.color.r + tint.r * percent, image.color.g + tint.g * percent, image.color.b + tint.b * percent);
+
+        private static Color UserFriendStatusToColor(string status) =>
+            status switch
+            {
+                "Friend" => new Color(0, .8f, 0, 1),
+                "Mutuals" => new Color(1, 0, 1, 1),
+                _ => new Color(0, 0, 0, 1),
+            };
 
         public static GameObject CreateLoginPanel(HomeController __instance)
         {
@@ -816,7 +849,7 @@ namespace TootTally.Graphics
             return overlayPanel;
         }
 
-        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action<CustomButton> onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
@@ -838,7 +871,7 @@ namespace TootTally.Graphics
             newButton.GetComponent<RectTransform>().sizeDelta = size;
             newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
 
-            newButton.button.onClick.AddListener(() => onClick?.Invoke());
+            newButton.button.onClick.AddListener(() => onClick?.Invoke(newButton));
 
             newButton.gameObject.SetActive(true);
             return newButton;

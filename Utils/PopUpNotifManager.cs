@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using HarmonyLib;
 using TootTally.Graphics;
 using UnityEngine;
-using UnityEngine.Networking.Match;
 using UnityEngine.UI;
 
 namespace TootTally.Utils

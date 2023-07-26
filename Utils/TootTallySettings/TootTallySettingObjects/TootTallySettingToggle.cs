@@ -1,11 +1,7 @@
 ﻿using BepInEx.Configuration;
-using System;
-using System.Drawing;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TootTally.Utils.TootTallySettings
 {

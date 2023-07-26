@@ -1,14 +1,6 @@
 ﻿using BepInEx.Configuration;
-using Rewired.UI.ControlMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
-using TootTally.Graphics.Animation;
-using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.UI;
 

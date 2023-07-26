@@ -1,11 +1,4 @@
 ﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TootTally.Discord.Core;
-using TootTally.Discord;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -44,7 +37,7 @@ namespace TootTally.TootTallyOverlay
         [HarmonyPostfix]
         public static void SetPlayingUserStatus()
         {
-            var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing; //For some reasons this is inverted
+            var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
             UserStatusManager.SetUserStatus(status);
         }
     }

@@ -1,25 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine.UI;
 using UnityEngine;
 using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using TootTally.Graphics;
 using TootTally.Utils;
-using System.Runtime.CompilerServices;
 using static TootTally.Utils.APIServices.SerializableClass;
-using UnityEngine.UIElements;
 
 namespace TootTally.TootTallyOverlay
 {
     public class TootTallyOverlayManager : MonoBehaviour
     {
-
+        private static readonly List<KeyCode> keyInputList = new() { KeyCode.F3, KeyCode.F4, KeyCode.F5 };
         private static bool _isPanelActive;
         private static bool _isInitialized;
+        private static bool _isUpdating;
         private static GameObject _overlayCanvas;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
 
@@ -33,6 +29,7 @@ namespace TootTally.TootTallyOverlay
         private static bool _showAllSUsers, _showFriends;
 
         private static float _scrollAcceleration;
+
 
         private void Awake()
         {
@@ -71,7 +68,7 @@ namespace TootTally.TootTallyOverlay
             text.rectTransform.sizeDelta = new Vector2(1700, 800);
             text.fontSize = 60f;
             text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
-            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(180, 60), "Close", "CloseTromBuddiesButton", TogglePanel);
+            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(180, 60), "Close", "CloseTromBuddiesButton", (sender) => TogglePanel());
 
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
@@ -81,7 +78,7 @@ namespace TootTally.TootTallyOverlay
 
         private void Update()
         {
-            if (!_isInitialized) return;
+            if (!_isInitialized || Plugin.userInfo == null) return;
 
             if (Input.GetKeyDown(KeyCode.F2))
             {
@@ -91,26 +88,41 @@ namespace TootTally.TootTallyOverlay
 
             if (!_isPanelActive) return;
 
-            if (Input.GetKeyDown(KeyCode.F3))
+            keyInputList.ForEach(key =>
             {
-                _showAllSUsers = !_showAllSUsers;
-                PopUpNotifManager.DisplayNotif(_showAllSUsers ? "Showing all users" : "Showing online users", GameTheme.themeColors.notification.defaultText);
-                UpdateUsers();
-            }
-
-            if (Input.GetKeyDown(KeyCode.F4))
-            {
-                _showFriends = !_showFriends;
-                PopUpNotifManager.DisplayNotif(_showFriends ? "Showing friends only" : "Showing non-friend users", GameTheme.themeColors.notification.defaultText);
-                UpdateUsers();
-            }
-
-            if (Input.GetKeyDown(KeyCode.F5))
-                UpdateUsers();
+                if (Input.GetKeyDown(key))
+                    HandleKeyDown(key);
+            });
 
             if (Input.mouseScrollDelta.y != 0)
                 AddScrollAcceleration(Input.mouseScrollDelta.y * 1.5f);
             UpdateScrolling();
+        }
+
+        private static void HandleKeyDown(KeyCode keypressed)
+        {
+            if (_isUpdating)
+            {
+                PopUpNotifManager.DisplayNotif("Panel currently updating, be patient!", GameTheme.themeColors.notification.defaultText);
+                return;
+            }
+            switch (keypressed)
+            {
+                case KeyCode.F3:
+                    _showAllSUsers = !_showAllSUsers;
+                    PopUpNotifManager.DisplayNotif(_showAllSUsers ? "Showing all users" : "Showing online users", GameTheme.themeColors.notification.defaultText);
+                    UpdateUsers();
+                    break;
+                case KeyCode.F4:
+                    _showFriends = !_showFriends;
+                    PopUpNotifManager.DisplayNotif(_showFriends ? "Showing friends only" : "Showing non-friend users", GameTheme.themeColors.notification.defaultText);
+                    UpdateUsers();
+                    break;
+                case KeyCode.F5:
+                    PopUpNotifManager.DisplayNotif("Forcing refresh...", GameTheme.themeColors.notification.defaultText);
+                    UpdateUsers();
+                    break;
+            }
         }
 
         private static void AddScrollAcceleration(float value)
@@ -155,6 +167,7 @@ namespace TootTally.TootTallyOverlay
 
         public static void UpdateUsers()
         {
+            _isUpdating = true;
             if (_isPanelActive)
                 if (_showFriends && _showAllSUsers)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFriendList(OnUpdateUsersResponse));
@@ -175,6 +188,7 @@ namespace TootTally.TootTallyOverlay
             {
                 _userObjectList.Add(GameObjectFactory.CreateUserCard(_overlayPanelContainer.transform, user, GetStatusString(user)));
             });
+            _isUpdating = false;
         }
 
         private static string GetStatusString(User user)
@@ -193,6 +207,19 @@ namespace TootTally.TootTallyOverlay
                     else
                         return $"<size=16><color=green>{user.status}</color></size>";
             }
+        }
+
+
+        public static void OnAddButtonPress(User user) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.AddFriend(user.id, OnFriendResponse));
+        public static void OnRemoveButtonPress(User user) =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
+        public static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
+        private static void OnFriendResponse(bool value)
+        {
+            if (value)
+                UpdateUsers();
+                PopUpNotifManager.DisplayNotif(value ? "Friend list updated." : "Action couldn't be done.", GameTheme.themeColors.notification.defaultText);
         }
 
         public static void ClearUsers()

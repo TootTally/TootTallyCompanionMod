@@ -1,15 +1,9 @@
 ﻿using HarmonyLib;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
 {
@@ -63,7 +57,7 @@ namespace TootTally.Utils.TootTallySettings
             label.SetText(ColorUtility.ToHtmlStringRGB(new Color(r, g, b)));
         }
 
-        public static void OnBackButtonClick()
+        public static void OnBackButtonClick(CustomButton sender)
         {
             if (_currentActivePage != null)
             {

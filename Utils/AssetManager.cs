@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using UnityEngine;
 
@@ -44,6 +43,7 @@ namespace TootTally.Utils
             "MultiText.png",
             "CollectButtonOutline.png",
             "icon.png",
+            "PfpMask.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;

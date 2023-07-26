@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace TootTally.Compatibility
 {
     public static class CircularBreathingCompatibility

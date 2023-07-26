@@ -1,7 +1,5 @@
-﻿using Steamworks;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace TootTally.Utils.APIServices
 {
@@ -237,6 +235,7 @@ namespace TootTally.Utils.APIServices
             public string status;
             public string picture;
             public SongDataFromDB[] currently_playing;
+            public string friend_status;
         }
 
         [Serializable]

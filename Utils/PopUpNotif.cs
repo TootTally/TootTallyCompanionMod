@@ -1,9 +1,6 @@
-﻿using Steamworks;
-using System;
-using TMPro;
+﻿using TMPro;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TootTally.Utils
 {

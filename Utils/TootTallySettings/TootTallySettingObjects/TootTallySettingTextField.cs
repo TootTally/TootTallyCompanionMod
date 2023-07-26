@@ -1,13 +1,6 @@
-﻿using Steamworks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using TMPro;
-using TootTally.Graphics;
 using UnityEngine;
-using UnityEngine.Experimental.XR.Interaction;
 using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
