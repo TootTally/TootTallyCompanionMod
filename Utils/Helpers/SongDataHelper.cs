@@ -52,7 +52,7 @@ namespace TootTally.Utils.Helpers
         {
             if (!File.Exists(fileLocation))
                 return "";
-            return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
+            return CalcSHA256Hash(File.ReadAllBytes(fileLocation).Where(b => b != '\n').ToArray());
         }
 
         public static string GetSongFilePath(TromboneTrack track)

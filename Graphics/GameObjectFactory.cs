@@ -605,10 +605,10 @@ namespace TootTally.Graphics
                 var bgColor = card.transform.Find("LatencyBG").GetComponent<Image>().color = UserFriendStatusToColor(user.friend_status);
                 TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), bgColor, .1f);
                 if (user.friend_status == "Friend" || user.friend_status == "Mutuals")
-                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "-", "RemoveFriendButton", (sender) => { TootTallyOverlayManager.OnRemoveButtonPress(user); });
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "-", "RemoveFriendButton", delegate { TootTallyOverlayManager.OnRemoveButtonPress(user); });
                 else
-                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", (sender) => { TootTallyOverlayManager.OnAddButtonPress(user); });
-                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", (sender) => { TootTallyOverlayManager.OpenUserProfile(user.id); });
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { TootTallyOverlayManager.OnAddButtonPress(user); });
+                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { TootTallyOverlayManager.OpenUserProfile(user.id); });
             }
             else
             {
@@ -849,7 +849,7 @@ namespace TootTally.Graphics
             return overlayPanel;
         }
 
-        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action<CustomButton> onClick = null)
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
@@ -871,7 +871,7 @@ namespace TootTally.Graphics
             newButton.GetComponent<RectTransform>().sizeDelta = size;
             newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
 
-            newButton.button.onClick.AddListener(() => onClick?.Invoke(newButton));
+            newButton.button.onClick.AddListener(() => onClick?.Invoke());
 
             newButton.gameObject.SetActive(true);
             return newButton;

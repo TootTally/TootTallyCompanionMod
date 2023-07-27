@@ -198,7 +198,7 @@ namespace TootTally.Replays
             if (Plugin.Instance.SyncDuringSong.Value) return true; //always sync if enabled
 
             var previousSync = _hasSyncedOnce;
-            _hasSyncedOnce = true; 
+            _hasSyncedOnce = true;
             return !previousSync;
         }
 
@@ -255,7 +255,7 @@ namespace TootTally.Replays
             GameObjectFactory.CreateSingleText(ttHitbox.transform, "ScorePanelHitboxText", "<", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
             GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
 
-            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");           
+            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");
             _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
             VerticalLayoutGroup vertLayout = _tootTallyScorePanel.AddComponent<VerticalLayoutGroup>();
             vertLayout.padding = new RectOffset(2, 2, 2, 2);
@@ -263,7 +263,7 @@ namespace TootTally.Replays
             vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
             _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
 
-            
+
 
             new SlideTooltip(ttHitbox, panelBody, new Vector2(750, 0), new Vector2(225, 0));
 
@@ -509,22 +509,10 @@ namespace TootTally.Replays
             TootTallyLogger.LogInfo($"Requesting UUID for {songHash}");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
-                if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
-                {
-                    // Theoretically could just simplify to GenerateBaseTmb, but that might change custom track hashes
-                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(track);
-                    SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
-                    {
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
-                    }));
-                }
-                else if (songHashInDB == 0)
+                if (songHashInDB == 0)
                     _replayUUID = null;
-                else if (songHashInDB != 0)
+                else
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
-
-
             }));
         }
 
@@ -769,7 +757,7 @@ namespace TootTally.Replays
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
                 TootTallyLogger.DebugModeLog("TempReplay Loaded");
                 _currentGCInstance.pauseRetryLevel();*/
-        });
+            });
             Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";
             replayText.supportRichText = true;

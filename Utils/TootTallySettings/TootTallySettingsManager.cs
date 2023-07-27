@@ -57,7 +57,7 @@ namespace TootTally.Utils.TootTallySettings
             label.SetText(ColorUtility.ToHtmlStringRGB(new Color(r, g, b)));
         }
 
-        public static void OnBackButtonClick(CustomButton sender)
+        public static void OnBackButtonClick()
         {
             if (_currentActivePage != null)
             {

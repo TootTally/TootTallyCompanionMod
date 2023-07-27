@@ -34,7 +34,6 @@ namespace TootTally
         public static SerializableClass.User userInfo; //Temporary public
         public const int BUILDDATE = 20230724;
         internal ConfigEntry<string> APIKey { get; private set; }
-        public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public ConfigEntry<bool> DebugMode { get; private set; }
@@ -60,7 +59,6 @@ namespace TootTally
 
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
-            AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
             ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
@@ -77,12 +75,11 @@ namespace TootTally
         {
             if (_tootTallyMainPage != null)
             {
-                _tootTallyMainPage.AddToggle("AllowTmbUploads", AllowTMBUploads);
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
                 _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
                 _tootTallyMainPage.AddToggle("SyncDuringSong", SyncDuringSong);
-                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", (sender) => TootTallyOverlayManager.TogglePanel());
+                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
             }
 
             AssetManager.LoadAssets();

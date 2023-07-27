@@ -95,7 +95,7 @@ namespace TootTally.Graphics
             PopUpNotifManager.DisplayNotif("New Theme Loaded!", GameTheme.themeColors.notification.defaultText);
         }
 
-        private static void RefreshTheme(CustomButton sender)
+        private static void RefreshTheme()
         {
             SetTheme(_currentTheme);
             PopUpNotifManager.DisplayNotif("Theme refreshed!", GameTheme.themeColors.notification.defaultText);

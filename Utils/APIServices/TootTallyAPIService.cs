@@ -156,31 +156,6 @@ namespace TootTally.Utils
             callback(false);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
-        {
-
-            string query = $"{APIURL}/api/upload/";
-            string jsonified = JsonUtility.ToJson(chart);
-            var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
-
-            UnityWebRequest webRequest = PostUploadRequest(query, jsonbin);
-            yield return webRequest.SendWebRequest();
-
-            if (!HasError(webRequest, query))
-            {
-                if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
-                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, GameTheme.themeColors.notification.warningText);
-                else
-                {
-                    TootTallyLogger.LogInfo($"Chart Sent.");
-                    PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
-                }
-            }
-            else
-                PopUpNotifManager.DisplayNotif("Error in sending chart", GameTheme.themeColors.notification.errorText);
-            callback();
-        }
-
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
         {
             var query = $"{APIURL}/api/replay/start/";
