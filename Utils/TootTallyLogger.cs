@@ -41,6 +41,12 @@ namespace TootTally.Utils
             Plugin.GetLogger().LogError(msg);
         }
 
+        internal static void CatchError(Exception ex)
+        {
+            Plugin.GetLogger().LogError(ex.Message);
+            Plugin.GetLogger().LogError(ex.StackTrace);
+        }
+
         internal static void LogWarning(string msg)
         {
             Plugin.GetLogger().LogWarning(msg);

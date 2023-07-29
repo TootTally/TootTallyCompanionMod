@@ -877,6 +877,31 @@ namespace TootTally.Graphics
             return newButton;
         }
 
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
+        {
+            CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
+            newButton.name = name;
+            newButton.button.GetComponent<Image>().sprite = sprite;
+
+            ColorBlock btnColors = newButton.button.colors;
+            btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
+            btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
+            btnColors.pressedColor = GameTheme.themeColors.replayButton.colors.pressedColor;
+            btnColors.selectedColor = GameTheme.themeColors.replayButton.colors.normalColor;
+            newButton.button.colors = btnColors;
+
+            newButton.textHolder.text = "";
+            newButton.textHolder.color = GameTheme.themeColors.replayButton.text;
+
+            newButton.GetComponent<RectTransform>().sizeDelta = size;
+            newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
+
+            newButton.button.onClick.AddListener(() => onClick?.Invoke());
+
+            newButton.gameObject.SetActive(true);
+            return newButton;
+        }
+
         public static void UpdatePrefabTheme()
         {
             if (_isHomeControllerInitialized)

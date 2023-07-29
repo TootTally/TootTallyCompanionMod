@@ -451,9 +451,7 @@ namespace TootTally.CustomLeaderboard
                 GameObject currentTab = _globalLeaderboard.GetComponent<LeaderboardManager>().tabs[i];
 
                 Button btn = currentTab.GetComponentInChildren<Button>();
-                Texture2D texture = AssetManager.GetTexture(tabsImageNames[i]);
-                if (texture != null)
-                    btn.image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+                btn.image.sprite = AssetManager.GetSprite(tabsImageNames[i]);
 
             }
             _tabs.SetActive(true);
