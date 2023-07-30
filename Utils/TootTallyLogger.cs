@@ -69,7 +69,7 @@ namespace TootTally.Utils
             {
                 var filePath = Path.Combine(Paths.BepInExRootPath, TOOTTALLY_LOG_FOLDER, TOOTTALLY_LOG_FILE_NAME);
                 if (!File.Exists(filePath))
-                    File.Create(filePath);
+                    File.Create(filePath).Close();
                 var level = e.Level.ToString();
                 var source = e.Source.SourceName;
                 if (source == "TootTally")
@@ -98,7 +98,7 @@ namespace TootTally.Utils
             {
                 if (File.Exists(sourceFilePath))
                     File.Delete(sourceFilePath);
-                File.Create(sourceFilePath);
+                File.Create(sourceFilePath).Close();
                 _initializedLogs.Add(sourceFilePath);
             }
         }
