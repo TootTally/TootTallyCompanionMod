@@ -180,29 +180,6 @@ namespace TootTally.Replays
             _lastIsTooting = __result;
         }
 
-        private static bool _hasSyncedOnce;
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
-        [HarmonyPostfix]
-        public static void ResetSyncFlag()
-        {
-            TootTallyLogger.LogInfo("Sync:" + Plugin.Instance.SyncDuringSong.Value);
-            _hasSyncedOnce = false;
-        }
-
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
-        [HarmonyPrefix]
-        public static bool SyncOnlyOnce()
-        {
-            if (Plugin.Instance.SyncDuringSong.Value) return true; //always sync if enabled
-
-            var previousSync = _hasSyncedOnce;
-            _hasSyncedOnce = true;
-            return !previousSync;
-        }
-
-
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPrefix]
         public static void PointSceneControllerPostfixPatch(PointSceneController __instance)
@@ -662,7 +639,6 @@ namespace TootTally.Replays
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
-                _hasSyncedOnce = false;
                 _currentGCInstance.syncTrackPositions((float)__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
