@@ -881,8 +881,8 @@ namespace TootTally.Graphics
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
-            newButton.button.GetComponent<Image>().sprite = sprite;
-
+            //newButton.button.GetComponent<Image>().sprite = sprite;
+            
             ColorBlock btnColors = newButton.button.colors;
             btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
             btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
@@ -890,8 +890,13 @@ namespace TootTally.Graphics
             btnColors.selectedColor = GameTheme.themeColors.replayButton.colors.normalColor;
             newButton.button.colors = btnColors;
 
-            newButton.textHolder.text = "";
-            newButton.textHolder.color = GameTheme.themeColors.replayButton.text;
+            GameObject imageHolder = newButton.textHolder.gameObject;
+            imageHolder.transform.localScale = new Vector3(.81f, .81f);
+            GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
+            Image image = imageHolder.AddComponent<Image>();
+            image.preserveAspect = true;
+            image.maskable = true;
+            image.sprite = sprite;
 
             newButton.GetComponent<RectTransform>().sizeDelta = size;
             newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
