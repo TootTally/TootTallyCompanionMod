@@ -211,7 +211,6 @@ namespace TootTally.Replays
                 __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier:0.00}x){colorStringFoot}";
             }
 
-            //__instance.bigscoreobj.gameObject.SetActive(false);
             GameObject lowerRightPanel = __instance.yellowwave.transform.parent.gameObject;
             try
             {
@@ -222,9 +221,6 @@ namespace TootTally.Replays
             {
                 TootTallyLogger.LogWarning("Objects rule-b or rule-r couldn't be found.");
             }
-            //lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
-            //lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
-            //lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
 
             GameObject UICanvas = lowerRightPanel.transform.parent.gameObject;
 
@@ -245,6 +241,38 @@ namespace TootTally.Replays
             new SlideTooltip(ttHitbox, panelBody, new Vector2(750, 0), new Vector2(225, 0));
 
         }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doneWithCountUp))]
+        [HarmonyPostfix]
+        public static void OnDoneWIthCountUpUpdateFCLogo(PointSceneController __instance)
+        {
+            if (_replay.IsFullCombo)
+                DisplayFCLogo(__instance);
+        }
+
+        //This is just in case they have InstantScore Plugin
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
+        [HarmonyPostfix]
+        public static void OnDoCoinsUpdateFCLogo(PointSceneController __instance)
+        {
+            if (_replay.IsFullCombo)
+                DisplayFCLogo(__instance);
+        }
+
+        private static void DisplayFCLogo(PointSceneController __instance)
+        {
+            __instance.giantscoretext.text = "You suck";
+            __instance.giantscoretext.fontSize = 20;
+            __instance.giantscoretext.horizontalOverflow = HorizontalWrapMode.Overflow;
+            __instance.giantscoretextshad.text = "You suck";
+            __instance.giantscoretextshad.fontSize = 20;
+            __instance.giantscoretextshad.horizontalOverflow = HorizontalWrapMode.Overflow;
+            if (_replay.IsTripleS)
+                __instance.giantscorediamond.transform.Find("cool-s").GetComponent<Image>().sprite = AssetManager.GetSprite("Cool-sss.png");
+            __instance.giantscorediamond.transform.Find("cool-s").gameObject.SetActive(true);
+        }
+
+
         public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
 
         public static void UpdateLoadingSwirlyAnimation()

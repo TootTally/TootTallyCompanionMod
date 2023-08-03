@@ -43,7 +43,8 @@ namespace TootTally.Replays
         public string GetUsername { get => _replayUsername; }
         public string GetSongName { get => _replaySong; }
 
-
+        public bool IsFullCombo { get => GlobalVariables.gameplay_notescores[0] == 0 && GlobalVariables.gameplay_notescores[1] == 0 && GlobalVariables.gameplay_notescores[2] == 0; }
+        public bool IsTripleS { get => GlobalVariables.gameplay_notescores[0] == 0 && GlobalVariables.gameplay_notescores[1] == 0 && GlobalVariables.gameplay_notescores[2] == 0 && GlobalVariables.gameplay_notescores[3] == 0; }
 
         #region ReplayRecorder
 
