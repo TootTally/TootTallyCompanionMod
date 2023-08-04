@@ -154,6 +154,7 @@ namespace TootTally.Replays
             if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
             {
                 __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
+                __instance.breathscale = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
                 TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }
@@ -182,7 +183,7 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPrefix]
-        public static void PointSceneControllerPostfixPatch(PointSceneController __instance)
+        public static void PointSceneControllerPostfixPatch()
         {
             switch (_replayManagerState)
             {
@@ -277,8 +278,7 @@ namespace TootTally.Replays
 
         public static void UpdateLoadingSwirlyAnimation()
         {
-            if (_loadingSwirly != null)
-                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
@@ -300,11 +300,11 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.updateSave))]
         [HarmonyPrefix]
-        public static bool AvoidSaveChange(PointSceneController __instance) => !wasPlayingReplay; // Don't touch the savefile if we just did a replay
+        public static bool AvoidSaveChange() => !wasPlayingReplay; // Don't touch the savefile if we just did a replay
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.checkScoreCheevos))]
         [HarmonyPrefix]
-        public static bool AvoidAchievementCheck(PointSceneController __instance) => !wasPlayingReplay; // Don't check for achievements if we just did a replay
+        public static bool AvoidAchievementCheck() => !wasPlayingReplay; // Don't check for achievements if we just did a replay
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
         [HarmonyPrefix]
