@@ -43,7 +43,6 @@ namespace TootTally
 
         public object moduleSettings { get; private set; }
         private Harmony _harmony;
-        private object settingsPage = null;
 
         private static TootTallySettingPage _tootTallyMainPage;
         private static TootTallySettingPage _tootTallyModulePage;

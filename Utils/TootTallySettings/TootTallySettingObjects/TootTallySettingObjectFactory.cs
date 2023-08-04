@@ -168,7 +168,10 @@ namespace TootTally.Utils.TootTallySettings
             panel.transform.Find("TootTallySettingsHeader").GetComponent<TMP_Text>().text = headerText;
 
             var gridPanel = panel.transform.Find("SettingsPanelGridHolder").gameObject;
-            
+            gridPanel.GetComponent<RectTransform>().pivot = new Vector2(0,1);
+            gridPanel.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f, 1);
+            gridPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(-950, -150);
+
             var verticalLayoutGroup = gridPanel.AddComponent<VerticalLayoutGroup>();
             verticalLayoutGroup.childAlignment = TextAnchor.UpperLeft;
             verticalLayoutGroup.childControlHeight = verticalLayoutGroup.childControlWidth = false;
@@ -187,7 +190,7 @@ namespace TootTally.Utils.TootTallySettings
         private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
         {
             var gridPanelRect = gridPanel.GetComponent<RectTransform>();
-            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, -value * gridPanelRect.sizeDelta.y);
+            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, (value * gridPanelRect.sizeDelta.y) - (1-value) * 150f); //This is so scuffed I fucking love it
         }
 
         public static Slider CreateSlider(Transform canvasTransform, string name, float min, float max, bool integerOnly)

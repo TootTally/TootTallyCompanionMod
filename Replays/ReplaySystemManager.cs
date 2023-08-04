@@ -154,7 +154,6 @@ namespace TootTally.Replays
             if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
             {
                 __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
-                __instance.breathscale = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
                 TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }
