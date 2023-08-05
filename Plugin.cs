@@ -32,7 +32,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230804;
+        public const int BUILDDATE = 20230805;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -88,7 +88,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
             _harmony.PatchAll(typeof(UserStatusUpdater));
-            
+
             //Managers
             gameObject.AddComponent<PopUpNotifManager>();
             gameObject.AddComponent<AnimationManager>();
@@ -104,11 +104,11 @@ namespace TootTally
             tootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
-                    module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
-                    _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
+                module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
 
-                    module.IsConfigInitialized = true;
-                
+                module.IsConfigInitialized = true;
+
             }
             if (module.ModuleConfigEnabled.Value)
             {
@@ -227,7 +227,22 @@ namespace TootTally
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
+            /*[HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void OnGameControllerStart(GameController __instance)
+            {
+                var gameplayCanvas = GameObject.Find("GameplayCanvas");
+                gameplayCanvas.GetComponent<Canvas>().scaleFactor = 2f;
 
+                var topLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
+                var topRightCam = GameObject.Instantiate(topLeftCam);
+                var bottomLeftCam = GameObject.Instantiate(topLeftCam);
+                var bottomRightCam = GameObject.Instantiate(topLeftCam);
+                topRightCam.pixelRect = new Rect(960, 0, 960, 540);
+                topLeftCam.pixelRect = new Rect(0, 0, 960, 540);
+                bottomLeftCam.pixelRect = new Rect(0, 540, 960, 540);
+                bottomRightCam.pixelRect = new Rect(960, 540, 960, 540);
+            }*/
         }
     }
 }
