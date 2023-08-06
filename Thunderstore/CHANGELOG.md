@@ -1,5 +1,21 @@
 #### Changelog:
 
+`v0.3.4` -> `v0.4.0`
+
+```diff
++ TootTallySettings: a replacement for TrombSettings for TootTally modules
++ TromBuddies: TootTally's new friend and status system
++ Profile session popup on the bottom right of the song select screen to show your current session's TT gains
++ Point Screen now shows you your current score's TT and position
++ Fixed replay bugs for non-16:9 resolutions. v0.4.0 replays cannot be viewed correctly on v0.3.4 or under.
++ (Actually) Fixed crashing issue related to TootTallyLogger and Themes
++ Added button to reload current themes in the Themes folder
++ New FC and SSS graphic for the point screen
++ Minor optimizations and reworks
+```
+
+-----
+
 `v0.3.3` -> `v0.3.4`
 
 ```diff
