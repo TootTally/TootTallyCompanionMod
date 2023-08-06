@@ -7,12 +7,20 @@ using TootTally.Utils.Helpers;
 using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Utils.APIServices.SerializableClass;
+using TMPro;
+using System.Linq;
 
 namespace TootTally.TootTallyOverlay
 {
     public class TootTallyOverlayManager : MonoBehaviour
     {
-        private static readonly List<KeyCode> keyInputList = new() { KeyCode.F3, KeyCode.F4, KeyCode.F5 };
+        private static readonly List<KeyCode> _keyInputList = new() { KeyCode.F3, KeyCode.F4, KeyCode.F5, KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.B, KeyCode.A };
+        private static readonly List<KeyCode> _kenoKeys = new List<KeyCode>{KeyCode.UpArrow, KeyCode.UpArrow,
+                                       KeyCode.DownArrow, KeyCode.DownArrow,
+                                       KeyCode.LeftArrow, KeyCode.RightArrow,
+                                       KeyCode.LeftArrow, KeyCode.RightArrow,
+                                       KeyCode.B, KeyCode.A};
+        private static int _kenoIndex;
         private static bool _isPanelActive;
         private static bool _isInitialized;
         private static bool _isUpdating;
@@ -23,6 +31,7 @@ namespace TootTally.TootTallyOverlay
         private static GameObject _overlayPanelContainer;
 
         private static RectTransform _containerRect;
+        private static TMP_Text _titleText;
 
         private static List<GameObject> _userObjectList;
 
@@ -40,6 +49,7 @@ namespace TootTally.TootTallyOverlay
 
         private static void Initialize()
         {
+            _kenoIndex = 0;
             _overlayCanvas = new GameObject("TootTallyOverlayCanvas");
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -67,6 +77,7 @@ namespace TootTally.TootTallyOverlay
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "subtitle");
             GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "title");
             var text = GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform, "title", "TromBuddies (EARLY ACCESS)", GameTheme.themeColors.leaderboard.text);
+            _titleText = text.GetComponent<TMP_Text>();
             var layoutElement = text.gameObject.AddComponent<LayoutElement>();
             layoutElement.ignoreLayout = true;
             text.raycastTarget = false;
@@ -76,7 +87,7 @@ namespace TootTally.TootTallyOverlay
             text.rectTransform.sizeDelta = new Vector2(1700, 800);
             text.fontSize = 60f;
             text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
-            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(60, 60), AssetManager.GetSprite("Close64.png"), "CloseTromBuddiesButton",TogglePanel);
+            GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(60, 60), AssetManager.GetSprite("Close64.png"), "CloseTromBuddiesButton", TogglePanel);
 
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
@@ -95,7 +106,7 @@ namespace TootTally.TootTallyOverlay
 
             if (!_isPanelActive) return;
 
-            keyInputList.ForEach(key =>
+            _keyInputList.ForEach(key =>
             {
                 if (Input.GetKeyDown(key))
                     HandleKeyDown(key);
@@ -130,6 +141,25 @@ namespace TootTally.TootTallyOverlay
                     UpdateUsers();
                     break;
             }
+
+            if (_kenoKeys.Contains(keypressed))
+                if (_kenoIndex != -1 && _kenoKeys[_kenoIndex] == keypressed)
+                {
+                    _kenoIndex++;
+                    if (_kenoIndex >= _kenoKeys.Count)
+                        OnKenomiCodeEnter();
+                }
+                else
+                    _kenoIndex = 0;
+            else
+                _kenoIndex = 0;
+        }
+
+        private static void OnKenomiCodeEnter()
+        {
+            _titleText.text = "BonerBuddies";
+            PopUpNotifManager.DisplayNotif("Secret found... ☠", GameTheme.themeColors.notification.defaultText);
+            _kenoIndex = -1;
         }
 
         private static void AddScrollAcceleration(float value)
