@@ -1,0 +1,116 @@
+{
+	"version": "0.0.1",
+	"theme": {
+		"leaderboard": {
+			"panelBody": "#13a674",
+			"scoresBody": "#131313",
+			"rowEntry": "#303030",
+			"yourRowEntry": "#255b5b",
+			"headerText": "#7bffa3",
+			"text": "#FFFFFFFF",
+			"textOutline": "#131313",
+			"slider": {
+				"handle": "#ff3748",
+				"background": "#131313",
+				"fill": "#7bffa3"
+			},
+			"tabs": {
+				"normal": "#13a674",
+				"pressed": "#7bffa3",
+				"highlighted": "#15e39d"
+			}
+		},
+		"scrollSpeedSlider": {
+			"handle": "#ff3748",
+			"text": "#131313",
+			"background": "#131313",
+			"fill": "#7bffa3"
+		},
+		"notification": {
+			"border": "#13a674",
+			"background": "#131313",
+			"defaultText": "#FFFFFFFF",
+			"warningText": "#f4e004",
+			"errorText": "#ff3748",
+			"textOutline": "#131313"
+		},
+		"replayButton": {
+			"text": "#FFFFFFFF",
+			"normal": "#ff3748",
+			"pressed": "#edbfbe",
+			"highlighted": "#ed8b88"
+		},
+		"capsules": {
+			"year": "#13a674",
+			"yearShadow": "#13131340",
+			"composer": "#131313",
+			"composerShadow": "#13131340",
+			"genre": "#ff3748",
+			"genreShadow": "#13131340",
+			"description": "#ff3748",
+			"descriptionShadow": "#13131340",
+			"tempo": "#13131370"
+		},
+		"randomButton": {
+			"background": "#131313",
+			"backgroundOver": "#8c8c8c",
+			"outline": "#13a674",
+			"outlineOver": "#7bffa3",
+			"text": "#FFFFFFFF",
+			"textOver": "#FFFFFFFF"
+		},
+		"backButton": {
+			"background": "#131313",
+			"backgroundOver": "#8c8c8c",
+			"outline": "#13a674",
+			"outlineOver": "#7bffa3",
+			"text": "#ff3748",
+			"textOver": "#ed8b88",
+			"shadow": "#13131340",
+			"shadowOver": "#13131340"
+		},
+		"playButton": {
+			"background": "#131313",
+			"backgroundOver": "#8c8c8c",
+			"outline": "#13a674",
+			"outlineOver": "#7bffa3",
+			"text": "#ff3748",
+			"textOver": "#ed8b88",
+			"shadow": "#13131340",
+			"shadowOver": "#13131340"
+		},
+		"songButton": {
+			"background": "#131313",
+			"text": "#8c8c8c",
+			"textOver": "#FFFFFFFF",
+			"outline": "#13a674",
+			"outlineOver": "#7bffa3",
+			"shadow": "#13131340",
+			"square": "#282828"
+		},
+		"diffStar": {
+			"gradientStart": "#7bffa3",
+			"gradientEnd": "#ff3748"
+		},
+		"pointer": {
+			"background": "#ff3748",
+			"shadow": "#13131340",
+			"outline": "#131313"
+		},
+		"background":{
+			"waves": "#13a674",
+			"waves2": "#47D38C",
+			"dots": "#0A533A80",
+			"dots2": "#00000000",
+			"shape": "#13131340",
+			"diamond": "#FFFFFF00",
+			"background": "#7bffa3"
+		},
+		"title": {
+			"songName": "#FFFFFFFF",
+			"titleBar": "#131313",
+			"title": "#ff3748",
+			"titleShadow": "#13131340"
+		}
+	}
+}
