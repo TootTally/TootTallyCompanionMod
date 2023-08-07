@@ -4,6 +4,7 @@ using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
 {
@@ -37,11 +38,23 @@ namespace TootTally.Utils.TootTallySettings
             GameObject mainCanvas = GameObject.Find("MainCanvas");
             _mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
 
-            GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1860, -415), new Vector2(60, 250), "<", "TTSettingsOpenButton", delegate
+            var btn = GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1661, -456), new Vector2(164, 164), AssetManager.GetSprite("icon.png"), "TTSettingsOpenButton", delegate
             {
                 AnimationManager.AddNewPositionAnimation(_mainMenu, new Vector2(1940, 0), 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             });
-
+            btn.GetComponent<Image>().sprite = AssetManager.GetSprite("PfpMask.png");
+            btn.GetComponent<Image>().color = Color.black;
+            btn.button.colors = new ColorBlock()
+            {
+                normalColor = Color.white,
+                pressedColor = Color.gray,
+                highlightedColor = new Color(.3f, .3f, 0),
+                colorMultiplier = 1f,
+                fadeDuration = 0.2f
+            };
+            var outline = btn.gameObject.AddComponent<Outline>();
+            outline.effectColor = Color.yellow;
+            outline.effectDistance = new Vector2(3, -3);
             _mainSettingPanel = TootTallySettingObjectFactory.CreateMainSettingPanel(_mainMenu.transform);
 
             _settingPanelGridHolder = _mainSettingPanel.transform.Find("SettingsPanelGridHolder").gameObject;
@@ -50,11 +63,6 @@ namespace TootTally.Utils.TootTallySettings
             _settingPageList.ForEach(page => page.Initialize());
             isInitialized = true;
 
-        }
-
-        private static void UpdateHexLabel(float r, float g, float b, TootTallySettingLabel label)
-        {
-            label.SetText(ColorUtility.ToHtmlStringRGB(new Color(r, g, b)));
         }
 
         public static void OnBackButtonClick()

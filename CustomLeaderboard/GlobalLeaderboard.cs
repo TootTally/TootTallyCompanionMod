@@ -206,8 +206,13 @@ namespace TootTally.CustomLeaderboard
 
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
                 {
+                    AssetManager.GetProfilePictureByID(user.id, (sprite) =>
+                    {
+                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, "Pfp", OpenUserProfile);
+                        i.transform.SetSiblingIndex(0);
+                    });
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
-                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)", GameTheme.themeColors.leaderboard.text);
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt):0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
                     _profilePopupLoadingSwirly.gameObject.SetActive(false);
                 }));
 
@@ -437,10 +442,8 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateLoadingSwirlyAnimation()
         {
-            if (_loadingSwirly != null)
-                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-            if (_profilePopupLoadingSwirly != null)
-                _profilePopupLoadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _profilePopupLoadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
 
         }
 

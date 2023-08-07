@@ -39,9 +39,9 @@ namespace TootTally
         public ConfigEntry<bool> DebugMode { get; private set; }
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
 
-        public static List<ITootTallyModule> tootTallyModules { get; private set; }
+        public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
-        public object moduleSettings { get; private set; }
+        public object ModuleSettings { get; private set; }
         private Harmony _harmony;
 
         private static TootTallySettingPage _tootTallyMainPage;
@@ -61,7 +61,7 @@ namespace TootTally
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
             ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
 
-            tootTallyModules = new List<ITootTallyModule>();
+            TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
             _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
 
@@ -100,8 +100,8 @@ namespace TootTally
 
         public static void AddModule(ITootTallyModule module)
         {
-            if (tootTallyModules == null) TootTallyLogger.LogInfo("tootTallyModules IS NULL");
-            tootTallyModules.Add(module);
+            if (TootTallyModules == null) TootTallyLogger.LogInfo("tootTallyModules IS NULL");
+            TootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
                 module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
