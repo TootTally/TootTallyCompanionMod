@@ -413,8 +413,9 @@ namespace TootTally.Replays
                         OnPauseAddReplayButton(__instance);
                     break;
                 case ReplayManagerState.Replaying:
-                    _replaySpeedSlider.onValueChanged.RemoveAllListeners();
-                    Time.timeScale = 1f;
+                    _replaySpeedSlider.value = 1f;
+                    //_replaySpeedSlider.onValueChanged.RemoveAllListeners();
+                    //Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
                     break;
 
@@ -435,6 +436,14 @@ namespace TootTally.Replays
             _replayFileName = null;
         }
 
+        [HarmonyPatch(typeof(GameController), nameof(GameController.resumeTrack))]
+        [HarmonyPostfix]
+        static void GameControllerResumeTrackPostfixPatch(GameController __instance)
+        {
+            if (_replayFileName != null)
+                _replayManagerState = ReplayManagerState.Replaying;
+        }
+
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
         [HarmonyPostfix]
         static void GameControllerPauseRetryLevelPostfixPatch(GameController __instance)
@@ -442,7 +451,6 @@ namespace TootTally.Replays
             if (_replayFileName == null)
                 _replay.ClearData();
         }
-
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
@@ -751,15 +759,14 @@ namespace TootTally.Replays
 
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
-            //replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
             replayBtn.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
-                PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
-                /*_replayFileName = "TempReplay";
+                //PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
+                _replayFileName = "TempReplay";
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
                 TootTallyLogger.DebugModeLog("TempReplay Loaded");
-                _currentGCInstance.pauseRetryLevel();*/
+                _currentGCInstance.pauseRetryLevel();
             });
             Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";

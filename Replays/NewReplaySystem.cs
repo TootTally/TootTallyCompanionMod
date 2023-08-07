@@ -6,6 +6,7 @@ using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using Newtonsoft.Json;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -159,7 +160,7 @@ namespace TootTally.Replays
             replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
             replayJson.gamespeedmultiplier = float.Parse(ReplaySystemManager.gameSpeedMultiplier.ToString("0.00"));
             replayJson.audiolatency = GlobalVariables.localsettings.latencyadjust;
-            replayJson.gamemodifiers = "None";
+            replayJson.gamemodifiers = GameModifierManager.GetModifiersString();
             replayJson.pluginbuilddate = Plugin.BUILDDATE;
             replayJson.gameversion = Application.version;
             replayJson.songhash = songHash;
