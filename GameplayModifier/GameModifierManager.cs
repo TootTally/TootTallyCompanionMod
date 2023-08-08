@@ -27,12 +27,12 @@ namespace TootTally.GameplayModifier
         {
             if (!_isInitialized) Initialize();
 
-            var hiddenBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(350, -150), new Vector2(32, 32), AssetManager.GetSprite("icon.png"), "HiddenButton", ToggleHidden).gameObject;
+            var hiddenBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(350, -150), new Vector2(32, 32), AssetManager.GetSprite("icon.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }).gameObject;
             var rect = hiddenBtn.GetComponent<RectTransform>();
             rect.pivot = new Vector2(0, 1);
             rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
-
-            var flashlightBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(400, -150), new Vector2(32, 32), AssetManager.GetSprite("Download64.png"), "FlashlightButton", ToggleFlashlight).gameObject;
+            
+            var flashlightBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(400, -150), new Vector2(32, 32), AssetManager.GetSprite("Download64.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }).gameObject;
             var rect2 = flashlightBtn.GetComponent<RectTransform>();
             rect2.pivot = new Vector2(0, 1);
             rect2.anchorMin = rect2.anchorMax = new Vector2(0, 1);
@@ -51,16 +51,6 @@ namespace TootTally.GameplayModifier
             _modifierTypesToRemove = new();
             _modifiersBackup = "None";
             _isInitialized = true;
-        }
-
-        private static void ToggleHidden()
-        {
-            Toggle(GameModifiers.ModifierType.Hidden);
-        }
-
-        private static void ToggleFlashlight()
-        {
-            Toggle(GameModifiers.ModifierType.Flashlight);
         }
 
         private static bool Toggle(GameModifiers.ModifierType modifierType)
