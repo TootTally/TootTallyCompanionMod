@@ -723,9 +723,13 @@ namespace TootTally.Replays
                         displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})";
                     PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
-                    if (replaySubmissionReply.isBestPlay)
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})", GameTheme.themeColors.leaderboard.text);
+                    if (!replaySubmissionReply.isBestPlay)
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"{replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    else
+                    {
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Global Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (<color=\"green\">+{rankDiff}</color>)", GameTheme.themeColors.leaderboard.text);
+                    }
                 }
                 else
                 {

@@ -51,6 +51,9 @@ namespace TootTally.Utils
             "Twitch64.png",
             "PfpMask.png",
             "Cool-sss.png",
+            "HD.png",
+            "FL.png",
+            "FLMask.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;

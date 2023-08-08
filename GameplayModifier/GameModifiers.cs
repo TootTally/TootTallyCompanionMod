@@ -25,8 +25,8 @@ namespace TootTally.GameplayModifier
             public static Color _tailOutColor, _tailInColor, _tailOutColorLerpEnd, _tailInColorLerpEnd;
             public static Color _bodyOutStartColor, _bodyOutEndColor, _bodyOutStartColorLerpEnd, _bodyOutEndColorLerpEnd;
             public static Color _bodyInStartColor, _bodyInEndColor, _bodyInStartColorLerpEnd, _bodyInEndColorLerpEnd;
-            public const float START_FADEOUT_POSX = 3f;
-            public const float END_FADEOUT_POSX = -5f;
+            public const float START_FADEOUT_POSX = 3.8f;
+            public const float END_FADEOUT_POSX = -0.75f;
 
             public override void Initialize(GameController __instance)
             {
@@ -88,8 +88,8 @@ namespace TootTally.GameplayModifier
                     //Fuck 4am coding im tired I wanna sleep
                     var perc = (note.note.transform.position.x - END_FADEOUT_POSX) / (START_FADEOUT_POSX - END_FADEOUT_POSX);
                     var percEnd = (note.note.transform.Find("EndPoint").position.x - END_FADEOUT_POSX) / (START_FADEOUT_POSX - END_FADEOUT_POSX);
-                    var lerpStartBy = 1-Mathf.Clamp(perc, 0, 1);
-                    var lerpEndBy = 1-Mathf.Clamp(percEnd, 0, 1);
+                    var lerpStartBy = 1 - Mathf.Clamp(perc, 0, 1);
+                    var lerpEndBy = 1 - Mathf.Clamp(percEnd, 0, 1);
 
                     note.outlineLine.startColor = Color.Lerp(_bodyOutStartColor, _bodyOutStartColorLerpEnd, lerpStartBy);
                     note.outlineLine.endColor = Color.Lerp(_bodyOutEndColor, _bodyOutEndColorLerpEnd, lerpEndBy);
@@ -137,11 +137,47 @@ namespace TootTally.GameplayModifier
 
             public override void Initialize(GameController __instance)
             {
+                var rightSquare = new GameObject("FLImage", typeof(Image), typeof(CanvasScaler));
+                var scaler = rightSquare.GetComponent<CanvasScaler>();
+                scaler.referenceResolution = new Vector2(1920, 1080);
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                rightSquare.transform.SetParent(__instance.pointer.transform);
+                rightSquare.transform.position = new Vector3(5, 0, 1);
+                rightSquare.transform.localScale = new Vector2(IsAspect16_10() ? 8.8f : 8.35f, 20);
+                var image = rightSquare.GetComponent<Image>();
+                image.maskable = true;
+                image.color = new Color(0, 0, 0, 1f);
+                var topSquare = GameObject.Instantiate(rightSquare, __instance.pointer.transform);
+                var bottomSquare = GameObject.Instantiate(topSquare, __instance.pointer.transform);
+                var cursorMask = GameObject.Instantiate(topSquare, __instance.pointer.transform);
+                if (Camera.main.aspect >= 1.7)
+                    Debug.Log("16:9");
+                else if (Camera.main.aspect >= 1.5)
+                    Debug.Log("3:2");
+                else
+                    Debug.Log("4:3");
+                topSquare.transform.localScale = new Vector2(8.35f, 3f);
+                topSquare.GetComponent<RectTransform>().pivot = new Vector2(0.5f, -0.45f);
+
+                bottomSquare.transform.localScale = new Vector2(8.35f, 3f);
+                bottomSquare.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 1.49f);
+
+                cursorMask.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                cursorMask.transform.localScale = Vector2.one * 3f;
+                cursorMask.GetComponent<Image>().sprite = AssetManager.GetSprite("FLMask.png");
+                cursorMask.AddComponent<Mask>();
+
             }
 
             public override void Update(GameController __instance)
             {
             }
+
+            private static bool IsAspect16_10() => Camera.main.aspect < 1.7f && Camera.main.aspect >= 1.6f;
+            private static bool IsAspect16_9() => Camera.main.aspect >= 1.7f;
+            private static bool IsAspect3_2() => Camera.main.aspect < 1.6f && Camera.main.aspect >= 1.5f;
+            private static bool IsAspect4_3() => Camera.main.aspect < 1.5f;
+
         }
 
         public enum ModifierType

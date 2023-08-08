@@ -891,6 +891,7 @@ namespace TootTally.Graphics
             newButton.button.colors = btnColors;
 
             GameObject imageHolder = newButton.textHolder.gameObject;
+            imageHolder.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             imageHolder.transform.localScale = new Vector3(.81f, .81f);
             GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
             Image image = imageHolder.AddComponent<Image>();
