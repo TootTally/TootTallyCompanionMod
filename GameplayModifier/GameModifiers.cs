@@ -60,9 +60,6 @@ namespace TootTally.GameplayModifier
 
                 _bodyInEndColor = note.transform.Find("Line").GetComponent<LineRenderer>().endColor;
                 _bodyInEndColorLerpEnd = GetColorZeroAlpha(_bodyInEndColor);
-
-                TootTallyLogger.LogInfo("CS: " + note.transform.position.x);
-                TootTallyLogger.LogInfo("CM: " + note.transform.Find("EndPoint").transform.position.x);
             }
 
             public override void Update(GameController __instance)
@@ -83,7 +80,6 @@ namespace TootTally.GameplayModifier
                         };
                         _processedNotes.Add(currentNote);
                         _activeNotesComponents.Add(noteComp);
-                        TootTallyLogger.LogInfo(currentNote.name + " Added to comp.");
                     }
                 }
 
