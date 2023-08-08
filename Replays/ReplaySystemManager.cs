@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using HarmonyLib;
 using TMPro;
 using TootTally.Compatibility;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -29,7 +31,7 @@ namespace TootTally.Replays
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused, _hasRewindReplay;
-        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
+        private static bool _hasReleaseToot, _lastIsTooting;
 
         private static float _elapsedTime;
         public static float gameSpeedMultiplier = 1f;
@@ -48,6 +50,7 @@ namespace TootTally.Replays
         private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
+        private static string _gameModifiersBackup;
 
         private static GameObject _loadingSwirly, _tootTallyScorePanel;
         #region GameControllerPatches
@@ -80,7 +83,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnGameControllerPlaySongSetReplayStartTime()
         {
-            if (_replay != null)
+            if (_replay != null && !wasPlayingReplay)
             {
                 SetReplayUUID();
                 _replay.SetStartTime();
@@ -92,9 +95,8 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnCurtainControllerCloseCurtainSetReplayEndTime()
         {
-            if (_replay != null)
-                _replay.SetEndTime();
-
+            if (!wasPlayingReplay)
+                _replay?.SetEndTime();
         }
 
         //This is when the video player is created.
@@ -190,6 +192,7 @@ namespace TootTally.Replays
                     OnRecordingStop();
                     break;
                 case ReplayManagerState.Replaying:
+                    GameModifierManager.LoadBackedupModifiers();
                     OnReplayingStop();
                     break;
             }
@@ -320,7 +323,7 @@ namespace TootTally.Replays
                     }
                     break;
                 case ReplayManagerState.Replaying:
-                    if (!_hasRewindReplay) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
+                    if (!_hasRewindReplay && !__instance.retrying) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
                         _replay.PlaybackReplay(__instance);
                     _hasRewindReplay = false;
                     break;
@@ -431,6 +434,8 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
         {
+            if (wasPlayingReplay)
+                GameModifierManager.LoadBackedupModifiers();
             _replay.ClearData();
             _replayManagerState = ReplayManagerState.None;
             _replayFileName = null;
@@ -461,15 +466,6 @@ namespace TootTally.Replays
                 _replayManagerState = ReplayManagerState.None;
                 _replay = new NewReplaySystem();
                 gameSpeedMultiplier = 1f;
-            }
-
-            if (Plugin.userInfo != null && !_hasGreetedUser)
-            {
-                _hasGreetedUser = true;
-                if (Plugin.userInfo.username != "Guest")
-                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", GameTheme.themeColors.notification.defaultText, 9f);
-                else
-                    PopUpNotifManager.DisplayNotif($"Login on TootTally\n<size=16>Put the APIKey in your config file\nto be able to submit scores</size>", GameTheme.themeColors.notification.warningText, 9f);
             }
         }
         #endregion
@@ -746,7 +742,6 @@ namespace TootTally.Replays
             _replayFileName = null;
             GlobalVariables.localsave.tracks_played--;
             Time.timeScale = 1f;
-
             _replayManagerState = ReplayManagerState.None;
             TootTallyLogger.LogInfo("Replay finished");
         }
@@ -765,7 +760,7 @@ namespace TootTally.Replays
                 //PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
                 _replayFileName = "TempReplay";
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
-                TootTallyLogger.DebugModeLog("TempReplay Loaded");
+                TootTallyLogger.LogInfo("TempReplay Loaded");
                 _currentGCInstance.pauseRetryLevel();
             });
             Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -59,7 +60,7 @@ namespace TootTally.CustomLeaderboard
             _levelSelectControllerInstance = __instance;
             _currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
-
+            GameModifierManager.Initialize();
             ClearBaseLeaderboard();
             CustomizeGameMenuUI();
 

@@ -17,6 +17,7 @@ using TootTally.Utils.TootTallySettings;
 using System;
 using TootTally.Utils.APIServices;
 using TootTally.TootTallyOverlay;
+using TootTally.GameplayModifier;
 
 namespace TootTally
 {
@@ -86,6 +87,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
+            _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
             _harmony.PatchAll(typeof(UserStatusUpdater));
 

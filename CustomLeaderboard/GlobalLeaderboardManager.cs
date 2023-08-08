@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using HarmonyLib;
+using TootTally.Graphics;
 using TootTally.Utils;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace TootTally.CustomLeaderboard
     {
         private static bool _hasLeaderboardFinishedLoading;
 
+        private static bool _hasGreetedUser;
         private static GlobalLeaderboard globalLeaderboard;
 
         #region HarmonyPatches
@@ -24,6 +26,16 @@ namespace TootTally.CustomLeaderboard
             globalLeaderboard.Initialize(__instance);
 
             globalLeaderboard.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
+
+
+            if (Plugin.userInfo != null && !_hasGreetedUser)
+            {
+                _hasGreetedUser = true;
+                if (Plugin.userInfo.username != "Guest")
+                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", GameTheme.themeColors.notification.defaultText, 9f);
+                else
+                    PopUpNotifManager.DisplayNotif($"Login on TootTally\n<size=16>Put the APIKey in your config file\nto be able to submit scores</size>", GameTheme.themeColors.notification.warningText, 9f);
+            }
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.populateScores))]

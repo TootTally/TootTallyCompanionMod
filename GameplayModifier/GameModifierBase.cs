@@ -8,14 +8,8 @@ namespace TootTally.GameplayModifier
 {
     public abstract class GameModifierBase
     {
-        public string Name { get; set; }
-
-
-
-        public GameModifierBase(string name)
-        {
-            Name = name;    
-        }
+        public abstract string Name { get; }
+        public abstract GameModifiers.ModifierType ModifierType { get; }
 
         public abstract void Initialize(GameController __instance);
 
@@ -23,7 +17,7 @@ namespace TootTally.GameplayModifier
 
         public virtual void Remove()
         {
-            GameModifierManager.Remove(this);
+            GameModifierManager.Remove(ModifierType);
         }
     }
 }
