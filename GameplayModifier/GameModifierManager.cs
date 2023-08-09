@@ -36,6 +36,11 @@ namespace TootTally.GameplayModifier
             var rect2 = flashlightBtn.GetComponent<RectTransform>();
             rect2.pivot = new Vector2(0, 1);
             rect2.anchorMin = rect2.anchorMax = new Vector2(0, 1);
+
+            var BrutalBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(350, -200), new Vector2(32, 32), AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }).gameObject;
+            var rect3 = BrutalBtn.GetComponent<RectTransform>();
+            rect3.pivot = new Vector2(0, 1);
+            rect3.anchorMin = rect3.anchorMax = new Vector2(0, 1);
         }
 
         public static void Initialize()
@@ -46,7 +51,8 @@ namespace TootTally.GameplayModifier
             _stringModifierDict = new()
             {
                 {"HD", GameModifiers.ModifierType.Hidden },
-                {"FL", GameModifiers.ModifierType.Flashlight }
+                {"FL", GameModifiers.ModifierType.Flashlight },
+                {"BT", GameModifiers.ModifierType.Brutal },
             };
             _modifierTypesToRemove = new();
             _modifiersBackup = "None";
@@ -121,6 +127,9 @@ namespace TootTally.GameplayModifier
                     break;
                 case GameModifiers.ModifierType.Flashlight:
                     _gameModifierDict.Add(GameModifiers.ModifierType.Flashlight, new GameModifiers.Flashlight());
+                    break;
+                case GameModifiers.ModifierType.Brutal:
+                    _gameModifierDict.Add(GameModifiers.ModifierType.Brutal, new GameModifiers.Brutal());
                     break;
             };
         }

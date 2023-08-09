@@ -53,6 +53,7 @@ namespace TootTally.Utils
             "Cool-sss.png",
             "HD.png",
             "FL.png",
+            "BT.png",
             "FLMask.png",
         };
 

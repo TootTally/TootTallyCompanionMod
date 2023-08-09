@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using TootTally.Replays;
 using TootTally.Utils;
 using UnityEngine;
+using UnityEngine.PostProcessing;
 using UnityEngine.UI;
 
 namespace TootTally.GameplayModifier
@@ -180,10 +182,32 @@ namespace TootTally.GameplayModifier
 
         }
 
+        public class Brutal : GameModifierBase
+        {
+            public override string Name => "BT";
+
+            public override ModifierType ModifierType => ModifierType.Brutal;
+
+
+            public override void Initialize(GameController __instance)
+            {
+            }
+
+            public override void Update(GameController __instance)
+            {
+                if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
+                    __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                Time.timeScale = 1 + (__instance.highestcombocounter/100f);
+                __instance.musictrack.pitch = Time.timeScale;
+                __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
+            }
+        }
+
         public enum ModifierType
         {
             Hidden,
-            Flashlight
+            Flashlight,
+            Brutal
         }
     }
 }

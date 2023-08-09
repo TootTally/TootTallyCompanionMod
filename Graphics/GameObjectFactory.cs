@@ -895,6 +895,7 @@ namespace TootTally.Graphics
             imageHolder.transform.localScale = new Vector3(.81f, .81f);
             GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
             Image image = imageHolder.AddComponent<Image>();
+            image.color = GameTheme.themeColors.leaderboard.text;
             image.preserveAspect = true;
             image.maskable = true;
             image.sprite = sprite;
