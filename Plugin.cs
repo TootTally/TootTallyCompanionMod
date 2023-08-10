@@ -78,7 +78,6 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
             }
-
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
             _harmony.PatchAll(typeof(UserLogin));

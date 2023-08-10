@@ -7,9 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TootTally.Graphics;
+using TootTally.Graphics.Animation;
 using TootTally.Utils;
+using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking.Match;
+using UnityEngine.UI;
 
 namespace TootTally.GameplayModifier
 {
@@ -21,33 +24,48 @@ namespace TootTally.GameplayModifier
         private static Dictionary<string, GameModifiers.ModifierType> _stringModifierDict;
         private static string _modifiersBackup;
 
+        private static GameObject _modifierPanel, _modifierPanelContainer;
+        private static GameObject _showModifierPanelButton, _hideModifierPanelButton;
+        private static List<GameObject> _modifierButtonList;
+
+        private static CustomAnimation _openAnimation, _closeAnimation;
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         static void OnLevelSelectControllerStartPostfix(LevelSelectController __instance)
         {
             if (!_isInitialized) Initialize();
 
-            var hiddenBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(350, -150), new Vector2(32, 32), AssetManager.GetSprite("HD.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }).gameObject;
-            var rect = hiddenBtn.GetComponent<RectTransform>();
-            rect.pivot = new Vector2(0, 1);
-            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
-            
-            var flashlightBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(400, -150), new Vector2(32, 32), AssetManager.GetSprite("FL.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }).gameObject;
-            var rect2 = flashlightBtn.GetComponent<RectTransform>();
-            rect2.pivot = new Vector2(0, 1);
-            rect2.anchorMin = rect2.anchorMax = new Vector2(0, 1);
 
-            var BrutalBtn = GameObjectFactory.CreateCustomButton(__instance.fullpanel.transform, new Vector2(350, -200), new Vector2(32, 32), AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }).gameObject;
-            var rect3 = BrutalBtn.GetComponent<RectTransform>();
-            rect3.pivot = new Vector2(0, 1);
-            rect3.anchorMin = rect3.anchorMax = new Vector2(0, 1);
+            _modifierButtonList.Clear();
+            _modifierPanel = GameObjectFactory.CreateDefaultPanel(__instance.fullpanel.transform, new Vector2(-35, 60), new Vector2(300, 200), "ModifierPanel");
+            _modifierPanel.SetActive(false);
+            _modifierPanel.transform.localScale = Vector2.zero;
+            GameObjectFactory.DestroyFromParent(_modifierPanel, "loadingspinner_parent");
+            _modifierPanelContainer = _modifierPanel.transform.Find("scoresbody").gameObject;
+            _modifierPanelContainer.AddComponent<Mask>();
+            var gridLayoutGroup = _modifierPanelContainer.AddComponent<GridLayoutGroup>();
+            gridLayoutGroup.padding = new RectOffset(30, 30, 30, 30);
+            gridLayoutGroup.spacing = new Vector2(5, 5);
+            gridLayoutGroup.cellSize = new Vector2(64, 64);
+            gridLayoutGroup.childAlignment = TextAnchor.UpperLeft;
+
+            _hideModifierPanelButton = GameObjectFactory.CreateCustomButton(_modifierPanelContainer.transform, Vector2.zero, new Vector2(32, 32), AssetManager.GetSprite("Close64.png"), "CloseModifierPanelButton", HideModifierPanel).gameObject;
+            var layout = _hideModifierPanelButton.AddComponent<LayoutElement>();
+            layout.ignoreLayout = true;
+            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
+            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
+            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
+            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", ShowModifierPanel);
+            _showModifierPanelButton.transform.localScale = Vector2.one;
+            _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
+            _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
         }
 
         public static void Initialize()
         {
-            if (_isInitialized) return;
-
             _gameModifierDict = new();
+            _modifierButtonList = new List<GameObject>();
             _stringModifierDict = new()
             {
                 {"HD", GameModifiers.ModifierType.Hidden },
@@ -57,6 +75,40 @@ namespace TootTally.GameplayModifier
             _modifierTypesToRemove = new();
             _modifiersBackup = "None";
             _isInitialized = true;
+        }
+
+        private static void ShowModifierPanel()
+        {
+            if (_modifierPanel == null) return;
+            if (_modifierPanel.active)
+                PopUpNotifManager.DisplayNotif("Stop trying to breaking my stuff... -_-", GameTheme.themeColors.notification.defaultText);
+
+
+            _modifierPanel.SetActive(true);
+
+            _closeAnimation?.Dispose();
+
+            _showModifierPanelButton.transform.localScale = Vector2.zero;
+            _openAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one / 2f, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f));
+            AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), (sender) =>
+            {
+                _modifierButtonList.ForEach(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f)));
+            });
+        }
+
+        private static void HideModifierPanel()
+        {
+            if (_modifierPanel == null) return;
+
+            _openAnimation?.Dispose();
+
+            AnimationManager.AddNewScaleAnimation(_showModifierPanelButton, Vector2.one, 0.5f, new EasingHelper.SecondOrderDynamics(3.5f, 1f, 0f));
+
+            _closeAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.zero, 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f), (sender) =>
+            {
+                _modifierPanel.SetActive(false);
+                _modifierButtonList.ForEach(b => b.transform.localScale = Vector2.zero);
+            });
         }
 
         private static bool Toggle(GameModifiers.ModifierType modifierType)
@@ -139,7 +191,7 @@ namespace TootTally.GameplayModifier
             _modifiersBackup = GetModifiersString();
             ClearAllModifiers();
             var replayModifierStringArray = replayModifierString.Split(',');
-            if (replayModifierStringArray.Length <= 0 )
+            if (replayModifierStringArray.Length <= 0)
             {
                 TootTallyLogger.LogInfo("No modifiers detected in replay.");
                 return;

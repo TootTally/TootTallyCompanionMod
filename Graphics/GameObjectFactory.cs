@@ -2,6 +2,7 @@
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
+using TootTally.GameplayModifier;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
 using TootTally.TootTallyOverlay;
@@ -907,6 +908,16 @@ namespace TootTally.Graphics
 
             newButton.gameObject.SetActive(true);
             return newButton;
+        }
+
+        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, Action onClick = null)
+        {
+            var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
+            var rect = btn.GetComponent<RectTransform>();
+            rect.pivot = Vector2.one / 2f;
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
+            rect.localScale = Vector2.zero;
+            return btn;
         }
 
         public static void UpdatePrefabTheme()
