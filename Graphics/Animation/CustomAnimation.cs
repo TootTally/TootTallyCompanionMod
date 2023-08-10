@@ -1,6 +1,7 @@
 ﻿using System;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace TootTally.Graphics.Animation
 {
@@ -45,6 +46,9 @@ namespace TootTally.Graphics.Animation
             _timeSpan -= delta;
             if (_timeSpan <= 0)
             {
+                if (_vectorType == VectorType.EulerAngle)
+                    _gameObject.transform.eulerAngles = _targetVector;
+
                 if (_onFinishCallback != null)
                 {
                     _onFinishCallback(_gameObject);
@@ -72,6 +76,9 @@ namespace TootTally.Graphics.Animation
                     case VectorType.Scale:
                         _gameObject.GetComponent<RectTransform>().localScale = _secondDegreeAnimation.GetNewVector(_targetVector, delta * _speedMultiplier);
                         break;
+                    case VectorType.EulerAngle:
+                        _gameObject.transform.eulerAngles = _secondDegreeAnimation.GetNewVector(_targetVector, delta * _speedMultiplier);
+                        break;
                 }
             }
         }
@@ -90,6 +97,7 @@ namespace TootTally.Graphics.Animation
             Position,
             SizeDelta,
             Scale,
+            EulerAngle,
         }
     }
 }

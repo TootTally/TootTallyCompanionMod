@@ -43,10 +43,19 @@ namespace TootTally.Graphics.Animation
             AddToList(anim);
             return anim;
         }
+
         public static CustomAnimation AddNewTransformScaleAnimation(GameObject gameObject, Vector2 targetVector,
            float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.localScale, targetVector, 1f, timeSpan, CustomAnimation.VectorType.TransformScale, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+
+        public static CustomAnimation AddNewEulerAngleAnimation(GameObject gameObject, Vector3 targetVector,
+           float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.eulerAngles, targetVector, 1f, timeSpan, CustomAnimation.VectorType.EulerAngle, secondDegreeAnimation, true, onFinishCallback);
             AddToList(anim);
             return anim;
         }

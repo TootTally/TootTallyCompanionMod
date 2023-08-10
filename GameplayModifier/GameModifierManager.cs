@@ -26,7 +26,7 @@ namespace TootTally.GameplayModifier
 
         private static GameObject _modifierPanel, _modifierPanelContainer;
         private static GameObject _showModifierPanelButton, _hideModifierPanelButton;
-        private static List<GameObject> _modifierButtonList;
+        private static Dictionary<GameModifiers.ModifierType, GameObject> _modifierButtonDict;
 
         private static CustomAnimation _openAnimation, _closeAnimation;
 
@@ -37,7 +37,13 @@ namespace TootTally.GameplayModifier
             if (!_isInitialized) Initialize();
 
 
-            _modifierButtonList.Clear();
+            _modifierButtonDict.Clear();
+
+            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", ShowModifierPanel);
+            _showModifierPanelButton.transform.localScale = Vector2.one;
+            _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
+            _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
+
             _modifierPanel = GameObjectFactory.CreateDefaultPanel(__instance.fullpanel.transform, new Vector2(-35, 60), new Vector2(300, 200), "ModifierPanel");
             _modifierPanel.SetActive(false);
             _modifierPanel.transform.localScale = Vector2.zero;
@@ -53,26 +59,23 @@ namespace TootTally.GameplayModifier
             _hideModifierPanelButton = GameObjectFactory.CreateCustomButton(_modifierPanelContainer.transform, Vector2.zero, new Vector2(32, 32), AssetManager.GetSprite("Close64.png"), "CloseModifierPanelButton", HideModifierPanel).gameObject;
             var layout = _hideModifierPanelButton.AddComponent<LayoutElement>();
             layout.ignoreLayout = true;
-            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
-            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
-            _modifierButtonList.Add(GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
-            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", ShowModifierPanel);
-            _showModifierPanelButton.transform.localScale = Vector2.one;
-            _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
-            _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Hidden, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Flashlight, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
+
         }
 
         public static void Initialize()
         {
-            _gameModifierDict = new();
-            _modifierButtonList = new List<GameObject>();
-            _stringModifierDict = new()
+            _gameModifierDict = new Dictionary<GameModifiers.ModifierType, GameModifierBase>();
+            _modifierButtonDict = new Dictionary<GameModifiers.ModifierType, GameObject>();
+            _stringModifierDict = new Dictionary<string, GameModifiers.ModifierType>()
             {
                 {"HD", GameModifiers.ModifierType.Hidden },
                 {"FL", GameModifiers.ModifierType.Flashlight },
                 {"BT", GameModifiers.ModifierType.Brutal },
             };
-            _modifierTypesToRemove = new();
+            _modifierTypesToRemove = new List<GameModifierBase>();
             _modifiersBackup = "None";
             _isInitialized = true;
         }
@@ -92,7 +95,7 @@ namespace TootTally.GameplayModifier
             _openAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one / 2f, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f));
             AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), (sender) =>
             {
-                _modifierButtonList.ForEach(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f)));
+                _modifierButtonDict.Values.Do(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f)));
             });
         }
 
@@ -107,7 +110,7 @@ namespace TootTally.GameplayModifier
             _closeAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.zero, 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f), (sender) =>
             {
                 _modifierPanel.SetActive(false);
-                _modifierButtonList.ForEach(b => b.transform.localScale = Vector2.zero);
+                _modifierButtonDict.Values.Do(b => b.transform.localScale = Vector2.zero);
             });
         }
 
@@ -116,11 +119,13 @@ namespace TootTally.GameplayModifier
             if (!_gameModifierDict.ContainsKey(modifierType))
             {
                 Add(modifierType);
+                AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f));
                 PopUpNotifManager.DisplayNotif($"{modifierType} mod enabled.", GameTheme.themeColors.notification.defaultText);
                 return true;
             }
-            else
-                Remove(modifierType);
+
+            AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.5f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f));
+            Remove(modifierType);
             PopUpNotifManager.DisplayNotif($"{modifierType} mod disabled.", GameTheme.themeColors.notification.defaultText);
             return false;
         }

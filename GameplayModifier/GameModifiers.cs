@@ -191,13 +191,14 @@ namespace TootTally.GameplayModifier
 
             public override void Initialize(GameController __instance)
             {
+                ReplaySystemManager.gameSpeedMultiplier = 1f;
             }
 
             public override void Update(GameController __instance)
             {
                 if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
                     __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                Time.timeScale = 1 + (__instance.highestcombocounter/100f);
+                Time.timeScale = Mathf.Clamp(1 + (__instance.highestcombocounter/100f),1,2);
                 __instance.musictrack.pitch = Time.timeScale;
                 __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
             }
