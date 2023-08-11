@@ -38,7 +38,7 @@ namespace TootTally.Utils.TootTallySettings
             GameObject mainCanvas = GameObject.Find("MainCanvas");
             _mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
 
-            var btn = GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1661, -456), new Vector2(164, 164), AssetManager.GetSprite("icon.png"), "TTSettingsOpenButton", delegate
+            var btn = GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1661, -456), new Vector2(164, 164), AssetManager.GetSprite("icon.png"), false, "TTSettingsOpenButton", delegate
             {
                 AnimationManager.AddNewPositionAnimation(_mainMenu, new Vector2(1940, 0), 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             });

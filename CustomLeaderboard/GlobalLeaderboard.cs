@@ -208,7 +208,7 @@ namespace TootTally.CustomLeaderboard
                 {
                     AssetManager.GetProfilePictureByID(user.id, (sprite) =>
                     {
-                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, "Pfp", OpenUserProfile);
+                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, false, "Pfp", OpenUserProfile);
                         i.transform.SetSiblingIndex(0);
                     });
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);

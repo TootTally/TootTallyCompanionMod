@@ -878,7 +878,7 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, bool isImageThemable, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
@@ -896,7 +896,7 @@ namespace TootTally.Graphics
             imageHolder.transform.localScale = new Vector3(.81f, .81f);
             GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
             Image image = imageHolder.AddComponent<Image>();
-            image.color = GameTheme.themeColors.replayButton.text;
+            image.color = isImageThemable ? GameTheme.themeColors.replayButton.text : Color.white;
             image.preserveAspect = true;
             image.maskable = true;
             image.sprite = sprite;
@@ -912,7 +912,7 @@ namespace TootTally.Graphics
 
         public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, bool active, Action onClick = null)
         {
-            var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
+            var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, true, name, onClick).gameObject;
             var glow = new GameObject("glow", typeof(Image));
             var image = glow.GetComponent<Image>();
             image.maskable = true;
