@@ -4,9 +4,11 @@ using System.IO;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
+using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.Utils
 {
@@ -15,6 +17,7 @@ namespace TootTally.Utils
         public const string APIURL = "https://toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
+        public const string PFPURL = "https://cdn.toottally.com/profile/";
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetHashInDB(string songHash, bool isCustom, Action<int> callback)
         {
@@ -153,31 +156,6 @@ namespace TootTally.Utils
             callback(false);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> AddChartInDB(SerializableClass.TMBFile chart, Action callback)
-        {
-
-            string query = $"{APIURL}/api/upload/";
-            string jsonified = JsonUtility.ToJson(chart);
-            var jsonbin = System.Text.Encoding.UTF8.GetBytes(jsonified);
-
-            UnityWebRequest webRequest = PostUploadRequest(query, jsonbin);
-            yield return webRequest.SendWebRequest();
-
-            if (!HasError(webRequest, query))
-            {
-                if (webRequest.downloadHandler.text.Equals("Chart requested to skip"))
-                    PopUpNotifManager.DisplayNotif(webRequest.downloadHandler.text, GameTheme.themeColors.notification.warningText);
-                else
-                {
-                    TootTallyLogger.LogInfo($"Chart Sent.");
-                    PopUpNotifManager.DisplayNotif("New chart sent to TootTally", Color.green);
-                }
-            }
-            else
-                PopUpNotifManager.DisplayNotif("Error in sending chart", GameTheme.themeColors.notification.errorText);
-            callback();
-        }
-
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
         {
             var query = $"{APIURL}/api/replay/start/";
@@ -299,6 +277,27 @@ namespace TootTally.Utils
 
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetValidTwitchAccessToken(Action<SerializableClass.TwitchAccessToken> callback)
+        {
+            string query = $"{APIURL}/api/twitch/self/";
+            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
+            var webRequest = PostUploadRequest(query, apiKey);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest))
+            {
+                var token_info = JsonConvert.DeserializeObject<SerializableClass.TwitchAccessToken>(webRequest.downloadHandler.text);
+                callback(token_info);
+            }
+            else
+            {
+                TootTallyLogger.LogError($"Could not get active access token.");
+                PopUpNotifManager.DisplayNotif("Could not get active access token, please re-authorize TootTally on Twitch", GameTheme.themeColors.notification.warningText, 10f);
+                callback(null);
+            }
+        }
+
         //Unused for now because we're storing textures locally, but could be useful in the future...
         public static IEnumerator<UnityWebRequestAsyncOperation> LoadTextureFromServer(string query, Action<Texture2D> callback)
         {
@@ -307,6 +306,18 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, query))
                 callback(DownloadHandlerTexture.GetContent(webRequest));
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> LoadPFPFromServer(int userID, Action<Texture2D> callback)
+        {
+            var query = PFPURL + userID + ".png";
+            UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(query);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback(DownloadHandlerTexture.GetContent(webRequest));
+            else
+                callback(null);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadTextureFromServer(string query, string outputPath, Action<bool> callback)
@@ -368,6 +379,161 @@ namespace TootTally.Utils
             callback(allowSubmit);
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> SendUserStatus(int status, Action callback = null)
+        {
+            APIHeartbeat heartbeat = new APIHeartbeat() { apiKey = Plugin.Instance.APIKey.Value, status = status };
+
+            string query = $"{APIURL}/api/profile/heartbeat/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(heartbeat));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback?.Invoke();
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLatestOnlineUsers(Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/latest/?userID={Plugin.userInfo.id}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFirstPageUsers(Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/?userID={Plugin.userInfo.id}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetAllUsersUpToPageID(int pageID, Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/?userID={Plugin.userInfo.id}";
+            List<User> userList = new List<User>();
+
+            for (int i = 1; i < pageID; i++)
+            {
+                UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+                yield return webRequest.SendWebRequest();
+
+                if (!HasError(webRequest, query))
+                {
+                    var response = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text);
+                    userList.AddRange(response.results);
+                    query = response.next;
+                }
+                else
+                    callback(null);
+            }
+
+            callback(userList);
+
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineUsersBySearch(string username, Action<List<User>> callback)
+        {
+            string query = $"{APIURL}/api/users/search/?username={username}?userID={Plugin.userInfo.id}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFriendList(Action<List<User>> callback)
+        {
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+
+            string query = $"{APIURL}/api/friends/all/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineFriends(Action<List<User>> callback)
+        {
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+
+            string query = $"{APIURL}/api/friends/online/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> AddFriend(int userID, Action<bool> callback = null)
+        {
+            APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
+
+            string query = $"{APIURL}/api/friends/add/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+            if (!HasError(webRequest, query))
+                callback(true);
+            else
+                callback(false);
+        }
+        public static IEnumerator<UnityWebRequestAsyncOperation> RemoveFriend(int userID, Action<bool> callback = null)
+        {
+
+            APIFriendSubmission apiObj = new APIFriendSubmission() { apiKey = Plugin.Instance.APIKey.Value, userID = userID };
+
+            string query = $"{APIURL}/api/friends/remove/";
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiObj));
+            UnityWebRequest webRequest = PostUploadRequest(query, data);
+            yield return webRequest.SendWebRequest();
+            if (!HasError(webRequest, query))
+                callback(true);
+            else
+                callback(false);
+        }
+
         private static UnityWebRequest PostUploadRequest(string query, byte[] data, string contentType = "application/json")
         {
 
@@ -399,16 +565,12 @@ namespace TootTally.Utils
 
         private static bool HasError(UnityWebRequest webRequest, string query)
         {
+            if (webRequest.isNetworkError || webRequest.isHttpError)
+                TootTallyLogger.LogError($"QUERY ERROR: {query}");
             if (webRequest.isNetworkError)
-            {
-                TootTallyLogger.LogError($"QUERY ERROR: {query}");
                 TootTallyLogger.LogError($"NETWORK ERROR: {webRequest.error}");
-            }
-            else if (webRequest.isHttpError)
-            {
-                TootTallyLogger.LogError($"QUERY ERROR: {query}");
+            if (webRequest.isHttpError)
                 TootTallyLogger.LogError($"HTTP ERROR {webRequest.error}");
-            }
 
             return webRequest.isNetworkError || webRequest.isHttpError;
         }

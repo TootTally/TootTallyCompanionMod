@@ -6,8 +6,10 @@ using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using Newtonsoft.Json;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
@@ -17,11 +19,13 @@ namespace TootTally.Replays
     public class NewReplaySystem
     {
         public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
+        public const string REPLAY_VERSION = "1.0.0";
 
         private int _scores_A, _scores_B, _scores_C, _scores_D, _scores_F, _totalScore, _finalTotalScore;
         private int[] _finalNoteTally, _replayNoteTally; // [nasties, mehs, okays, nices, perfects]
         private int _frameIndex, _tootIndex;
         private int _maxCombo;
+        private int _replaybuilddate;
 
         private List<int[]> _frameData = new List<int[]>(), _noteData = new List<int[]>(), _tootData = new List<int[]>();
         private int[] _lastFrameData;
@@ -40,7 +44,8 @@ namespace TootTally.Replays
         public string GetUsername { get => _replayUsername; }
         public string GetSongName { get => _replaySong; }
 
-
+        public bool IsFullCombo { get => GlobalVariables.gameplay_notescores[0] == 0 && GlobalVariables.gameplay_notescores[1] == 0 && GlobalVariables.gameplay_notescores[2] == 0; }
+        public bool IsTripleS { get => GlobalVariables.gameplay_notescores[0] == 0 && GlobalVariables.gameplay_notescores[1] == 0 && GlobalVariables.gameplay_notescores[2] == 0 && GlobalVariables.gameplay_notescores[3] == 0; }
 
         #region ReplayRecorder
 
@@ -68,7 +73,8 @@ namespace TootTally.Replays
         public void RecordFrameData(GameController __instance)
         {
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
-            float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
+
+            float noteHolderPosition = __instance.noteholderr.anchoredPosition.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
             float pointerPos = __instance.pointer.transform.localPosition.y * 100; // 2 decimal precision
             float mousePosX = Input.mousePosition.x;
             float mousePosY = Input.mousePosition.y;
@@ -97,7 +103,7 @@ namespace TootTally.Replays
 
         public void RecordToot(GameController __instance)
         {
-            float noteHolderPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
+            float noteHolderPosition = __instance.noteholderr.anchoredPosition.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
 
             _tootData.Add(new int[] { (int)noteHolderPosition });
         }
@@ -141,8 +147,9 @@ namespace TootTally.Replays
             string startDateTimeUnix = _startTime.ToUnixTimeSeconds().ToString();
             string endDateTimeUnix = _endTime.ToUnixTimeSeconds().ToString();
 
-            string inputType = _wasTouchScreenUsed ? "touch" : "mouse";
+            string inputType = GetInputTypeString();
             var replayJson = new SerializableClass.ReplayData();
+            replayJson.version = REPLAY_VERSION;
             replayJson.username = username;
             replayJson.starttime = startDateTimeUnix;
             replayJson.endtime = endDateTimeUnix;
@@ -152,8 +159,10 @@ namespace TootTally.Replays
             replayJson.samplerate = targetFramerate;
             replayJson.scrollspeed = GlobalVariables.gamescrollspeed;
             replayJson.gamespeedmultiplier = float.Parse(ReplaySystemManager.gameSpeedMultiplier.ToString("0.00"));
+            replayJson.audiolatency = GlobalVariables.localsettings.latencyadjust;
+            replayJson.gamemodifiers = GameModifierManager.GetModifiersString();
             replayJson.pluginbuilddate = Plugin.BUILDDATE;
-            replayJson.gameversion = GlobalVariables.version;
+            replayJson.gameversion = Application.version;
             replayJson.songhash = songHash;
             replayJson.finalscore = GlobalVariables.gameplay_scoretotal;
             replayJson.maxcombo = _maxCombo;
@@ -178,7 +187,14 @@ namespace TootTally.Replays
 
             return JsonConvert.SerializeObject(replayJson);
         }
-
+        private string GetInputTypeString()
+        {
+            if (_wasTabletUsed)
+                return "Tablet";
+            else if (_wasTouchScreenUsed)
+                return "Touch";
+            return "Mouse";
+        }
         private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
 
         private static void OptimizeTootData(ref List<int[]> rawReplayTootData)
@@ -264,6 +280,8 @@ namespace TootTally.Replays
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
             _replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
+            GameModifierManager.LoadModifiersFromReplayString(replayJson.gamemodifiers ?? "");
+            _replaybuilddate = replayJson.pluginbuilddate;
 
             return ReplayState.ReplayLoadSuccess;
         }
@@ -273,13 +291,16 @@ namespace TootTally.Replays
             Cursor.visible = true;
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
-            var currentMapPosition = __instance.noteholder.transform.position.x * GetNoteHolderPrecisionMultiplier();
+            //Backward compatibility with old replays
+            var currentMapPosition = (_replaybuilddate < 20230705 ?
+                 __instance.noteholder.transform.position.x : __instance.noteholderr.anchoredPosition.x) * GetNoteHolderPrecisionMultiplier();
+
             __instance.totalscore = _totalScore;
             if (_frameData.Count > _frameIndex && _lastPosition != 0)
                 InterpolateCursorPosition(currentMapPosition, __instance);
 
             PlaybackFrameData(currentMapPosition, __instance);
-            PlaybackTootData(currentMapPosition);
+            PlaybackTootData(currentMapPosition, __instance);
         }
 
         private void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
@@ -316,7 +337,7 @@ namespace TootTally.Replays
                 _frameIndex++;
             }
         }
-        private void PlaybackTootData(float currentMapPosition)
+        private void PlaybackTootData(float currentMapPosition, GameController __instance)
         {
             if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])
             {

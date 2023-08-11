@@ -1,0 +1,22 @@
+name: Generate TootTally Thunderstore Package
+on: [push, workflow_dispatch]
+jobs:
+  Build-Package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code from GitHub
+        uses: actions/checkout@v3
+      - name: Run build command
+        run: |
+          dotnet restore
+          dotnet build
+      - name: Generate TootTally Directory
+        run: |
+          mkdir TootTally-TootTally
+          mv Thunderstore/* TootTally-TootTally/
+          mv bin/Debug/net472/TootTally.dll TootTally-TootTally/plugins/TootTally.dll
+      - name: Upload directory as job artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: TootTally-TootTally
+          path: TootTally-TootTally/

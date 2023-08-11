@@ -1,22 +1,19 @@
 ﻿using System.Collections.Generic;
-using HarmonyLib;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TootTally.Utils
 {
-    public static class PopUpNotifManager
+    public class PopUpNotifManager : MonoBehaviour
     {
+        private static List<PopUpNotif> _toAddNotificationList;
         private static List<PopUpNotif> _activeNotificationList;
         private static List<PopUpNotif> _toRemoveNotificationList;
         private static GameObject _notifCanvas;
         private static bool IsInitialized;
 
-
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-        [HarmonyPostfix]
-        public static void Initialize(HomeController __instance)
+        private void Awake()
         {
             if (IsInitialized) return;
 
@@ -28,6 +25,7 @@ namespace TootTally.Utils
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
             GameObject.DontDestroyOnLoad(_notifCanvas);
+            _toAddNotificationList = new List<PopUpNotif>();
             _activeNotificationList = new List<PopUpNotif>();
             _toRemoveNotificationList = new List<PopUpNotif>();
             IsInitialized = true;
@@ -35,12 +33,15 @@ namespace TootTally.Utils
 
         public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)
         {
+            if (!IsInitialized) return;
+
             if (Plugin.Instance.ShouldDisplayToasts.Value)
             {
+                _notifCanvas.SetActive(false);
+                _notifCanvas.SetActive(true);//reset the order to make sure its on top
                 PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
                 notif.Initialize(lifespan, new Vector2(695, -400));
-                _activeNotificationList.Add(notif);
-                OnNotifCountChangeSetNewPosition();
+                _toAddNotificationList.Add(notif);
             }
         }
 
@@ -54,10 +55,17 @@ namespace TootTally.Utils
             }
         }
 
-        [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
-        [HarmonyPostfix]
-        public static void Update()
+        private void Update()
         {
+            if (!IsInitialized) return;
+
+            if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
+            {
+                _activeNotificationList.AddRange(_toAddNotificationList);
+                OnNotifCountChangeSetNewPosition();
+                _toAddNotificationList.Clear();
+            }
+
             if (_activeNotificationList != null)
                 _activeNotificationList.ForEach(notif => notif.Update());
             if (_toRemoveNotificationList != null && _toRemoveNotificationList.Count > 0)

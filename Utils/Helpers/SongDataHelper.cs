@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using Newtonsoft.Json;
+using TootTally.Utils.APIServices;
 using TrombLoader.CustomTracks;
 using TrombLoader.Helpers;
 using UnityEngine;
@@ -51,7 +53,7 @@ namespace TootTally.Utils.Helpers
         {
             if (!File.Exists(fileLocation))
                 return "";
-            return CalcSHA256Hash(File.ReadAllBytes(fileLocation));
+            return CalcSHA256Hash(Encoding.UTF8.GetBytes(File.ReadAllText(fileLocation)));
         }
 
         public static string GetSongFilePath(TromboneTrack track)

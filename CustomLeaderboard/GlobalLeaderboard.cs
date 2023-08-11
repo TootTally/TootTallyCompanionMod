@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
-using TootTally.Graphics.Animation;
 using TootTally.Utils;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
@@ -59,7 +60,6 @@ namespace TootTally.CustomLeaderboard
             _levelSelectControllerInstance = __instance;
             _currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
-
             ClearBaseLeaderboard();
             CustomizeGameMenuUI();
 
@@ -206,8 +206,13 @@ namespace TootTally.CustomLeaderboard
 
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
                 {
+                    AssetManager.GetProfilePictureByID(user.id, (sprite) =>
+                    {
+                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, "Pfp", OpenUserProfile);
+                        i.transform.SetSiblingIndex(0);
+                    });
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
-                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt).ToString("0.00")}tt</color>)", GameTheme.themeColors.leaderboard.text);
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt):0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
                     _profilePopupLoadingSwirly.gameObject.SetActive(false);
                 }));
 
@@ -437,10 +442,8 @@ namespace TootTally.CustomLeaderboard
 
         public void UpdateLoadingSwirlyAnimation()
         {
-            if (_loadingSwirly != null)
-                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-            if (_profilePopupLoadingSwirly != null)
-                _profilePopupLoadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _profilePopupLoadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
 
         }
 
@@ -451,9 +454,7 @@ namespace TootTally.CustomLeaderboard
                 GameObject currentTab = _globalLeaderboard.GetComponent<LeaderboardManager>().tabs[i];
 
                 Button btn = currentTab.GetComponentInChildren<Button>();
-                Texture2D texture = AssetManager.GetTexture(tabsImageNames[i]);
-                if (texture != null)
-                    btn.image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+                btn.image.sprite = AssetManager.GetSprite(tabsImageNames[i]);
 
             }
             _tabs.SetActive(true);

@@ -1,13 +1,11 @@
-﻿using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 
 namespace TootTally.Graphics.Animation
 {
-    public static class AnimationManager
+    public class AnimationManager : MonoBehaviour
     {
         private static List<CustomAnimation> _animationList;
         private static List<CustomAnimation> _animationToAdd;
@@ -45,10 +43,19 @@ namespace TootTally.Graphics.Animation
             AddToList(anim);
             return anim;
         }
+
         public static CustomAnimation AddNewTransformScaleAnimation(GameObject gameObject, Vector2 targetVector,
            float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.localScale, targetVector, 1f, timeSpan, CustomAnimation.VectorType.TransformScale, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+
+        public static CustomAnimation AddNewEulerAngleAnimation(GameObject gameObject, Vector3 targetVector,
+           float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.eulerAngles, targetVector, 1f, timeSpan, CustomAnimation.VectorType.EulerAngle, secondDegreeAnimation, true, onFinishCallback);
             AddToList(anim);
             return anim;
         }
@@ -61,9 +68,7 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
-        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
-        [HarmonyPostfix]
-        public static void Initialize()
+        private void Awake()
         {
             if (_isInitialized) return;
 
@@ -76,9 +81,7 @@ namespace TootTally.Graphics.Animation
         public static void AddToList(CustomAnimation anim) => _animationToAdd.Add(anim);
         public static void RemoveFromList(CustomAnimation anim) => _animationToRemove.Add(anim);
 
-        [HarmonyPatch(typeof(Plugin), nameof(Plugin.Update))]
-        [HarmonyPostfix]
-        public static void Update()
+        private void Update()
         {
             if (!_isInitialized) return;
 

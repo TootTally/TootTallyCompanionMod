@@ -1,15 +1,17 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using HarmonyLib;
 using TMPro;
 using TootTally.Compatibility;
+using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
@@ -29,7 +31,7 @@ namespace TootTally.Replays
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
         private static bool _hasPaused, _hasRewindReplay;
-        private static bool _hasReleaseToot, _lastIsTooting, _hasGreetedUser;
+        private static bool _hasReleaseToot, _lastIsTooting;
 
         private static float _elapsedTime;
         public static float gameSpeedMultiplier = 1f;
@@ -48,6 +50,7 @@ namespace TootTally.Replays
         private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
+        private static string _gameModifiersBackup;
 
         private static GameObject _loadingSwirly, _tootTallyScorePanel;
         #region GameControllerPatches
@@ -80,7 +83,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnGameControllerPlaySongSetReplayStartTime()
         {
-            if (_replay != null)
+            if (_replay != null && !wasPlayingReplay)
             {
                 SetReplayUUID();
                 _replay.SetStartTime();
@@ -92,9 +95,8 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnCurtainControllerCloseCurtainSetReplayEndTime()
         {
-            if (_replay != null)
-                _replay.SetEndTime();
-
+            if (!wasPlayingReplay)
+                _replay?.SetEndTime();
         }
 
         //This is when the video player is created.
@@ -125,7 +127,6 @@ namespace TootTally.Replays
                     TootTallyLogger.LogWarning(e.ToString());
                     TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
-                //_replaySpeedSlider.value = _replay.replaySpeed;
             }
             else
             {
@@ -181,10 +182,9 @@ namespace TootTally.Replays
             _lastIsTooting = __result;
         }
 
-
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
         [HarmonyPrefix]
-        public static void PointSceneControllerPostfixPatch(PointSceneController __instance)
+        public static void PointSceneControllerPostfixPatch()
         {
             switch (_replayManagerState)
             {
@@ -192,6 +192,7 @@ namespace TootTally.Replays
                     OnRecordingStop();
                     break;
                 case ReplayManagerState.Replaying:
+                    GameModifierManager.LoadBackedupModifiers();
                     OnReplayingStop();
                     break;
             }
@@ -213,7 +214,6 @@ namespace TootTally.Replays
                 __instance.txt_trackname.text += $" {colorStringHeader}({gameSpeedMultiplier:0.00}x){colorStringFoot}";
             }
 
-            //__instance.bigscoreobj.gameObject.SetActive(false);
             GameObject lowerRightPanel = __instance.yellowwave.transform.parent.gameObject;
             try
             {
@@ -224,9 +224,6 @@ namespace TootTally.Replays
             {
                 TootTallyLogger.LogWarning("Objects rule-b or rule-r couldn't be found.");
             }
-            //lowerRightPanel.transform.Find("redblock").gameObject.SetActive(false);
-            //lowerRightPanel.transform.Find("redblock (1)").gameObject.SetActive(false);
-            //lowerRightPanel.transform.parent.Find("BigScorePanel").gameObject.SetActive(false);
 
             GameObject UICanvas = lowerRightPanel.transform.parent.gameObject;
 
@@ -234,7 +231,7 @@ namespace TootTally.Replays
             GameObjectFactory.CreateSingleText(ttHitbox.transform, "ScorePanelHitboxText", "<", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
             GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
 
-            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");           
+            GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");
             _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
             VerticalLayoutGroup vertLayout = _tootTallyScorePanel.AddComponent<VerticalLayoutGroup>();
             vertLayout.padding = new RectOffset(2, 2, 2, 2);
@@ -242,17 +239,48 @@ namespace TootTally.Replays
             vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
             _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
 
-            
+
 
             new SlideTooltip(ttHitbox, panelBody, new Vector2(750, 0), new Vector2(225, 0));
 
         }
+
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doneWithCountUp))]
+        [HarmonyPostfix]
+        public static void OnDoneWIthCountUpUpdateFCLogo(PointSceneController __instance)
+        {
+            if (_replay.IsFullCombo)
+                DisplayFCLogo(__instance);
+        }
+
+        //This is just in case they have InstantScore Plugin
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
+        [HarmonyPostfix]
+        public static void OnDoCoinsUpdateFCLogo(PointSceneController __instance)
+        {
+            if (_replay.IsFullCombo)
+                DisplayFCLogo(__instance);
+        }
+
+        private static void DisplayFCLogo(PointSceneController __instance)
+        {
+            __instance.giantscoretext.text = "You suck";
+            __instance.giantscoretext.fontSize = 20;
+            __instance.giantscoretext.horizontalOverflow = HorizontalWrapMode.Overflow;
+            __instance.giantscoretextshad.text = "You suck";
+            __instance.giantscoretextshad.fontSize = 20;
+            __instance.giantscoretextshad.horizontalOverflow = HorizontalWrapMode.Overflow;
+            if (_replay.IsTripleS)
+                __instance.giantscorediamond.transform.Find("cool-s").GetComponent<Image>().sprite = AssetManager.GetSprite("Cool-sss.png");
+            __instance.giantscorediamond.transform.Find("cool-s").gameObject.SetActive(true);
+        }
+
+
         public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
 
         public static void UpdateLoadingSwirlyAnimation()
         {
-            if (_loadingSwirly != null)
-                _loadingSwirly.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
+            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
@@ -274,11 +302,11 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.updateSave))]
         [HarmonyPrefix]
-        public static bool AvoidSaveChange(PointSceneController __instance) => !wasPlayingReplay; // Don't touch the savefile if we just did a replay
+        public static bool AvoidSaveChange() => !wasPlayingReplay; // Don't touch the savefile if we just did a replay
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.checkScoreCheevos))]
         [HarmonyPrefix]
-        public static bool AvoidAchievementCheck(PointSceneController __instance) => !wasPlayingReplay; // Don't check for achievements if we just did a replay
+        public static bool AvoidAchievementCheck() => !wasPlayingReplay; // Don't check for achievements if we just did a replay
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
         [HarmonyPrefix]
@@ -295,7 +323,7 @@ namespace TootTally.Replays
                     }
                     break;
                 case ReplayManagerState.Replaying:
-                    if (!_hasRewindReplay) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
+                    if (!_hasRewindReplay && !__instance.retrying) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
                         _replay.PlaybackReplay(__instance);
                     _hasRewindReplay = false;
                     break;
@@ -311,7 +339,7 @@ namespace TootTally.Replays
                     _replayTimestampSlider.SetValueWithoutNotify(__instance.musictrack.time / __instance.musictrack.clip.length);
                     if (_replayIndicatorMarquee.text.Equals(""))
                     {
-                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier.ToString("0.00")}]" : "");
+                        _replayIndicatorMarquee.text = $"Watching {_replay.GetUsername} play {_replay.GetSongName}" + (gameSpeedMultiplier != 1f ? $" [{gameSpeedMultiplier:0.00}x]" : "");
                     }
                     _replayIndicatorMarquee.transform.localPosition -= _marqueeScroll * Time.deltaTime;
                     if (_replayIndicatorMarquee.transform.localPosition.x <= -1000)
@@ -324,18 +352,25 @@ namespace TootTally.Replays
                         _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
-
+            float value = 0;
             if (__instance.noteplaying && __instance.breathcounter < 1f)
             {
-                __instance.breathcounter -= Time.deltaTime * (1 - gameSpeedMultiplier) * 0.22f;
+                value = Time.deltaTime * (1 - gameSpeedMultiplier) * -0.22f;
             }
             else if (!__instance.noteplaying && __instance.breathcounter > 0f)
             {
                 if (!__instance.outofbreath)
-                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
+                    value = Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
                 else
-                    __instance.breathcounter += Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
+                    value = Time.deltaTime * (1 - gameSpeedMultiplier) * .29f;
             }
+            __instance.breathcounter += value;
+            if (__instance.breathcounter >= 1f) { __instance.breathcounter = .99f; }
+            /*
+             * Refer to this function where the outOfBreath detection happens... no idea why there's a breathcount < 1f if statement
+             * Token: 0x06000268 RID: 616 RVA: 0x000260D8 File Offset: 0x000242D8
+            */
+
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
@@ -381,8 +416,9 @@ namespace TootTally.Replays
                         OnPauseAddReplayButton(__instance);
                     break;
                 case ReplayManagerState.Replaying:
-                    _replaySpeedSlider.onValueChanged.RemoveAllListeners();
-                    Time.timeScale = 1f;
+                    _replaySpeedSlider.value = 1f;
+                    //_replaySpeedSlider.onValueChanged.RemoveAllListeners();
+                    //Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
                     break;
 
@@ -398,9 +434,19 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
         {
+            if (wasPlayingReplay)
+                GameModifierManager.LoadBackedupModifiers();
             _replay.ClearData();
             _replayManagerState = ReplayManagerState.None;
             _replayFileName = null;
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.resumeTrack))]
+        [HarmonyPostfix]
+        static void GameControllerResumeTrackPostfixPatch(GameController __instance)
+        {
+            if (_replayFileName != null)
+                _replayManagerState = ReplayManagerState.Replaying;
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
@@ -411,7 +457,6 @@ namespace TootTally.Replays
                 _replay.ClearData();
         }
 
-
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
         [HarmonyPostfix]
         public static void OnLevelselectControllerStartInstantiateReplay(LevelSelectController __instance)
@@ -421,15 +466,6 @@ namespace TootTally.Replays
                 _replayManagerState = ReplayManagerState.None;
                 _replay = new NewReplaySystem();
                 gameSpeedMultiplier = 1f;
-            }
-
-            if (Plugin.userInfo != null && !_hasGreetedUser)
-            {
-                _hasGreetedUser = true;
-                if (Plugin.userInfo.username != "Guest")
-                    PopUpNotifManager.DisplayNotif($"Welcome, {Plugin.userInfo.username}!", GameTheme.themeColors.notification.defaultText, 9f);
-                else
-                    PopUpNotifManager.DisplayNotif($"Login on TootTally\n<size=16>Put the APIKey in your config file\nto be able to submit scores</size>", GameTheme.themeColors.notification.warningText, 9f);
             }
         }
         #endregion
@@ -481,22 +517,10 @@ namespace TootTally.Replays
             TootTallyLogger.LogInfo($"Requesting UUID for {songHash}");
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, isCustom, songHashInDB =>
             {
-                if (Plugin.Instance.AllowTMBUploads.Value && songHashInDB == 0)
-                {
-                    // Theoretically could just simplify to GenerateBaseTmb, but that might change custom track hashes
-                    string tmb = isCustom ? File.ReadAllText(songFilePath, Encoding.UTF8) : SongDataHelper.GenerateBaseTmb(track);
-                    SerializableClass.TMBFile chart = new SerializableClass.TMBFile { tmb = tmb };
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.AddChartInDB(chart, () =>
-                    {
-                        Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
-                    }));
-                }
-                else if (songHashInDB == 0)
+                if (songHashInDB == 0)
                     _replayUUID = null;
-                else if (songHashInDB != 0)
+                else
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetReplayUUID(SongDataHelper.GetChoosenSongHash(), UUID => _replayUUID = UUID));
-
-
             }));
         }
 
@@ -525,29 +549,36 @@ namespace TootTally.Replays
 
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed)
             {
-                TootTallyLogger.DebugModeLog("AutoToot used, skipping replay submission.");
+                TootTallyLogger.LogInfo("AutoToot used, skipping replay submission.");
                 return; // Don't submit anything if AutoToot was used.
             }
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong)
             {
-                TootTallyLogger.DebugModeLog("HoverToot used, skipping replay submission.");
+                TootTallyLogger.LogInfo("HoverToot used, skipping replay submission.");
                 return; // Don't submit anything if HoverToot was used.
             }
             if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated)
             {
                 PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
-                TootTallyLogger.DebugModeLog("CircularBreathing used, skipping replay submission.");
+                TootTallyLogger.LogInfo("CircularBreathing used, skipping replay submission.");
                 return; // Don't submit anything if Circular Breathing is enabled
             }
             if (_hasPaused)
             {
-                TootTallyLogger.DebugModeLog("Paused during gameplay, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("Pausing not allowed, Score submission disabled.", GameTheme.themeColors.notification.warningText);
+                TootTallyLogger.LogInfo("Paused during gameplay, skipping replay submission.");
                 return; //Don't submit if paused during the play
             }
 
             if (_replayUUID == null)
             {
-                TootTallyLogger.DebugModeLog("Replay UUID was null, skipping replay submission.");
+                TootTallyLogger.LogInfo("Replay UUID was null, skipping replay submission.");
+                return; //Dont save or upload if no UUID
+            }
+
+            if (GameModifierManager.GetModifiersString().Contains("BT"))
+            {
+                TootTallyLogger.LogInfo("BT modifier was used, skipping replay submission.");
                 return; //Dont save or upload if no UUID
             }
 
@@ -602,16 +633,13 @@ namespace TootTally.Replays
             TMP_Text floatingSpeedText = GameObjectFactory.CreateSingleText(_replaySpeedSlider.transform, "SpeedSliderFloatingText", "SPEED", new Color(1, 1, 1, 1));
             floatingSpeedText.fontSize = 14;
             floatingSpeedText.alignment = TextAlignmentOptions.Center;
-            floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 22);
-            //floatingSpeedText.outlineWidth = 0.2f; //doesnt work... still dont know why
+            floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-2, 30);
 
             //Text inside the slider
             TMP_Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
-            replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 5);
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
-            replaySpeedSliderText.alignment = TextAlignmentOptions.Center;
-            //replaySpeedSliderText.horizontalOverflow = HorizontalWrapMode.Overflow;
-            //replaySpeedSliderText.verticalOverflow = VerticalWrapMode.Overflow;
+            replaySpeedSliderText.alignment = TextAlignmentOptions.Top;
             replaySpeedSliderText.fontSize = 8;
             replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
             replaySpeedSliderText.color = GameTheme.themeColors.scrollSpeedSlider.text;
@@ -648,6 +676,7 @@ namespace TootTally.Replays
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                _currentGCInstance.syncTrackPositions((float)__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
@@ -700,9 +729,13 @@ namespace TootTally.Replays
                         displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})";
                     PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
-                    if (replaySubmissionReply.isBestPlay)
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})", GameTheme.themeColors.leaderboard.text);
+                    if (!replaySubmissionReply.isBestPlay)
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"{replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    else
+                    {
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Global Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (<color=\"green\">+{rankDiff}</color>)", GameTheme.themeColors.leaderboard.text);
+                    }
                 }
                 else
                 {
@@ -719,7 +752,6 @@ namespace TootTally.Replays
             _replayFileName = null;
             GlobalVariables.localsave.tracks_played--;
             Time.timeScale = 1f;
-
             _replayManagerState = ReplayManagerState.None;
             TootTallyLogger.LogInfo("Replay finished");
         }
@@ -732,15 +764,14 @@ namespace TootTally.Replays
 
             replayBtn.name = "ButtonReplay";
             replayBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(30, -121);
-            //replayBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(190, 40);
             replayBtn.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
             replayBtn.GetComponent<Button>().onClick.AddListener(() =>
             {
-                PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
-                /*_replayFileName = "TempReplay";
+                //PopUpNotifManager.DisplayNotif("Temp Replays currently under maintenance.", GameTheme.themeColors.notification.warningText);
+                _replayFileName = "TempReplay";
                 _replay.SetUsernameAndSongName(Plugin.userInfo.username, GlobalVariables.chosen_track_data.trackname_long);
-                TootTallyLogger.DebugModeLog("TempReplay Loaded");
-                _currentGCInstance.pauseRetryLevel();*/
+                TootTallyLogger.LogInfo("TempReplay Loaded");
+                _currentGCInstance.pauseRetryLevel();
             });
             Text replayText = replayBtn.transform.Find("RETRY").GetComponent<Text>();
             replayText.name = "ReplayText";

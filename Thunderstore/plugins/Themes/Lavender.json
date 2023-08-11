@@ -1,0 +1,110 @@
+{
+	"version": "0.0.1",
+	"theme": {
+		"leaderboard": {
+			"panelBody": "#542d8a",
+			"scoresBody": "#4f305e",
+			"rowEntry": "#542d8a",
+			"yourRowEntry": "#4badb3",
+			"headerText": "#000000",
+			"text": "#C982ea",
+			"textOutline": "#626163",
+			"slider": {
+				"handle": "#49484a",
+				"background": "#9b4aed",
+				"fill": "#5d4aed"
+			},
+			"tabs": {
+				"normal": "#000000",
+				"pressed": "#49484a",
+				"highlighted": "#444445"
+			}
+		},
+		"scrollSpeedSlider": {
+			"handle": "#49484a",
+			"text": "#000000",
+			"background": "#9b4aed",
+			"fill": "#5d4aed"
+		},
+		"notification": {
+			"border": "#9b4aed",
+			"background": "#c8aee6",
+			"defaultText": "#FFFFFFFF",
+			"warningText": "#FFFFFFFF",
+			"errorText": "#FFFFFFFF",
+			"textOutline": "#FFFFFFFF"
+		},
+		"replayButton": {
+			"text": "#FFFFFFFF",
+			"normal": "#9b4aed",
+			"pressed": "#49484a",
+			"highlighted": "#5d4aed"
+		},
+		"capsules": {
+			"year": "#9b4aed",
+			"yearShadow": "#5d4aed",
+			"composer": "#4e257d",
+			"composerShadow": "#5d4aed",
+			"genre": "#4e257d",
+			"genreShadow": "#5d4aed",
+			"description": "#9b4aed",
+			"descriptionShadow": "#5d4aed",
+			"tempo": "#9b4aed"
+		},
+		"randomButton": {
+			"background": "#A363c1",
+			"backgroundOver": "#A363c1",
+			"outline": "#523985",
+			"outlineOver": "#3f3985",
+			"text": "#67337f",
+			"textOver": "#5d4aed"
+		},
+		"backButton": {
+			"background": "#A363c1",
+			"backgroundOver": "#A363c1",
+			"outline": "#523985",
+			"outlineOver": "#3f3985",
+			"text": "#67337f",
+			"textOver": "#5d4aed",
+			"shadow": "#7133b0",
+			"shadowOver": "#6050de"
+		},
+		"playButton": {
+			"background": "#A363c1",
+			"backgroundOver": "#A363c1",
+			"outline": "#523985",
+			"outlineOver": "#3f3985",
+			"text": "#67337f",
+			"textOver": "#5d4aed",
+			"shadow": "#7133b0",
+			"shadowOver": "#6050de"
+		},
+		"songButton": {
+			"background": "#A363c1",
+			"text": "#67337f",
+			"textOver": "#5d4aed",
+			"outline": "#523985",
+			"outlineOver": "#3f3985",
+			"shadow": "#7133b0",
+			"square": "#A363c1"
+		},
+		"diffStar": {
+			"gradientStart": "#5d4aed",
+			"gradientEnd": "#9b4aed"
+		},
+		"pointer": {
+			"background": "#9b4aed",
+			"shadow": "#5d4aed",
+			"outline": "#A363c1"
+		},
+		"background":{
+			"waves": "#9b86b3",
+			"waves2": "#c8aee6",
+			"dots": "#d2b2f7",
+			"dots2": "#1732A1",
+			"shape": "#b897de44",
+			"diamond": "#9a8aab",
+			"background": "#d2b2f7"
+			}
+	}
+}

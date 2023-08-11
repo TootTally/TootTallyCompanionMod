@@ -13,13 +13,17 @@ using TootTally.Utils.Helpers;
 using TootTally.Discord;
 using TootTally.Graphics.Animation;
 using BepInEx.Logging;
+using TootTally.Utils.TootTallySettings;
+using System;
+using TootTally.Utils.APIServices;
+using TootTally.TootTallyOverlay;
+using TootTally.GameplayModifier;
 
 namespace TootTally
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("AutoToot", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("org.crispykevin.hovertoot", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("TrombSettings", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("TrombLoader", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
@@ -29,18 +33,20 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230614;
+        public const int BUILDDATE = 20230810;
         internal ConfigEntry<string> APIKey { get; private set; }
-        public ConfigEntry<bool> AllowTMBUploads { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public ConfigEntry<bool> DebugMode { get; private set; }
+        public ConfigEntry<bool> ShowLeaderboard { get; private set; }
 
-        public static List<ITootTallyModule> tootTallyModules { get; private set; }
+        public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
-        public object moduleSettings { get; private set; }
+        public object ModuleSettings { get; private set; }
         private Harmony _harmony;
-        private object settingsPage = null;
+
+        private static TootTallySettingPage _tootTallyMainPage;
+        private static TootTallySettingPage _tootTallyModulePage;
 
         private void Awake()
         {
@@ -49,66 +55,75 @@ namespace TootTally
 
             _harmony = new Harmony(Info.Metadata.GUID);
             TootTallyLogger.Initialize();
+
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
-            AllowTMBUploads = Config.Bind("API Setup", "Allow Unknown Song Uploads", false, "Should this mod send unregistered charts to the TootTally server?");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
+            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
 
-            tootTallyModules = new List<ITootTallyModule>();
-            settingsPage = OptionalTrombSettings.GetConfigPage("TootTally"); // create the TootTally settings page
-            moduleSettings = OptionalTrombSettings.GetConfigPage("TTModules"); // create the Modules page
+            TootTallyModules = new List<ITootTallyModule>();
+            _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
+            _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
 
         private void TryInitialize()
         {
-            if (settingsPage != null)
+            if (_tootTallyMainPage != null)
             {
-                OptionalTrombSettings.Add(settingsPage, AllowTMBUploads);
-                OptionalTrombSettings.Add(settingsPage, APIKey);
-                OptionalTrombSettings.Add(settingsPage, ShouldDisplayToasts);
-                OptionalTrombSettings.Add(settingsPage, DebugMode);
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
+                _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
+                _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
+                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
             }
-
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
-
             _harmony.PatchAll(typeof(UserLogin));
-            _harmony.PatchAll(typeof(AnimationManager));
             _harmony.PatchAll(typeof(GameObjectFactory));
             _harmony.PatchAll(typeof(GameThemeManager));
-            _harmony.PatchAll(typeof(PopUpNotifManager));
+            _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
-            //_harmony.PatchAll(typeof(TootTallySettings));
-            _harmony.PatchAll(typeof(DiscordRPC));
+            _harmony.PatchAll(typeof(GameModifierManager));
+            _harmony.PatchAll(typeof(DiscordRPCManager));
+            _harmony.PatchAll(typeof(UserStatusUpdater));
 
-          
+            //Managers
+            gameObject.AddComponent<PopUpNotifManager>();
+            gameObject.AddComponent<AnimationManager>();
+            gameObject.AddComponent<DiscordRPCManager>();
 
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
-            TootTallyLogger.LogInfo($"Game Version: {GlobalVariables.version}");
-        }
-
-        public void Update()
-        {
-
+            TootTallyLogger.LogInfo($"Game Version: {Application.version}");
         }
 
         public static void AddModule(ITootTallyModule module)
         {
-            if (tootTallyModules == null) TootTallyLogger.LogInfo("tootTallyModules IS NULL");
-            tootTallyModules.Add(module);
+            if (TootTallyModules == null) TootTallyLogger.LogInfo("tootTallyModules IS NULL");
+            TootTallyModules.Add(module);
             if (!module.IsConfigInitialized)
             {
                 module.ModuleConfigEnabled.SettingChanged += delegate { ModuleConfigEnabled_SettingChanged(module); };
+                _tootTallyModulePage.AddToggle(module.Name.Split('.')[1], module.ModuleConfigEnabled); // Holy shit this sucks why did I do this LMFAO
+
                 module.IsConfigInitialized = true;
+
             }
             if (module.ModuleConfigEnabled.Value)
             {
-                module.LoadModule();
-                TootTallyLogger.AddLoggerToListener(module.GetLogger);
+                try
+                {
+                    module.LoadModule();
+                    TootTallyLogger.AddLoggerToListener(module.GetLogger);
+                }
+                catch (Exception e)
+                {
+                    TootTallyLogger.LogError($"Module {module.Name} couldn't be loaded.");
+                    TootTallyLogger.LogError(e.Message);
+                    TootTallyLogger.LogError(e.StackTrace);
+                }
             }
         }
 
@@ -122,8 +137,8 @@ namespace TootTally
             }
             else
             {
-                module.UnloadModule();
                 TootTallyLogger.RemoveLoggerFromListener(module.GetLogger);
+                module.UnloadModule();
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
             }
         }
@@ -141,7 +156,6 @@ namespace TootTally
                         if (user != null)
                         {
                             OnUserLogin(user);
-
                             if (user.id == 0)
                             {
                                 GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
@@ -178,7 +192,7 @@ namespace TootTally
                         if (_messagesReceived.FindAll(m => m.sent_on == message.sent_on).Count == 0)
                         {
                             _messagesReceived.Add(message);
-                            PopUpNotifManager.DisplayNotif($"<size=14>From:{message.author} ({message.sent_on})</size>\n{message.message}", GameTheme.themeColors.notification.defaultText, 12f);
+                            PopUpNotifManager.DisplayNotif($"<size=14>From:{message.author} ({message.sent_on})</size>\n{message.message}", GameTheme.themeColors.notification.defaultText, 16f);
                         }
                     }
                 }));
@@ -209,7 +223,27 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
+                Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
+                Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
+                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
+
+            /*[HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void OnGameControllerStart(GameController __instance)
+            {
+                var gameplayCanvas = GameObject.Find("GameplayCanvas");
+                gameplayCanvas.GetComponent<Canvas>().scaleFactor = 2f;
+
+                var topLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
+                var topRightCam = GameObject.Instantiate(topLeftCam);
+                var bottomLeftCam = GameObject.Instantiate(topLeftCam);
+                var bottomRightCam = GameObject.Instantiate(topLeftCam);
+                topRightCam.pixelRect = new Rect(960, 0, 960, 540);
+                topLeftCam.pixelRect = new Rect(0, 0, 960, 540);
+                bottomLeftCam.pixelRect = new Rect(0, 540, 960, 540);
+                bottomRightCam.pixelRect = new Rect(960, 540, 960, 540);
+            }*/
         }
     }
 }

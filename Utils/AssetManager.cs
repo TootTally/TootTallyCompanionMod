@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -7,11 +8,13 @@ namespace TootTally.Utils
     public static class AssetManager
     {
         public static int coroutineCount;
+        public const string DEFAULT_TEXTURE_NAME = "icon.png";
 
         //Add your asset names here:
         //Assets are attempted to be loaded locally. If the assets aren't found, it downloads them from the server's assets API link into the Bepinex/Assets folder and tries to reload them.
         public static readonly List<string> requiredAssetNames = new List<string>
         {
+            "icon.png",
             "profile64.png",
             "global64.png",
             "local64.png",
@@ -41,6 +44,19 @@ namespace TootTally.Utils
             "CollectButtonV2.png",
             "MultiText.png",
             "CollectButtonOutline.png",
+            "Close64.png",
+            "Download64.png",
+            "Check64.png",
+            "Block64.png",
+            "Twitch64.png",
+            "PfpMask.png",
+            "Cool-sss.png",
+            "HD.png",
+            "FL.png",
+            "BT.png",
+            "FLMask.png",
+            "ModifierButton.png",
+            "glow.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
@@ -101,8 +117,24 @@ namespace TootTally.Utils
                     }
                     else
                         TootTallyLogger.LogInfo("All Assets Loaded Correctly");
+
                 }
             }));
+        }
+
+        public static void GetProfilePictureByID(int userID, Action<Sprite> callback)
+        {
+            if (!textureDictionary.ContainsKey(userID.ToString()))
+            {
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.LoadPFPFromServer(userID, (texture) =>
+                {
+                    textureDictionary.Add(userID.ToString(), texture);
+                    callback(GetSprite(userID.ToString()));
+                }));
+            }
+            else
+                callback(GetSprite(userID.ToString()));
+
         }
 
         public static List<string> GetMissingAssetsName()
@@ -113,11 +145,33 @@ namespace TootTally.Utils
             return missingAssetsNames;
         }
 
-        public static Texture2D GetTexture(string assetKey) => textureDictionary[assetKey];
+        public static Texture2D GetTexture(string assetKey)
+        {
+            try
+            {
+                return textureDictionary[assetKey];
+            }
+            catch (Exception ex)
+            {
+                TootTallyLogger.LogError($"Key {assetKey} not found.");
+                TootTallyLogger.CatchError(ex);
+                return textureDictionary[DEFAULT_TEXTURE_NAME];
+            }
+        }
         public static Sprite GetSprite(string assetKey)
         {
-            Texture2D texture = textureDictionary[assetKey];
-            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+            try
+            {
+                Texture2D texture = textureDictionary[assetKey];
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+            }
+            catch (Exception ex)
+            {
+                TootTallyLogger.LogError($"Key {assetKey} not found.");
+                TootTallyLogger.CatchError(ex);
+                Texture2D texture = textureDictionary[DEFAULT_TEXTURE_NAME];
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 300f);
+            }
         }
     }
 }
