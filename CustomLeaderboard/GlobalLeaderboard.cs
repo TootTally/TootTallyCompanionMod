@@ -60,7 +60,6 @@ namespace TootTally.CustomLeaderboard
             _levelSelectControllerInstance = __instance;
             _currentLeaderboardCoroutines = new List<IEnumerator<UnityWebRequestAsyncOperation>>();
             _scoreGameObjectList = new List<LeaderboardRowEntry>();
-            GameModifierManager.Initialize();
             ClearBaseLeaderboard();
             CustomizeGameMenuUI();
 

@@ -21,7 +21,7 @@ namespace TootTally.TootTallyOverlay
                                        KeyCode.LeftArrow, KeyCode.RightArrow,
                                        KeyCode.B, KeyCode.A};
         private static int _kenoIndex;
-        private static bool _isPanelActive;
+        public static bool IsPanelActive;
         private static bool _isInitialized;
         private static bool _isUpdating;
         private static GameObject _overlayCanvas;
@@ -90,7 +90,7 @@ namespace TootTally.TootTallyOverlay
             GameObjectFactory.CreateCustomButton(_overlayPanelContainer.transform.parent, Vector2.zero, new Vector2(60, 60), AssetManager.GetSprite("Close64.png"), "CloseTromBuddiesButton", TogglePanel);
 
             _overlayPanel.SetActive(false);
-            _isPanelActive = false;
+            IsPanelActive = false;
             _isInitialized = true;
         }
 
@@ -104,7 +104,7 @@ namespace TootTally.TootTallyOverlay
                 TogglePanel();
             }
 
-            if (!_isPanelActive) return;
+            if (!IsPanelActive) return;
 
             _keyInputList.ForEach(key =>
             {
@@ -178,24 +178,24 @@ namespace TootTally.TootTallyOverlay
 
         public static void TogglePanel()
         {
-            _isPanelActive = !_isPanelActive;
+            IsPanelActive = !IsPanelActive;
             if (_overlayPanel != null)
             {
                 _panelAnimationBG?.Dispose();
                 _panelAnimationFG?.Dispose();
-                var targetVector = _isPanelActive ? Vector2.one : Vector2.zero;
-                var animationTime = _isPanelActive ? 1f : 0.45f;
-                var secondDegreeAnimationFG = _isPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
-                var secondDegreeAnimationBG = _isPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
+                var targetVector = IsPanelActive ? Vector2.one : Vector2.zero;
+                var animationTime = IsPanelActive ? 1f : 0.45f;
+                var secondDegreeAnimationFG = IsPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
+                var secondDegreeAnimationBG = IsPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
                 _panelAnimationFG = AnimationManager.AddNewScaleAnimation(_overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").gameObject, targetVector, animationTime, secondDegreeAnimationFG);
                 _panelAnimationBG = AnimationManager.AddNewScaleAnimation(_overlayPanel.transform.Find("FSLatencyPanel/LatencyBG").gameObject, targetVector, animationTime, secondDegreeAnimationBG, (sender) =>
                 {
-                    if (!_isPanelActive)
-                        _overlayPanel.SetActive(_isPanelActive);
+                    if (!IsPanelActive)
+                        _overlayPanel.SetActive(IsPanelActive);
                 });
-                if (_isPanelActive)
+                if (IsPanelActive)
                 {
-                    _overlayPanel.SetActive(_isPanelActive);
+                    _overlayPanel.SetActive(IsPanelActive);
                     UpdateUsers();
                 }
                 else
@@ -205,7 +205,7 @@ namespace TootTally.TootTallyOverlay
 
         public static void UpdateUsers()
         {
-            if (_isPanelActive)
+            if (IsPanelActive)
             {
                 _isUpdating = true;
                 if (_showFriends && _showAllSUsers)

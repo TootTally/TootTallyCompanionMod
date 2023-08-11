@@ -896,7 +896,7 @@ namespace TootTally.Graphics
             imageHolder.transform.localScale = new Vector3(.81f, .81f);
             GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
             Image image = imageHolder.AddComponent<Image>();
-            image.color = GameTheme.themeColors.leaderboard.text;
+            image.color = GameTheme.themeColors.replayButton.text;
             image.preserveAspect = true;
             image.maskable = true;
             image.sprite = sprite;
@@ -910,13 +910,22 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, Action onClick = null)
+        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, bool active, Action onClick = null)
         {
             var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
+            var glow = new GameObject("glow", typeof(Image));
+            var image = glow.GetComponent<Image>();
+            image.maskable = true;
+            image.sprite = AssetManager.GetSprite("glow.png");
+            glow.transform.SetParent(btn.transform);
+            glow.transform.localScale = Vector3.one / 1.2f;
+            glow.SetActive(active);
+            image.color = GameTheme.themeColors.replayButton.text;
             var rect = btn.GetComponent<RectTransform>();
             rect.pivot = Vector2.one / 2f;
             rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
             rect.localScale = Vector2.zero;
+            rect.eulerAngles = active? new Vector3(0,0,8) : Vector3.zero;
             return btn;
         }
 

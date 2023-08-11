@@ -40,7 +40,7 @@ namespace TootTally.GameplayModifier
 
             _modifierButtonDict.Clear();
 
-            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", ShowModifierPanel);
+            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", false, ShowModifierPanel);
             _showModifierPanelButton.transform.localScale = Vector2.one;
             _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
             _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
@@ -60,9 +60,18 @@ namespace TootTally.GameplayModifier
             _hideModifierPanelButton = GameObjectFactory.CreateCustomButton(_modifierPanelContainer.transform, Vector2.zero, new Vector2(32, 32), AssetManager.GetSprite("Close64.png"), "CloseModifierPanelButton", HideModifierPanel).gameObject;
             var layout = _hideModifierPanelButton.AddComponent<LayoutElement>();
             layout.ignoreLayout = true;
-            _modifierButtonDict.Add(GameModifiers.ModifierType.Hidden, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
-            _modifierButtonDict.Add(GameModifiers.ModifierType.Flashlight, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
-            _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal, GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
+
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Hidden,
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Hidden),
+                delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
+
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Flashlight,
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Flashlight),
+                delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
+
+            _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal,
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
+                delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
         }
 
         public static void Initialize()
@@ -120,15 +129,17 @@ namespace TootTally.GameplayModifier
             _canClickButtons = false;
             if (!_gameModifierDict.ContainsKey(modifierType))
             {
-                Add(modifierType);
                 AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
+                _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(true);
                 PopUpNotifManager.DisplayNotif($"{modifierType} mod enabled.", GameTheme.themeColors.notification.defaultText);
+                Add(modifierType);
                 return;
             }
 
             AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.5f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
-            Remove(modifierType);
+            _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(false);
             PopUpNotifManager.DisplayNotif($"{modifierType} mod disabled.", GameTheme.themeColors.notification.defaultText);
+            Remove(modifierType);
         }
 
 

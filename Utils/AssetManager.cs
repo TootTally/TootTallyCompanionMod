@@ -56,6 +56,7 @@ namespace TootTally.Utils
             "BT.png",
             "FLMask.png",
             "ModifierButton.png",
+            "glow.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
