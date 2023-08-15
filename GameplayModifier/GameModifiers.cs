@@ -196,11 +196,17 @@ namespace TootTally.GameplayModifier
 
             public override void Update(GameController __instance)
             {
-                if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
-                    __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                Time.timeScale = Mathf.Clamp(1 + (__instance.highestcombocounter/100f),1,2);
-                __instance.musictrack.pitch = Time.timeScale;
-                __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
+                if (__instance.paused || __instance.quitting || __instance.retrying)
+                    Time.timeScale = 1f;
+                else
+                {
+                    if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
+                        __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                    Time.timeScale = Mathf.Clamp(1 + (__instance.highestcombocounter / 100f), 1, 2);
+                    __instance.musictrack.pitch = Time.timeScale;
+                    __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
+                }
+                
             }
         }
 

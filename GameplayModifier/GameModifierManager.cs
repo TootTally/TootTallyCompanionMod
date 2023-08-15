@@ -57,7 +57,7 @@ namespace TootTally.GameplayModifier
             gridLayoutGroup.cellSize = new Vector2(64, 64);
             gridLayoutGroup.childAlignment = TextAnchor.UpperLeft;
 
-            _hideModifierPanelButton = GameObjectFactory.CreateCustomButton(_modifierPanelContainer.transform, Vector2.zero, new Vector2(32, 32), AssetManager.GetSprite("Close64.png"), true, "CloseModifierPanelButton", HideModifierPanel).gameObject;
+            _hideModifierPanelButton = GameObjectFactory.CreateCustomButton(_modifierPanelContainer.transform, Vector2.zero, new Vector2(32, 32), AssetManager.GetSprite("Close64.png"), "CloseModifierPanelButton", HideModifierPanel).gameObject;
             var layout = _hideModifierPanelButton.AddComponent<LayoutElement>();
             layout.ignoreLayout = true;
 

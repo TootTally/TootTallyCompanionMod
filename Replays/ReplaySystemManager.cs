@@ -249,7 +249,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnDoneWIthCountUpUpdateFCLogo(PointSceneController __instance)
         {
-            if (_replay.IsFullCombo)
+            if (_replay.IsFullCombo && Plugin.Instance.ShowCoolS.Value)
                 DisplayFCLogo(__instance);
         }
 
@@ -258,7 +258,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnDoCoinsUpdateFCLogo(PointSceneController __instance)
         {
-            if (_replay.IsFullCombo)
+            if (_replay.IsFullCombo && Plugin.Instance.ShowCoolS.Value)
                 DisplayFCLogo(__instance);
         }
 

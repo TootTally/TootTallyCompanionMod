@@ -18,6 +18,7 @@ using System;
 using TootTally.Utils.APIServices;
 using TootTally.TootTallyOverlay;
 using TootTally.GameplayModifier;
+using TootTally.Achievements;
 
 namespace TootTally
 {
@@ -33,12 +34,13 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230811;
+        public const int BUILDDATE = 20230815;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public ConfigEntry<bool> DebugMode { get; private set; }
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
+        public ConfigEntry<bool> ShowCoolS { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -57,10 +59,11 @@ namespace TootTally
             TootTallyLogger.Initialize();
 
             // Config
-            APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
+            APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions.");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
-            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
+            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select.");
+            ShowCoolS = Config.Bind("General", "Show Cool S", false, "Show special graphic when getting SS and SSS on a song.");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
@@ -76,6 +79,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
                 _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
+                _tootTallyMainPage.AddToggle("ShowCoolS", ShowCoolS);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
             }
             AssetManager.LoadAssets();
@@ -89,7 +93,6 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
             _harmony.PatchAll(typeof(UserStatusUpdater));
-
             //Managers
             gameObject.AddComponent<PopUpNotifManager>();
             gameObject.AddComponent<AnimationManager>();

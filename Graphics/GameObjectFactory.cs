@@ -878,6 +878,10 @@ namespace TootTally.Graphics
             return newButton;
         }
 
+        //Backward Compatibility
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
+        => CreateCustomButton(canvasTransform, anchoredPosition, size, sprite, true, name, onClick); 
+
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, bool isImageThemable, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
@@ -912,7 +916,7 @@ namespace TootTally.Graphics
 
         public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, bool active, Action onClick = null)
         {
-            var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, true, name, onClick).gameObject;
+            var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
             var glow = new GameObject("glow", typeof(Image));
             var image = glow.GetComponent<Image>();
             image.maskable = true;

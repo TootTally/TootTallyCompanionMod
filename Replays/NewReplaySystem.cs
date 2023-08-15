@@ -139,6 +139,7 @@ namespace TootTally.Replays
             else
             {
                 var tmb = SongDataHelper.GenerateBaseTmb(track);
+                //FileHelper.WriteJsonToFile(Paths.BepInExRootPath, "basetmb.tmb", tmb);
                 songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
 
