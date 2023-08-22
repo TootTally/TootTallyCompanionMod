@@ -19,6 +19,8 @@ using TootTally.Utils.APIServices;
 using TootTally.TootTallyOverlay;
 using TootTally.GameplayModifier;
 using TootTally.Achievements;
+using BaboonAPI.Hooks.Tracks;
+using Microsoft.FSharp.Collections;
 
 namespace TootTally
 {
@@ -101,6 +103,7 @@ namespace TootTally
             gameObject.AddComponent<DiscordRPCManager>();
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {Application.version}");
+            TracksLoadedEvent.EVENT.Register(new UserLogin.TracksLoaderListener());
         }
 
         public static void AddModule(ITootTallyModule module)
@@ -131,7 +134,7 @@ namespace TootTally
             }
         }
 
-        public void ReloadTracks() => BaboonAPI.Hooks.Tracks.TrackLookup.reload();
+        public void ReloadTracks() => TrackLookup.reload();
 
         private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
         {
@@ -221,12 +224,14 @@ namespace TootTally
                 }
             }
 
-            [HarmonyPatch(typeof(BaboonAPI.Hooks.Tracks.TrackLookup), nameof(BaboonAPI.Hooks.Tracks.TrackLookup.reload))]
-            [HarmonyPostfix]
-            public static void PostReloadResetFlag()
+            public class TracksLoaderListener : TracksLoadedEvent.Listener
             {
-                _isReloadingSongs = false;
+                public void OnTracksLoaded(FSharpList<TromboneTrack> value)
+                {
+                    _isReloadingSongs = false;
+                }
             }
+
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
