@@ -34,7 +34,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230815;
+        public const int BUILDDATE = 20230822;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -204,17 +204,17 @@ namespace TootTally
                 }));
             }
 
-            private static bool _isRefreshingSongs;
+            private static bool _isReloadingSongs;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
             [HarmonyPostfix]
             public static void OnLevelSelectControllerUpdateDetectRefreshSongs(LevelSelectController __instance)
             {
-                if (!_isRefreshingSongs)
+                if (!_isReloadingSongs)
                 {
                     if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
                     {
-                        _isRefreshingSongs = true;
+                        _isReloadingSongs = true;
                         PopUpNotifManager.DisplayNotif("Reloading tracks... Lag is normal.");
                         Plugin.Instance.Invoke("ReloadTracks", 0.5f);
                     }
@@ -225,7 +225,7 @@ namespace TootTally
             [HarmonyPostfix]
             public static void PostReloadResetFlag()
             {
-                _isRefreshingSongs = false;
+                _isReloadingSongs = false;
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
