@@ -226,7 +226,6 @@ namespace TootTally.Utils.TootTallySettings
         public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, ConfigEntry<bool> config)
         {
             var toggle = GameObject.Instantiate(_togglePrefab, canvasTransform);
-            toggle.transform.Find("Label").GetComponent<Text>().text = text;
             RectTransform rect = toggle.GetComponent<RectTransform>();
             rect.pivot = Vector3.zero;
             rect.anchoredPosition = Vector3.zero;
@@ -234,7 +233,7 @@ namespace TootTally.Utils.TootTallySettings
             toggle.name = name;
             toggle.isOn = config.Value;
             toggle.onValueChanged.AddListener((value) => config.Value = value);
-
+            toggle.transform.Find("Label").GetComponent<Text>().text = text;
             return toggle;
         }
 

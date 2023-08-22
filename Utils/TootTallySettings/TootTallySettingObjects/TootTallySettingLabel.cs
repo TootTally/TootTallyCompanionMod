@@ -25,6 +25,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             label = GameObjectFactory.CreateSingleText(_page.gridPanel.transform, name, _text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = Vector2.zero;
+            label.rectTransform.pivot = Vector2.one / 2f;
             label.rectTransform.sizeDelta = new Vector2(0, _fontSize + 10);
             label.enableWordWrapping = false;
             label.fontSize = _fontSize;

@@ -76,11 +76,13 @@ namespace TootTally
         {
             if (_tootTallyMainPage != null)
             {
-                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
-                _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
-                _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
-                _tootTallyMainPage.AddToggle("ShowCoolS", ShowCoolS);
-                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", new Vector2(400, 50), "Display Toasts", ShouldDisplayToasts);
+                _tootTallyMainPage.AddToggle("DebugMode", new Vector2(400, 50), "Debug Mode", DebugMode);
+                _tootTallyMainPage.AddToggle("ShowLeaderboard", new Vector2(400, 50), "Show Leaderboards", ShowLeaderboard);
+                _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
+                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
+                //Adding / Removing causes out of bound / index not found exceptions
             }
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
@@ -97,7 +99,6 @@ namespace TootTally
             gameObject.AddComponent<PopUpNotifManager>();
             gameObject.AddComponent<AnimationManager>();
             gameObject.AddComponent<DiscordRPCManager>();
-
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {Application.version}");
         }
@@ -129,6 +130,8 @@ namespace TootTally
                 }
             }
         }
+
+        public void ReloadTracks() => BaboonAPI.Hooks.Tracks.TrackLookup.reload();
 
         private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
         {
@@ -199,6 +202,30 @@ namespace TootTally
                         }
                     }
                 }));
+            }
+
+            private static bool _isRefreshingSongs;
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
+            [HarmonyPostfix]
+            public static void OnLevelSelectControllerUpdateDetectRefreshSongs(LevelSelectController __instance)
+            {
+                if (!_isRefreshingSongs)
+                {
+                    if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
+                    {
+                        _isRefreshingSongs = true;
+                        PopUpNotifManager.DisplayNotif("Reloading tracks... Lag is normal.");
+                        Plugin.Instance.Invoke("ReloadTracks", 0.5f);
+                    }
+                }
+            }
+
+            [HarmonyPatch(typeof(BaboonAPI.Hooks.Tracks.TrackLookup), nameof(BaboonAPI.Hooks.Tracks.TrackLookup.reload))]
+            [HarmonyPostfix]
+            public static void PostReloadResetFlag()
+            {
+                _isRefreshingSongs = false;
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]

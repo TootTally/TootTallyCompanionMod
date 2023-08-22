@@ -80,6 +80,7 @@ namespace TootTally.Graphics
             List<string> fileNames = new List<string>();
             fileNames.AddRange(new string[] { "Day", "Night", "Random", "Default" });
             filePaths.ToList().ForEach(path => fileNames.Add(Path.GetFileNameWithoutExtension(path)));
+            mainPage.AddLabel("GameThemesLabel", "Game Theme", 24f, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
             mainPage.AddDropdown("Themes", option.Theme, fileNames.ToArray()); //Have to fix dropdown default value not working
             mainPage.AddButton("ResetThemeButton", new Vector2(350, 50), "Refresh Theme", RefreshTheme);
 

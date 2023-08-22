@@ -45,6 +45,8 @@ namespace TootTally.Utils
             }
         }
 
+        public static void DisplayNotif(string message) => DisplayNotif(message, GameTheme.themeColors.notification.defaultText);
+
         private static void OnNotifCountChangeSetNewPosition()
         {
             int count = 0;
