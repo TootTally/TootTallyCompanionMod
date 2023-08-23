@@ -93,6 +93,22 @@ namespace TootTally.Utils.TootTallySettings
             return page;
         }
 
+        public static TootTallySettingPage AddNewPage(TootTallySettingPage settingPage)
+        {
+            var page = GetSettingPageByName(settingPage.name);
+            if (page != null)
+            {
+                TootTallyLogger.LogInfo($"Page {page.name} already exist.");
+                return page;
+            }
+
+            page = settingPage;
+            page.OnPageAdd();
+            _settingPageList.Add(page);
+
+            return page;
+        }
+
         public static void SwitchActivePage(TootTallySettingPage page)
         {
             _currentActivePage?.Hide();

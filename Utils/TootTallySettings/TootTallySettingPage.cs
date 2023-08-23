@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
@@ -19,9 +20,9 @@ namespace TootTally.Utils.TootTallySettings
 
         public string name, headerName;
         public float elementSpacing;
-        private List<BaseTootTallySettingObject> _settingObjectList;
+        protected List<BaseTootTallySettingObject> _settingObjectList;
         private GameObject _pageButton;
-        private GameObject _fullPanel;
+        protected GameObject _fullPanel;
         public GameObject gridPanel;
         private Color _bgColor;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
@@ -35,7 +36,7 @@ namespace TootTally.Utils.TootTallySettings
                 Initialize();
         }
 
-        public void Initialize()
+        public virtual void Initialize()
         {
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
@@ -76,6 +77,13 @@ namespace TootTally.Utils.TootTallySettings
             if (!settingObject.isDisposed)
                 settingObject.Dispose();
             _settingObjectList.Remove(settingObject);
+        }
+
+        public void RemoveAllObjects()
+        {
+            BaseTootTallySettingObject[] allObjectsList = new BaseTootTallySettingObject[_settingObjectList.Count];
+            _settingObjectList.CopyTo(allObjectsList);
+            allObjectsList.ToList().ForEach(o => o.Remove());
         }
 
         public BaseTootTallySettingObject AddSettingObjectToList(BaseTootTallySettingObject settingObject)

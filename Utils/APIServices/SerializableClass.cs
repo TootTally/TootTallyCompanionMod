@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cinemachine;
+using System;
 using System.Collections.Generic;
 
 namespace TootTally.Utils.APIServices
@@ -50,6 +51,7 @@ namespace TootTally.Utils.APIServices
         [Serializable]
         public class SongDataFromDB
         {
+            public int id;
             public float difficulty;
             public float tap;
             public float aim;
@@ -64,6 +66,7 @@ namespace TootTally.Utils.APIServices
             public string download;
             public string charter;
             public string track_ref;
+            public float song_length;
         }
 
         [Serializable]

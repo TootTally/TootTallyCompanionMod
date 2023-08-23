@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
@@ -235,6 +236,7 @@ namespace TootTally.Utils
             }
         }
 
+
         public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
         {
             string query = $"{APIURL}/api/songs/{songID}";
@@ -463,6 +465,23 @@ namespace TootTally.Utils
             {
                 var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
                 callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongBySongName(string songName, Action<List<SongDataFromDB>> callback)
+        {
+            string query = $"{APIURL}/api/search/?song_name={songName}";
+
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var userList = JsonConvert.DeserializeObject<SongInfoFromDB>(webRequest.downloadHandler.text).results;
+                callback(userList.ToList());
             }
             else
                 callback(null);

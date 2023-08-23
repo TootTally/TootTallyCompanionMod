@@ -550,14 +550,6 @@ namespace TootTally.Graphics
                 sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
         }
 
-        /*[HarmonyPatch(typeof(HumanPuppetController), nameof(HumanPuppetController.setTextures))]
-        [HarmonyPostfix]
-        public static void Test(HumanPuppetController __instance)
-        {
-            if (option.CustomTrombColor.Value)
-                __instance.trombmaterials[__instance.trombone_texture_index].SetColor("_Color", new Color(option.TrombRed.Value, option.TrombGreen.Value, option.TrombBlue.Value));
-        }*/
-
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
         {
             gameObject.GetComponent<Image>().sprite = AssetManager.GetSprite(spriteName);

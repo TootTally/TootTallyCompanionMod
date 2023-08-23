@@ -21,6 +21,7 @@ using TootTally.GameplayModifier;
 using TootTally.Achievements;
 using BaboonAPI.Hooks.Tracks;
 using Microsoft.FSharp.Collections;
+using TootTally.SongDownloader;
 
 namespace TootTally
 {
@@ -36,7 +37,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230822;
+        public const int BUILDDATE = 20230823;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -88,6 +89,7 @@ namespace TootTally
             }
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
+            SongDownloadManager.Initialize();
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(GameObjectFactory));
             _harmony.PatchAll(typeof(GameThemeManager));

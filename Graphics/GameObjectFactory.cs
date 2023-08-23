@@ -650,7 +650,7 @@ namespace TootTally.Graphics
             Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
             title.text = "TootTally Login";
             title.color = GameTheme.themeColors.notification.defaultText;
-            subtitle.text = "This is an early version of TootTally's in-game login page.";
+            subtitle.text = "Press ENTER after typing your username and password to confirm the inputs.";
             subtitle.color = GameTheme.themeColors.notification.defaultText;
 
 
@@ -708,22 +708,7 @@ namespace TootTally.Graphics
             loginButton.onClick = new Button.ButtonClickedEvent();
             loginButton.onClick.AddListener(delegate
             {
-                __instance.playSfx(4);// click button sfx
-                if (usernameInput.text == "" || usernameInput.text.Contains("username"))
-                {
-                    PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
-                    return;
-                }
-                if (!passwordInput.text.Contains("password") || passwordInput.text.Length <= 5)
-                {
-                    if (passwordInput.text.Length <= 5)
-                        PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
-                    else
-                        PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
-                    return;
-                }
-
-
+                __instance.playSfx(4);// click button sfx             
                 PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
                 {
@@ -782,17 +767,32 @@ namespace TootTally.Graphics
                 confirmInput.inputType = InputField.InputType.Password;
                 confirmInput.textComponent = confirmInputHolder.transform.Find("Text").GetComponent<Text>();
                 confirmInput.image = latencyFGPanel.GetComponent<Image>();
-                confirmInput.text = "Password";
+                confirmInput.text = "Confirm";
                 GameObject.DestroyImmediate(signUpButton.gameObject);
                 loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
                 loginButton.onClick.RemoveAllListeners();
                 loginButton.onClick.AddListener(delegate
                 {
                     __instance.playSfx(4);// click button sfx
+
+                    if (usernameInput.text == "" || usernameInput.text.ToLower().Contains("username"))
+                    {
+                        PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
+                        return;
+                    }
+                    if (!passwordInput.text.ToLower().Contains("password") || passwordInput.text.Length <= 5)
+                    {
+                        if (passwordInput.text.Length <= 5)
+                            PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
+                        else
+                            PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
+                        return;
+                    }
+
                     if (passwordInput.text != confirmInput.text)
                     {
                         passwordInput.text = "";
-                        confirmInput.text = "";
+                        confirmInput.text = "Confirm";
                         PopUpNotifManager.DisplayNotif($"Passwords did not match! Type your password again.", GameTheme.themeColors.notification.errorText);
                         return; //skip requests
                     }
@@ -864,7 +864,7 @@ namespace TootTally.Graphics
             newButton.textHolder.text = text;
             newButton.textHolder.alignment = TextAnchor.MiddleCenter;
             newButton.textHolder.fontSize = 22;
-            newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
+            newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Wrap;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             newButton.textHolder.color = GameTheme.themeColors.replayButton.text;
 
