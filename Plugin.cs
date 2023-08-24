@@ -52,6 +52,7 @@ namespace TootTally
 
         private static TootTallySettingPage _tootTallyMainPage;
         private static TootTallySettingPage _tootTallyModulePage;
+        private static SongDownloadPage _songDownloadPage;
 
         private void Awake()
         {
@@ -71,6 +72,7 @@ namespace TootTally
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
             _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
+            _songDownloadPage = TootTallySettingsManager.AddNewPage(new SongDownloadPage()) as SongDownloadPage; //Prevents the same page from being accidently created twice
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
@@ -89,7 +91,6 @@ namespace TootTally
             }
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
-            SongDownloadManager.Initialize();
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(GameObjectFactory));
             _harmony.PatchAll(typeof(GameThemeManager));

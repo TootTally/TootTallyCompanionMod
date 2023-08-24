@@ -8,6 +8,8 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UIElements.UIR;
 using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.SongDownloader
@@ -16,6 +18,8 @@ namespace TootTally.SongDownloader
     {
         private TMP_InputField _inputField;
         private GameObject _searchButton;
+        private Toggle _toggleRated;
+        internal GameObject songRowPrefab;
         public SongDownloadPage() : base("MoreSongs", "More Songs", 20f, new Color(0, 0, 0, 0.1f))
         {
         }
@@ -24,8 +28,11 @@ namespace TootTally.SongDownloader
         {
             base.Initialize();
             _inputField = TootTallySettingObjectFactory.CreateInputField(_fullPanel.transform, $"{name}InputField", DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, "Search", false);
-            _inputField.GetComponent<RectTransform>().anchoredPosition = new Vector2(750, 850);
-            _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-600, -200), DEFAULT_OBJECT_SIZE, "Search", $"{name}SearchButton", Search).gameObject;
+            _inputField.GetComponent<RectTransform>().anchoredPosition = new Vector2(1375, 750);
+            _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-375, -175), DEFAULT_OBJECT_SIZE, "Search", $"{name}SearchButton", Search).gameObject;
+            _toggleRated = TootTallySettingObjectFactory.CreateToggle(_fullPanel.transform, $"{name}ToggleRated", new Vector2(200, 60), "Rated", null);
+            _toggleRated.GetComponent<RectTransform>().anchoredPosition = new Vector2(-725, -450);
+            SetSongRowPrefab();
         }
 
         private void Search()
@@ -33,7 +40,7 @@ namespace TootTally.SongDownloader
             var text = _inputField.text;
             RemoveAllObjects();
             _searchButton.SetActive(false);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.SearchSongBySongName(text, songList =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.SearchSongWithFilters(text, _toggleRated.isOn, songList =>
             {
                 _searchButton.SetActive(true);
                 songList?.ForEach(AddSongToPage);
@@ -42,10 +49,38 @@ namespace TootTally.SongDownloader
 
         private void AddSongToPage(SongDataFromDB song)
         {
-            //toString("HH:mm:ss") wasn't working, need to find a better way
-            var time = TimeSpan.FromSeconds(song.song_length);
-            var stringTime = $"{(time.Hours != 0 ? (time.Hours+":") : "")}{(time.Minutes != 0 ? time.Minutes : "00")}:{(time.Seconds != 0 ? time.Seconds : "00")}";
-            AddButton($"{song.short_name}Button", new Vector2(400, 150), $"{song.name}\n<size=16>Mapped by {song.charter}\nDuration: {stringTime}</size>", () => Application.OpenURL($"https://toottally.com/song/{song.id}/"));
+            AddSettingObjectToList(new SongDownloadObject(gridPanel.transform, song, this));
+        }
+
+        public void SetSongRowPrefab()
+        {
+            var tempRow = GameObjectFactory.CreateOverlayPanel(_fullPanel.transform, Vector2.zero, new Vector2(1000, 140), 5f, $"TwitchRequestRowTemp").transform.Find("FSLatencyPanel").gameObject;
+            songRowPrefab = GameObject.Instantiate(tempRow);
+            GameObject.DestroyImmediate(tempRow.gameObject);
+
+            songRowPrefab.name = "RequestRowPrefab";
+            songRowPrefab.transform.localScale = Vector3.one;
+            songRowPrefab.GetComponent<Image>().maskable = true;
+            songRowPrefab.GetComponent<RectTransform>().sizeDelta = new Vector2(1020, 160);
+
+            var container = songRowPrefab.transform.Find("LatencyFG/MainPage").gameObject;
+            container.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            container.GetComponent<RectTransform>().sizeDelta = new Vector2(1020, 160);
+
+            GameObject.DestroyImmediate(container.transform.parent.Find("subtitle").gameObject);
+            GameObject.DestroyImmediate(container.transform.parent.Find("title").gameObject);
+            GameObject.DestroyImmediate(container.GetComponent<VerticalLayoutGroup>());
+            var horizontalLayoutGroup = container.AddComponent<HorizontalLayoutGroup>();
+            horizontalLayoutGroup.padding = new RectOffset(20, 20, 20, 20);
+            horizontalLayoutGroup.spacing = 40f;
+            horizontalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
+            horizontalLayoutGroup.childControlHeight = horizontalLayoutGroup.childControlWidth = false;
+            horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = false;
+            songRowPrefab.transform.Find("LatencyFG").GetComponent<Image>().maskable = true;
+            songRowPrefab.transform.Find("LatencyBG").GetComponent<Image>().maskable = true;
+
+            GameObject.DontDestroyOnLoad(songRowPrefab);
+            songRowPrefab.SetActive(false);
         }
     }
 }

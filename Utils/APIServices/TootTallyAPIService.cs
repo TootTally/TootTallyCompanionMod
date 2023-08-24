@@ -470,9 +470,9 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongBySongName(string songName, Action<List<SongDataFromDB>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongWithFilters(string songName, bool isRated, Action<List<SongDataFromDB>> callback)
         {
-            string query = $"{APIURL}/api/search/?song_name={songName}";
+            string query = $"{APIURL}/api/search/?song_name={songName}&rated={(isRated?1:0)}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 
