@@ -18,8 +18,9 @@ namespace TootTally.SongDownloader
     {
         private TMP_InputField _inputField;
         private GameObject _searchButton;
-        private Toggle _toggleRated;
+        private Toggle _toggleRated, _toggleUnrated;
         internal GameObject songRowPrefab;
+        private List<string> _trackRefList;
         public SongDownloadPage() : base("MoreSongs", "More Songs", 20f, new Color(0, 0, 0, 0.1f))
         {
         }
@@ -27,11 +28,22 @@ namespace TootTally.SongDownloader
         public override void Initialize()
         {
             base.Initialize();
+            _trackRefList = new List<string>();
+
             _inputField = TootTallySettingObjectFactory.CreateInputField(_fullPanel.transform, $"{name}InputField", DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, "Search", false);
+            _inputField.onSubmit.AddListener((value) => Search());
             _inputField.GetComponent<RectTransform>().anchoredPosition = new Vector2(1375, 750);
+
             _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-375, -175), DEFAULT_OBJECT_SIZE, "Search", $"{name}SearchButton", Search).gameObject;
+
             _toggleRated = TootTallySettingObjectFactory.CreateToggle(_fullPanel.transform, $"{name}ToggleRated", new Vector2(200, 60), "Rated", null);
             _toggleRated.GetComponent<RectTransform>().anchoredPosition = new Vector2(-725, -450);
+            _toggleRated.onValueChanged.AddListener(value => { if (value) _toggleUnrated.SetIsOnWithoutNotify(!value); });
+
+            _toggleUnrated = TootTallySettingObjectFactory.CreateToggle(_fullPanel.transform, $"{name}ToggleUnrated", new Vector2(200, 60), "Unrated", null);
+            _toggleUnrated.GetComponent<RectTransform>().anchoredPosition = new Vector2(-725, -550);
+            _toggleUnrated.onValueChanged.AddListener(value => { if (value) _toggleRated.SetIsOnWithoutNotify(!value); });
+
             SetSongRowPrefab();
         }
 
@@ -39,16 +51,19 @@ namespace TootTally.SongDownloader
         {
             var text = _inputField.text;
             RemoveAllObjects();
+            _trackRefList.Clear();
             _searchButton.SetActive(false);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.SearchSongWithFilters(text, _toggleRated.isOn, songList =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.SearchSongWithFilters(text, _toggleRated.isOn, _toggleUnrated.isOn, songList =>
             {
                 _searchButton.SetActive(true);
-                songList?.ForEach(AddSongToPage);
+                songList?.OrderByDescending(x => x.id).ToList().ForEach(AddSongToPage);
             }));
         }
 
         private void AddSongToPage(SongDataFromDB song)
         {
+            if (_trackRefList.Contains(song.track_ref)) return;
+            _trackRefList.Add(song.track_ref);
             AddSettingObjectToList(new SongDownloadObject(gridPanel.transform, song, this));
         }
 

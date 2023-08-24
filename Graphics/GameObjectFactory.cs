@@ -29,8 +29,6 @@ namespace TootTally.Graphics
 
         private static bool _isHomeControllerInitialized;
         private static bool _isLevelSelectControllerInitialized;
-        private static bool _isPlaytestAnimsInitialized;
-
 
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
