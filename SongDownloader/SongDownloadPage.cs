@@ -24,7 +24,7 @@ namespace TootTally.SongDownloader
         private Toggle _toggleRated, _toggleUnrated;
         internal GameObject songRowPrefab;
         private List<string> _trackRefList;
-        public bool hasDownloadedASong;
+        private List<string> _newDownloadedTrackRefs;
 
         public SongDownloadPage() : base("MoreSongs", "More Songs", 20f, new Color(0, 0, 0, 0.1f))
         {
@@ -34,6 +34,7 @@ namespace TootTally.SongDownloader
         {
             base.Initialize();
             _trackRefList = new List<string>();
+            _newDownloadedTrackRefs = new List<string>();
 
             _inputField = TootTallySettingObjectFactory.CreateInputField(_fullPanel.transform, $"{name}InputField", DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, DEFAULT_INPUT_TEXT, false);
             _inputField.onSubmit.AddListener((value) => Search(_inputField.text));
@@ -50,14 +51,12 @@ namespace TootTally.SongDownloader
             _toggleUnrated.onValueChanged.AddListener(value => { if (value) _toggleRated.SetIsOnWithoutNotify(!value); });
 
             SetSongRowPrefab();
-            hasDownloadedASong = false;
             _backButton.button.onClick.AddListener(() =>
             {
-                if (hasDownloadedASong)
+                if (_newDownloadedTrackRefs.Count > 0)
                 {
                     PopUpNotifManager.DisplayNotif("New tracks detected, Reloading songs...\nLagging is normal.");
-                    hasDownloadedASong = false;
-                    RemoveAllObjects();
+                    _newDownloadedTrackRefs.Clear();
                     Plugin.Instance.Invoke("ReloadTracks", 0.35f);
                 }
             });
@@ -91,6 +90,7 @@ namespace TootTally.SongDownloader
         private void OnSearchInfoRecieved(SongInfoFromDB searchInfo)
         {
             _searchButton.SetActive(true);
+            _verticalSlider.value = 0;
             searchInfo.results.OrderByDescending(x => x.id).ToList()?.ForEach(AddSongToPage);
             if (searchInfo.next != null)
                 _nextButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-350, -175), new Vector2(50, 50), ">>", $"{name}NextButton", () => Search(searchInfo.next, false)).gameObject;
@@ -135,5 +135,8 @@ namespace TootTally.SongDownloader
             GameObject.DontDestroyOnLoad(songRowPrefab);
             songRowPrefab.SetActive(false);
         }
+
+        public void AddTrackRefToDownloadedSong(string trackref) => _newDownloadedTrackRefs.Add(trackref);
+        public bool IsAlreadyDownloaded(string trackref) => _newDownloadedTrackRefs.Contains(trackref);
     }
 }

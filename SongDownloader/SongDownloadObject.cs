@@ -30,6 +30,7 @@ namespace TootTally.SongDownloader
         private SongDataFromDB _song;
         private GameObject _downloadButton;
         private TMP_Text _fileSizeText;
+        private TMP_Text _durationText;
 
         public SongDownloadObject(Transform canvasTransform, SongDataFromDB song, SongDownloadPage page) : base($"Song{song.track_ref}", page)
         {
@@ -43,17 +44,17 @@ namespace TootTally.SongDownloader
 
             var songNameText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "SongName", song.name, GameTheme.themeColors.leaderboard.text);
             var charterText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "Charter", song.charter != null ? $"Mapped by {song.charter}" : "Unknown", GameTheme.themeColors.leaderboard.text);
-            var durationText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "Duration", stringTime, GameTheme.themeColors.leaderboard.text);
+            _durationText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "Duration", stringTime, GameTheme.themeColors.leaderboard.text);
             _fileSizeText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "FileSize", "", GameTheme.themeColors.leaderboard.text);
             _fileSizeText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
             _fileSizeText.gameObject.SetActive(false);
             //fuck that shit :skull:
             songNameText.GetComponent<RectTransform>().sizeDelta = charterText.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 128);
-            durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(230, 128);
-            songNameText.overflowMode = charterText.overflowMode = durationText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+            _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(230, 128);
+            songNameText.overflowMode = charterText.overflowMode = _durationText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
 
             //lol
-            if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)))
+            if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)) && !(_page as SongDownloadPage).IsAlreadyDownloaded(song.track_ref))
             {
                 if (song.download != null && song.download.ToLower().Contains("https://cdn.discordapp.com"))
                 {
@@ -62,7 +63,7 @@ namespace TootTally.SongDownloader
                         var stringSize = FileHelper.SizeSuffix(size, 2);
                         _fileSizeText.text = stringSize;
                         _fileSizeText.gameObject.SetActive(true);
-                        durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
+                        _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
                     }));
                     _downloadButton = GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
                 }
@@ -116,7 +117,8 @@ namespace TootTally.SongDownloader
                     t4.overflowMode = TMPro.TextOverflowModes.Overflow;
                     t4.enableWordWrapping = false;
                     t4.transform.SetSiblingIndex(3);
-                    (_page as SongDownloadPage).hasDownloadedASong = true;
+                    _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(230, 128);
+                    (_page as SongDownloadPage).AddTrackRefToDownloadedSong(_song.track_ref);
                 }
                 else
                 {
