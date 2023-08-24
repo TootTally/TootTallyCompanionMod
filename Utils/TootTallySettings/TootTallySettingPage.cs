@@ -6,6 +6,7 @@ using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
 {
@@ -23,6 +24,8 @@ namespace TootTally.Utils.TootTallySettings
         protected List<BaseTootTallySettingObject> _settingObjectList;
         private GameObject _pageButton;
         protected GameObject _fullPanel;
+        protected CustomButton _backButton;
+        protected Slider _verticalSlider;
         public GameObject gridPanel;
         private Color _bgColor;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
@@ -39,6 +42,11 @@ namespace TootTally.Utils.TootTallySettings
         public virtual void Initialize()
         {
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
+
+            _backButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
+            _verticalSlider = TootTallySettingObjectFactory.CreateVerticalSlider(_fullPanel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
+            _verticalSlider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, _verticalSlider.value); });
+
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
             _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
             _settingObjectList.ForEach(obj => obj.Initialize());
@@ -70,6 +78,11 @@ namespace TootTally.Utils.TootTallySettings
             }
 
             RemoveSettingObjectFromList(settingObject);
+        }
+        private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
+        {
+            var gridPanelRect = gridPanel.GetComponent<RectTransform>();
+            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, (value * gridPanelRect.sizeDelta.y) - (1 - value) * 150f); //This is so scuffed I fucking love it
         }
 
         public void RemoveSettingObjectFromList(BaseTootTallySettingObject settingObject)

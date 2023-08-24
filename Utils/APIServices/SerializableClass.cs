@@ -73,6 +73,8 @@ namespace TootTally.Utils.APIServices
         public class SongInfoFromDB
         {
             public float count;
+            public string next;
+            public string previous;
             public SongDataFromDB[] results;
         }
 

@@ -50,7 +50,6 @@ namespace TootTally.Replays
         private static EasingHelper.SecondOrderDynamics _pausePointerAnimation;
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
-        private static string _gameModifiersBackup;
 
         private static GameObject _loadingSwirly, _tootTallyScorePanel;
         #region GameControllerPatches

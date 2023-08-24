@@ -18,7 +18,6 @@ namespace TootTally.Utils.TootTallySettings
         private static GameObject _mainMenu, _mainSettingPanel, _settingPanelGridHolder;
         public static Transform GetSettingPanelGridHolderTransform { get => _settingPanelGridHolder.transform; }
         
-        private static GameObject _sliderPrefab;
         private static List<TootTallySettingPage> _settingPageList;
         private static TootTallySettingPage _currentActivePage;
 

@@ -179,18 +179,8 @@ namespace TootTally.Utils.TootTallySettings
             verticalLayoutGroup.childScaleHeight = verticalLayoutGroup.childScaleWidth = false;
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
             verticalLayoutGroup.spacing = elementSpacing;
-            GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
-            Slider slider = TootTallySettingObjectFactory.CreateVerticalSlider(panel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
-
-            slider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, slider.value); });
 
             return panel;
-        }
-
-        private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
-        {
-            var gridPanelRect = gridPanel.GetComponent<RectTransform>();
-            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, (value * gridPanelRect.sizeDelta.y) - (1-value) * 150f); //This is so scuffed I fucking love it
         }
 
         public static Slider CreateSlider(Transform canvasTransform, string name, float min, float max, bool integerOnly)

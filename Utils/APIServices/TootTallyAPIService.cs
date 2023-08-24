@@ -236,6 +236,18 @@ namespace TootTally.Utils
             }
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, Action<byte[]> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Get(downloadlink);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, downloadlink))
+                callback(webRequest.downloadHandler.data);
+            else
+                callback(null);
+        }
+
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
         {
@@ -470,7 +482,22 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongWithFilters(string songName, bool isRated, bool isUnrated, Action<List<SongDataFromDB>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongByURL(string URL, Action<SongInfoFromDB> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Get(URL);
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, URL))
+            {
+                var userList = JsonConvert.DeserializeObject<SongInfoFromDB>(webRequest.downloadHandler.text);
+                callback(userList);
+            }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> SearchSongWithFilters(string songName, bool isRated, bool isUnrated, Action<SongInfoFromDB> callback)
         {
             string filters = isRated ? "&rated=1" : "";
             filters += !isRated && isUnrated ? "&rated=0" : "";
@@ -482,8 +509,8 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, query))
             {
-                var userList = JsonConvert.DeserializeObject<SongInfoFromDB>(webRequest.downloadHandler.text).results;
-                callback(userList.ToList());
+                var userList = JsonConvert.DeserializeObject<SongInfoFromDB>(webRequest.downloadHandler.text);
+                callback(userList);
             }
             else
                 callback(null);
@@ -506,6 +533,15 @@ namespace TootTally.Utils
             }
             else
                 callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFileSize(string downloadLink, Action<long> callback)
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Head(downloadLink);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, downloadLink))
+                callback(Convert.ToInt64(webRequest.GetResponseHeader("Content-Length")));
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineFriends(Action<List<User>> callback)
