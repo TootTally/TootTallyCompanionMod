@@ -1,27 +1,28 @@
 ﻿using BaboonAPI.Hooks.Initializer;
+using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
-using HarmonyLib;
-using UnityEngine;
-using System.Collections.Generic;
-using TootTally.Graphics;
-using TootTally.Replays;
-using TootTally.Utils;
-using TootTally.CustomLeaderboard;
-using TootTally.Utils.Helpers;
-using TootTally.Discord;
-using TootTally.Graphics.Animation;
 using BepInEx.Logging;
-using TootTally.Utils.TootTallySettings;
-using System;
-using TootTally.Utils.APIServices;
-using TootTally.TootTallyOverlay;
-using TootTally.GameplayModifier;
-using TootTally.Achievements;
-using BaboonAPI.Hooks.Tracks;
+using HarmonyLib;
 using Microsoft.FSharp.Collections;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using TootTally.CustomLeaderboard;
+using TootTally.Discord;
+using TootTally.GameplayModifier;
+using TootTally.Graphics;
+using TootTally.Graphics.Animation;
+using TootTally.Replays;
 using TootTally.SongDownloader;
+using TootTally.TootTallyOverlay;
+using TootTally.Utils;
+using TootTally.Utils.APIServices;
+using TootTally.Utils.Helpers;
+using TootTally.Utils.TootTallySettings;
+using UnityEngine;
 
 namespace TootTally
 {
@@ -37,7 +38,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230824;
+        public static int BUILDDATE = 20230903;
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -58,7 +59,6 @@ namespace TootTally
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
-
             _harmony = new Harmony(Info.Metadata.GUID);
             TootTallyLogger.Initialize();
 

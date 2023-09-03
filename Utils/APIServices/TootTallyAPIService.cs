@@ -501,6 +501,7 @@ namespace TootTally.Utils
         {
             string filters = isRated ? "&rated=1" : "";
             filters += !isRated && isUnrated ? "&rated=0" : "";
+            filters += "&page_size=100";
             string query = $"{APIURL}/api/search/?song_name={songName}{filters}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);

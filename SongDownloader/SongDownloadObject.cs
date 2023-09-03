@@ -56,7 +56,7 @@ namespace TootTally.SongDownloader
             //lol
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)) && !(_page as SongDownloadPage).IsAlreadyDownloaded(song.track_ref))
             {
-                if (song.download != null && song.download.ToLower().Contains("https://cdn.discordapp.com"))
+                if (song.download != null && song.download.ToLower().Contains("https://cdn.discordapp.com") && Path.GetExtension(song.download) == ".zip")
                 {
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(song.download, size =>
                     {
