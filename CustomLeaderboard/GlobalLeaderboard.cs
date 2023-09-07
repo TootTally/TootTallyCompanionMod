@@ -19,7 +19,7 @@ namespace TootTally.CustomLeaderboard
     {
         #region constants
         private const string ERROR_NO_LEADERBOARD_FOUND_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
-        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Clicking Play should automatically upload the chart\n if you have it turned on in your TootTally.cfg file</size>";
+        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Please upload the chart to TootTally.com\n or use TootBender on discord to create the leaderboard.</size>";
         private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };

@@ -296,6 +296,16 @@ namespace TootTally.Graphics
         private static void SetSwirlyInPanelBody()
         {
             GameObject loadingSwirly = _panelBodyPrefab.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
+            GameObject swirlyObj = loadingSwirly.transform.Find("swirly").gameObject;
+
+            var image = swirlyObj.GetComponent<Image>();
+            image.sprite = AssetManager.GetSprite("icon.png");
+            image.color = Color.white;
+
+            var rect = swirlyObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(200, 200);
+            rect.anchoredPosition = Vector2.zero;
+
             loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
             loadingSwirly.SetActive(true);
         }
