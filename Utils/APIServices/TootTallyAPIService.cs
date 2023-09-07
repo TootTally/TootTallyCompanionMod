@@ -256,6 +256,18 @@ namespace TootTally.Utils
                 callback(null);
         }
 
+        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, Action<byte[]> callback) //Progress barless for old twitch plugin versions
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Get(downloadlink);
+            
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, downloadlink))
+                callback(webRequest.downloadHandler.data);
+            else
+                callback(null);
+        }
+
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SongDataFromDB> callback)
         {
