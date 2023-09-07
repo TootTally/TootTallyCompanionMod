@@ -1,10 +1,8 @@
 ﻿using BepInEx.Configuration;
 using System.Linq;
 using TMPro;
-using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 namespace TootTally.Utils.TootTallySettings
 {

@@ -1,8 +1,6 @@
-﻿using BepInEx;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace TootTally.Utils.Helpers

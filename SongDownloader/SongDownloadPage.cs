@@ -1,16 +1,11 @@
-﻿using BaboonAPI.Hooks.Tracks;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements.UIR;
 using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.SongDownloader

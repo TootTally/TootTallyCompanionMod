@@ -2,7 +2,6 @@
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
-using TootTally.GameplayModifier;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
 using TootTally.TootTallyOverlay;
@@ -19,6 +18,7 @@ namespace TootTally.Graphics
         private static CustomButton _buttonPrefab;
         private static TextMeshProUGUI _multicoloreTextPrefab, _comfortaaTextPrefab, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
         private static Slider _verticalSliderPrefab, _sliderPrefab;
+        private static Slider _settingsPanelVolumeSlider;
         private static PopUpNotif _popUpNotifPrefab;
 
         private static GameObject _settingsGraphics, _creditPanel;
@@ -36,6 +36,7 @@ namespace TootTally.Graphics
         static void YoinkSettingsGraphicsHomeController(HomeController __instance)
         {
             _settingsGraphics = __instance.fullsettingspanel.transform.Find("Settings").gameObject;
+            _settingsPanelVolumeSlider = __instance.set_sld_volume_tromb;
             _creditPanel = __instance.ext_credits_go.transform.parent.gameObject;
             OnHomeControllerInitialize();
         }
@@ -579,6 +580,25 @@ namespace TootTally.Graphics
 
         #region Create Objects
 
+        public static ProgressBar CreateProgressBar(Transform canvasTransform, Vector2 position, Vector2 size, bool active, string name)
+        {
+            Slider slider = GameObject.Instantiate(_settingsPanelVolumeSlider, canvasTransform);
+            DestroyFromParent(slider.gameObject, "Handle Slide Area");
+            slider.name = name;
+            slider.onValueChanged = new Slider.SliderEvent();
+            RectTransform rect = slider.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.2f); //line up centered and slightly higher than the lowest point
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            rect.pivot = new Vector2(0.5f, 1f);
+            slider.minValue = slider.value = 0f;
+            slider.maxValue = 1f;
+            slider.interactable = false;
+            slider.wholeNumbers = false;
+            ProgressBar bar = new ProgressBar(slider, active);
+            return bar;
+        }
+
         public static GameObject CreateUserCard(Transform canvasTransform, SerializableClass.User user, string status)
         {
             GameObject card = GameObject.Instantiate(_userCardPrefab, canvasTransform);
@@ -619,7 +639,7 @@ namespace TootTally.Graphics
         }
 
         private static void TintImage(Image image, Color tint, float percent) =>
-            image.color = new Color(image.color.r * (1f-percent) + tint.r * percent, image.color.g * (1f - percent) + tint.g * percent, image.color.b * (1f - percent) + tint.b * percent);
+            image.color = new Color(image.color.r * (1f - percent) + tint.r * percent, image.color.g * (1f - percent) + tint.g * percent, image.color.b * (1f - percent) + tint.b * percent);
 
         private static Color UserFriendStatusToColor(string status) =>
             status switch
@@ -878,14 +898,14 @@ namespace TootTally.Graphics
 
         //Backward Compatibility
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
-        => CreateCustomButton(canvasTransform, anchoredPosition, size, sprite, true, name, onClick); 
+        => CreateCustomButton(canvasTransform, anchoredPosition, size, sprite, true, name, onClick);
 
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, bool isImageThemable, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
             //newButton.button.GetComponent<Image>().sprite = sprite;
-            
+
             ColorBlock btnColors = newButton.button.colors;
             btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
             btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
@@ -927,7 +947,7 @@ namespace TootTally.Graphics
             rect.pivot = Vector2.one / 2f;
             rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
             rect.localScale = Vector2.zero;
-            rect.eulerAngles = active? new Vector3(0,0,8) : Vector3.zero;
+            rect.eulerAngles = active ? new Vector3(0, 0, 8) : Vector3.zero;
             return btn;
         }
 

@@ -8,7 +8,6 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Utils.APIServices.SerializableClass;
 using TMPro;
-using System.Linq;
 
 namespace TootTally.TootTallyOverlay
 {

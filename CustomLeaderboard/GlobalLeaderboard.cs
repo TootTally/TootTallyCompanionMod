@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
-using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;

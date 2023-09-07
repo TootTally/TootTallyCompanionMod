@@ -1,5 +1,4 @@
-﻿using Cinemachine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TootTally.Utils.APIServices

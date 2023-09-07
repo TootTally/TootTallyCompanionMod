@@ -1,17 +1,11 @@
 ﻿using HarmonyLib;
-using Steamworks;
-using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.Networking.Match;
 using UnityEngine.UI;
 
 namespace TootTally.GameplayModifier

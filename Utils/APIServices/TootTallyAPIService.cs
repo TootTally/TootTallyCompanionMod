@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
-using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -35,23 +33,23 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromAPIKey(Action<SerializableClass.User> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromAPIKey(Action<User> callback)
         {
             // TODO: Might have to redo this to follow the same pattern as SubmitScore
-            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiObj = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
             var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest($"{APIURL}/api/profile/self/", apiKey);
-            SerializableClass.User user;
+            User user;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest))
             {
-                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
+                user = JsonConvert.DeserializeObject<User>(webRequest.downloadHandler.text);
                 TootTallyLogger.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
-                user = new SerializableClass.User()
+                user = new User()
                 {
                     username = "Guest",
                     id = 0,
@@ -61,53 +59,53 @@ namespace TootTally.Utils
             callback(user);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromID(int id, Action<SerializableClass.User> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromID(int id, Action<User> callback)
         {
             var query = $"{APIURL}/api/profile/{id}";
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
-            SerializableClass.User user;
+            User user;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
             {
-                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
+                user = JsonConvert.DeserializeObject<User>(webRequest.downloadHandler.text);
                 TootTallyLogger.LogInfo($"Welcome, {user.username}!");
                 callback(user);
             }
         }
 
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<SerializableClass.APIMessages> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetMessageFromAPIKey(Action<APIMessages> callback)
         {
             var query = $"{APIURL}/api/announcements/?apiKey={Plugin.Instance.APIKey.Value}";
             var webRequest = UnityWebRequest.Get(query);
-            SerializableClass.APIMessages messages;
+            APIMessages messages;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
             {
-                messages = JsonConvert.DeserializeObject<SerializableClass.APIMessages>(webRequest.downloadHandler.text);
+                messages = JsonConvert.DeserializeObject<APIMessages>(webRequest.downloadHandler.text);
                 if (messages.results.Count > 0)
                     callback(messages);
             }
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromToken(string token, Action<SerializableClass.User> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromToken(string token, Action<User> callback)
         {
             var query = $"{APIURL}/auth/self/";
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
             webRequest.SetRequestHeader("Authorization", $"Token {token}");
-            SerializableClass.User user;
+            User user;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
             {
-                user = JsonConvert.DeserializeObject<SerializableClass.User>(webRequest.downloadHandler.text);
+                user = JsonConvert.DeserializeObject<User>(webRequest.downloadHandler.text);
                 TootTallyLogger.LogInfo($"Welcome, {user.username}!");
             }
             else
             {
-                user = new SerializableClass.User()
+                user = new User()
                 {
                     username = "Guest",
                     id = 0,
@@ -117,22 +115,22 @@ namespace TootTally.Utils
             callback(user);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetLoginToken(string username, string password, Action<SerializableClass.LoginToken> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLoginToken(string username, string password, Action<LoginToken> callback)
         {
             var query = $"{APIURL}/auth/token/";
-            var apiObj = new SerializableClass.APILogin() { username = username, password = password };
+            var apiObj = new APILogin() { username = username, password = password };
             var apiLogin = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest(query, apiLogin);
-            SerializableClass.LoginToken token;
+            LoginToken token;
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
             {
-                token = JsonConvert.DeserializeObject<SerializableClass.LoginToken>(webRequest.downloadHandler.text);
+                token = JsonConvert.DeserializeObject<LoginToken>(webRequest.downloadHandler.text);
             }
             else
             {
-                token = new SerializableClass.LoginToken()
+                token = new LoginToken()
                 {
                     token = ""
                 };
@@ -144,7 +142,7 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> SignUpRequest(string username, string password, string pass_check, Action<bool> callback)
         {
             var query = $"{APIURL}/auth/signup/";
-            var apiObj = new SerializableClass.APISignUp() { username = username, password = password, pass_check = pass_check };
+            var apiObj = new APISignUp() { username = username, password = password, pass_check = pass_check };
             var apiSignUp = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest(query, apiSignUp);
             yield return webRequest.SendWebRequest();
@@ -160,14 +158,14 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
         {
             var query = $"{APIURL}/api/replay/start/";
-            var apiObj = new SerializableClass.ReplayUUIDSubmission() { apiKey = Plugin.Instance.APIKey.Value, songHash = songHash, speed = Replays.ReplaySystemManager.gameSpeedMultiplier };
+            var apiObj = new ReplayUUIDSubmission() { apiKey = Plugin.Instance.APIKey.Value, songHash = songHash, speed = Replays.ReplaySystemManager.gameSpeedMultiplier };
             var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest(query, apiKeyAndSongHash);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, query))
             {
-                string replayUUID = JsonConvert.DeserializeObject<SerializableClass.ReplayStart>(webRequest.downloadHandler.text).id;
+                string replayUUID = JsonConvert.DeserializeObject<ReplayStart>(webRequest.downloadHandler.text).id;
                 TootTallyLogger.LogInfo("Current Replay UUID: " + replayUUID);
                 callback(replayUUID);
             }
@@ -176,7 +174,7 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> OnReplayStopUUID(string songHash, string replayUUID)
         {
             var query = $"{APIURL}/api/replay/stop/";
-            var apiObj = new SerializableClass.ReplayStopSubmission() { apiKey = Plugin.Instance.APIKey.Value, replayId = replayUUID };
+            var apiObj = new ReplayStopSubmission() { apiKey = Plugin.Instance.APIKey.Value, replayId = replayUUID };
             var apiKeyAndSongHash = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest(query, apiKeyAndSongHash);
             yield return webRequest.SendWebRequest();
@@ -185,7 +183,7 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo("Stopped UUID: " + replayUUID);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid, Action<SerializableClass.ReplaySubmissionReply> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid, Action<ReplaySubmissionReply> callback)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
 
@@ -213,7 +211,7 @@ namespace TootTally.Utils
             if (!HasError(webRequest, query))
             {
                 TootTallyLogger.LogInfo($"Replay Sent.");
-                callback(JsonConvert.DeserializeObject<SerializableClass.ReplaySubmissionReply>(webRequest.downloadHandler.text));
+                callback(JsonConvert.DeserializeObject<ReplaySubmissionReply>(webRequest.downloadHandler.text));
             }
             else
                 callback(null);
@@ -236,11 +234,21 @@ namespace TootTally.Utils
             }
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, Action<byte[]> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, ProgressBar bar, Action<byte[]> callback)
         {
             UnityWebRequest webRequest = UnityWebRequest.Get(downloadlink);
+            webRequest.SendWebRequest();
 
-            yield return webRequest.SendWebRequest();
+            bar.ToggleActive();
+
+            while (!webRequest.isDone)
+            {
+                bar.UpdateValue(webRequest.downloadProgress);
+
+                yield return null;
+            }
+
+            bar.ToggleActive();
 
             if (!HasError(webRequest, downloadlink))
                 callback(webRequest.downloadHandler.data);
@@ -249,7 +257,7 @@ namespace TootTally.Utils
         }
 
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SerializableClass.SongDataFromDB> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetSongDataFromDB(int songID, Action<SongDataFromDB> callback)
         {
             string query = $"{APIURL}/api/songs/{songID}";
 
@@ -259,7 +267,7 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, query))
             {
-                var songData = JsonConvert.DeserializeObject<SerializableClass.SongInfoFromDB>(webRequest.downloadHandler.text).results[0];
+                var songData = JsonConvert.DeserializeObject<SongInfoFromDB>(webRequest.downloadHandler.text).results[0];
                 callback(songData);
             }
             else
@@ -267,7 +275,7 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<SerializableClass.ScoreDataFromDB>> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetLeaderboardScoresFromDB(int songID, Action<List<ScoreDataFromDB>> callback)
         {
             string query = $"{APIURL}/api/songs/{songID}/leaderboard/";
 
@@ -277,10 +285,10 @@ namespace TootTally.Utils
 
             if (!HasError(webRequest, query))
             {
-                List<SerializableClass.ScoreDataFromDB> scoreList = new List<SerializableClass.ScoreDataFromDB>();
+                List<ScoreDataFromDB> scoreList = new List<ScoreDataFromDB>();
 
-                var leaderboardInfo = JsonConvert.DeserializeObject<SerializableClass.LeaderboardInfo>(webRequest.downloadHandler.text);
-                foreach (SerializableClass.ScoreDataFromDB score in leaderboardInfo.results)
+                var leaderboardInfo = JsonConvert.DeserializeObject<LeaderboardInfo>(webRequest.downloadHandler.text);
+                foreach (ScoreDataFromDB score in leaderboardInfo.results)
                 {
                     scoreList.Add(score);
                 }
@@ -291,17 +299,17 @@ namespace TootTally.Utils
 
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetValidTwitchAccessToken(Action<SerializableClass.TwitchAccessToken> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetValidTwitchAccessToken(Action<TwitchAccessToken> callback)
         {
             string query = $"{APIURL}/api/twitch/self/";
-            var apiObj = new SerializableClass.APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var apiObj = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
             var apiKey = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(apiObj));
             var webRequest = PostUploadRequest(query, apiKey);
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest))
             {
-                var token_info = JsonConvert.DeserializeObject<SerializableClass.TwitchAccessToken>(webRequest.downloadHandler.text);
+                var token_info = JsonConvert.DeserializeObject<TwitchAccessToken>(webRequest.downloadHandler.text);
                 callback(token_info);
             }
             else
@@ -362,13 +370,13 @@ namespace TootTally.Utils
 
         public static IEnumerator<UnityWebRequestAsyncOperation> SendModInfo(Dictionary<string, BepInEx.PluginInfo> modsDict, Action<bool> callback)
         {
-            var sendableModInfo = new SerializableClass.ModInfoAPI();
-            var mods = new List<SerializableClass.SendableModInfo>();
+            var sendableModInfo = new ModInfoAPI();
+            var mods = new List<SendableModInfo>();
             bool allowSubmit = true;
 
             foreach (string key in modsDict.Keys)
             {
-                var mod = new SerializableClass.SendableModInfo
+                var mod = new SendableModInfo
                 {
                     name = modsDict[key].Metadata.Name,
                     version = modsDict[key].Metadata.Version.ToString(),

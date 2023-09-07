@@ -1,24 +1,14 @@
 ﻿using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using Microsoft.FSharp.Core;
-using Mono.Security.Cryptography;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
-using TrombLoader.CustomTracks;
 using UnityEngine;
-using UnityEngine.Networking.Match;
-using UnityEngine.UIElements.UIR;
 using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.SongDownloader
@@ -29,6 +19,7 @@ namespace TootTally.SongDownloader
         private GameObject _songRow;
         private SongDataFromDB _song;
         private GameObject _downloadButton;
+        private ProgressBar _progressBar;
         private TMP_Text _fileSizeText;
         private TMP_Text _durationText;
 
@@ -66,6 +57,7 @@ namespace TootTally.SongDownloader
                         _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
                     }));
                     _downloadButton = GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
+                    _progressBar = GameObjectFactory.CreateProgressBar(_songRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
                 }
                 else
                 {
@@ -98,7 +90,7 @@ namespace TootTally.SongDownloader
         {
             _downloadButton.SetActive(false);
             _fileSizeText.gameObject.SetActive(false);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_song.download, data =>
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_song.download, _progressBar, data =>
             {
                 if (data != null)
                 {

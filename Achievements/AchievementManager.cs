@@ -3,13 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static TootTally.Replays.NewReplaySystem;
-using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
-using TootTally.Utils;
 
 namespace TootTally.Achievements
 {

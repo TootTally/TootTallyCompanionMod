@@ -8,8 +8,6 @@ using HarmonyLib;
 using Microsoft.FSharp.Collections;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using TootTally.CustomLeaderboard;
 using TootTally.Discord;
 using TootTally.GameplayModifier;

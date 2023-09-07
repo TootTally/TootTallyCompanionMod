@@ -1,7 +1,6 @@
 ﻿using System;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace TootTally.Graphics.Animation
 {
