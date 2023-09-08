@@ -21,6 +21,7 @@ namespace TootTally.SongDownloader
         internal GameObject songRowPrefab;
         private List<string> _trackRefList;
         private List<string> _newDownloadedTrackRefs;
+        
 
         public SongDownloadPage() : base("MoreSongs", "More Songs", 20f, new Color(0, 0, 0, 0.1f))
         {
@@ -58,6 +59,7 @@ namespace TootTally.SongDownloader
                     Plugin.Instance.Invoke("ReloadTracks", 0.35f);
                 }
             });
+            _scrollableSliderHandler.accelerationMult = 0.09f;
         }
 
         internal override void OnShow()

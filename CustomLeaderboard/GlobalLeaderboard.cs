@@ -31,9 +31,6 @@ namespace TootTally.CustomLeaderboard
 
         private List<SerializableClass.ScoreDataFromDB> _scoreDataList;
 
-        private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
-        private List<RaycastResult> _raycastHitList;
-
         private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _profilePopup;
         private LoadingIcon _loadingSwirly, _profilePopupLoadingSwirly;
         private Text _errorText;
@@ -43,14 +40,14 @@ namespace TootTally.CustomLeaderboard
         private List<LeaderboardRowEntry> _scoreGameObjectList;
         private SerializableClass.SongDataFromDB _songData;
         private Slider _slider, _gameSpeedSlider;
+        private ScrollableSliderHandler _scrollableSliderHandler;
         private GameObject _sliderHandle;
 
         private Dictionary<int, float> _speedToDiffDict;
 
         private int _currentSelectedSongHash, _localScoreId;
         public bool HasLeaderboard => _leaderboard != null;
-
-        private float _scrollAcceleration;
+        public bool IsMouseOver;
 
         private EasingHelper.SecondOrderDynamics _starMaskAnimation;
 
@@ -64,8 +61,17 @@ namespace TootTally.CustomLeaderboard
 
             _globalLeaderboard = GameObjectFactory.CreateSteamLeaderboardFromPrefab(_leaderboard.transform, "GlobalLeaderboard");
             _globalLeaderboard.SetActive(true);
-            _globalLeaderboardGraphicRaycaster = _globalLeaderboard.GetComponent<GraphicRaycaster>();
-            _raycastHitList = new List<RaycastResult>();
+
+            EventTrigger leaderboardHitboxEvent = _globalLeaderboard.AddComponent<EventTrigger>();
+            EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+            pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+            pointerEnterEvent.callback.AddListener((data) => OnPointerEnter());
+            leaderboardHitboxEvent.triggers.Add(pointerEnterEvent);
+
+            EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
+            pointerExitEvent.eventID = EventTriggerType.PointerExit;
+            pointerExitEvent.callback.AddListener((data) => OnPointerExit());
+            leaderboardHitboxEvent.triggers.Add(pointerExitEvent);
 
 
             GameObject panelBody = _globalLeaderboard.transform.Find("PanelBody").gameObject;
@@ -88,6 +94,11 @@ namespace TootTally.CustomLeaderboard
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
             _slider.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
             _slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
+
+            _scrollableSliderHandler = _slider.gameObject.AddComponent<ScrollableSliderHandler>();
+            _scrollableSliderHandler.slider = _slider;
+            _scrollableSliderHandler.accelerationMult = 0.8f;
+
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
             _sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
 
@@ -110,6 +121,16 @@ namespace TootTally.CustomLeaderboard
             _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
+        }
+
+        public void OnPointerEnter()
+        {
+            _scrollableSliderHandler.enabled = IsMouseOver = true;
+        }
+
+        public void OnPointerExit()
+        {
+            _scrollableSliderHandler.enabled = IsMouseOver = false;
         }
 
         public void ClearBaseLeaderboard()
@@ -250,7 +271,7 @@ namespace TootTally.CustomLeaderboard
         public void UpdateLeaderboard(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
         {
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
-            _scrollAcceleration = 0;
+            _scrollableSliderHandler.ResetAcceleration();
 
             var trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
             var track = TrackLookup.lookup(trackRef);
@@ -313,6 +334,7 @@ namespace TootTally.CustomLeaderboard
                     if (scoreDataList != null)
                     {
                         _scoreDataList = scoreDataList;
+                        _scrollableSliderHandler.accelerationMult = 8f / _scoreDataList.Count;
                         callback(LeaderboardState.ReadyToRefresh);
                     }
                     else
@@ -363,9 +385,6 @@ namespace TootTally.CustomLeaderboard
             _slider.onValueChanged.AddListener((float _value) =>
             {
                 _slider.value = Mathf.Clamp(_value, 0, 1);
-                if (_value == 0f || _value == 1f)
-                    _scrollAcceleration = 0;
-
 
                 foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
@@ -382,34 +401,12 @@ namespace TootTally.CustomLeaderboard
             });
         }
 
-        public void UpdateRaycastHitList()
-        {
-            PointerEventData pointerData = new PointerEventData(null);
-            pointerData.position = Input.mousePosition;
-            _raycastHitList.Clear();
-            _globalLeaderboardGraphicRaycaster.Raycast(pointerData, _raycastHitList);
-        }
-
         public void UpdateStarRatingAnimation()
         {
             _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewVector(_starRatingMaskSizeTarget, Time.deltaTime);
         }
 
-        public bool IsMouseOver() => _raycastHitList.Count > 0;
-
-        public bool IsScrollAccelerationNotNull() => _scrollAcceleration != 0;
-
-        public void UpdateScrolling()
-        {
-            _slider.value += _scrollAcceleration * Time.deltaTime;
-            _scrollAcceleration *= 130f * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
-        }
-
-        public void AddScrollAcceleration(float value)
-        {
-            if (_scoreGameObjectList.Count > 8)
-                _scrollAcceleration -= (value * 0.01f) / Time.deltaTime;
-        }
+        public bool IsScrollingEnabled() => _scrollableSliderHandler.enabled;
 
         public void ClearLeaderboard()
         {

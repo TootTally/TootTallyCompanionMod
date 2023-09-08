@@ -26,6 +26,7 @@ namespace TootTally.Utils.TootTallySettings
         protected GameObject _fullPanel;
         protected CustomButton _backButton;
         protected Slider _verticalSlider;
+        protected ScrollableSliderHandler _scrollableSliderHandler;
         public GameObject gridPanel;
         private Color _bgColor;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
@@ -46,6 +47,9 @@ namespace TootTally.Utils.TootTallySettings
             _backButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
             _verticalSlider = TootTallySettingObjectFactory.CreateVerticalSlider(_fullPanel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
             _verticalSlider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, _verticalSlider.value); });
+            _scrollableSliderHandler = _verticalSlider.gameObject.AddComponent<ScrollableSliderHandler>();
+            _scrollableSliderHandler.slider = _verticalSlider;
+            _scrollableSliderHandler.enabled = false;
 
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
             _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
@@ -114,6 +118,7 @@ namespace TootTally.Utils.TootTallySettings
         public void Show()
         {
             _fullPanel.SetActive(true);
+            _scrollableSliderHandler.enabled = true;
             OnShow();
         }
 
@@ -122,6 +127,7 @@ namespace TootTally.Utils.TootTallySettings
         public void Hide()
         {
             _fullPanel.SetActive(false);
+            _scrollableSliderHandler.enabled = false;
             OnHide();
         }
 

@@ -51,15 +51,6 @@ namespace TootTally.CustomLeaderboard
 
             if (_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateStarRatingAnimation();
-
-            globalLeaderboard.UpdateRaycastHitList();
-
-            if (globalLeaderboard.IsMouseOver() && Input.mouseScrollDelta.y != 0 && !TootTallyOverlayManager.IsPanelActive)
-                globalLeaderboard.AddScrollAcceleration(Input.mouseScrollDelta.y);
-
-            if (globalLeaderboard.IsScrollAccelerationNotNull())
-                globalLeaderboard.UpdateScrolling();
-
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
@@ -99,7 +90,7 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
         [HarmonyPrefix]
         private static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
-        private static bool ShouldScrollSongs() => globalLeaderboard == null || (!globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f) && !TootTallyOverlayManager.IsPanelActive; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
+        private static bool ShouldScrollSongs() => globalLeaderboard == null || (!globalLeaderboard.IsMouseOver || Input.mouseScrollDelta.y == 0f) && !TootTallyOverlayManager.IsPanelActive; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
         [HarmonyPostfix]
