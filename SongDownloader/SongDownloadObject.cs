@@ -10,13 +10,16 @@ using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
 using static TootTally.Utils.APIServices.SerializableClass;
+using static TootTally.Utils.Helpers.FileHelper;
 
 namespace TootTally.SongDownloader
 {
     internal class SongDownloadObject : BaseTootTallySettingObject
     {
         private const string _DOWNLOAD_MIRROR_LINK = "https://sgp1.digitaloceanspaces.com/toottally/chartmirrors/";
-        private const string _DOWNLOAD_DOWNLOAD_LINK = "https://cdn.discordapp.com/";
+        private const string _DISCORD_DOWNLOAD_HEADER = "https://cdn.discordapp.com/";
+        private const string _GOOGLEDRIVE_LINK_HEADER = "https://drive.google.com/file/d/";
+        private const string _GOOGLEDRIVE_DOWNLOAD_HEADER = "https://drive.google.com/uc?export=download&id=";
         private GameObject _songRowContainer;
         private GameObject _songRow;
         private SongDataFromDB _song;
@@ -52,41 +55,74 @@ namespace TootTally.SongDownloader
                 string link = "";
                 if (song.mirror != null && Path.GetExtension(song.mirror).Contains(".zip"))
                     link = song.mirror;
-                else if (song.download != null && song.download.Contains(_DOWNLOAD_DOWNLOAD_LINK) && Path.GetExtension(song.download).Contains(".zip"))
-                    link = song.download;
+                else if (song.download != null)
+                {
+                    if (song.download.Contains(_DISCORD_DOWNLOAD_HEADER) && Path.GetExtension(song.download).Contains(".zip"))
+                        link = song.download;
+                    else if (song.download.Contains(_GOOGLEDRIVE_LINK_HEADER))
+                        link = GetGoogleDriveDownloadLink(song.download);
+                }
+
 
                 if (link != "")
                 {
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, size =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, fileData =>
                     {
-                        var stringSize = FileHelper.SizeSuffix(size, 2);
-                        _fileSizeText.text = stringSize;
-                        _fileSizeText.gameObject.SetActive(true);
-                        _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
+                        if (fileData != null)
+                        {
+                            DisplaySizeFileText(fileData.size);
+                            if (fileData.extension != "zip")
+                                DisplayNotAvailableText(4);
+                            else
+                            {
+                                _downloadButton = GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
+                                _downloadButton.transform.SetSiblingIndex(4);
+                                _progressBar = GameObjectFactory.CreateProgressBar(_songRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
+                            }
+                        }
+                        else
+                        {
+                            DisplayNotAvailableText(3);
+                        }
+                        
                     }));
-                    _downloadButton = GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
-                    _progressBar = GameObjectFactory.CreateProgressBar(_songRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
                 }
                 else
-                {
-                    var notAvailableText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "N/A", "N/A", GameTheme.themeColors.leaderboard.text);
-                    notAvailableText.GetComponent<RectTransform>().sizeDelta = new Vector2(64, 128);
-                    notAvailableText.overflowMode = TMPro.TextOverflowModes.Overflow;
-                    notAvailableText.enableWordWrapping = false;
-                }
+                    DisplayNotAvailableText();
             }
             else
-            {
-                var ownedText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "Owned", "Owned", GameTheme.themeColors.leaderboard.text);
-                ownedText.GetComponent<RectTransform>().sizeDelta = new Vector2(64, 128);
-                ownedText.overflowMode = TMPro.TextOverflowModes.Overflow;
-                ownedText.enableWordWrapping = false;
-            }
+                DisplayOwnedText();
 
             GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("global64.png"), "OpenWebButton", () => Application.OpenURL($"https://toottally.com/song/{song.id}/"));
-            
-            
+
+
             _songRow.SetActive(true);
+        }
+
+        public void DisplaySizeFileText(long size)
+        {
+            var stringSize = FileHelper.SizeSuffix(size, 2);
+            _fileSizeText.text = stringSize;
+            _fileSizeText.gameObject.SetActive(true);
+            _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 128);
+        }
+
+        public void DisplayNotAvailableText(int siblingIndex = -1)
+        {
+            var notAvailableText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "N/A", "N/A", GameTheme.themeColors.leaderboard.text);
+            notAvailableText.GetComponent<RectTransform>().sizeDelta = new Vector2(64, 128);
+            notAvailableText.overflowMode = TextOverflowModes.Overflow;
+            notAvailableText.enableWordWrapping = false;
+            if (siblingIndex != -1)
+                notAvailableText.transform.SetSiblingIndex(siblingIndex);
+        }
+
+        public void DisplayOwnedText()
+        {
+            var ownedText = GameObjectFactory.CreateSingleText(_songRowContainer.transform, "Owned", "Owned", GameTheme.themeColors.leaderboard.text);
+            ownedText.GetComponent<RectTransform>().sizeDelta = new Vector2(64, 128);
+            ownedText.overflowMode = TMPro.TextOverflowModes.Overflow;
+            ownedText.enableWordWrapping = false;
         }
 
         public override void Dispose()
@@ -126,8 +162,10 @@ namespace TootTally.SongDownloader
                     PopUpNotifManager.DisplayNotif("Download failed.");
                     _downloadButton.SetActive(true);
                 }
-                
+
             }));
         }
+
+        private string GetGoogleDriveDownloadLink(string downloadString) => _GOOGLEDRIVE_DOWNLOAD_HEADER + downloadString.Replace(_GOOGLEDRIVE_LINK_HEADER, "").Split('/')[0];
     }
 }

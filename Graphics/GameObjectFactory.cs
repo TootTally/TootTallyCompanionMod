@@ -273,7 +273,6 @@ namespace TootTally.Graphics
 
             errorsHolder.SetActive(false);
 
-            //_errorText = _errorsHolder.transform.Find("error_noleaderboard").GetComponent<Text>();
             errorsHolder.transform.Find("error_noleaderboard").gameObject.SetActive(true);
         }
 

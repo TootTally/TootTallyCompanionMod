@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
@@ -556,13 +557,15 @@ namespace TootTally.Utils
                 callback(null);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> GetFileSize(string downloadLink, Action<long> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetFileSize(string downloadLink, Action<FileHelper.FileData> callback)
         {
             UnityWebRequest webRequest = UnityWebRequest.Head(downloadLink);
             yield return webRequest.SendWebRequest();
 
-            if (!HasError(webRequest, downloadLink))
-                callback(Convert.ToInt64(webRequest.GetResponseHeader("Content-Length")));
+            if (!HasError(webRequest))
+                callback(new FileHelper.FileData() { size = Convert.ToInt64(webRequest.GetResponseHeader("Content-Length")), extension = webRequest.GetResponseHeader("Content-Type").Split('/').Last() });
+            else
+                callback(null);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineFriends(Action<List<User>> callback)

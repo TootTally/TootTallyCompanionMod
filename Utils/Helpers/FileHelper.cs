@@ -124,5 +124,11 @@ namespace TootTally.Utils.Helpers
                 adjustedSize,
                 SizeSuffixes[mag]);
         }
+
+        public class FileData
+        {
+            public long size;
+            public string extension;
+        }
     }
 }
