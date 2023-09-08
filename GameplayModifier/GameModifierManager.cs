@@ -42,7 +42,6 @@ namespace TootTally.GameplayModifier
             _modifierPanel = GameObjectFactory.CreateDefaultPanel(__instance.fullpanel.transform, new Vector2(-35, 60), new Vector2(300, 200), "ModifierPanel");
             _modifierPanel.SetActive(false);
             _modifierPanel.transform.localScale = Vector2.zero;
-            GameObjectFactory.DestroyFromParent(_modifierPanel, "loadingspinner_parent");
             _modifierPanelContainer = _modifierPanel.transform.Find("scoresbody").gameObject;
             _modifierPanelContainer.AddComponent<Mask>();
             var gridLayoutGroup = _modifierPanelContainer.AddComponent<GridLayoutGroup>();

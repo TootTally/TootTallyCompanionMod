@@ -48,7 +48,8 @@ namespace TootTally.Replays
         private static GameObject _pauseArrow;
         private static Vector2 _pauseArrowDestination;
 
-        private static GameObject _loadingSwirly, _tootTallyScorePanel;
+        private static GameObject _tootTallyScorePanel;
+        private static LoadingIcon _loadingSwirly;
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -225,7 +226,6 @@ namespace TootTally.Replays
 
             GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(365, -23), new Vector2(56, 112), "ScorePanelHitbox");
             GameObjectFactory.CreateSingleText(ttHitbox.transform, "ScorePanelHitboxText", "<", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
-            GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
 
             GameObject panelBody = GameObjectFactory.CreateDefaultPanel(UICanvas.transform, new Vector2(750, 0), new Vector2(600, 780), "TootTallyScorePanel");
             _tootTallyScorePanel = panelBody.transform.Find("scoresbody").gameObject;
@@ -233,7 +233,9 @@ namespace TootTally.Replays
             vertLayout.padding = new RectOffset(2, 2, 2, 2);
             vertLayout.childAlignment = TextAnchor.MiddleCenter;
             vertLayout.childForceExpandHeight = vertLayout.childForceExpandWidth = true;
-            _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
+            _loadingSwirly = GameObjectFactory.CreateLoadingIcon(panelBody.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "LoadingSwirly");
+            _loadingSwirly.Show();
+            _loadingSwirly.StartRecursiveAnimation();
 
 
 
@@ -270,23 +272,6 @@ namespace TootTally.Replays
                 __instance.giantscorediamond.transform.Find("cool-s").GetComponent<Image>().sprite = AssetManager.GetSprite("Cool-sss.png");
             __instance.giantscorediamond.transform.Find("cool-s").gameObject.SetActive(true);
         }
-
-
-        public static void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public static void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
-
-        public static void UpdateLoadingSwirlyAnimation()
-        {
-            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-        }
-
-        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
-        [HarmonyPostfix]
-        public static void OnPointSceneControllerUpdateDoSwirlyAnimation()
-        {
-            UpdateLoadingSwirlyAnimation();
-        }
-
-
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.doCoins))]
         [HarmonyPostfix]
@@ -711,13 +696,13 @@ namespace TootTally.Replays
             {
                 if (replaySubmissionReply == null)
                 {
-                    HideLoadingSwirly();
+                    _loadingSwirly.Dispose();
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Score submission disabled for that map.", GameTheme.themeColors.leaderboard.text);
                     return;
                 }
                 if (replaySubmissionReply.tt != 0)
                 {
-                    HideLoadingSwirly();
+                    _loadingSwirly.Dispose();
                     var rankDiff = Math.Abs(replaySubmissionReply.ranking - Plugin.userInfo.rank);
                     var displayMessage = "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!\n" : "\n");
                     displayMessage += $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt\n";
@@ -735,7 +720,7 @@ namespace TootTally.Replays
                 }
                 else
                 {
-                    HideLoadingSwirly();
+                    _loadingSwirly.Dispose();
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Map not rated, no data found.", GameTheme.themeColors.leaderboard.text);
                     GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"Score position: #{replaySubmissionReply.position}", GameTheme.themeColors.leaderboard.text);
                 }

@@ -49,9 +49,7 @@ namespace TootTally.CustomLeaderboard
         {
             if (globalLeaderboard == null) return;
 
-            if (!_hasLeaderboardFinishedLoading)
-                globalLeaderboard.UpdateLoadingSwirlyAnimation();
-            else
+            if (_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateStarRatingAnimation();
 
             globalLeaderboard.UpdateRaycastHitList();

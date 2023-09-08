@@ -17,6 +17,7 @@ namespace TootTally.SongDownloader
         private GameObject _searchButton;
         private GameObject _nextButton, _prevButton;
         private Toggle _toggleRated, _toggleUnrated;
+        private LoadingIcon _loadingIcon;
         internal GameObject songRowPrefab;
         private List<string> _trackRefList;
         private List<string> _newDownloadedTrackRefs;
@@ -34,6 +35,8 @@ namespace TootTally.SongDownloader
             _inputField = TootTallySettingObjectFactory.CreateInputField(_fullPanel.transform, $"{name}InputField", DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, DEFAULT_INPUT_TEXT, false);
             _inputField.onSubmit.AddListener((value) => Search(_inputField.text));
             _inputField.GetComponent<RectTransform>().anchoredPosition = new Vector2(1375, 750);
+
+            _loadingIcon = GameObjectFactory.CreateLoadingIcon(_fullPanel.transform, new Vector2(-300, -75), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), false, "SongSearchLoadingSwirly");
 
             _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-375, -175), DEFAULT_OBJECT_SIZE, "Search" , $"{name}SearchButton", () => Search(_inputField.text)).gameObject;
 
@@ -57,12 +60,24 @@ namespace TootTally.SongDownloader
             });
         }
 
+        internal override void OnShow()
+        {
+            _loadingIcon.StartRecursiveAnimation();
+        }
+
+        internal override void OnHide()
+        {
+            _loadingIcon.StopRecursiveAnimation(true);
+        }
+
+
         private void Search(string input, bool searchWithFilter = true)
         {
             if (input == DEFAULT_INPUT_TEXT)
                 input = "";
             RemoveAllObjects();
             _searchButton.SetActive(false);
+            _loadingIcon.Show();
             if (_nextButton != null)
             {
                 GameObject.DestroyImmediate(_nextButton);
@@ -85,6 +100,7 @@ namespace TootTally.SongDownloader
         private void OnSearchInfoRecieved(SongInfoFromDB searchInfo)
         {
             _searchButton.SetActive(true);
+            _loadingIcon.Hide();
             _verticalSlider.value = 0;
             searchInfo.results.OrderByDescending(x => x.id).ToList()?.ForEach(AddSongToPage);
             if (searchInfo.next != null)

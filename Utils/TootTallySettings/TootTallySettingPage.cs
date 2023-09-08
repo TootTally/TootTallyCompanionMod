@@ -52,10 +52,7 @@ namespace TootTally.Utils.TootTallySettings
             _settingObjectList.ForEach(obj => obj.Initialize());
         }
 
-        public void OnPageAdd()
-        {
-
-        }
+        public virtual void OnPageAdd() { }
 
         public void OnPageRemove()
         {
@@ -112,14 +109,20 @@ namespace TootTally.Utils.TootTallySettings
 
         public BaseTootTallySettingObject GetSettingObjectByName(string name) => _settingObjectList.Find(obj => obj.name == name);
 
+        internal virtual void OnShow() { }
+        
         public void Show()
         {
             _fullPanel.SetActive(true);
+            OnShow();
         }
+
+        internal virtual void OnHide() { }
 
         public void Hide()
         {
             _fullPanel.SetActive(false);
+            OnHide();
         }
 
         public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;

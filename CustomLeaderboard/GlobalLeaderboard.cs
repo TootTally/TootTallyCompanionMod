@@ -20,7 +20,6 @@ namespace TootTally.CustomLeaderboard
         #region constants
         private const string ERROR_NO_LEADERBOARD_FOUND_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
         private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Please upload the chart to TootTally.com\n or use TootBender on discord to create the leaderboard.</size>";
-        private const float SWIRLY_SPEED = 0.5f;
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
         private static float[] _starSizeDeltaPositions = { 0, 20, 58, 96, 134, 172, 210, 248, 285, 324, 361 };
@@ -35,7 +34,8 @@ namespace TootTally.CustomLeaderboard
         private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
         private List<RaycastResult> _raycastHitList;
 
-        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopupLoadingSwirly, _profilePopup;
+        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _profilePopup;
+        private LoadingIcon _loadingSwirly, _profilePopupLoadingSwirly;
         private Text _errorText;
         private TMP_Text _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
@@ -81,8 +81,9 @@ namespace TootTally.CustomLeaderboard
             _tabs = panelBody.transform.Find("tabs").gameObject; //Hidden until icons are loaded
             SetTabsImages();
 
-            _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
-            ShowLoadingSwirly();
+            _loadingSwirly = GameObjectFactory.CreateLoadingIcon(panelBody.transform, new Vector2(-20,0), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "LeaderboardLoadingSwirly");
+            _loadingSwirly.StartRecursiveAnimation();
+            _loadingSwirly.Show();
 
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
             _slider.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
@@ -185,10 +186,11 @@ namespace TootTally.CustomLeaderboard
 
                 GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(381, -207), new Vector2(72, 72), "ProfilePopupHitbox");
                 GameObjectFactory.CreateSingleText(ttHitbox.transform, "ProfilePopupHitboxText", "P", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
-                GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
 
                 _profilePopup = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(525, -300), new Vector2(450, 270), "TootTallyScorePanel");
-                _profilePopupLoadingSwirly = _profilePopup.transform.Find("loadingspinner_parent").gameObject;
+                _profilePopupLoadingSwirly = GameObjectFactory.CreateLoadingIcon(_profilePopup.transform, Vector2.zero, new Vector2(96, 96), AssetManager.GetSprite("icon.png"), true, "ProfilePopupLoadingSwirly");
+                _profilePopupLoadingSwirly.Show();
+                _profilePopupLoadingSwirly.StartRecursiveAnimation();
 
                 var scoresbody = _profilePopup.transform.Find("scoresbody").gameObject;
 
@@ -212,7 +214,7 @@ namespace TootTally.CustomLeaderboard
                     });
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
                     var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt):0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
-                    _profilePopupLoadingSwirly.gameObject.SetActive(false);
+                    _profilePopupLoadingSwirly.Dispose();
                 }));
 
                 new SlideTooltip(ttHitbox, _profilePopup, new Vector2(525, -300), new Vector2(282, -155));
@@ -327,6 +329,9 @@ namespace TootTally.CustomLeaderboard
             Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
         }
 
+        public void ShowLoadingSwirly() => _loadingSwirly.Show();
+        public void HideLoadingSwirly() => _loadingSwirly.Hide();
+
         public void RefreshLeaderboard()
         {
             var count = 1;
@@ -419,7 +424,6 @@ namespace TootTally.CustomLeaderboard
         }
 
         public void ShowSlider() => _slider.gameObject.SetActive(true); public void HideSlider() => _slider.gameObject.SetActive(false);
-        public void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
         public void ShowErrorText() => _errorsHolder.SetActive(true); public void HideErrorText() => _errorsHolder.SetActive(false);
 
         public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + Plugin.userInfo.id);
@@ -435,14 +439,6 @@ namespace TootTally.CustomLeaderboard
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
             }
-
-        }
-
-
-        public void UpdateLoadingSwirlyAnimation()
-        {
-            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-            _profilePopupLoadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
 
         }
 

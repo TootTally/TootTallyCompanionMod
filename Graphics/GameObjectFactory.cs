@@ -228,11 +228,11 @@ namespace TootTally.Graphics
             DestroyFromParent(_panelBodyPrefab, "txt_songname");
             DestroyFromParent(_panelBodyPrefab, "rule");
             DestroyFromParent(_panelBodyPrefab, "HelpBtn");
+            DestroyFromParent(_panelBodyPrefab, "loadingspinner_parent");
 
             SetTabsInPanelBody();
             SetErrorsInPanelBody();
             SetScoreboardInPanelBody();
-            SetSwirlyInPanelBody();
             AddSliderInPanelBody();
         }
 
@@ -291,23 +291,6 @@ namespace TootTally.Graphics
             RectTransform scoreboardRectTransform = scoreboard.GetComponent<RectTransform>();
             scoreboardRectTransform.anchoredPosition = new Vector2(-30, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
-        }
-
-        private static void SetSwirlyInPanelBody()
-        {
-            GameObject loadingSwirly = _panelBodyPrefab.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
-            GameObject swirlyObj = loadingSwirly.transform.Find("swirly").gameObject;
-
-            var image = swirlyObj.GetComponent<Image>();
-            image.sprite = AssetManager.GetSprite("icon.png");
-            image.color = Color.white;
-
-            var rect = swirlyObj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(200, 200);
-            rect.anchoredPosition = Vector2.zero;
-
-            loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
-            loadingSwirly.SetActive(true);
         }
 
         private static void AddSliderInPanelBody()
@@ -589,6 +572,24 @@ namespace TootTally.Graphics
         #endregion
 
         #region Create Objects
+
+        public static LoadingIcon CreateLoadingIcon(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, bool isActive, string name)
+        {
+            GameObject iconHolder = new GameObject(name, typeof(Image));
+            iconHolder.transform.SetParent(canvasTransform);
+
+            var rect = iconHolder.GetComponent<RectTransform>();
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            rect.localScale = Vector3.one;
+
+            Image image = iconHolder.GetComponent<Image>();
+            image.preserveAspect = true;
+            image.color = Color.white;
+            image.sprite = sprite;
+
+            return new LoadingIcon(iconHolder, isActive);
+        }
 
         public static ProgressBar CreateProgressBar(Transform canvasTransform, Vector2 position, Vector2 size, bool active, string name)
         {
@@ -1168,7 +1169,16 @@ namespace TootTally.Graphics
 
         #endregion
 
-        public static void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+        public static void DestroyFromParent(GameObject parent, string objectName)
+        {
+            try
+            {
+                GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+            } catch(Exception e)
+            {
+                TootTallyLogger.LogError($"Object {objectName} couldn't be deleted from {parent.name} parent");
+            }
+        }
 
         public enum TextFont
         {

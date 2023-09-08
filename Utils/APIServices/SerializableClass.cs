@@ -63,6 +63,7 @@ namespace TootTally.Utils.APIServices
             public string short_name;
             public string author;
             public string download;
+            public string mirror;
             public string charter;
             public string track_ref;
             public float song_length;

@@ -33,6 +33,8 @@ namespace TootTally.Graphics.Animation
 
         public void SetTargetVector(Vector3 targetVector) => _targetVector = targetVector;
 
+        public void SetCallback(Action<GameObject> onFinishCallback) => _onFinishCallback = onFinishCallback;
+
         public void UpdateVector()
         {
             if (_gameObject == null)

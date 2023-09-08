@@ -159,10 +159,13 @@ namespace TootTally
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
+                var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, new Vector2(840, -440), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                icon.StartRecursiveAnimation();
                 if (userInfo == null)
                 {
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
+                        icon.Dispose();
                         if (user != null)
                         {
                             OnUserLogin(user);

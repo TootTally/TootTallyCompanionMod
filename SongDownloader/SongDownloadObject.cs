@@ -15,6 +15,8 @@ namespace TootTally.SongDownloader
 {
     internal class SongDownloadObject : BaseTootTallySettingObject
     {
+        private const string _DOWNLOAD_MIRROR_LINK = "https://sgp1.digitaloceanspaces.com/toottally/chartmirrors/";
+        private const string _DOWNLOAD_DOWNLOAD_LINK = "https://cdn.discordapp.com/";
         private GameObject _songRowContainer;
         private GameObject _songRow;
         private SongDataFromDB _song;
@@ -47,9 +49,15 @@ namespace TootTally.SongDownloader
             //lol
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)) && !(_page as SongDownloadPage).IsAlreadyDownloaded(song.track_ref))
             {
-                if (song.download != null && song.download.ToLower().Contains("https://cdn.discordapp.com") && Path.GetExtension(song.download) == ".zip")
+                string link = "";
+                if (song.mirror != null && Path.GetExtension(song.mirror).Contains(".zip"))
+                    link = song.mirror;
+                else if (song.download != null && song.download.Contains(_DOWNLOAD_DOWNLOAD_LINK) && Path.GetExtension(song.download).Contains(".zip"))
+                    link = song.download;
+
+                if (link != "")
                 {
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(song.download, size =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, size =>
                     {
                         var stringSize = FileHelper.SizeSuffix(size, 2);
                         _fileSizeText.text = stringSize;
@@ -90,7 +98,8 @@ namespace TootTally.SongDownloader
         {
             _downloadButton.SetActive(false);
             _fileSizeText.gameObject.SetActive(false);
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_song.download, _progressBar, data =>
+            string link = _song.mirror ?? _song.download;
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(link, _progressBar, data =>
             {
                 if (data != null)
                 {
