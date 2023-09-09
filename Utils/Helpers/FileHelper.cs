@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.Utils.Helpers
 {
@@ -124,6 +125,27 @@ namespace TootTally.Utils.Helpers
                 adjustedSize,
                 SizeSuffixes[mag]);
         }
+
+
+        private const string _DOWNLOAD_MIRROR_LINK = "https://sgp1.digitaloceanspaces.com/toottally/chartmirrors/"; //May or may not use this
+        private const string _DISCORD_DOWNLOAD_HEADER = "https://cdn.discordapp.com/";
+        private const string _GOOGLEDRIVE_LINK_HEADER = "https://drive.google.com/file/d/";
+        private const string _GOOGLEDRIVE_DOWNLOAD_HEADER = "https://drive.google.com/uc?export=download&id=";
+        public static string GetDownloadLinkFromSongData(SongDataFromDB song)
+        {
+            if (song.mirror != null && Path.GetExtension(song.mirror).Contains(".zip"))
+                return song.mirror;
+            else if (song.download != null)
+            {
+                if (song.download.Contains(_DISCORD_DOWNLOAD_HEADER) && Path.GetExtension(song.download).Contains(".zip"))
+                    return song.download;
+                else if (song.download.Contains(_GOOGLEDRIVE_LINK_HEADER))
+                    return GetGoogleDriveDownloadLink(song.download);
+            }
+            return null;
+        }
+
+        private static string GetGoogleDriveDownloadLink(string downloadString) => _GOOGLEDRIVE_DOWNLOAD_HEADER + downloadString.Replace(_GOOGLEDRIVE_LINK_HEADER, "").Split('/')[0];
 
         public class FileData
         {

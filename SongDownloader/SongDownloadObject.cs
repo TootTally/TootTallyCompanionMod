@@ -52,19 +52,9 @@ namespace TootTally.SongDownloader
             //lol
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)) && !(_page as SongDownloadPage).IsAlreadyDownloaded(song.track_ref))
             {
-                string link = "";
-                if (song.mirror != null && Path.GetExtension(song.mirror).Contains(".zip"))
-                    link = song.mirror;
-                else if (song.download != null)
-                {
-                    if (song.download.Contains(_DISCORD_DOWNLOAD_HEADER) && Path.GetExtension(song.download).Contains(".zip"))
-                        link = song.download;
-                    else if (song.download.Contains(_GOOGLEDRIVE_LINK_HEADER))
-                        link = GetGoogleDriveDownloadLink(song.download);
-                }
+                string link = GetDownloadLinkFromSongData(song);
 
-
-                if (link != "")
+                if (link != null)
                 {
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, fileData =>
                     {
@@ -166,6 +156,5 @@ namespace TootTally.SongDownloader
             }));
         }
 
-        private string GetGoogleDriveDownloadLink(string downloadString) => _GOOGLEDRIVE_DOWNLOAD_HEADER + downloadString.Replace(_GOOGLEDRIVE_LINK_HEADER, "").Split('/')[0];
     }
 }

@@ -37,6 +37,7 @@ namespace TootTally
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
         public static int BUILDDATE = 20230908;
+
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
@@ -183,9 +184,7 @@ namespace TootTally
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
-                        {
                             PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", GameTheme.themeColors.notification.warningText, 8.5f);
-                        }
                     }));
                 }
             }
@@ -240,7 +239,7 @@ namespace TootTally
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
-            public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD
+            public static bool GetRidOfThatScreenShakePls() => false; //THANKS GOD
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPrefix]
