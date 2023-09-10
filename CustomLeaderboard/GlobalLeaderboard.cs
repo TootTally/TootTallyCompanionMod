@@ -4,6 +4,7 @@ using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
 using TootTally.Graphics;
+using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
@@ -436,7 +437,11 @@ namespace TootTally.CustomLeaderboard
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
             }
+        }
 
+        public void SendSongInfoToSocket()
+        {
+            SpectatingManager.SendSongInfoToSocket(_songData.track_ref, _songData.id);
         }
 
         private void SetTabsImages()

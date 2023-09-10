@@ -456,6 +456,7 @@ namespace TootTally.Replays
                 gameSpeedMultiplier = 1f;
             }
         }
+
         #endregion
 
         public static NewReplaySystem.ReplayState ResolveLoadReplay(string replayId, LevelSelectController levelSelectControllerInstance)

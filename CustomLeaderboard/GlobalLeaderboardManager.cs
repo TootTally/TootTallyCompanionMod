@@ -151,6 +151,13 @@ namespace TootTally.CustomLeaderboard
 
         }
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
+        [HarmonyPostfix]
+        public static void OnLevelSelectControllerClickPlaySendToSocket()
+        {
+            globalLeaderboard.SendSongInfoToSocket();
+        }
+
         #endregion
     }
 }
