@@ -12,6 +12,7 @@ using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.EventSystems;
 using UnityEngine.Scripting;
 using UnityEngine.UI;
@@ -171,6 +172,9 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     __result = _replay.GetIsTooting;
+                    break;
+                case ReplayManagerState.Spectating:
+                    //TODO SPECTATING
                     break;
             }
 
@@ -338,7 +342,7 @@ namespace TootTally.Replays
             {
                 value = Time.deltaTime * (1 - gameSpeedMultiplier) * -0.22f;
             }
-            else if (!__instance.noteplaying && __instance.breathcounter > 0f)
+            else if (!__instance.noteplaying && __instance.breathcounter >= 0f)
             {
                 if (!__instance.outofbreath)
                     value = Time.deltaTime * (1 - gameSpeedMultiplier) * 8.5f;
@@ -401,6 +405,9 @@ namespace TootTally.Replays
                     //_replaySpeedSlider.onValueChanged.RemoveAllListeners();
                     //Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
+                    break;
+                case ReplayManagerState.Spectating:
+                    //TODO SPECTATING
                     break;
 
             }
@@ -798,7 +805,8 @@ namespace TootTally.Replays
             None,
             Paused,
             Recording,
-            Replaying
+            Replaying,
+            Spectating
         }
     }
 }

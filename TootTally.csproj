@@ -18,6 +18,7 @@
 		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.5.0" />
 		<PackageReference Include="TromboneChamp.TrombLoader" Version="2.0.0-rc.1" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.4.40" />
+		<PackageReference Include="websocket-sharp-customheaders" Version="1.0.2.31869" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">

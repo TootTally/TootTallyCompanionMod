@@ -262,6 +262,8 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
+                SpectatingManager.ConnectToWebSocketServer(1);
+                //SpectatingManager.OpenNewWebSocketConnection();
                 Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
                 Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
