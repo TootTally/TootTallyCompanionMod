@@ -36,7 +36,9 @@ namespace TootTally.Graphics
         static void YoinkSettingsGraphicsHomeController(HomeController __instance)
         {
             _settingsGraphics = __instance.fullsettingspanel.transform.Find("Settings").gameObject;
-            _settingsPanelVolumeSlider = __instance.set_sld_volume_tromb;
+            _settingsPanelVolumeSlider = GameObject.Instantiate(__instance.set_sld_volume_tromb);
+            _settingsPanelVolumeSlider.gameObject.SetActive(false);
+            GameObject.DontDestroyOnLoad(_settingsPanelVolumeSlider);
             _creditPanel = __instance.ext_credits_go.transform.parent.gameObject;
             OnHomeControllerInitialize();
         }
