@@ -50,7 +50,7 @@ namespace TootTally.Replays
 
         public static void SendUserStateToSocket(UserState userState)
         {
-            var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(),  userState = (int)userState });
+            var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
             SendToSocket(json);
         }
 
@@ -65,7 +65,17 @@ namespace TootTally.Replays
             TootTallyLogger.DebugModeLog(e.Data);
             if (e.IsText)
             {
-                var socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
+                SocketMessage socketMessage;
+                try
+                {
+                    socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
+                }
+                catch (Exception ex)
+                {
+                    TootTallyLogger.LogInfo("Raw message: " + e.Data);
+                    return;
+                }
+
                 if (socketMessage is SocketSongInfo)
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
@@ -77,7 +87,7 @@ namespace TootTally.Replays
                 else if (socketMessage is SocketUserState)
                 {
                     var state = socketMessage as SocketUserState;
-                    PopUpNotifManager.DisplayNotif("User now " + ((UserState)state.userState));
+                    TootTallyLogger.DebugModeLog("User now " + ((UserState)state.userState));
                 }
                 else
                 {
@@ -145,7 +155,7 @@ namespace TootTally.Replays
             Quitting,
         }
 
-        public class SocketMessage 
+        public class SocketMessage
         {
             public string dataType { get; set; }
         }
