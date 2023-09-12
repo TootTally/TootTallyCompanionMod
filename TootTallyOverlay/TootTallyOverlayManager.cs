@@ -8,6 +8,7 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Utils.APIServices.SerializableClass;
 using TMPro;
+using TootTally.Replays;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -255,6 +256,14 @@ namespace TootTally.TootTallyOverlay
         public static void OnRemoveButtonPress(User user) =>
             Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
         public static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
+
+        public static void OnSpectateButtonPress(int id)
+        {
+            if (SpectatingManager.IsConnected)
+                SpectatingManager.Disconnect();
+            SpectatingManager.ConnectToWebSocketServer(id);
+        }
+
         private static void OnFriendResponse(bool value)
         {
             if (value)

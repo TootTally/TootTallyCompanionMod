@@ -640,6 +640,7 @@ namespace TootTally.Graphics
                 else
                     CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { TootTallyOverlayManager.OnAddButtonPress(user); });
                 CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { TootTallyOverlayManager.OpenUserProfile(user.id); });
+                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
             }
             else
             {
