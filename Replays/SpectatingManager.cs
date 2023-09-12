@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -6,6 +7,7 @@ using System.Runtime.Remoting.Channels;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Experimental.AI;
 using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using WebSocketSharp;
@@ -17,6 +19,7 @@ namespace TootTally.Replays
     {
         private const string SPEC_URL = "wss://spec.toottally.com:443/spec/";
         private static WebSocket _websocket;
+        private static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         public static bool IsHost;
         public static bool IsConnected;
 
@@ -41,19 +44,19 @@ namespace TootTally.Replays
 
         public static void SendSongInfoToSocket(string trackRef, int id)
         {
-            var json = JsonConvert.SerializeObject(new SocketMessage() { dataType = DataType.SongInfo.ToString(), data = new SocketSongData() { trackRef = trackRef, songID = id } });
+            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id });
             SendToSocket(json);
         }
 
         public static void SendUserStateToSocket(UserState userState)
         {
-            var json = JsonConvert.SerializeObject(new SocketMessage() { dataType = DataType.UserState.ToString(), data = new SocketUserState() { userState = userState.ToString() } });
+            var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(),  userState = userState.ToString() });
             SendToSocket(json);
         }
 
         public static void SendFrameData(float noteHolder, float pointerPosition, bool isTooting)
         {
-            var json = JsonConvert.SerializeObject(new SocketMessage() { dataType = DataType.FrameData.ToString(), data = new SocketFrameData() { noteHolder = noteHolder, pointerPosition = pointerPosition, isTooting = isTooting } });
+            var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), noteHolder = noteHolder, pointerPosition = pointerPosition, isTooting = isTooting });
             SendToSocket(json);
         }
 
@@ -62,20 +65,23 @@ namespace TootTally.Replays
             TootTallyLogger.LogInfo(e.Data);
             if (e.IsText)
             {
-                /*var message = JsonConvert.DeserializeObject<SocketMessage>(e.Data);
-                if (message.dataType == DataType.SongInfo.ToString())
+                var socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
+                if (socketMessage is SocketSongInfo)
                 {
-
+                    TootTallyLogger.DebugModeLog("SongInfo Detected");
                 }
-                else if (message.dataType == DataType.FrameData.ToString())
+                else if (socketMessage is SocketFrameData)
                 {
-
-                } 
-                else if (message.dataType == DataType.UserState.ToString())
+                    TootTallyLogger.DebugModeLog("FrameData Detected");
+                }
+                else if (socketMessage is SocketUserState)
                 {
-
-                }*/
-
+                    TootTallyLogger.DebugModeLog("Userstate Detected");
+                }
+                else
+                {
+                    TootTallyLogger.DebugModeLog("Nothing Detected");
+                }
             }
 
         }
@@ -138,32 +144,60 @@ namespace TootTally.Replays
             Quitting,
         }
 
-        [Serializable]
-        public class SocketMessage
+        public class SocketMessage 
         {
             public string dataType { get; set; }
-            public ISocketData data { get; set; }
-
         }
 
-        public class SocketUserState : ISocketData
+        public class SocketUserState : SocketMessage
         {
             public string userState { get; set; }
         }
 
-        public class SocketFrameData : ISocketData
+        public class SocketFrameData : SocketMessage
         {
             public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
             public bool isTooting { get; set; }
         }
 
-        public class SocketSongData : ISocketData
+        public class SocketSongInfo : SocketMessage
         {
             public string trackRef { get; set; }
             public int songID { get; set; }
         }
 
-        public interface ISocketData { }
+        public class SocketDataConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType)
+            {
+                return (objectType == typeof(SocketMessage));
+            }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                JObject jo = JObject.Load(reader);
+                if (jo["dataType"].Value<string>() == DataType.UserState.ToString())
+                    return jo.ToObject<SocketUserState>(serializer);
+
+                if (jo["dataType"].Value<string>() == DataType.FrameData.ToString())
+                    return jo.ToObject<SocketFrameData>(serializer);
+
+                if (jo["dataType"].Value<string>() == DataType.SongInfo.ToString())
+                    return jo.ToObject<SocketSongInfo>(serializer);
+
+                return null;
+            }
+
+            public override bool CanWrite
+            {
+                get { return false; }
+            }
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }
