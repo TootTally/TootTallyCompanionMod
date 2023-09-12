@@ -1,16 +1,7 @@
-﻿using BaboonAPI.Hooks.Tracks;
-using Microsoft.FSharp.Core;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using TootTally.Utils;
-using UnityEngine.Playables;
 using WebSocketSharp;
-using static TootTally.Replays.SpectatingManager;
 
 namespace TootTally.Replays
 {

@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using TootTally.Replays;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -26,8 +25,6 @@ namespace TootTally.TootTallyOverlay
         public static void SetLevelSelectUserStatusOnAdvanceSongs()
         {
             UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.BrowsingSongs);
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.SelectingSong);
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
@@ -43,40 +40,6 @@ namespace TootTally.TootTallyOverlay
         {
             var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
             UserStatusManager.SetUserStatus(status);
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.Playing);
-        }
-
-        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
-        [HarmonyPostfix]
-        public static void OnResumeSetUserStatus()
-        {
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.Paused);
-        }
-
-        [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
-        [HarmonyPostfix]
-        public static void OnPauseSetUserStatus()
-        {
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.Playing);
-        }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
-        [HarmonyPostfix]
-        public static void OnQuitSetUserStatus()
-        {
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.Quitting);
-        }
-
-        [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
-        [HarmonyPostfix]
-        public static void OnRetryingSetUserStatus()
-        {
-            if (SpectatingManager.IsHost)
-                SpectatingManager.SendUserStateToSocket(SpectatingManager.UserState.Restarting);
         }
     }
 }

@@ -1,16 +1,9 @@
-﻿using BaboonAPI.Hooks.Tracks;
-using Microsoft.FSharp.Core;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static TootTally.Replays.SpectatingManager;
 using TootTally.Utils;
-using UnityEngine.Playables;
 using WebSocketSharp;
-using TMPro;
 
 namespace TootTally.Replays
 {
@@ -18,22 +11,22 @@ namespace TootTally.Replays
     {
         private WebsocketManager _websocketManager;
 
-        private static List<SocketFrameData> _receivedFrameData;
-        private static List<SocketSongInfo> _receivedSongInfo;
-        private static List<SocketUserState> _receivedUserState;
+        private static Stack<SocketFrameData> _receivedFrameDataStack;
+        private static Stack<SocketSongInfo> _receivedSongInfoStack;
+        private static Stack<SocketUserState> _receivedUserStateStack;
         private static SocketSongInfo _currentSongInfo;
         private static UserState _currentUserState;
 
-        public static Action<SocketFrameData> OnSocketFrameDataReceiveStack;
-        public static Action<SocketUserState> OnSocketUserStateReceiveStack;
-        public static Action<SocketSongInfo> OnSocketSongInfoStack;
+        public static Action<SocketFrameData> OnSocketFrameDataReceived;
+        public static Action<SocketUserState> OnSocketUserStateReceived;
+        public static Action<SocketSongInfo> OnSocketSongInfoReceived;
         public bool GetIsHost => _websocketManager.IsHost;
 
         public SpectatingSystem(int id)
         {
-            _receivedFrameData = new List<SocketFrameData>();
-            _receivedSongInfo = new List<SocketSongInfo>();
-            _receivedUserState = new List<SocketUserState>();
+            _receivedFrameDataStack = new Stack<SocketFrameData>();
+            _receivedSongInfoStack = new Stack<SocketSongInfo>();
+            _receivedUserStateStack = new Stack<SocketUserState>();
             _websocketManager = new WebsocketManager(id);
         }
 
@@ -71,10 +64,11 @@ namespace TootTally.Replays
                     TootTallyLogger.LogInfo("Raw message: " + e.Data);
                     return;
                 }
+
                 if (socketMessage is SocketSongInfo)
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
-                    _receivedSongInfo.Add(socketMessage as SocketSongInfo);
+                    _receivedSongInfoStack.Push(socketMessage as SocketSongInfo);
                     /*if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_currentSongInfo.trackRef)))
                         ReplaySystemManager.SetTrackToSpectatingTrackref(_currentSongInfo.trackRef);
                     else
@@ -84,12 +78,12 @@ namespace TootTally.Replays
                 else if (socketMessage is SocketFrameData)
                 {
                     TootTallyLogger.DebugModeLog("FrameData Detected");
-                    _receivedFrameData.Add(socketMessage as SocketFrameData);
+                    _receivedFrameDataStack.Push(socketMessage as SocketFrameData);
                 }
                 else if (socketMessage is SocketUserState)
                 {
                     TootTallyLogger.DebugModeLog("UserState Detected");
-                    _receivedUserState.Add(socketMessage as SocketUserState);
+                    _receivedUserStateStack.Push(socketMessage as SocketUserState);
                 }
                 else
                 {
@@ -100,7 +94,13 @@ namespace TootTally.Replays
 
         public void UpdateStacks()
         {
-            
+            if (_receivedFrameDataStack.TryPop(out SocketFrameData frameData))
+                OnSocketFrameDataReceived?.Invoke(frameData);
+            if (_receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
+                OnSocketSongInfoReceived?.Invoke(songInfo);
+            if (_receivedUserStateStack.TryPop(out SocketUserState userState))
+                OnSocketUserStateReceived?.Invoke(userState);
+
         }
 
         public void Disconnect()

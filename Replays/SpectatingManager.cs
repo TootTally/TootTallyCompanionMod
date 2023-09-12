@@ -1,20 +1,8 @@
-﻿using BaboonAPI.Hooks.Tracks;
-using Microsoft.FSharp.Core;
+﻿using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Runtime.Remoting.Channels;
-using TootTally.CustomLeaderboard;
-using TootTally.Utils;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Experimental.AI;
-using UnityEngine.Networking;
-using UnityEngine.Playables;
-using UnityEngine.UIElements;
-using WebSocketSharp;
 
 namespace TootTally.Replays
 {
@@ -22,13 +10,15 @@ namespace TootTally.Replays
     {
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
-
+        private static SpectatingSystem _hostedSpectator;
 
         public static SpectatingSystem CreateNewSpectatingConnection(int id)
         {
             _spectatingSystemList ??= new List<SpectatingSystem>();
             var spec = new SpectatingSystem(id);
             _spectatingSystemList.Add(spec);
+            if (id == Plugin.userInfo.id)
+                _hostedSpectator = spec;
             return spec;
         }
 
@@ -120,6 +110,51 @@ namespace TootTally.Replays
             {
                 throw new NotImplementedException();
             }
+
+            #region patches
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPostfix]
+            public static void SetLevelSelectUserStatusOnAdvanceSongs()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.SelectingSong);
+            }
+
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
+            [HarmonyPostfix]
+            public static void SetPlayingUserStatus()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+            }
+
+            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
+            [HarmonyPostfix]
+            public static void OnResumeSetUserStatus()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.Paused);
+            }
+
+            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
+            [HarmonyPostfix]
+            public static void OnPauseSetUserStatus()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
+            [HarmonyPostfix]
+            public static void OnQuitSetUserStatus()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.Quitting);
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
+            [HarmonyPostfix]
+            public static void OnRetryingSetUserStatus()
+            {
+                _hostedSpectator?.SendUserStateToSocket(UserState.Restarting);
+            }
         }
+        #endregion
     }
 }

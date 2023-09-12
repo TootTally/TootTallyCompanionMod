@@ -259,9 +259,7 @@ namespace TootTally.TootTallyOverlay
 
         public static void OnSpectateButtonPress(int id)
         {
-            if (SpectatingManager.IsConnected)
-                SpectatingManager.Disconnect();
-            SpectatingManager.ConnectToWebSocketServer(id);
+            SpectatingManager.CreateUniqueSpectatingConnection(id);
         }
 
         private static void OnFriendResponse(bool value)
