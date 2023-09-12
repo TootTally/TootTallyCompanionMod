@@ -51,6 +51,7 @@ namespace TootTally.Replays
 
         private static GameObject _tootTallyScorePanel;
         private static LoadingIcon _loadingSwirly;
+        private static LevelSelectController _currentLevelSelectInstance;
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -66,6 +67,11 @@ namespace TootTally.Replays
 
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
+            else if (_replayFileName != "Spectating")
+            {
+                _replayManagerState = ReplayManagerState.Spectating;
+                OnSpectatingStart();
+            }
             else
             {
                 OnReplayingStart();
@@ -449,6 +455,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnLevelselectControllerStartInstantiateReplay(LevelSelectController __instance)
         {
+            _currentLevelSelectInstance = __instance;
             if (_replay == null)
             {
                 _replayManagerState = ReplayManagerState.None;
@@ -521,6 +528,15 @@ namespace TootTally.Replays
             _replay.ClearData();
             _replay.SetupRecording(__instance);
             _replayManagerState = ReplayManagerState.Recording;
+        }
+
+        public static void OnSpectatingStart()
+        {
+            _replay.OnReplayPlayerStart();
+            _lastIsTooting = false;
+            wasPlayingReplay = true;
+            _replayManagerState = ReplayManagerState.Spectating;
+            TootTallyLogger.LogInfo("Spectating Started");
         }
 
         public static void OnReplayingStart()
@@ -798,6 +814,23 @@ namespace TootTally.Replays
             GameObject retrybtn = __instance.panelobj.transform.Find("buttons/ButtonRetry").gameObject;
             retrybtn.transform.Find("RETRY").GetComponent<Text>().text = "Restart Replay";
             _pauseArrowDestination = new Vector2(28, -37);
+        }
+
+        public static void SetTrackToSpectatingTrackref(string trackref)
+        {
+            if (_currentLevelSelectInstance == null) return;
+            for (int i = 0; i < _currentLevelSelectInstance.alltrackslist.Count; i++)
+            {
+                if (_currentLevelSelectInstance.alltrackslist[i].trackref == trackref)
+                {
+                    if (i - _currentLevelSelectInstance.songindex != 0)
+                    {
+                        // Only advance songs if we're not on the same song already
+                        _currentLevelSelectInstance.advanceSongs(i - _currentLevelSelectInstance.songindex, true);
+                        //Add some verification here just in case
+                    }
+                }
+            }
         }
 
 

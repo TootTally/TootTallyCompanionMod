@@ -1,14 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using BaboonAPI.Hooks.Tracks;
+using Microsoft.FSharp.Core;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.Remoting.Channels;
+using TootTally.CustomLeaderboard;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Experimental.AI;
 using UnityEngine.Networking;
+using UnityEngine.Playables;
 using UnityEngine.UIElements;
 using WebSocketSharp;
 using static Mono.Security.X509.X520;
@@ -22,6 +26,9 @@ namespace TootTally.Replays
         private static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         public static bool IsHost;
         public static bool IsConnected;
+        public static List<SocketFrameData> FrameData;
+        private static SocketSongInfo _songInfo;
+        public static UserState CurrentUserState;
 
         public static void OpenNewWebSocketConnection()
         {
@@ -42,9 +49,9 @@ namespace TootTally.Replays
             _websocket.Send(data);
         }
 
-        public static void SendSongInfoToSocket(string trackRef, int id)
+        public static void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
         {
-            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id });
+            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed });
             SendToSocket(json);
         }
 
@@ -62,8 +69,8 @@ namespace TootTally.Replays
 
         public static void OnDataReceived(object sender, MessageEventArgs e)
         {
-            TootTallyLogger.DebugModeLog(e.Data);
-            if (e.IsText)
+            TootTallyLogger.LogInfo(e.Data);
+            if (e.IsText && !IsHost)
             {
                 SocketMessage socketMessage;
                 try
@@ -72,22 +79,41 @@ namespace TootTally.Replays
                 }
                 catch (Exception ex)
                 {
+                    TootTallyLogger.LogInfo("Couldn't parse to data.");
                     TootTallyLogger.LogInfo("Raw message: " + e.Data);
                     return;
                 }
-
                 if (socketMessage is SocketSongInfo)
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
+                    _songInfo = (SocketSongInfo)socketMessage;
+                    FrameData.Clear();
+                    if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_songInfo.trackRef)))
+                        ReplaySystemManager.SetTrackToSpectatingTrackref(_songInfo.trackRef);
+                    else
+                        TootTallyLogger.LogInfo("Do not own the song " + _songInfo.trackRef);
+
                 }
                 else if (socketMessage is SocketFrameData)
                 {
                     TootTallyLogger.DebugModeLog("FrameData Detected");
+                    FrameData.Add(socketMessage as SocketFrameData);
                 }
                 else if (socketMessage is SocketUserState)
                 {
                     var state = socketMessage as SocketUserState;
-                    TootTallyLogger.DebugModeLog("User now " + ((UserState)state.userState));
+                    if (CurrentUserState != (UserState)state.userState)
+                    {
+                        CurrentUserState = (UserState)state.userState;
+                        if (_songInfo != null && (UserState)state.userState == UserState.Playing)
+                        {
+                            ReplaySystemManager.gameSpeedMultiplier = _songInfo.gameSpeed;
+                            GlobalVariables.gamescrollspeed = _songInfo.scrollSpeed;
+                            
+                            //Start the replay here, dont forget to set gamespeed and scrollspeed
+                        }
+                        TootTallyLogger.DebugModeLog("User now " + CurrentUserState);
+                    }
                 }
                 else
                 {
@@ -96,6 +122,7 @@ namespace TootTally.Replays
             }
 
         }
+
 
         public static void OnWebSocketOpen(object sender, EventArgs e)
         {
@@ -143,7 +170,6 @@ namespace TootTally.Replays
             UserState,
             SongInfo,
             FrameData,
-
         }
 
         public enum UserState
@@ -176,6 +202,8 @@ namespace TootTally.Replays
         {
             public string trackRef { get; set; }
             public int songID { get; set; }
+            public float gameSpeed { get; set; }
+            public float scrollSpeed { get; set; }
         }
 
         public class SocketDataConverter : JsonConverter

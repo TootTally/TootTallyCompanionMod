@@ -441,7 +441,7 @@ namespace TootTally.CustomLeaderboard
 
         public void SendSongInfoToSocket()
         {
-            SpectatingManager.SendSongInfoToSocket(_songData.track_ref, _songData.id);
+            SpectatingManager.SendSongInfoToSocket(_songData.track_ref, _songData.id, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
         }
 
         private void SetTabsImages()

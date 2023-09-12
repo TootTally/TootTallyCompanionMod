@@ -220,6 +220,7 @@ namespace TootTally.Replays
         #endregion
 
         #region ReplayPlayer
+
         public void OnReplayPlayerStart()
         {
             _lastTiming = 0;
