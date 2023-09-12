@@ -13,6 +13,7 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
+using static Unity.Audio.Handle;
 
 namespace TootTally.Replays
 {
@@ -89,6 +90,8 @@ namespace TootTally.Replays
                 && _frameData.Last()[(int)FrameDataStructure.MousePositionY] != _lastFrameData[(int)FrameDataStructure.MousePositionY]))
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
 
+            if (SpectatingManager.IsHosting)
+                SpectatingManager.hostedSpectator.SendFrameData(noteHolderPosition, pointerPos, __instance.isNoteButtonPressed());
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -99,8 +102,9 @@ namespace TootTally.Replays
             var currentHealth = __instance.currenthealth;
             var noteScoreAverage = __instance.notescoreaverage * 1000;
 
-            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1, (int)noteScoreAverage });
+            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1, (int)noteScoreAverage });           
         }
+
 
         public void RecordToot(GameController __instance)
         {

@@ -60,7 +60,7 @@ namespace TootTally
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
             _harmony = new Harmony(Info.Metadata.GUID);
-            TootTallyLogger.Initialize();
+            gameObject.AddComponent<TootTallyLogger>();
 
             // Config
             APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions.");

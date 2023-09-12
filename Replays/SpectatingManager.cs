@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using Microsoft.FSharp.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,7 +13,8 @@ namespace TootTally.Replays
     {
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
-        private static SpectatingSystem _hostedSpectator;
+        public static SpectatingSystem hostedSpectator;
+        public static bool IsHosting => hostedSpectator != null && hostedSpectator.GetIsHost;
 
         public void Awake()
         {
@@ -31,7 +33,7 @@ namespace TootTally.Replays
             var spec = new SpectatingSystem(id);
             _spectatingSystemList.Add(spec);
             if (id == Plugin.userInfo.id)
-                _hostedSpectator = spec;
+                hostedSpectator = spec;
             return spec;
         }
 
@@ -96,7 +98,7 @@ namespace TootTally.Replays
         {
             public override bool CanConvert(Type objectType)
             {
-                return (objectType == typeof(SocketMessage));
+                return objectType == typeof(SocketMessage);
             }
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
@@ -129,7 +131,7 @@ namespace TootTally.Replays
             [HarmonyPostfix]
             public static void SetLevelSelectUserStatusOnAdvanceSongs()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.SelectingSong);
+                hostedSpectator?.SendUserStateToSocket(UserState.SelectingSong);
             }
 
 
@@ -137,42 +139,42 @@ namespace TootTally.Replays
             [HarmonyPostfix]
             public static void SetPlayingUserStatus()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+                hostedSpectator?.SendUserStateToSocket(UserState.Playing);
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
             [HarmonyPostfix]
             public static void OnResumeSetUserStatus()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.Paused);
+                hostedSpectator?.SendUserStateToSocket(UserState.Paused);
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
             [HarmonyPostfix]
             public static void OnPauseSetUserStatus()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+                hostedSpectator?.SendUserStateToSocket(UserState.Playing);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
             [HarmonyPostfix]
             public static void OnQuitSetUserStatus()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.Quitting);
+                hostedSpectator?.SendUserStateToSocket(UserState.Quitting);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
             [HarmonyPostfix]
             public static void OnRetryingSetUserStatus()
             {
-                _hostedSpectator?.SendUserStateToSocket(UserState.Restarting);
+                hostedSpectator?.SendUserStateToSocket(UserState.Restarting);
             }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
             [HarmonyPostfix]
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
-                _hostedSpectator.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                hostedSpectator.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
             }
         }
         #endregion

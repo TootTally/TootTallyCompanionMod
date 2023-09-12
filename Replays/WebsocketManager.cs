@@ -16,19 +16,7 @@ namespace TootTally.Replays
 
         public WebsocketManager(int id)
         {
-            if (id == Plugin.userInfo.id)
-                OpenNewWebSocketConnection();
-            else
-                ConnectToWebSocketServer(id);
-        }
-
-        public void OpenNewWebSocketConnection()
-        {
-            _websocket = CreateNewWebSocket(SPEC_URL + Plugin.userInfo.id);
-            IsHost = true;
-            _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } };
-            TootTallyLogger.LogInfo($"Connecting to WebSocket server...");
-            _websocket.ConnectAsync();
+            ConnectToWebSocketServer(id);
         }
 
         public void SendToSocket(byte[] data)

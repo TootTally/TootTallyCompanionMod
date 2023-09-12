@@ -28,6 +28,7 @@ namespace TootTally.Replays
             _receivedSongInfoStack = new Stack<SocketSongInfo>();
             _receivedUserStateStack = new Stack<SocketUserState>();
             _websocketManager = new WebsocketManager(id);
+            _websocketManager.OnMessageReceived = OnDataReceived;
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
@@ -50,8 +51,7 @@ namespace TootTally.Replays
 
         public void OnDataReceived(MessageEventArgs e)
         {
-            TootTallyLogger.LogInfo(e.Data);
-            if (e.IsText && !_websocketManager.IsHost)
+            if (e.IsText)
             {
                 SocketMessage socketMessage;
                 try
