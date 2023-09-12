@@ -4,18 +4,30 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using TootTally.CustomLeaderboard;
+using UnityEngine;
 
 namespace TootTally.Replays
 {
-    public static class SpectatingManager
+    public class SpectatingManager : MonoBehaviour
     {
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
         private static SpectatingSystem _hostedSpectator;
 
-        public static SpectatingSystem CreateNewSpectatingConnection(int id)
+        public void Awake()
         {
             _spectatingSystemList ??= new List<SpectatingSystem>();
+            if (Plugin.Instance.AllowSpectate.Value)
+                CreateUniqueSpectatingConnection(Plugin.userInfo.id);
+        }
+
+        public void Update()
+        {
+            _spectatingSystemList?.ForEach(s => s.UpdateStacks());
+        }
+
+        public static SpectatingSystem CreateNewSpectatingConnection(int id)
+        {
             var spec = new SpectatingSystem(id);
             _spectatingSystemList.Add(spec);
             if (id == Plugin.userInfo.id)

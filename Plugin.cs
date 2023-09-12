@@ -44,6 +44,7 @@ namespace TootTally
         public ConfigEntry<bool> DebugMode { get; private set; }
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
         public ConfigEntry<bool> ShowCoolS { get; private set; }
+        public ConfigEntry<bool> AllowSpectate { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -67,6 +68,7 @@ namespace TootTally
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
             ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select.");
             ShowCoolS = Config.Bind("General", "Show Cool S", false, "Show special graphic when getting SS and SSS on a song.");
+            AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
@@ -84,6 +86,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("DebugMode", new Vector2(400, 50), "Debug Mode", DebugMode);
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", new Vector2(400, 50), "Show Leaderboards", ShowLeaderboard);
                 _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
+                _tootTallyMainPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
                 //Adding / Removing causes out of bound / index not found exceptions
@@ -161,7 +164,7 @@ namespace TootTally
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
-                
+
                 if (userInfo == null)
                 {
                     var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, new Vector2(840, -440), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
@@ -263,7 +266,8 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
-                SpectatingManager.CreateNewSpectatingConnection(userInfo.id);
+
+                Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
                 Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
                 Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
