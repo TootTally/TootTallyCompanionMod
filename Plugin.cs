@@ -86,7 +86,6 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
-                _tootTallyMainPage.AddTextField("text", "Hello grist", false, SpectatingManager.SendToSocket);
                 //Adding / Removing causes out of bound / index not found exceptions
             }
             AssetManager.LoadAssets();
@@ -96,6 +95,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
+            _harmony.PatchAll(typeof(SpectatingManager));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
@@ -263,7 +263,7 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
-                SpectatingManager.ConnectToWebSocketServer(userInfo.id);
+                SpectatingManager.CreateNewSpectatingConnection(userInfo.id);
                 Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
                 Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);

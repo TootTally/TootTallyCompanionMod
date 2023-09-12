@@ -15,154 +15,37 @@ using UnityEngine.Networking;
 using UnityEngine.Playables;
 using UnityEngine.UIElements;
 using WebSocketSharp;
-using static Mono.Security.X509.X520;
 
 namespace TootTally.Replays
 {
     public static class SpectatingManager
     {
-        private const string SPEC_URL = "wss://spec.toottally.com:443/spec/";
-        private static WebSocket _websocket;
-        private static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
-        public static bool IsHost;
-        public static bool IsConnected;
-        public static List<SocketFrameData> FrameData;
-        private static SocketSongInfo _songInfo;
-        public static UserState CurrentUserState;
+        public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
+        private static List<SpectatingSystem> _spectatingSystemList;
 
-        public static void OpenNewWebSocketConnection()
+
+        public static SpectatingSystem CreateNewSpectatingConnection(int id)
         {
-            _websocket = CreateNewWebSocket(SPEC_URL + Plugin.userInfo.id);
-            IsHost = true;
-            _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } };
-            TootTallyLogger.LogInfo($"Connecting to WebSocket server...");
-            _websocket.ConnectAsync();
+            _spectatingSystemList ??= new List<SpectatingSystem>();
+            var spec = new SpectatingSystem(id);
+            _spectatingSystemList.Add(spec);
+            return spec;
         }
 
-        public static void SendToSocket(byte[] data)
+        public static void RemoveSpectator(SpectatingSystem spectator)
         {
-            _websocket.Send(data);
+            spectator.Disconnect();
+            if (_spectatingSystemList.Contains(spectator))
+                _spectatingSystemList.Remove(spectator);
         }
 
-        public static void SendToSocket(string data)
+        public static SpectatingSystem CreateUniqueSpectatingConnection(int id)
         {
-            _websocket.Send(data);
-        }
+            if (_spectatingSystemList != null)
+                for (int i = 0; i < _spectatingSystemList.Count;)
+                    RemoveSpectator(_spectatingSystemList[i]);
 
-        public static void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
-        {
-            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed });
-            SendToSocket(json);
-        }
-
-        public static void SendUserStateToSocket(UserState userState)
-        {
-            var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
-            SendToSocket(json);
-        }
-
-        public static void SendFrameData(float noteHolder, float pointerPosition, bool isTooting)
-        {
-            var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), noteHolder = noteHolder, pointerPosition = pointerPosition, isTooting = isTooting });
-            SendToSocket(json);
-        }
-
-        public static void OnDataReceived(object sender, MessageEventArgs e)
-        {
-            TootTallyLogger.LogInfo(e.Data);
-            if (e.IsText && !IsHost)
-            {
-                SocketMessage socketMessage;
-                try
-                {
-                    socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
-                }
-                catch (Exception ex)
-                {
-                    TootTallyLogger.LogInfo("Couldn't parse to data.");
-                    TootTallyLogger.LogInfo("Raw message: " + e.Data);
-                    return;
-                }
-                if (socketMessage is SocketSongInfo)
-                {
-                    TootTallyLogger.DebugModeLog("SongInfo Detected");
-                    _songInfo = (SocketSongInfo)socketMessage;
-                    FrameData.Clear();
-                    if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_songInfo.trackRef)))
-                        ReplaySystemManager.SetTrackToSpectatingTrackref(_songInfo.trackRef);
-                    else
-                        TootTallyLogger.LogInfo("Do not own the song " + _songInfo.trackRef);
-
-                }
-                else if (socketMessage is SocketFrameData)
-                {
-                    TootTallyLogger.DebugModeLog("FrameData Detected");
-                    FrameData.Add(socketMessage as SocketFrameData);
-                }
-                else if (socketMessage is SocketUserState)
-                {
-                    var state = socketMessage as SocketUserState;
-                    if (CurrentUserState != (UserState)state.userState)
-                    {
-                        CurrentUserState = (UserState)state.userState;
-                        if (_songInfo != null && (UserState)state.userState == UserState.Playing)
-                        {
-                            ReplaySystemManager.gameSpeedMultiplier = _songInfo.gameSpeed;
-                            GlobalVariables.gamescrollspeed = _songInfo.scrollSpeed;
-                            
-                            //Start the replay here, dont forget to set gamespeed and scrollspeed
-                        }
-                        TootTallyLogger.DebugModeLog("User now " + CurrentUserState);
-                    }
-                }
-                else
-                {
-                    TootTallyLogger.DebugModeLog("Nothing Detected");
-                }
-            }
-
-        }
-
-
-        public static void OnWebSocketOpen(object sender, EventArgs e)
-        {
-            TootTallyLogger.LogInfo($"Connected to WebSocket server {_websocket.Url}");
-            IsConnected = true;
-        }
-
-        public static void OnWebSocketClose(object sender, EventArgs e)
-        {
-            TootTallyLogger.LogInfo("Disconnected from websocket");
-            IsConnected = false;
-            IsHost = false;
-        }
-
-        public static void Disconnect()
-        {
-            TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
-            _websocket.Close();
-            _websocket = null;
-        }
-
-        public static void ConnectToWebSocketServer(int userId)
-        {
-            _websocket = CreateNewWebSocket(SPEC_URL + userId);
-            _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } };
-            TootTallyLogger.LogInfo($"Connecting to WebSocket server...");
-            IsHost = userId == Plugin.userInfo.id;
-            _websocket.ConnectAsync();
-        }
-
-        private static WebSocket CreateNewWebSocket(string url)
-        {
-            var ws = new WebSocket(url);
-            ws.Log.Level = LogLevel.Debug;
-            ws.OnError += (sender, e) => { TootTallyLogger.LogError(e.Message); };
-            ws.OnOpen += OnWebSocketOpen;
-            ws.OnClose += OnWebSocketClose;
-            ws.OnMessage += OnDataReceived;
-            ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-            return ws;
+            return CreateNewSpectatingConnection(id);
         }
 
         public enum DataType
