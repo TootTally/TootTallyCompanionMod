@@ -97,9 +97,15 @@ namespace TootTally.Replays
             if (_receivedFrameDataStack.TryPop(out SocketFrameData frameData))
                 OnSocketFrameDataReceived?.Invoke(frameData);
             if (_receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
+            {
                 OnSocketSongInfoReceived?.Invoke(songInfo);
+                _currentSongInfo = songInfo;
+            }
             if (_receivedUserStateStack.TryPop(out SocketUserState userState))
+            {
                 OnSocketUserStateReceived?.Invoke(userState);
+                _currentUserState = (UserState)userState.userState;
+            }
 
         }
 

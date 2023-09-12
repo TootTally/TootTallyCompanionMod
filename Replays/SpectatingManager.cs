@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using TootTally.CustomLeaderboard;
 
 namespace TootTally.Replays
 {
@@ -153,6 +154,13 @@ namespace TootTally.Replays
             public static void OnRetryingSetUserStatus()
             {
                 _hostedSpectator?.SendUserStateToSocket(UserState.Restarting);
+            }
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
+            [HarmonyPostfix]
+            public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
+            {
+                _hostedSpectator.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
             }
         }
         #endregion
