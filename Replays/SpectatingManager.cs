@@ -256,7 +256,7 @@ namespace TootTally.Replays
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
             {
-                ReplaySystemManager.gameSpeedMultiplier = info.gameSpeed;
+                GlobalLeaderboardManager.SetGameSpeedSlider(info.gameSpeed);
                 GlobalVariables.gamescrollspeed = info.scrollSpeed;
                 if (_levelSelectControllerInstance != null)
                 {

@@ -13,7 +13,6 @@ namespace TootTally.Replays
         private Stack<SocketFrameData> _receivedFrameDataStack;
         private Stack<SocketSongInfo> _receivedSongInfoStack;
         private Stack<SocketUserState> _receivedUserStateStack;
-        private SocketSongInfo _currentSongInfo;
         private UserState _currentUserState;
 
         public Action<int, SocketFrameData> OnSocketFrameDataReceived;
@@ -66,7 +65,6 @@ namespace TootTally.Replays
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
                     _receivedSongInfoStack.Push(socketMessage as SocketSongInfo);
-                    _currentSongInfo = socketMessage as SocketSongInfo;               
                 }
                 else if (socketMessage is SocketFrameData)
                 {
@@ -90,14 +88,12 @@ namespace TootTally.Replays
         {
             if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryPop(out SocketFrameData frameData))
                 OnSocketFrameDataReceived.Invoke(_id, frameData);
+
             if (OnSocketSongInfoReceived != null && _receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
-            {
                 OnSocketSongInfoReceived.Invoke(_id, songInfo);
-            }
+
             if (OnSocketUserStateReceived != null && _receivedUserStateStack.TryPop(out SocketUserState userState))
-            {
                 OnSocketUserStateReceived.Invoke(_id, userState);
-            }
 
         }
 

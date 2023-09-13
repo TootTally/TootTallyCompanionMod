@@ -151,6 +151,8 @@ namespace TootTally.CustomLeaderboard
 
         }
 
+
+        public static void SetGameSpeedSlider(float speed) => globalLeaderboard?.SetGameSpeedSliderValue(speed);
         #endregion
     }
 }
