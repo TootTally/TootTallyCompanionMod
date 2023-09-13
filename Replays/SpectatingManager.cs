@@ -33,7 +33,7 @@ namespace TootTally.Replays
         {
             _spectatingSystemList?.ForEach(s => s.UpdateStacks());
 
-            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape)  && _spectatingSystemList.Count >= 0 && !_spectatingSystemList.Last().IsHost)
+            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape)  && _spectatingSystemList.Count > 0 && !IsHosting)
                 _spectatingSystemList.Last().RemoveFromManager();
         }
 
