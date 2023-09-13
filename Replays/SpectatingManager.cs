@@ -10,6 +10,7 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using static TootTally.Replays.ReplaySystemManager;
 
 namespace TootTally.Replays
 {
@@ -18,7 +19,7 @@ namespace TootTally.Replays
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
         public static SpectatingSystem hostedSpectatingSystem;
-        public static bool IsHosting => hostedSpectatingSystem != null && hostedSpectatingSystem.IsHost;
+        public static bool IsHosting => hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected && hostedSpectatingSystem.IsHost;
         public static bool IsSpectating => _spectatingSystemList != null && !IsHosting && _spectatingSystemList.Any(x => x.IsConnected);
 
         public void Awake()
@@ -32,7 +33,7 @@ namespace TootTally.Replays
         {
             _spectatingSystemList?.ForEach(s => s.UpdateStacks());
 
-            if (Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count >= 0 && !_spectatingSystemList.Last().IsHost)
+            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape)  && _spectatingSystemList.Count >= 0 && !_spectatingSystemList.Last().IsHost)
                 _spectatingSystemList.Last().RemoveFromManager();
         }
 
@@ -170,7 +171,9 @@ namespace TootTally.Replays
             {
                 _levelSelectControllerInstance = __instance;
                 _frameData.Clear();
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.SelectingSong);
+                _frameIndex = 0;
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.SelectingSong);
             }
 
 
@@ -189,8 +192,17 @@ namespace TootTally.Replays
                 if (IsSpectating)
                 {
                 }
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Playing);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.Playing);
 
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
+            [HarmonyPostfix]
+            public static void GameControllerIsNoteButtonPressedPostfixPatch(ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+            {
+                if (IsSpectating)
+                    __result = _isTooting;
             }
 
             public static void PlaybackSpectatingData(GameController __instance)
@@ -210,7 +222,7 @@ namespace TootTally.Replays
 
             private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
             {
-                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _frameData[_frameIndex].noteHolder, (_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _frameData[_frameIndex].noteHolder));
+                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _frameData[_frameIndex].pointerPosition, (_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _frameData[_frameIndex].noteHolder));
                 SetCursorPosition(__instance, newCursorPosition);
                 __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
             }
@@ -256,28 +268,31 @@ namespace TootTally.Replays
                     else
                         TootTallyLogger.LogInfo("Do not own the song " + info.trackRef);
                 }
-                
+
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
             [HarmonyPostfix]
             public static void OnResumeSetUserStatus()
             {
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Paused);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.Paused);
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
             [HarmonyPostfix]
             public static void OnPauseSetUserStatus()
             {
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Playing);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.Playing);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
             [HarmonyPostfix]
             public static void OnGameControllerUpdate()
             {
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Quitting);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.Quitting);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
@@ -292,14 +307,16 @@ namespace TootTally.Replays
             [HarmonyPostfix]
             public static void OnRetryingSetUserStatus()
             {
-                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Restarting);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.Restarting);
             }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
             [HarmonyPostfix]
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
-                hostedSpectatingSystem?.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                if (IsHosting)
+                    hostedSpectatingSystem.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
                 _levelSelectControllerInstance = null;
             }
 
