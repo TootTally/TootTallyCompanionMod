@@ -109,6 +109,7 @@ namespace TootTally.Replays
 
         public class SocketFrameData : SocketMessage
         {
+            public float time { get; set; }
             public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
             public bool isTooting { get; set; }
@@ -187,10 +188,15 @@ namespace TootTally.Replays
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
             [HarmonyPostfix]
-            public static void SetPlayingUserStatus()
+            public static void SetPlayingUserStatus(GameController __instance)
             {
                 if (IsSpectating)
                 {
+                    if (_frameData[_frameIndex].time - __instance.musictrack.time <= 4)
+                    {
+                        __instance.musictrack.time = _frameData[_frameIndex].time;
+                        __instance.noteholderr.anchoredPosition = new Vector2(_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
+                    }
                 }
                 if (IsHosting)
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.Playing);
@@ -256,8 +262,12 @@ namespace TootTally.Replays
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
             {
+                if (info == null || info.trackRef == null || info.gameSpeed == 0f) return;
+
                 GlobalLeaderboardManager.SetGameSpeedSlider(info.gameSpeed);
+                TootTallyLogger.LogInfo("GameSpeed Set: " + info.gameSpeed);
                 GlobalVariables.gamescrollspeed = info.scrollSpeed;
+                TootTallyLogger.LogInfo("ScrollSpeed Set: " + info.gameSpeed);
                 if (_levelSelectControllerInstance != null)
                 {
                     if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
