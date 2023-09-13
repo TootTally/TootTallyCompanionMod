@@ -46,7 +46,7 @@ namespace TootTally.Replays
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
-            TootTallyLogger.LogInfo(e.Data);
+            //TootTallyLogger.LogInfo(e.Data);
             if (e.IsText)
             {
                 SocketMessage socketMessage;

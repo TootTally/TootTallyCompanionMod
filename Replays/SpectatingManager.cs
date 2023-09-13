@@ -194,6 +194,7 @@ namespace TootTally.Replays
                 {
                     if (_frameData[_frameIndex].time - __instance.musictrack.time >= 4)
                     {
+                        TootTallyLogger.LogInfo("Syncing track with replay data...");
                         __instance.musictrack.time = _frameData[_frameIndex].time;
                         __instance.noteholderr.anchoredPosition = new Vector2(_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
                     }
