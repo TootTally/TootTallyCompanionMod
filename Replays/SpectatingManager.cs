@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BaboonAPI.Hooks.Tracks;
+using HarmonyLib;
 using Microsoft.FSharp.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -6,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TootTally.CustomLeaderboard;
+using TootTally.Utils;
+using TootTally.Utils.Helpers;
 using UnityEngine;
 
 namespace TootTally.Replays
@@ -14,8 +17,9 @@ namespace TootTally.Replays
     {
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
-        public static SpectatingSystem hostedSpectator;
-        public static bool IsHosting => hostedSpectator != null && hostedSpectator.IsHost;
+        public static SpectatingSystem hostedSpectatingSystem;
+        public static bool IsHosting => hostedSpectatingSystem != null && hostedSpectatingSystem.IsHost;
+        public static bool IsSpectating => _spectatingSystemList != null && !IsHosting && _spectatingSystemList.Any(x => x.IsConnected);
 
         public void Awake()
         {
@@ -37,7 +41,7 @@ namespace TootTally.Replays
             var spec = new SpectatingSystem(id);
             _spectatingSystemList.Add(spec);
             if (id == Plugin.userInfo.id)
-                hostedSpectator = spec;
+                hostedSpectatingSystem = spec;
             return spec;
         }
 
@@ -52,11 +56,11 @@ namespace TootTally.Replays
         {
             if (_spectatingSystemList != null)
             {
-                
+
                 for (int i = 0; i < _spectatingSystemList.Count;)
                     RemoveSpectator(_spectatingSystemList[i]);
-                if (hostedSpectator != null && hostedSpectator.IsConnected)
-                    hostedSpectator = null;
+                if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
+                    hostedSpectatingSystem = null;
             }
 
 
@@ -65,12 +69,12 @@ namespace TootTally.Replays
 
         public static void OnAllowHostConfigChange(bool value)
         {
-            if (value && hostedSpectator == null)
+            if (value && hostedSpectatingSystem == null)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id);
-            else if (!value && hostedSpectator != null)
+            else if (!value && hostedSpectatingSystem != null)
             {
-                RemoveSpectator(hostedSpectator);
-                hostedSpectator = null;
+                RemoveSpectator(hostedSpectatingSystem);
+                hostedSpectatingSystem = null;
             }
         }
 
@@ -148,57 +152,164 @@ namespace TootTally.Replays
             {
                 throw new NotImplementedException();
             }
+        }
 
-            #region patches
+        #region patches
+        public static class SpectatorManagerPatches
+        {
+            private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
+            private static LevelSelectController _levelSelectControllerInstance;
+            private static SocketFrameData _lastFrame;
+            private static bool _isTooting;
+            private static int _frameIndex;
+            private static int _totalScore;
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
-            public static void SetLevelSelectUserStatusOnAdvanceSongs()
+            public static void SetLevelSelectUserStatusOnAdvanceSongs(LevelSelectController __instance)
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.SelectingSong);
+                _levelSelectControllerInstance = __instance;
+                _frameData.Clear();
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.SelectingSong);
             }
 
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void OnGameControllerStart()
+            {
+                if (IsSpectating)
+                    _frameIndex = 0;
+            }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
             [HarmonyPostfix]
             public static void SetPlayingUserStatus()
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+                if (IsSpectating)
+                {
+                }
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Playing);
+
+            }
+
+            public static void PlaybackSpectatingData(GameController __instance)
+            {
+                Cursor.visible = true;
+                if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
+
+                var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
+
+                __instance.totalscore = _totalScore;
+                if (_frameData.Count > _frameIndex && _lastFrame != null)
+                    InterpolateCursorPosition(currentMapPosition, __instance);
+
+                PlaybackFrameData(currentMapPosition, __instance);
+                _isTooting = _frameData[_frameIndex].isTooting;
+            }
+
+            private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
+            {
+                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _frameData[_frameIndex].noteHolder, (_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _frameData[_frameIndex].noteHolder));
+                SetCursorPosition(__instance, newCursorPosition);
+                __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
+            }
+
+            private static void PlaybackFrameData(float currentMapPosition, GameController __instance)
+            {
+                if (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder)
+                {
+                    _lastFrame = _frameData[_frameIndex];
+                }
+
+                while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
+                {
+                    SetCursorPosition(__instance, _frameData[_frameIndex].pointerPosition);
+                    if (_frameIndex < _frameData.Count - 1)
+                        _frameIndex++;
+                }
+            }
+
+            public static void SetCursorPosition(GameController __instance, float newPosition)
+            {
+                Vector3 pointerPosition = __instance.pointer.transform.localPosition;
+                pointerPosition.y = newPosition;
+                __instance.pointer.transform.localPosition = pointerPosition;
+            }
+
+            public static void OnFrameDataReceived(int id, SocketFrameData frameData)
+            {
+                _frameData.Add(frameData);
+            }
+
+            public static void OnSongInfoReceived(int id, SocketSongInfo info)
+            {
+                ReplaySystemManager.gameSpeedMultiplier = info.gameSpeed;
+                GlobalVariables.gamescrollspeed = info.scrollSpeed;
+                if (_levelSelectControllerInstance != null)
+                {
+                    if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
+                    {
+                        ReplaySystemManager.SetTrackToSpectatingTrackref(info.trackRef);
+                        _levelSelectControllerInstance.clickPlay();
+                    }
+                    else
+                        TootTallyLogger.LogInfo("Do not own the song " + info.trackRef);
+                }
+                
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
             [HarmonyPostfix]
             public static void OnResumeSetUserStatus()
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.Paused);
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Paused);
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
             [HarmonyPostfix]
             public static void OnPauseSetUserStatus()
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.Playing);
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Playing);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
             [HarmonyPostfix]
-            public static void OnQuitSetUserStatus()
+            public static void OnGameControllerUpdate()
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.Quitting);
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Quitting);
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
+            [HarmonyPostfix]
+            public static void OnQuitSetUserStatus(GameController __instance)
+            {
+                if (IsSpectating)
+                    PlaybackSpectatingData(__instance);
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
             [HarmonyPostfix]
             public static void OnRetryingSetUserStatus()
             {
-                hostedSpectator?.SendUserStateToSocket(UserState.Restarting);
+                hostedSpectatingSystem?.SendUserStateToSocket(UserState.Restarting);
             }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
             [HarmonyPostfix]
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
-                hostedSpectator.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                hostedSpectatingSystem?.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                _levelSelectControllerInstance = null;
             }
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickBack))]
+            [HarmonyPostfix]
+            public static void OnBackButtonClick()
+            {
+                _levelSelectControllerInstance = null;
+            }
+
         }
         #endregion
     }

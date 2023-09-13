@@ -13,9 +13,11 @@ namespace TootTally.Replays
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
         public bool ConnectionPending { get; private set; }
+        protected int _id { get; private set; }
 
         public WebsocketManager(int id)
         {
+            _id = id;
             ConnectionPending = true;
             ConnectToWebSocketServer(id);
         }
@@ -34,23 +36,23 @@ namespace TootTally.Replays
 
         protected virtual void CloseWebsocket()
         {
-            TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
             _websocket.Close();
+            TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
             _websocket = null;
         }
 
         protected virtual void OnWebSocketOpen(object sender, EventArgs e)
         {
-            TootTallyLogger.LogInfo($"Connected to WebSocket server {_websocket.Url}");
             IsConnected = true;
             ConnectionPending = false;
+            TootTallyLogger.LogInfo($"Connected to WebSocket server {_websocket.Url}");
         }
 
         protected virtual void OnWebSocketClose(object sender, EventArgs e)
         {
-            TootTallyLogger.LogInfo("Disconnected from websocket");
             IsConnected = false;
             IsHost = false;
+            TootTallyLogger.LogInfo("Disconnected from websocket");
         }
 
 

@@ -67,10 +67,7 @@ namespace TootTally.Replays
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
             else if (_replayFileName != "Spectating")
-            {
                 _replayManagerState = ReplayManagerState.Spectating;
-                OnSpectatingStart();
-            }
             else
             {
                 OnReplayingStart();
@@ -527,15 +524,6 @@ namespace TootTally.Replays
             _replay.ClearData();
             _replay.SetupRecording(__instance);
             _replayManagerState = ReplayManagerState.Recording;
-        }
-
-        public static void OnSpectatingStart()
-        {
-            _replay.OnReplayPlayerStart();
-            _lastIsTooting = false;
-            wasPlayingReplay = true;
-            _replayManagerState = ReplayManagerState.Spectating;
-            TootTallyLogger.LogInfo("Spectating Started");
         }
 
         public static void OnReplayingStart()

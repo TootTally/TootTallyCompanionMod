@@ -10,15 +10,15 @@ namespace TootTally.Replays
 {
     public class SpectatingSystem : WebsocketManager
     {
-        private static Stack<SocketFrameData> _receivedFrameDataStack;
-        private static Stack<SocketSongInfo> _receivedSongInfoStack;
-        private static Stack<SocketUserState> _receivedUserStateStack;
-        private static SocketSongInfo _currentSongInfo;
-        private static UserState _currentUserState;
+        private Stack<SocketFrameData> _receivedFrameDataStack;
+        private Stack<SocketSongInfo> _receivedSongInfoStack;
+        private Stack<SocketUserState> _receivedUserStateStack;
+        private SocketSongInfo _currentSongInfo;
+        private UserState _currentUserState;
 
-        public static Action<SocketFrameData> OnSocketFrameDataReceived;
-        public static Action<SocketUserState> OnSocketUserStateReceived;
-        public static Action<SocketSongInfo> OnSocketSongInfoReceived;
+        public Action<int, SocketFrameData> OnSocketFrameDataReceived;
+        public Action<int, SocketUserState> OnSocketUserStateReceived;
+        public Action<int, SocketSongInfo> OnSocketSongInfoReceived;
 
         public SpectatingSystem(int id) : base(id)
         {
@@ -66,11 +66,7 @@ namespace TootTally.Replays
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
                     _receivedSongInfoStack.Push(socketMessage as SocketSongInfo);
-                    /*if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_currentSongInfo.trackRef)))
-                        ReplaySystemManager.SetTrackToSpectatingTrackref(_currentSongInfo.trackRef);
-                    else
-                        TootTallyLogger.LogInfo("Do not own the song " + _currentSongInfo.trackRef);*/
-
+                    _currentSongInfo = socketMessage as SocketSongInfo;               
                 }
                 else if (socketMessage is SocketFrameData)
                 {
@@ -81,6 +77,7 @@ namespace TootTally.Replays
                 {
                     TootTallyLogger.DebugModeLog("UserState Detected");
                     _receivedUserStateStack.Push(socketMessage as SocketUserState);
+                    _currentUserState = (UserState)(socketMessage as SocketUserState).userState;
                 }
                 else
                 {
@@ -91,19 +88,27 @@ namespace TootTally.Replays
 
         public void UpdateStacks()
         {
-            if (_receivedFrameDataStack.TryPop(out SocketFrameData frameData))
-                OnSocketFrameDataReceived?.Invoke(frameData);
-            if (_receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
+            if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryPop(out SocketFrameData frameData))
+                OnSocketFrameDataReceived.Invoke(_id, frameData);
+            if (OnSocketSongInfoReceived != null && _receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
             {
-                OnSocketSongInfoReceived?.Invoke(songInfo);
-                _currentSongInfo = songInfo;
+                OnSocketSongInfoReceived.Invoke(_id, songInfo);
             }
-            if (_receivedUserStateStack.TryPop(out SocketUserState userState))
+            if (OnSocketUserStateReceived != null && _receivedUserStateStack.TryPop(out SocketUserState userState))
             {
-                OnSocketUserStateReceived?.Invoke(userState);
-                _currentUserState = (UserState)userState.userState;
+                OnSocketUserStateReceived.Invoke(_id, userState);
             }
 
+        }
+
+        protected override void OnWebSocketOpen(object sender, EventArgs e)
+        {
+            if (!IsHost)
+            {
+                OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
+                OnSocketSongInfoReceived = SpectatorManagerPatches.OnSongInfoReceived;
+            }
+            base.OnWebSocketOpen(sender, e);
         }
 
         public void Disconnect()

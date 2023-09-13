@@ -98,7 +98,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
-            _harmony.PatchAll(typeof(SpectatingManager));
+            _harmony.PatchAll(typeof(SpectatingManager.SpectatorManagerPatches));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
@@ -181,7 +181,6 @@ namespace TootTally
                                 loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
                                 AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                             }
-
                         }
                     }));
 
