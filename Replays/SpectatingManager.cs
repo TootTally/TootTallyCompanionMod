@@ -192,7 +192,7 @@ namespace TootTally.Replays
             {
                 if (IsSpectating)
                 {
-                    if (_frameData[_frameIndex].time - __instance.musictrack.time <= 4)
+                    if (_frameData[_frameIndex].time - __instance.musictrack.time >= 4)
                     {
                         __instance.musictrack.time = _frameData[_frameIndex].time;
                         __instance.noteholderr.anchoredPosition = new Vector2(_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
