@@ -12,10 +12,12 @@ namespace TootTally.Replays
         private WebSocket _websocket;
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
+        public bool ConnectionPending { get; private set; }
         public Action<MessageEventArgs> OnMessageReceived;
 
         public WebsocketManager(int id)
         {
+            ConnectionPending = true;
             ConnectToWebSocketServer(id);
         }
 
@@ -34,7 +36,7 @@ namespace TootTally.Replays
             OnMessageReceived?.Invoke(e);
         }
 
-        public void Disconnect()
+        public void CloseWebsocket()
         {
             TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
             _websocket.Close();
@@ -45,6 +47,7 @@ namespace TootTally.Replays
         {
             TootTallyLogger.LogInfo($"Connected to WebSocket server {_websocket.Url}");
             IsConnected = true;
+            ConnectionPending = false;
         }
 
         private void OnWebSocketClose(object sender, EventArgs e)
@@ -67,7 +70,8 @@ namespace TootTally.Replays
         private WebSocket CreateNewWebSocket(string url)
         {
             var ws = new WebSocket(url);
-            ws.Log.Level = LogLevel.Debug;
+            //if (Plugin.Instance.DebugMode.Value) 
+                //ws.Log.Level = LogLevel.Debug; //Too risky since it shows API KEY in the logs
             ws.OnError += (sender, e) => { TootTallyLogger.LogError(e.Message); };
             ws.OnOpen += OnWebSocketOpen;
             ws.OnClose += OnWebSocketClose;

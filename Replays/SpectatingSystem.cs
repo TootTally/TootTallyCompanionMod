@@ -7,10 +7,8 @@ using WebSocketSharp;
 
 namespace TootTally.Replays
 {
-    public class SpectatingSystem
+    public class SpectatingSystem : WebsocketManager
     {
-        private WebsocketManager _websocketManager;
-
         private static Stack<SocketFrameData> _receivedFrameDataStack;
         private static Stack<SocketSongInfo> _receivedSongInfoStack;
         private static Stack<SocketUserState> _receivedUserStateStack;
@@ -20,33 +18,31 @@ namespace TootTally.Replays
         public static Action<SocketFrameData> OnSocketFrameDataReceived;
         public static Action<SocketUserState> OnSocketUserStateReceived;
         public static Action<SocketSongInfo> OnSocketSongInfoReceived;
-        public bool GetIsHost => _websocketManager.IsHost;
 
-        public SpectatingSystem(int id)
+        public SpectatingSystem(int id) : base(id)
         {
             _receivedFrameDataStack = new Stack<SocketFrameData>();
             _receivedSongInfoStack = new Stack<SocketSongInfo>();
             _receivedUserStateStack = new Stack<SocketUserState>();
-            _websocketManager = new WebsocketManager(id);
-            _websocketManager.OnMessageReceived = OnDataReceived;
+            OnMessageReceived = OnDataReceived;
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
         {
             var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed });
-            _websocketManager?.SendToSocket(json);
+            SendToSocket(json);
         }
 
         public void SendUserStateToSocket(UserState userState)
         {
             var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
-            _websocketManager?.SendToSocket(json);
+            SendToSocket(json);
         }
 
         public void SendFrameData(float noteHolder, float pointerPosition, bool isTooting)
         {
             var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), noteHolder = noteHolder, pointerPosition = pointerPosition, isTooting = isTooting });
-            _websocketManager?.SendToSocket(json);
+            SendToSocket(json);
         }
 
         public void OnDataReceived(MessageEventArgs e)
@@ -111,13 +107,13 @@ namespace TootTally.Replays
 
         public void Disconnect()
         {
-            if (_websocketManager.IsConnected)
-                _websocketManager.Disconnect();
+            if (IsConnected)
+                CloseWebsocket();
         }
 
         public void RemoveFromManager()
         {
-            SpectatingManager.RemoveSpectator(this);
+            RemoveSpectator(this);
         }
 
     }

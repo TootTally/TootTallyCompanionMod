@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TootTally.CustomLeaderboard;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace TootTally.Replays
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
         public static SpectatingSystem hostedSpectator;
-        public static bool IsHosting => hostedSpectator != null && hostedSpectator.GetIsHost;
+        public static bool IsHosting => hostedSpectator != null && hostedSpectator.IsHost;
 
         public void Awake()
         {
@@ -26,6 +27,9 @@ namespace TootTally.Replays
         public void Update()
         {
             _spectatingSystemList?.ForEach(s => s.UpdateStacks());
+
+            if (Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count >= 0 && !_spectatingSystemList.Last().IsHost)
+                _spectatingSystemList.Last().RemoveFromManager();
         }
 
         public static SpectatingSystem CreateNewSpectatingConnection(int id)
@@ -47,11 +51,30 @@ namespace TootTally.Replays
         public static SpectatingSystem CreateUniqueSpectatingConnection(int id)
         {
             if (_spectatingSystemList != null)
+            {
+                
                 for (int i = 0; i < _spectatingSystemList.Count;)
                     RemoveSpectator(_spectatingSystemList[i]);
+                if (hostedSpectator != null && hostedSpectator.IsConnected)
+                    hostedSpectator = null;
+            }
+
 
             return CreateNewSpectatingConnection(id);
         }
+
+        public static void OnAllowHostConfigChange(bool value)
+        {
+            if (value && hostedSpectator == null)
+                CreateUniqueSpectatingConnection(Plugin.userInfo.id);
+            else if (!value && hostedSpectator != null)
+            {
+                RemoveSpectator(hostedSpectator);
+                hostedSpectator = null;
+            }
+        }
+
+        public static bool IsAnyConnectionPending() => _spectatingSystemList.Any(x => x.ConnectionPending);
 
         public enum DataType
         {
