@@ -259,9 +259,8 @@ namespace TootTally.TootTallyOverlay
 
         public static void OnSpectateButtonPress(int id)
         {
-            //if (!SpectatingManager.IsAnyConnectionPending())
-            // SpectatingManager.CreateUniqueSpectatingConnection(id);
-            PopUpNotifManager.DisplayNotif("Feature disabled for now... wait for update ;)");
+            if (!SpectatingManager.IsAnyConnectionPending())
+                SpectatingManager.CreateUniqueSpectatingConnection(id);
         }
 
         private static void OnFriendResponse(bool value)

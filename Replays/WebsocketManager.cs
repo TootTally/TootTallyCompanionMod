@@ -13,7 +13,6 @@ namespace TootTally.Replays
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
         public bool ConnectionPending { get; private set; }
-        public Action<MessageEventArgs> OnMessageReceived;
 
         public WebsocketManager(int id)
         {
@@ -31,26 +30,23 @@ namespace TootTally.Replays
             _websocket.Send(data);
         }
 
-        public void OnDataReceived(object sender, MessageEventArgs e)
-        {
-            OnMessageReceived?.Invoke(e);
-        }
+        protected virtual void OnDataReceived(object sender, MessageEventArgs e) { }
 
-        public void CloseWebsocket()
+        protected virtual void CloseWebsocket()
         {
             TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
             _websocket.Close();
             _websocket = null;
         }
 
-        private void OnWebSocketOpen(object sender, EventArgs e)
+        protected virtual void OnWebSocketOpen(object sender, EventArgs e)
         {
             TootTallyLogger.LogInfo($"Connected to WebSocket server {_websocket.Url}");
             IsConnected = true;
             ConnectionPending = false;
         }
 
-        private void OnWebSocketClose(object sender, EventArgs e)
+        protected virtual void OnWebSocketClose(object sender, EventArgs e)
         {
             TootTallyLogger.LogInfo("Disconnected from websocket");
             IsConnected = false;

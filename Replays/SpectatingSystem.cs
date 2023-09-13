@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using static TootTally.Replays.SpectatingManager;
 using TootTally.Utils;
 using WebSocketSharp;
+using UnityEngine.UIElements;
 
 namespace TootTally.Replays
 {
@@ -24,7 +25,6 @@ namespace TootTally.Replays
             _receivedFrameDataStack = new Stack<SocketFrameData>();
             _receivedSongInfoStack = new Stack<SocketSongInfo>();
             _receivedUserStateStack = new Stack<SocketUserState>();
-            OnMessageReceived = OnDataReceived;
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
@@ -45,8 +45,9 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void OnDataReceived(MessageEventArgs e)
+        protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
+            TootTallyLogger.LogInfo(e.Data);
             if (e.IsText)
             {
                 SocketMessage socketMessage;
