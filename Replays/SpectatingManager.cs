@@ -274,7 +274,7 @@ namespace TootTally.Replays
 
                     if (_frameIndex < _frameData.Count - 1)
                         _frameIndex++;
-                    
+
                 }
             }
 
@@ -400,6 +400,9 @@ namespace TootTally.Replays
             [HarmonyPostfix]
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
+                if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value)
+                    CreateUniqueSpectatingConnection(Plugin.userInfo.id); //Remake Hosting connection just in case it wasnt reopened correctly
+
                 if (IsHosting)
                     hostedSpectatingSystem.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
                 _levelSelectControllerInstance = null;

@@ -244,6 +244,10 @@ namespace TootTally
             [HarmonyPrefix]
             public static bool GetRidOfThatScreenShakePls() => false; //THANKS GOD
 
+            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
+            [HarmonyPostfix]
+            public static void ChangePauseCanvasOrderingLayout(PauseCanvasController __instance) => __instance.gc.pausecanvas.GetComponent<Canvas>().sortingOrder = 0;
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPrefix]
             public static void UpdateUserInfoOnLevelSelect()
