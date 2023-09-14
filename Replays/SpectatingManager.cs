@@ -213,7 +213,7 @@ namespace TootTally.Replays
             {
                 if (IsSpectating)
                 {
-                    if (_frameData[_frameIndex].time - __instance.musictrack.time >= 4)
+                    if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time - __instance.musictrack.time >= 4)
                     {
                         TootTallyLogger.LogInfo("Syncing track with replay data...");
                         __instance.musictrack.time = _frameData[_frameIndex].time;
