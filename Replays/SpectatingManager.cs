@@ -58,9 +58,14 @@ namespace TootTally.Replays
 
         public static void RemoveSpectator(SpectatingSystem spectator)
         {
-            spectator.Disconnect();
+            if (spectator == null) return;
+
+            if (spectator.IsConnected)
+                spectator.Disconnect();
             if (_spectatingSystemList.Contains(spectator))
                 _spectatingSystemList.Remove(spectator);
+            else
+                TootTallyLogger.LogInfo($"Couldnt find websocket in list.");
         }
 
         public static SpectatingSystem CreateUniqueSpectatingConnection(int id)
@@ -87,6 +92,7 @@ namespace TootTally.Replays
             UserState,
             SongInfo,
             FrameData,
+            TootData,
         }
 
         public enum UserState
@@ -117,6 +123,11 @@ namespace TootTally.Replays
             public int highestCombo { get; set; }
             public int currentCombo { get; set; }
             public float health { get; set; }
+        }
+
+        public class SocketTootData : SocketMessage
+        {
+            public float noteHolder { get; set; }
             public bool isTooting { get; set; }
         }
 
@@ -144,6 +155,9 @@ namespace TootTally.Replays
                 if (jo["dataType"].Value<string>() == DataType.FrameData.ToString())
                     return jo.ToObject<SocketFrameData>(serializer);
 
+                if (jo["dataType"].Value<string>() == DataType.TootData.ToString())
+                    return jo.ToObject<SocketTootData>(serializer);
+
                 if (jo["dataType"].Value<string>() == DataType.SongInfo.ToString())
                     return jo.ToObject<SocketSongInfo>(serializer);
 
@@ -165,11 +179,12 @@ namespace TootTally.Replays
         public static class SpectatorManagerPatches
         {
             private static List<SocketFrameData> _frameData;
+            private static List<SocketTootData> _tootData;
             private static LevelSelectController _levelSelectControllerInstance;
             private static SocketFrameData _lastFrame;
             private static bool _isTooting;
             private static int _frameIndex;
-            private static int _totalScore;
+            private static int _tootIndex;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
@@ -186,7 +201,10 @@ namespace TootTally.Replays
             public static void OnGameControllerStart()
             {
                 if (IsSpectating)
+                {
                     _frameIndex = 0;
+                    _tootIndex = 0;
+                }
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
@@ -218,17 +236,19 @@ namespace TootTally.Replays
             public static void PlaybackSpectatingData(GameController __instance)
             {
                 Cursor.visible = true;
-                if (_frameData == null) return;
+                if (_frameData == null || _tootData == null) return;
+
                 if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
                 var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
 
-                __instance.totalscore = _totalScore;
-                if (_frameData.Count > _frameIndex && _lastFrame != null)
+                __instance.totalscore = _frameData[_frameIndex].totalScore;
+                if (_frameData.Count - 1 > _frameIndex && _lastFrame != null)
                     InterpolateCursorPosition(currentMapPosition, __instance);
-
-                PlaybackFrameData(currentMapPosition, __instance);
-                _isTooting = _frameData[_frameIndex].isTooting;
+                if (_frameData.Count > 0)
+                    PlaybackFrameData(currentMapPosition, __instance);
+                if (_tootData.Count > 0)
+                    PlaybackTootData(currentMapPosition, __instance);
             }
 
             private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
@@ -248,10 +268,13 @@ namespace TootTally.Replays
                 while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
                     SetCursorPosition(__instance, _frameData[_frameIndex].pointerPosition);
-                    if (_frameIndex < _frameData.Count - 2)
+                    if (_frameIndex < _frameData.Count - 1)
                         _frameIndex++;
                     else if (!__instance.level_finished)
-                        __instance.musictrack.time = __instance.levelendtime;
+                    {
+                        __instance.quitting = true;
+                        __instance.pauseQuitLevel();
+                    };
                     __instance.totalscore = _frameData[_frameIndex].totalScore;
                     __instance.currenthealth = _frameData[_frameIndex].health;
                     __instance.highestcombo_level = _frameData[_frameIndex].highestCombo;
@@ -271,6 +294,20 @@ namespace TootTally.Replays
                 _frameData?.Add(frameData);
             }
 
+            public static void OnTootDataReceived(int id, SocketTootData tootData)
+            {
+                _tootData?.Add(tootData);
+            }
+
+            public static void PlaybackTootData(float currentMapPosition, GameController __instance)
+            {
+                if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
+                {
+                    if (_tootIndex < _tootData.Count - 1)
+                        _isTooting = _tootData[++_tootIndex].isTooting;
+                }
+            }
+
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
             {
                 if (info == null || info.trackRef == null || info.gameSpeed <= 0f)
@@ -280,6 +317,10 @@ namespace TootTally.Replays
                 }
                 _frameData = new List<SocketFrameData>();
                 _frameIndex = 0;
+                _tootData = new List<SocketTootData>();
+                _tootIndex = 0;
+                _isTooting = false;
+
                 GlobalLeaderboardManager.SetGameSpeedSlider((info.gameSpeed - 0.5f) / .05f);
                 TootTallyLogger.LogInfo("GameSpeed Set: " + info.gameSpeed);
                 GlobalVariables.gamescrollspeed = info.scrollSpeed;
@@ -340,7 +381,7 @@ namespace TootTally.Replays
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
             [HarmonyPostfix]
-            public static void OnQuitSetUserStatus(GameController __instance)
+            public static void OnUpdatePlaybackSpectatingData(GameController __instance)
             {
                 if (IsSpectating)
                     PlaybackSpectatingData(__instance);

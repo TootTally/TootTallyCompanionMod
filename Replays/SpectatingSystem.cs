@@ -11,17 +11,19 @@ namespace TootTally.Replays
     public class SpectatingSystem : WebsocketManager
     {
         private Stack<SocketFrameData> _receivedFrameDataStack;
+        private Stack<SocketTootData> _receivedTootDataStack;
         private Stack<SocketSongInfo> _receivedSongInfoStack;
         private Stack<SocketUserState> _receivedUserStateStack;
-        private UserState _currentUserState;
 
         public Action<int, SocketFrameData> OnSocketFrameDataReceived;
+        public Action<int, SocketTootData> OnSocketTootDataReceived;
         public Action<int, SocketUserState> OnSocketUserStateReceived;
         public Action<int, SocketSongInfo> OnSocketSongInfoReceived;
 
         public SpectatingSystem(int id) : base(id)
         {
             _receivedFrameDataStack = new Stack<SocketFrameData>();
+            _receivedTootDataStack = new Stack<SocketTootData>();
             _receivedSongInfoStack = new Stack<SocketSongInfo>();
             _receivedUserStateStack = new Stack<SocketUserState>();
         }
@@ -38,7 +40,7 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health, bool isTooting)
+        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health)
         {
             var frame = new SocketFrameData()
             {
@@ -50,16 +52,27 @@ namespace TootTally.Replays
                 highestCombo = highestCombo,
                 currentCombo = currentCombo,
                 health = health,
-                isTooting = isTooting
             };
             var json = JsonConvert.SerializeObject(frame);
+            SendToSocket(json);
+        }
+
+        public void SendTootData(float noteHolder, bool isTooting)
+        {
+            var tootFrame = new SocketTootData()
+            {
+                dataType = DataType.TootData.ToString(),
+                noteHolder = noteHolder,
+                isTooting = isTooting
+            };
+            var json = JsonConvert.SerializeObject(tootFrame);
             SendToSocket(json);
         }
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
             //TootTallyLogger.LogInfo(e.Data);
-            if (e.IsText)
+            if (e.IsText && !IsHosting)
             {
                 SocketMessage socketMessage;
                 try
@@ -83,11 +96,16 @@ namespace TootTally.Replays
                     TootTallyLogger.DebugModeLog("FrameData Detected");
                     _receivedFrameDataStack.Push(socketMessage as SocketFrameData);
                 }
+                else if (socketMessage is SocketTootData)
+                {
+                    TootTallyLogger.DebugModeLog("TootData Detected");
+                    _receivedTootDataStack.Push(socketMessage as SocketTootData);
+
+                }
                 else if (socketMessage is SocketUserState)
                 {
                     TootTallyLogger.DebugModeLog("UserState Detected");
                     _receivedUserStateStack.Push(socketMessage as SocketUserState);
-                    _currentUserState = (UserState)(socketMessage as SocketUserState).userState;
                 }
                 else
                 {
@@ -100,6 +118,9 @@ namespace TootTally.Replays
         {
             if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryPop(out SocketFrameData frameData))
                 OnSocketFrameDataReceived.Invoke(_id, frameData);
+
+            if (OnSocketTootDataReceived != null && _receivedTootDataStack.TryPop(out SocketTootData tootData))
+                OnSocketTootDataReceived.Invoke(_id, tootData);
 
             if (OnSocketSongInfoReceived != null && _receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
                 OnSocketSongInfoReceived.Invoke(_id, songInfo);
@@ -115,6 +136,7 @@ namespace TootTally.Replays
             {
                 OnSocketSongInfoReceived = SpectatorManagerPatches.OnSongInfoReceived;
                 OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
+                OnSocketTootDataReceived = SpectatorManagerPatches.OnTootDataReceived;
             }
             base.OnWebSocketOpen(sender, e);
         }

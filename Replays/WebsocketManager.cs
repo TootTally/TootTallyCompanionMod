@@ -52,6 +52,7 @@ namespace TootTally.Replays
         {
             IsConnected = false;
             IsHost = false;
+            ConnectionPending = false;
             TootTallyLogger.LogInfo("Disconnected from websocket");
         }
 

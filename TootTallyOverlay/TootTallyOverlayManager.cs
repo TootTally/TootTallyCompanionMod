@@ -259,13 +259,13 @@ namespace TootTally.TootTallyOverlay
 
         public static void OnSpectateButtonPress(int id)
         {
-            if (Plugin.userInfo.id == 70)
-            {
-                if (!SpectatingManager.IsAnyConnectionPending())
-                    SpectatingManager.CreateUniqueSpectatingConnection(id);
-            }
-            else
-                PopUpNotifManager.DisplayNotif("Feature disabled... Will be available soon! ;)");
+            //if (Plugin.userInfo.id == 70)
+            //{
+            if (!SpectatingManager.IsAnyConnectionPending())
+                SpectatingManager.CreateUniqueSpectatingConnection(id);
+            //}
+            //else
+            // PopUpNotifManager.DisplayNotif("Feature disabled... Will be available soon! ;)");
         }
 
         private static void OnFriendResponse(bool value)
