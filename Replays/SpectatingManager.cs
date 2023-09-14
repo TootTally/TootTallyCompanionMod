@@ -242,7 +242,6 @@ namespace TootTally.Replays
 
                 var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
 
-                __instance.totalscore = _frameData[_frameIndex].totalScore;
                 if (_frameData.Count - 1 > _frameIndex && _lastFrame != null)
                     InterpolateCursorPosition(currentMapPosition, __instance);
                 if (_frameData.Count > 0)
@@ -268,6 +267,11 @@ namespace TootTally.Replays
                 while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
                     SetCursorPosition(__instance, _frameData[_frameIndex].pointerPosition);
+                    __instance.totalscore = _frameData[_frameIndex].totalScore;
+                    __instance.currenthealth = _frameData[_frameIndex].health;
+                    __instance.highestcombo_level = _frameData[_frameIndex].highestCombo;
+                    __instance.highestcombocounter = _frameData[_frameIndex].currentCombo;
+
                     if (_frameIndex < _frameData.Count - 1)
                         _frameIndex++;
                     else if (!__instance.level_finished)
@@ -275,10 +279,7 @@ namespace TootTally.Replays
                         __instance.quitting = true;
                         __instance.pauseQuitLevel();
                     };
-                    __instance.totalscore = _frameData[_frameIndex].totalScore;
-                    __instance.currenthealth = _frameData[_frameIndex].health;
-                    __instance.highestcombo_level = _frameData[_frameIndex].highestCombo;
-                    __instance.highestcombocounter = _frameData[_frameIndex].currentCombo;
+                    
                 }
             }
 
