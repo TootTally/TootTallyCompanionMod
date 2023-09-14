@@ -114,6 +114,9 @@ namespace TootTally.Replays
             public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
             public int totalScore { get; set; }
+            public int highestCombo { get; set; }
+            public int currentCombo { get; set; }
+            public float health { get; set; }
             public bool isTooting { get; set; }
         }
 
@@ -250,6 +253,9 @@ namespace TootTally.Replays
                     else if (!__instance.level_finished)
                         __instance.musictrack.time = __instance.levelendtime;
                     __instance.totalscore = _frameData[_frameIndex].totalScore;
+                    __instance.currenthealth = _frameData[_frameIndex].health;
+                    __instance.highestcombo = _frameData[_frameIndex].highestCombo;
+                    __instance.highestcombocounter = _frameData[_frameIndex].currentCombo;
                 }
             }
 

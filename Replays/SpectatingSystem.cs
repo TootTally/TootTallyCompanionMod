@@ -38,9 +38,21 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, bool isTooting)
+        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health, bool isTooting)
         {
-            var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), time = time, noteHolder = noteHolder, pointerPosition = pointerPosition, totalScore = totalScore, isTooting = isTooting });
+            var frame = new SocketFrameData()
+            {
+                dataType = DataType.FrameData.ToString(),
+                time = time,
+                noteHolder = noteHolder,
+                pointerPosition = pointerPosition,
+                totalScore = totalScore,
+                highestCombo = highestCombo,
+                currentCombo = currentCombo,
+                health = health,
+                isTooting = isTooting
+            };
+            var json = JsonConvert.SerializeObject(frame);
             SendToSocket(json);
         }
 
