@@ -27,6 +27,7 @@ namespace TootTally.Replays
 
         private static int _targetFramerate;
         public static bool wasPlayingReplay;
+        public static bool wasSpectating;
         private static bool _hasPaused, _hasRewindReplay;
         private static bool _hasReleaseToot, _lastIsTooting;
 
@@ -67,7 +68,10 @@ namespace TootTally.Replays
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
             else if (_replayFileName == "Spectating")
+            {
+                wasSpectating = true;
                 _replayManagerState = ReplayManagerState.Spectating;
+            }
             else
             {
                 OnReplayingStart();
@@ -83,7 +87,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnGameControllerPlaySongSetReplayStartTime()
         {
-            if (_replay != null && !wasPlayingReplay)
+            if (_replay != null && !wasPlayingReplay && !wasSpectating)
             {
                 SetReplayUUID();
                 _replay.SetStartTime();
@@ -289,11 +293,11 @@ namespace TootTally.Replays
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.updateSave))]
         [HarmonyPrefix]
-        public static bool AvoidSaveChange() => !wasPlayingReplay; // Don't touch the savefile if we just did a replay
+        public static bool AvoidSaveChange() => !wasPlayingReplay && !wasSpectating; // Don't touch the savefile if we just did a replay
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.checkScoreCheevos))]
         [HarmonyPrefix]
-        public static bool AvoidAchievementCheck() => !wasPlayingReplay; // Don't check for achievements if we just did a replay
+        public static bool AvoidAchievementCheck() => !wasPlayingReplay && !wasSpectating; // Don't check for achievements if we just did a replay
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
         [HarmonyPrefix]
@@ -424,7 +428,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void GameControllerPauseQuitLevelPostfixPatch(GameController __instance)
         {
-            if (wasPlayingReplay)
+            if (wasPlayingReplay || wasSpectating)
                 GameModifierManager.LoadBackedupModifiers();
             _replay.ClearData();
             _replayManagerState = ReplayManagerState.None;
@@ -518,7 +522,7 @@ namespace TootTally.Replays
 
         public static void OnRecordingStart(GameController __instance)
         {
-            wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
+            wasPlayingReplay = wasSpectating = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
             _replay.ClearData();
@@ -530,6 +534,7 @@ namespace TootTally.Replays
         {
             _replay.OnReplayPlayerStart();
             _lastIsTooting = _hasRewindReplay = false;
+            wasSpectating = false;
             wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
             TootTallyLogger.LogInfo("Replay Started");
