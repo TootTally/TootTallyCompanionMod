@@ -646,6 +646,7 @@ namespace TootTally.Graphics
             {
                 card.transform.Find("LatencyBG").GetComponent<Image>().color = Color.cyan;
                 TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), Color.cyan, .1f);
+                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
             }
 
             return card;
