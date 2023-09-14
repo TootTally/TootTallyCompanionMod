@@ -63,6 +63,8 @@ namespace TootTally.Utils
 
             if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
             {
+                for (int i = 0; i < _toAddNotificationList.Count; i++)
+                    _toAddNotificationList[i].gameObject.SetActive(true);
                 _activeNotificationList.AddRange(_toAddNotificationList);
                 OnNotifCountChangeSetNewPosition();
                 _toAddNotificationList.Clear();
@@ -80,7 +82,7 @@ namespace TootTally.Utils
                 OnNotifCountChangeSetNewPosition();
                 _toRemoveNotificationList.Clear();
             }
-              
+
         }
 
         public static void QueueToRemovedFromList(PopUpNotif notif) => _toRemoveNotificationList.Add(notif);

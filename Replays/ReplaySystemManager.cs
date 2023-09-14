@@ -179,9 +179,6 @@ namespace TootTally.Replays
                 case ReplayManagerState.Replaying:
                     __result = _replay.GetIsTooting;
                     break;
-                case ReplayManagerState.Spectating:
-                    //TODO SPECTATING
-                    break;
             }
 
             if (!__result && !_hasReleaseToot) //If joseph is holding the key before the song start

@@ -307,7 +307,6 @@ namespace TootTally.Graphics
             #endregion
 
             #region RandomButton
-            //TODO FIX RANDOM BUTTON
             try
             {
                 __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
