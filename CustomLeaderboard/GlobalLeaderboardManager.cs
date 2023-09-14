@@ -61,6 +61,15 @@ namespace TootTally.CustomLeaderboard
                 UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
         }
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
+        [HarmonyPostfix]
+        static void OnLevelSelectControllerClickPlayDeleteLeaderboard(LevelSelectController __instance)
+        {
+            if (globalLeaderboard == null) return;
+            globalLeaderboard.CancelAndClearAllCoroutineInList();
+            globalLeaderboard = null;
+        }
+
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
         [HarmonyPrefix]
