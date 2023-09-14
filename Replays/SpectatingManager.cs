@@ -304,8 +304,8 @@ namespace TootTally.Replays
             {
                 if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
-                    if (_tootIndex < _tootData.Count - 1)
-                        _isTooting = _tootData[_tootIndex++].isTooting;
+                    if (_tootIndex < _tootData.Count - 2)
+                        _isTooting = _tootData[++_tootIndex].isTooting;
                 }
             }
 
