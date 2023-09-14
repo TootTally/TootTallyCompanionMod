@@ -259,7 +259,7 @@ namespace TootTally.Replays
 
             private static void PlaybackFrameData(float currentMapPosition, GameController __instance)
             {
-                if (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder)
+                if (_frameData.Count - 1 > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder)
                 {
                     _lastFrame = _frameData[_frameIndex];
                 }
@@ -274,11 +274,6 @@ namespace TootTally.Replays
 
                     if (_frameIndex < _frameData.Count - 1)
                         _frameIndex++;
-                    else if (!__instance.level_finished)
-                    {
-                        __instance.quitting = true;
-                        __instance.pauseQuitLevel();
-                    };
                     
                 }
             }
