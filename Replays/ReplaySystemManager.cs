@@ -413,7 +413,9 @@ namespace TootTally.Replays
                     OnPauseChangeButtonText(__instance);
                     break;
                 case ReplayManagerState.Spectating:
-                    //TODO SPECTATING
+                    SpectatingManager.StopAllSpectator();
+                    __instance.gc.quitting = true;
+                    __instance.gc.pauseQuitLevel();
                     break;
 
             }

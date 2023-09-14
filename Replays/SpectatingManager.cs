@@ -36,6 +36,17 @@ namespace TootTally.Replays
                 _spectatingSystemList.Last().RemoveFromManager();
         }
 
+        public static void StopAllSpectator()
+        {
+            if (_spectatingSystemList != null)
+            {
+                for (int i = 0; i < _spectatingSystemList.Count;)
+                    RemoveSpectator(_spectatingSystemList[i]);
+                if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
+                    hostedSpectatingSystem = null;
+            }
+        }
+
         public static SpectatingSystem CreateNewSpectatingConnection(int id)
         {
             var spec = new SpectatingSystem(id);
@@ -54,16 +65,7 @@ namespace TootTally.Replays
 
         public static SpectatingSystem CreateUniqueSpectatingConnection(int id)
         {
-            if (_spectatingSystemList != null)
-            {
-
-                for (int i = 0; i < _spectatingSystemList.Count;)
-                    RemoveSpectator(_spectatingSystemList[i]);
-                if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
-                    hostedSpectatingSystem = null;
-            }
-
-
+            StopAllSpectator();
             return CreateNewSpectatingConnection(id);
         }
 
@@ -246,7 +248,7 @@ namespace TootTally.Replays
                     if (_frameIndex < _frameData.Count - 2)
                         _frameIndex++;
                     else if (!__instance.level_finished)
-                        __instance.musictrack.time = __instance.musictrack.clip.length;
+                        __instance.musictrack.time = __instance.levelendtime;
                     __instance.totalscore = _frameData[_frameIndex].totalScore;
                 }
             }
