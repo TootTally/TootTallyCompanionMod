@@ -66,7 +66,7 @@ namespace TootTally.Replays
 
             if (_replayFileName == null)
                 OnRecordingStart(__instance);
-            else if (_replayFileName != "Spectating")
+            else if (_replayFileName == "Spectating")
                 _replayManagerState = ReplayManagerState.Spectating;
             else
             {
@@ -803,23 +803,7 @@ namespace TootTally.Replays
             _pauseArrowDestination = new Vector2(28, -37);
         }
 
-        public static void SetTrackToSpectatingTrackref(string trackref)
-        {
-            if (_currentLevelSelectInstance == null) return;
-            for (int i = 0; i < _currentLevelSelectInstance.alltrackslist.Count; i++)
-            {
-                if (_currentLevelSelectInstance.alltrackslist[i].trackref == trackref)
-                {
-                    if (i - _currentLevelSelectInstance.songindex != 0)
-                    {
-                        // Only advance songs if we're not on the same song already
-                        _currentLevelSelectInstance.advanceSongs(i - _currentLevelSelectInstance.songindex, true);
-                        //Add some verification here just in case
-                    }
-                }
-            }
-        }
-
+        public static void SetSpectatingMode() => _replayFileName = "Spectating";
 
         public enum ReplayManagerState
         {

@@ -10,7 +10,6 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using static TootTally.Replays.ReplaySystemManager;
 
 namespace TootTally.Replays
 {
@@ -33,7 +32,7 @@ namespace TootTally.Replays
         {
             _spectatingSystemList?.ForEach(s => s.UpdateStacks());
 
-            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape)  && _spectatingSystemList.Count > 0 && !IsHosting)
+            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count > 0 && !IsHosting)
                 _spectatingSystemList.Last().RemoveFromManager();
         }
 
@@ -112,6 +111,7 @@ namespace TootTally.Replays
             public float time { get; set; }
             public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
+            public int totalScore { get; set; }
             public bool isTooting { get; set; }
         }
 
@@ -159,7 +159,7 @@ namespace TootTally.Replays
         #region patches
         public static class SpectatorManagerPatches
         {
-            private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
+            private static List<SocketFrameData> _frameData;
             private static LevelSelectController _levelSelectControllerInstance;
             private static SocketFrameData _lastFrame;
             private static bool _isTooting;
@@ -171,8 +171,6 @@ namespace TootTally.Replays
             public static void SetLevelSelectUserStatusOnAdvanceSongs(LevelSelectController __instance)
             {
                 _levelSelectControllerInstance = __instance;
-                _frameData.Clear();
-                _frameIndex = 0;
                 if (IsHosting)
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.SelectingSong);
             }
@@ -215,6 +213,7 @@ namespace TootTally.Replays
             public static void PlaybackSpectatingData(GameController __instance)
             {
                 Cursor.visible = true;
+                if (_frameData == null) return;
                 if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
                 var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
@@ -244,8 +243,11 @@ namespace TootTally.Replays
                 while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
                     SetCursorPosition(__instance, _frameData[_frameIndex].pointerPosition);
-                    if (_frameIndex < _frameData.Count - 1)
+                    if (_frameIndex < _frameData.Count - 2)
                         _frameIndex++;
+                    else if (!__instance.level_finished)
+                        __instance.musictrack.time = __instance.musictrack.clip.length;
+                    __instance.totalscore = _frameData[_frameIndex].totalScore;
                 }
             }
 
@@ -258,28 +260,50 @@ namespace TootTally.Replays
 
             public static void OnFrameDataReceived(int id, SocketFrameData frameData)
             {
-                _frameData.Add(frameData);
+                _frameData?.Add(frameData);
             }
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
             {
-                if (info == null || info.trackRef == null || info.gameSpeed == 0f) return;
-
-                GlobalLeaderboardManager.SetGameSpeedSlider(info.gameSpeed);
+                if (info == null || info.trackRef == null || info.gameSpeed <= 0f)
+                {
+                    TootTallyLogger.LogInfo("SongInfo went wrong.");
+                    return;
+                }
+                _frameData = new List<SocketFrameData>();
+                _frameIndex = 0;
+                GlobalLeaderboardManager.SetGameSpeedSlider((info.gameSpeed - 0.5f) / .05f);
                 TootTallyLogger.LogInfo("GameSpeed Set: " + info.gameSpeed);
                 GlobalVariables.gamescrollspeed = info.scrollSpeed;
-                TootTallyLogger.LogInfo("ScrollSpeed Set: " + info.gameSpeed);
+                TootTallyLogger.LogInfo("ScrollSpeed Set: " + info.scrollSpeed);
                 if (_levelSelectControllerInstance != null)
                 {
-                    if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
+                    if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
                     {
-                        ReplaySystemManager.SetTrackToSpectatingTrackref(info.trackRef);
+                        SetTrackToSpectatingTrackref(info.trackRef);
+                        ReplaySystemManager.SetSpectatingMode();
                         _levelSelectControllerInstance.clickPlay();
                     }
                     else
                         TootTallyLogger.LogInfo("Do not own the song " + info.trackRef);
                 }
 
+            }
+
+            public static void SetTrackToSpectatingTrackref(string trackref)
+            {
+                if (_levelSelectControllerInstance == null) return;
+                for (int i = 0; i < _levelSelectControllerInstance.alltrackslist.Count; i++)
+                {
+                    if (_levelSelectControllerInstance.alltrackslist[i].trackref == trackref)
+                    {
+                        if (i - _levelSelectControllerInstance.songindex != 0)
+                        {
+                            _levelSelectControllerInstance.advanceSongs(i - _levelSelectControllerInstance.songindex, true);
+                            return;
+                        }
+                    }
+                }
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]

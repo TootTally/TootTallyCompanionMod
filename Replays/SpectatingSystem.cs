@@ -38,9 +38,9 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendFrameData(float time, float noteHolder, float pointerPosition, bool isTooting)
+        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, bool isTooting)
         {
-            var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), time = time, noteHolder = noteHolder, pointerPosition = pointerPosition, isTooting = isTooting });
+            var json = JsonConvert.SerializeObject(new SocketFrameData() { dataType = DataType.FrameData.ToString(), time = time, noteHolder = noteHolder, pointerPosition = pointerPosition, totalScore = totalScore, isTooting = isTooting });
             SendToSocket(json);
         }
 
@@ -101,8 +101,8 @@ namespace TootTally.Replays
         {
             if (!IsHost)
             {
-                OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
                 OnSocketSongInfoReceived = SpectatorManagerPatches.OnSongInfoReceived;
+                OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
             }
             base.OnWebSocketOpen(sender, e);
         }
