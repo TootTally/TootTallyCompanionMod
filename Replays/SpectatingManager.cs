@@ -330,8 +330,13 @@ namespace TootTally.Replays
                     if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
                     {
                         SetTrackToSpectatingTrackref(info.trackRef);
-                        ReplaySystemManager.SetSpectatingMode();
-                        _levelSelectControllerInstance.clickPlay();
+                        if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == info.trackRef)
+                        {
+                            ReplaySystemManager.SetSpectatingMode();
+                            _levelSelectControllerInstance.clickPlay();
+                        }
+                        else
+                            TootTallyLogger.LogWarning("Clear song organizer filters for auto start to work properly.");
                     }
                     else
                         TootTallyLogger.LogInfo("Do not own the song " + info.trackRef);
