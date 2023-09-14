@@ -91,7 +91,7 @@ namespace TootTally.Replays
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
 
             if (SpectatingManager.IsHosting)
-                SpectatingManager.hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.isNoteButtonPressed());
+                SpectatingManager.hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth, __instance.isNoteButtonPressed());
         }
 
         public void RecordNoteDataPrefix(GameController __instance)

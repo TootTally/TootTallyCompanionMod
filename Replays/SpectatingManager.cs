@@ -254,7 +254,7 @@ namespace TootTally.Replays
                         __instance.musictrack.time = __instance.levelendtime;
                     __instance.totalscore = _frameData[_frameIndex].totalScore;
                     __instance.currenthealth = _frameData[_frameIndex].health;
-                    __instance.highestcombo = _frameData[_frameIndex].highestCombo;
+                    __instance.highestcombo_level = _frameData[_frameIndex].highestCombo;
                     __instance.highestcombocounter = _frameData[_frameIndex].currentCombo;
                 }
             }
