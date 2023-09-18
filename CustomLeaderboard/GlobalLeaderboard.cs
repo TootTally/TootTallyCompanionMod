@@ -4,7 +4,6 @@ using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
 using TootTally.Graphics;
-using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;

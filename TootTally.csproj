@@ -25,13 +25,6 @@
 		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Reference Include="TootTallyDiffCalcTTV2" Condition="$(TromboneTootDir) != ''">
-			<HintPath>$(TromboneTootDir)\TootTallyDiffCalcTTV2.dll</HintPath>
-		</Reference>
-	</ItemGroup>
-
-
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(TromboneTootDir) != ''">
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)" />
 	</Target>

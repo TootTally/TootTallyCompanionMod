@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using TootTally.Graphics;
+using TootTally.Utils.TootTallySettings.TootTallySettingObjects;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -145,7 +146,9 @@ namespace TootTally.Utils.TootTallySettings
 
         public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
         public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
-
+        
+        public TootTallySettingColorSliders AddColorSliders(string name, string text, float length, ConfigEntry<Color> config) => AddSettingObjectToList(new TootTallySettingColorSliders(this, name, text, length, config)) as TootTallySettingColorSliders;
+        public TootTallySettingColorSliders AddColorSliders(string name, string text, ConfigEntry<Color> config) => AddColorSliders(name, text, DEFAULT_SLIDER_LENGTH, config);
 
 
         public TootTallySettingLabel AddLabel(string name, string text, float fontSize, FontStyles fontStyles = FontStyles.Normal, TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft) => AddSettingObjectToList(new TootTallySettingLabel(this, name, text, fontSize, fontStyles, align)) as TootTallySettingLabel;
