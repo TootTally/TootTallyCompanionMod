@@ -336,10 +336,11 @@ namespace TootTally.Replays
                     }
                     break;
                 case ReplayManagerState.Paused:
-                    if (_pauseArrowDestination != null)
+                    if (_pauseArrowDestination != null && _pauseArrow != null)
                         _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
             }
+
             float value = 0;
             if (__instance.noteplaying && __instance.breathcounter < 1f)
             {
@@ -409,12 +410,6 @@ namespace TootTally.Replays
                     //Time.timeScale = 1f;
                     OnPauseChangeButtonText(__instance);
                     break;
-                case ReplayManagerState.Spectating:
-                    SpectatingManager.StopAllSpectator();
-                    __instance.gc.quitting = true;
-                    __instance.gc.pauseQuitLevel();
-                    break;
-
             }
 
             _pauseArrow = __instance.pausearrow;
@@ -438,7 +433,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         static void GameControllerResumeTrackPostfixPatch(GameController __instance)
         {
-            if (_replayFileName != null)
+            if (_replayFileName != null && _replayFileName != "Spectating")
                 _replayManagerState = ReplayManagerState.Replaying;
         }
 

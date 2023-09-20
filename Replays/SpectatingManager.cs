@@ -178,18 +178,29 @@ namespace TootTally.Replays
         #region patches
         public static class SpectatorManagerPatches
         {
-            private static List<SocketFrameData> _frameData;
-            private static List<SocketTootData> _tootData;
             private static LevelSelectController _levelSelectControllerInstance;
+            private static GameController _gameControllerInstance;
+            private static PointSceneController _pointSceneControllerInstance;
+
+            private static UserState _lastState;
+
+            private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
+            private static List<SocketTootData> _tootData = new List<SocketTootData>();
             private static SocketFrameData _lastFrame;
+
+            private static SocketSongInfo _lastSongInfo;
+
             private static bool _isTooting;
             private static int _frameIndex;
             private static int _tootIndex;
+            private static bool _waitingToSync;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void SetLevelSelectUserStatusOnAdvanceSongs(LevelSelectController __instance)
             {
+                _gameControllerInstance = null;
+                _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = __instance;
                 if (IsHosting)
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.SelectingSong);
@@ -198,13 +209,32 @@ namespace TootTally.Replays
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
-            public static void OnGameControllerStart()
+            public static void OnGameControllerStart(GameController __instance)
             {
+                _pointSceneControllerInstance = null;
+                _levelSelectControllerInstance = null;
+                _gameControllerInstance = __instance;
                 if (IsSpectating)
                 {
                     _frameIndex = 0;
                     _tootIndex = 0;
+                    _elapsedTime = 0;
+                    _waitingToSync = true;
                 }
+            }
+
+            private const float SYNC_BUFFER = 1.5f;
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
+            [HarmonyPrefix]
+            public static bool OverwriteStartSongIfSyncRequired(GameController __instance)
+            {
+                if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time > SYNC_BUFFER)
+                    _waitingToSync = false;
+                else
+                    PopUpNotifManager.DisplayNotif("Waiting to sync with host...");
+
+                return _waitingToSync;
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
@@ -213,16 +243,15 @@ namespace TootTally.Replays
             {
                 if (IsSpectating)
                 {
-                    if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time - __instance.musictrack.time >= 4)
+                    if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time - __instance.musictrack.time >= SYNC_BUFFER * 2f)
                     {
                         TootTallyLogger.LogInfo("Syncing track with replay data...");
-                        __instance.musictrack.time = _frameData[_frameIndex].time;
+                        __instance.musictrack.time = _frameData[_frameIndex].time - SYNC_BUFFER;
                         __instance.noteholderr.anchoredPosition = new Vector2(_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
                     }
                 }
                 if (IsHosting)
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.Playing);
-
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -231,6 +260,15 @@ namespace TootTally.Replays
             {
                 if (IsSpectating)
                     __result = _isTooting;
+            }
+
+            [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+            [HarmonyPostfix]
+            public static void OnPointSceneControllerStartSetInstance(PointSceneController __instance) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+            {
+                _levelSelectControllerInstance = null;
+                _gameControllerInstance = null;
+                _pointSceneControllerInstance = __instance;
             }
 
             public static void PlaybackSpectatingData(GameController __instance)
@@ -242,7 +280,7 @@ namespace TootTally.Replays
 
                 var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
 
-                if (_frameData.Count - 1 > _frameIndex && _lastFrame != null)
+                if (_frameData.Count - 2 > _frameIndex && _lastFrame != null)
                     InterpolateCursorPosition(currentMapPosition, __instance);
                 if (_frameData.Count > 0)
                     PlaybackFrameData(currentMapPosition, __instance);
@@ -259,26 +297,23 @@ namespace TootTally.Replays
 
             private static void PlaybackFrameData(float currentMapPosition, GameController __instance)
             {
-                if (_frameData.Count - 1 > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder)
+                if (_frameData.Count - 2 > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder)
                 {
                     _lastFrame = _frameData[_frameIndex];
                 }
 
-                while (_frameData.Count > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
+                while (_frameData.Count - 2 > _frameIndex && currentMapPosition <= _frameData[_frameIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
+                    _frameIndex++;
                     SetCursorPosition(__instance, _frameData[_frameIndex].pointerPosition);
                     __instance.totalscore = _frameData[_frameIndex].totalScore;
                     __instance.currenthealth = _frameData[_frameIndex].health;
                     __instance.highestcombo_level = _frameData[_frameIndex].highestCombo;
                     __instance.highestcombocounter = _frameData[_frameIndex].currentCombo;
-
-                    if (_frameIndex < _frameData.Count - 1)
-                        _frameIndex++;
-
                 }
             }
 
-            public static void SetCursorPosition(GameController __instance, float newPosition)
+            private static void SetCursorPosition(GameController __instance, float newPosition)
             {
                 Vector3 pointerPosition = __instance.pointer.transform.localPosition;
                 pointerPosition.y = newPosition;
@@ -297,10 +332,9 @@ namespace TootTally.Replays
 
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
+                if (_tootData.Count - 2 > _tootIndex && currentMapPosition <= _tootData[_tootIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
-                    if (_tootIndex < _tootData.Count - 2)
-                        _isTooting = _tootData[++_tootIndex].isTooting;
+                    _isTooting = _tootData[++_tootIndex].isTooting;
                 }
             }
 
@@ -311,36 +345,131 @@ namespace TootTally.Replays
                     TootTallyLogger.LogInfo("SongInfo went wrong.");
                     return;
                 }
-                _frameData = new List<SocketFrameData>();
-                _frameIndex = 0;
-                _tootData = new List<SocketTootData>();
-                _tootIndex = 0;
-                _isTooting = false;
+                _lastSongInfo = info;
+            }
 
-                GlobalLeaderboardManager.SetGameSpeedSlider((info.gameSpeed - 0.5f) / .05f);
-                TootTallyLogger.LogInfo("GameSpeed Set: " + info.gameSpeed);
-                GlobalVariables.gamescrollspeed = info.scrollSpeed;
-                TootTallyLogger.LogInfo("ScrollSpeed Set: " + info.scrollSpeed);
-                if (_levelSelectControllerInstance != null)
+            public static void OnUserStateReceived(int id, SocketUserState userState)
+            {
+                if (IsSpectating)
+                    UserStateHandler((UserState)userState.userState);
+            }
+
+            private static void UserStateHandler(UserState state)
+            {
+                switch (state)
                 {
-                    if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(info.trackRef)))
+                    case UserState.SelectingSong:
+                        if (_pointSceneControllerInstance != null)
+                            BackToLevelSelect();
+                        break;
+                    case UserState.Playing:
+                        if (_levelSelectControllerInstance != null)
+                            TryStartSong();
+                        else if (_gameControllerInstance != null && _lastState == UserState.Paused)
+                            ResumeSong();
+                        else if (_pointSceneControllerInstance != null)
+                            RetryFromPointScene();
+                        break;
+                    case UserState.Paused:
+                        if (_gameControllerInstance != null)
+                            PauseSong();
+                        break;
+                    case UserState.Quitting:
+                        if (_gameControllerInstance != null)
+                            QuitSong();
+                        break;
+                    case UserState.Restarting:
+                        if (_gameControllerInstance != null)
+                            RestartSong();
+                        break;
+                }
+                _lastState = state;
+            }
+
+
+            private static void BackToLevelSelect() => _pointSceneControllerInstance.clickCont();
+
+            private static void RetryFromPointScene() => _pointSceneControllerInstance.clickRetry();
+
+            private static void TryStartSong()
+            {
+                if (_lastSongInfo != null)
+                    if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                     {
-                        SetTrackToSpectatingTrackref(info.trackRef);
-                        if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == info.trackRef)
+                        _frameData.Clear();
+                        _tootData.Clear();
+                        _frameIndex = 0;
+                        _tootIndex = 0;
+                        _isTooting = false;
+
+                        GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
+
+                        GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
+                        TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
+
+                        SetTrackToSpectatingTrackref(_lastSongInfo.trackRef);
+                        if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == _lastSongInfo.trackRef)
                         {
                             ReplaySystemManager.SetSpectatingMode();
                             _levelSelectControllerInstance.clickPlay();
+                            _levelSelectControllerInstance = null;
                         }
                         else
                             TootTallyLogger.LogWarning("Clear song organizer filters for auto start to work properly.");
                     }
                     else
-                        TootTallyLogger.LogInfo("Do not own the song " + info.trackRef);
-                }
+                    {
 
+                        TootTallyLogger.LogInfo("Do not own the song " + _lastSongInfo.trackRef);
+                        PopUpNotifManager.DisplayNotif($"Do not own the song #{_lastSongInfo.songID}");
+                    }
             }
 
-            public static void SetTrackToSpectatingTrackref(string trackref)
+            private static void ResumeSong()
+            {
+                _gameControllerInstance.pausecontroller.clickResume();
+            }
+
+            //Yoinked from DNSpy Token: 0x06000276 RID: 630 RVA: 0x000270A8 File Offset: 0x000252A8
+            private static void PauseSong()
+            {
+                if (!_gameControllerInstance.quitting && !_gameControllerInstance.level_finished && _gameControllerInstance.pausecontroller.done_animating && !_gameControllerInstance.freeplay)
+                {
+                    _gameControllerInstance.notebuttonpressed = false;
+                    _gameControllerInstance.musictrack.Pause();
+                    _gameControllerInstance.sfxrefs.backfromfreeplay.Play();
+                    _gameControllerInstance.puppet_humanc.shaking = false;
+                    _gameControllerInstance.puppet_humanc.stopParticleEffects();
+                    _gameControllerInstance.puppet_humanc.playCameraRotationTween(false);
+                    _gameControllerInstance.paused = true;
+                    _gameControllerInstance.quitting = true;
+                    _gameControllerInstance.pausecanvas.SetActive(true);
+                    _gameControllerInstance.pausecontroller.showPausePanel();
+                    Cursor.visible = true;
+                    if (!_gameControllerInstance.track_is_pausable)
+                    {
+                        _gameControllerInstance.curtainc.closeCurtain(false);
+                    }
+                }
+            }
+
+            private static void QuitSong()
+            {
+                _gameControllerInstance.pausecontroller.clickButton2();
+                _gameControllerInstance = null;
+            }
+
+            private static void RestartSong()
+            {
+                _frameData.Clear();
+                _tootData.Clear();
+                _frameIndex = 0;
+                _tootIndex = 0;
+                _isTooting = false;
+                _gameControllerInstance.pauseRetryLevel();
+            }
+
+            private static void SetTrackToSpectatingTrackref(string trackref)
             {
                 if (_levelSelectControllerInstance == null) return;
                 for (int i = 0; i < _levelSelectControllerInstance.alltrackslist.Count; i++)
@@ -357,11 +486,18 @@ namespace TootTally.Replays
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
-            [HarmonyPostfix]
-            public static void OnResumeSetUserStatus()
+            [HarmonyPrefix]
+            public static void OnResumeSetUserStatus(PauseCanvasController __instance)
             {
                 if (IsHosting)
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.Paused);
+
+                if (Input.GetKeyDown(KeyCode.Escape) && IsSpectating)
+                {
+                    StopAllSpectator();
+                    __instance.gc.quitting = true;
+                    __instance.gc.pauseQuitLevel();
+                }
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
@@ -380,12 +516,40 @@ namespace TootTally.Replays
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.Quitting);
             }
 
+            private static float _elapsedTime;
+            private static readonly float _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
+
             [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
             [HarmonyPostfix]
             public static void OnUpdatePlaybackSpectatingData(GameController __instance)
             {
-                if (IsSpectating)
+                if (_waitingToSync && _frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time > SYNC_BUFFER)
+                {
+                    _waitingToSync = false;
+                    __instance.startSong(false);
+                }
+
+                if (IsSpectating && !_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
                     PlaybackSpectatingData(__instance);
+
+
+                _elapsedTime += Time.deltaTime;
+                if (IsHosting && !__instance.paused && !__instance.quitting && !__instance.retrying && _elapsedTime >= 1f / _targetFramerate)
+                {
+                    _elapsedTime = 0f;
+                    hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth);
+                }
+            }
+
+            private static bool _lastIsTooting;
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
+            [HarmonyPostfix]
+            public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result)
+            {
+                if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
+                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __instance.notebuttonpressed);
+                _lastIsTooting = __result;
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]

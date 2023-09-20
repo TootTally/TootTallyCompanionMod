@@ -8,6 +8,7 @@ namespace TootTally.Replays
     public class WebsocketManager
     {
         private const string SPEC_URL = "wss://spec.toottally.com:443/spec/";
+        private const string VERSION = "1.0.0";
 
         private WebSocket _websocket;
         public bool IsHost { get; private set; }
@@ -60,7 +61,7 @@ namespace TootTally.Replays
         public void ConnectToWebSocketServer(int userId)
         {
             _websocket = CreateNewWebSocket(SPEC_URL + userId);
-            _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } };
+            _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value }, { "Version", VERSION } };
             TootTallyLogger.LogInfo($"Connecting to WebSocket server...");
             IsHost = userId == Plugin.userInfo.id;
             _websocket.ConnectAsync();

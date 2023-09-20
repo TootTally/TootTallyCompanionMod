@@ -70,6 +70,15 @@ namespace TootTally.CustomLeaderboard
             globalLeaderboard = null;
         }
 
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickBack))]
+        [HarmonyPostfix]
+        static void OnLevelSelectControllerClickBackDeleteLeaderboard(LevelSelectController __instance)
+        {
+            if (globalLeaderboard == null) return;
+            globalLeaderboard.CancelAndClearAllCoroutineInList();
+            globalLeaderboard = null;
+        }
+
 
         [HarmonyPatch(typeof(LeaderboardManager), nameof(LeaderboardManager.clickTab))]
         [HarmonyPrefix]
@@ -161,7 +170,11 @@ namespace TootTally.CustomLeaderboard
         }
 
 
-        public static void SetGameSpeedSlider(float speed) => globalLeaderboard?.SetGameSpeedSliderValue(speed);
+        public static void SetGameSpeedSlider(float speed)
+        {
+            TootTallyLogger.LogInfo("GameSpeed Set: " + speed);
+            globalLeaderboard?.SetGameSpeedSliderValue(speed);
+        }
         #endregion
     }
 }

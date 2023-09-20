@@ -90,6 +90,7 @@ namespace TootTally.Replays
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
                     _receivedSongInfoStack.Push(socketMessage as SocketSongInfo);
+                    TootTallyLogger.LogInfo("SongInfo:" + e.Data);
                 }
                 else if (socketMessage is SocketFrameData)
                 {
@@ -106,6 +107,7 @@ namespace TootTally.Replays
                 {
                     TootTallyLogger.DebugModeLog("UserState Detected");
                     _receivedUserStateStack.Push(socketMessage as SocketUserState);
+                    TootTallyLogger.LogInfo("UserState:" + e.Data);
                 }
                 else
                 {
@@ -135,6 +137,7 @@ namespace TootTally.Replays
             if (!IsHost)
             {
                 OnSocketSongInfoReceived = SpectatorManagerPatches.OnSongInfoReceived;
+                OnSocketUserStateReceived = SpectatorManagerPatches.OnUserStateReceived;
                 OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
                 OnSocketTootDataReceived = SpectatorManagerPatches.OnTootDataReceived;
             }

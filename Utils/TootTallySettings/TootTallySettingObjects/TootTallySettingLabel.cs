@@ -39,7 +39,8 @@ namespace TootTally.Utils.TootTallySettings
 
         public override void Dispose()
         {
-            GameObject.DestroyImmediate(label.gameObject);
+            if (label != null)
+                GameObject.DestroyImmediate(label.gameObject);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using TootTally.Replays;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -10,7 +11,6 @@ namespace TootTally.TootTallyOverlay
         public static void SetHomeScreenUserStatus()
         {
             UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.MainMenu);
-           
         }
 
         [HarmonyPatch(typeof(CharSelectController), nameof(CharSelectController.Start))]
@@ -38,8 +38,14 @@ namespace TootTally.TootTallyOverlay
         [HarmonyPostfix]
         public static void SetPlayingUserStatus()
         {
-            var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
-            UserStatusManager.SetUserStatus(status);
+            if (SpectatingManager.IsSpectating)
+                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Spectating);
+            else
+            {
+                var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
+                UserStatusManager.SetUserStatus(status);
+            }
+
         }
     }
 }

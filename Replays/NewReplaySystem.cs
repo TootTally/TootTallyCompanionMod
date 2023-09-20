@@ -89,9 +89,7 @@ namespace TootTally.Replays
                 && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]
                 && _frameData.Last()[(int)FrameDataStructure.MousePositionY] != _lastFrameData[(int)FrameDataStructure.MousePositionY]))
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
-
-            if (SpectatingManager.IsHosting)
-                SpectatingManager.hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth);
+           
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -111,9 +109,6 @@ namespace TootTally.Replays
             float noteHolderPosition = __instance.noteholderr.anchoredPosition.x * GetNoteHolderPrecisionMultiplier(); // the slower the scrollspeed , the better the precision
 
             _tootData.Add(new int[] { (int)noteHolderPosition });
-
-            if (SpectatingManager.IsHosting)
-                SpectatingManager.hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __instance.notebuttonpressed);
         }
 
         public void RecordNoteDataPostfix(GameController __instance)
