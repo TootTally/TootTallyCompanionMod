@@ -32,7 +32,7 @@ namespace TootTally.Utils
 
         public void Update()
         {
-            if (_logStack.TryPop(out var log) && log.Sender != null && log.LogEventArgs != null)
+            if (_logStack.TryPop(out var log) && log != null && log.Sender != null && log.LogEventArgs != null)
             {
                 try
                 {
