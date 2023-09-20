@@ -8,7 +8,7 @@ namespace TootTally.Replays
     public class WebsocketManager
     {
         private const string SPEC_URL = "wss://spec.toottally.com:443/spec/";
-        private const string VERSION = "1.0.1";
+        private const string VERSION = "1.1.0";
 
         private WebSocket _websocket;
         public bool IsHost { get; private set; }

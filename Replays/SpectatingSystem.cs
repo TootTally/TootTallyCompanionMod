@@ -116,6 +116,7 @@ namespace TootTally.Replays
             }
         }
 
+
         public void UpdateStacks()
         {
             if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryPop(out SocketFrameData frameData))
@@ -134,18 +135,24 @@ namespace TootTally.Replays
 
         protected override void OnWebSocketOpen(object sender, EventArgs e)
         {
+            PopUpNotifManager.DisplayNotif($"Connected to spectating server.");
             if (!IsHost)
             {
                 OnSocketSongInfoReceived = SpectatorManagerPatches.OnSongInfoReceived;
                 OnSocketUserStateReceived = SpectatorManagerPatches.OnUserStateReceived;
                 OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
                 OnSocketTootDataReceived = SpectatorManagerPatches.OnTootDataReceived;
+                PopUpNotifManager.DisplayNotif($"Waiting for host to pick a song...");
             }
+            else
+                SpectatorManagerPatches.SendCurrentUserState();
             base.OnWebSocketOpen(sender, e);
         }
 
         public void Disconnect()
         {
+            if (!IsHost)
+                PopUpNotifManager.DisplayNotif($"Disconnected from Spectating server.");
             if (IsConnected)
                 CloseWebsocket();
         }

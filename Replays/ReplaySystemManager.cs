@@ -579,6 +579,8 @@ namespace TootTally.Replays
                 return; //Dont save or upload if no UUID
             }
 
+            if (Plugin.userInfo.allowSubmit)
+                TootTallyLogger.LogInfo("Unexpected error occured while submitting, allowSubmit is false, skipping replay submission.");
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest" && Plugin.userInfo.allowSubmit) //Don't upload if logged in as a Guest or doesn't allowSubmit
