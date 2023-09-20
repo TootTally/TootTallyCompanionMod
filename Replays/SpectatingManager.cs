@@ -229,12 +229,19 @@ namespace TootTally.Replays
             [HarmonyPrefix]
             public static bool OverwriteStartSongIfSyncRequired(GameController __instance)
             {
-                if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time > SYNC_BUFFER)
-                    _waitingToSync = false;
-                else
+                if (ShouldWaitForSync(out _waitingToSync))
                     PopUpNotifManager.DisplayNotif("Waiting to sync with host...");
 
-                return _waitingToSync;
+                return !_waitingToSync;
+            }
+
+            private static bool ShouldWaitForSync(out bool waitForSync)
+            {
+                waitForSync = true;
+
+                if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER)
+                    waitForSync = false;
+                return waitForSync;
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
@@ -435,6 +442,7 @@ namespace TootTally.Replays
             {
                 if (!_gameControllerInstance.quitting && !_gameControllerInstance.level_finished && _gameControllerInstance.pausecontroller.done_animating && !_gameControllerInstance.freeplay)
                 {
+                    _isTooting = false;
                     _gameControllerInstance.notebuttonpressed = false;
                     _gameControllerInstance.musictrack.Pause();
                     _gameControllerInstance.sfxrefs.backfromfreeplay.Play();
@@ -466,6 +474,7 @@ namespace TootTally.Replays
                 _frameIndex = 0;
                 _tootIndex = 0;
                 _isTooting = false;
+                _waitingToSync = true;
                 _gameControllerInstance.pauseRetryLevel();
             }
 
@@ -523,22 +532,24 @@ namespace TootTally.Replays
             [HarmonyPostfix]
             public static void OnUpdatePlaybackSpectatingData(GameController __instance)
             {
-                if (_waitingToSync && _frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time > SYNC_BUFFER)
+                if (!__instance.paused && !__instance.quitting && !__instance.retrying)
                 {
-                    _waitingToSync = false;
-                    __instance.startSong(false);
+                    if (IsSpectating && !_waitingToSync)
+                        PlaybackSpectatingData(__instance);
+                    else if (_waitingToSync && !ShouldWaitForSync(out _waitingToSync))
+                    {
+                        PopUpNotifManager.DisplayNotif("Finished syncing with host.");
+                        __instance.startSong(true);
+                    }
+
+                    _elapsedTime += Time.deltaTime;
+                    if (IsHosting && _elapsedTime >= 1f / _targetFramerate)
+                    {
+                        _elapsedTime = 0f;
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth);
+                    }
                 }
 
-                if (IsSpectating && !_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
-                    PlaybackSpectatingData(__instance);
-
-
-                _elapsedTime += Time.deltaTime;
-                if (IsHosting && !__instance.paused && !__instance.quitting && !__instance.retrying && _elapsedTime >= 1f / _targetFramerate)
-                {
-                    _elapsedTime = 0f;
-                    hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth);
-                }
             }
 
             private static bool _lastIsTooting;
