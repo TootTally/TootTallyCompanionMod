@@ -381,9 +381,9 @@ namespace TootTally.Replays
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
                 if ((_currentTootData == null && _tootData.Count - 1 > _tootIndex) || (_tootData.Count - 1 > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
-                    _currentTootData = _tootData[_tootIndex++];
+                    _currentTootData = _tootData[++_tootIndex];
                 if (_currentTootData != null)
-                    _isTooting = _currentTootData.isTooting;
+                    _isTooting = !_currentTootData.isTooting;
             }
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
