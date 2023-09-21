@@ -40,7 +40,7 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendFrameData(float time, float noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health)
+        public void SendFrameData(double time, double noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health)
         {
             var frame = new SocketFrameData()
             {
@@ -57,7 +57,7 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendTootData(float noteHolder, bool isTooting)
+        public void SendTootData(double noteHolder, bool isTooting)
         {
             var tootFrame = new SocketTootData()
             {
@@ -94,7 +94,6 @@ namespace TootTally.Replays
                 }
                 else if (socketMessage is SocketFrameData)
                 {
-                    TootTallyLogger.DebugModeLog("FrameData Detected");
                     _receivedFrameDataStack.Push(socketMessage as SocketFrameData);
                 }
                 else if (socketMessage is SocketTootData)

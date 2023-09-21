@@ -10,6 +10,7 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using static TootTally.Replays.SpectatingManager;
 
 namespace TootTally.Replays
 {
@@ -117,8 +118,8 @@ namespace TootTally.Replays
 
         public class SocketFrameData : SocketMessage
         {
-            public float time { get; set; }
-            public float noteHolder { get; set; }
+            public double time { get; set; }
+            public double noteHolder { get; set; }
             public float pointerPosition { get; set; }
             public int totalScore { get; set; }
             public int highestCombo { get; set; }
@@ -128,7 +129,7 @@ namespace TootTally.Replays
 
         public class SocketTootData : SocketMessage
         {
-            public float noteHolder { get; set; }
+            public double noteHolder { get; set; }
             public bool isTooting { get; set; }
         }
 
@@ -188,6 +189,7 @@ namespace TootTally.Replays
             private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
             private static List<SocketTootData> _tootData = new List<SocketTootData>();
             private static SocketFrameData _lastFrame, _currentFrame;
+            private static SocketTootData _currentTootData;
 
             private static SocketSongInfo _lastSongInfo;
 
@@ -226,6 +228,7 @@ namespace TootTally.Replays
                     _tootIndex = 0;
                     _lastFrame = null;
                     _currentFrame = null;
+                    _currentTootData = null;
                         /*new SocketFrameData()
                     {
                         currentCombo = 0,
@@ -272,8 +275,8 @@ namespace TootTally.Replays
                     if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time - __instance.musictrack.time >= SYNC_BUFFER)
                     {
                         TootTallyLogger.LogInfo("Syncing track with replay data...");
-                        __instance.musictrack.time = _frameData[_frameIndex].time;
-                        __instance.noteholderr.anchoredPosition = new Vector2(_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
+                        __instance.musictrack.time = (float)_frameData[_frameIndex].time;
+                        __instance.noteholderr.anchoredPosition = new Vector2((float)_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
                     }
                 }
                 if (IsHosting)
@@ -329,7 +332,7 @@ namespace TootTally.Replays
 
             private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
             {
-                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _currentFrame.pointerPosition, (_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _currentFrame.noteHolder));
+                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _currentFrame.pointerPosition, (float)((_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _currentFrame.noteHolder)));
                 SetCursorPosition(__instance, newCursorPosition);
                 __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
             }
@@ -342,7 +345,7 @@ namespace TootTally.Replays
                     _lastFrame = _currentFrame;
                 }
 
-                while (_currentFrame == null || (_frameData.Count - 2 > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                while ((_currentFrame == null && _frameData.Count - 2 > _frameIndex) || (_frameData.Count - 2 > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
                 {
                     _currentFrame = _frameData[++_frameIndex];
                     if (_currentFrame != null)
@@ -376,10 +379,10 @@ namespace TootTally.Replays
 
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if (_tootData.Count - 2 > _tootIndex && currentMapPosition <= _tootData[_tootIndex].noteHolder) //smaller or equal to because noteholder goes toward negative
-                {
-                    _isTooting = _tootData[++_tootIndex].isTooting;
-                }
+                if ((_currentTootData == null && _tootData.Count - 2 > _tootIndex) || (_tootData.Count - 2 > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                    _currentTootData = _tootData[++_tootIndex];
+                if (_currentTootData != null)
+                    _isTooting = _currentTootData.isTooting;
             }
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
