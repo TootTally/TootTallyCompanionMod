@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using static TootTally.Replays.SpectatingManager;
 using TootTally.Utils;
 using WebSocketSharp;
-using UnityEngine.UIElements;
 
 namespace TootTally.Replays
 {
@@ -12,11 +11,13 @@ namespace TootTally.Replays
     {
         private Stack<SocketFrameData> _receivedFrameDataStack;
         private Stack<SocketTootData> _receivedTootDataStack;
+        private Stack<SocketNoteData> _receivedNoteDataStack;
         private Stack<SocketSongInfo> _receivedSongInfoStack;
         private Stack<SocketUserState> _receivedUserStateStack;
 
         public Action<int, SocketFrameData> OnSocketFrameDataReceived;
         public Action<int, SocketTootData> OnSocketTootDataReceived;
+        public Action<int, SocketNoteData> OnSocketNoteDataReceived;
         public Action<int, SocketUserState> OnSocketUserStateReceived;
         public Action<int, SocketSongInfo> OnSocketSongInfoReceived;
 
@@ -24,6 +25,7 @@ namespace TootTally.Replays
         {
             _receivedFrameDataStack = new Stack<SocketFrameData>();
             _receivedTootDataStack = new Stack<SocketTootData>();
+            _receivedNoteDataStack = new Stack<SocketNoteData>();
             _receivedSongInfoStack = new Stack<SocketSongInfo>();
             _receivedUserStateStack = new Stack<SocketUserState>();
         }
@@ -40,7 +42,25 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendFrameData(double time, double noteHolder, float pointerPosition, int totalScore, int highestCombo, int currentCombo, float health)
+        public void SendNoteData(bool champMode, int multiplier, int noteID, float noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
+        {
+            var note = new SocketNoteData()
+            {
+                dataType = DataType.NoteData.ToString(),
+                champMode = champMode,
+                multiplier = multiplier,
+                noteID = noteID,
+                noteScoreAverage = noteScoreAverage,
+                releasedButtonBetweenNotes = releasedButtonBetweenNotes,
+                totalScore = totalScore,
+                health = health,
+                highestCombo = highestCombo
+            };
+            var json = JsonConvert.SerializeObject(note);
+            SendToSocket(json);
+        }
+
+        public void SendFrameData(double time, double noteHolder, float pointerPosition)
         {
             var frame = new SocketFrameData()
             {
@@ -48,10 +68,6 @@ namespace TootTally.Replays
                 time = time,
                 noteHolder = noteHolder,
                 pointerPosition = pointerPosition,
-                totalScore = totalScore,
-                highestCombo = highestCombo,
-                currentCombo = currentCombo,
-                health = health,
             };
             var json = JsonConvert.SerializeObject(frame);
             SendToSocket(json);
@@ -68,6 +84,7 @@ namespace TootTally.Replays
             var json = JsonConvert.SerializeObject(tootFrame);
             SendToSocket(json);
         }
+
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
@@ -108,6 +125,11 @@ namespace TootTally.Replays
                     _receivedUserStateStack.Push(socketMessage as SocketUserState);
                     TootTallyLogger.LogInfo("UserState:" + e.Data);
                 }
+                else if (socketMessage is SocketNoteData)
+                {
+                    TootTallyLogger.DebugModeLog("NoteData Detected");
+                    _receivedNoteDataStack.Push(socketMessage as SocketNoteData);
+                }
                 else
                 {
                     TootTallyLogger.DebugModeLog("Nothing Detected");
@@ -130,6 +152,9 @@ namespace TootTally.Replays
             if (OnSocketUserStateReceived != null && _receivedUserStateStack.TryPop(out SocketUserState userState))
                 OnSocketUserStateReceived.Invoke(_id, userState);
 
+            if (OnSocketNoteDataReceived != null && _receivedNoteDataStack.TryPop(out SocketNoteData noteData))
+                OnSocketNoteDataReceived.Invoke(_id, noteData);
+
         }
 
         protected override void OnWebSocketOpen(object sender, EventArgs e)
@@ -141,6 +166,7 @@ namespace TootTally.Replays
                 OnSocketUserStateReceived = SpectatorManagerPatches.OnUserStateReceived;
                 OnSocketFrameDataReceived = SpectatorManagerPatches.OnFrameDataReceived;
                 OnSocketTootDataReceived = SpectatorManagerPatches.OnTootDataReceived;
+                OnSocketNoteDataReceived = SpectatorManagerPatches.OnNoteDataReceived;
                 PopUpNotifManager.DisplayNotif($"Waiting for host to pick a song...");
             }
             else

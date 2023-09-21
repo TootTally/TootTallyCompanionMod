@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using TootTally.CustomLeaderboard;
 using TootTally.Utils;
@@ -94,6 +95,7 @@ namespace TootTally.Replays
             SongInfo,
             FrameData,
             TootData,
+            NoteData,
         }
 
         public enum UserState
@@ -121,10 +123,6 @@ namespace TootTally.Replays
             public double time { get; set; }
             public double noteHolder { get; set; }
             public float pointerPosition { get; set; }
-            public int totalScore { get; set; }
-            public int highestCombo { get; set; }
-            public int currentCombo { get; set; }
-            public float health { get; set; }
         }
 
         public class SocketTootData : SocketMessage
@@ -141,12 +139,21 @@ namespace TootTally.Replays
             public float scrollSpeed { get; set; }
         }
 
+        public class SocketNoteData : SocketMessage
+        {
+            public int noteID { get; set; }
+            public float noteScoreAverage { get; set; }
+            public bool champMode { get; set; }
+            public int multiplier { get; set; }
+            public int totalScore { get; set; }
+            public bool releasedButtonBetweenNotes { get; set; }
+            public float health { get; set; }
+            public int highestCombo { get; set; }
+        }
+
         public class SocketDataConverter : JsonConverter
         {
-            public override bool CanConvert(Type objectType)
-            {
-                return objectType == typeof(SocketMessage);
-            }
+            public override bool CanConvert(Type objectType) => objectType == typeof(SocketMessage);
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
@@ -162,6 +169,9 @@ namespace TootTally.Replays
 
                 if (jo["dataType"].Value<string>() == DataType.SongInfo.ToString())
                     return jo.ToObject<SocketSongInfo>(serializer);
+
+                if (jo["dataType"].Value<string>() == DataType.NoteData.ToString())
+                    return jo.ToObject<SocketNoteData>(serializer);
 
                 return null;
             }
@@ -188,8 +198,10 @@ namespace TootTally.Replays
 
             private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
             private static List<SocketTootData> _tootData = new List<SocketTootData>();
+            private static List<SocketNoteData> _noteData = new List<SocketNoteData>();
             private static SocketFrameData _lastFrame, _currentFrame;
             private static SocketTootData _currentTootData;
+            private static SocketNoteData _currentNoteData;
 
             private static SocketSongInfo _lastSongInfo;
 
@@ -227,8 +239,8 @@ namespace TootTally.Replays
                     _frameIndex = 0;
                     _tootIndex = 0;
                     _lastFrame = null;
-                    _currentFrame = null;
-                    _currentTootData = null;
+                    _currentFrame = new SocketFrameData() { time = 0, noteHolder = 0, pointerPosition = 0 };
+                    _currentTootData = new SocketTootData() { isTooting = false, noteHolder = 0 };
                     _isTooting = false;
                     /*new SocketFrameData()
                 {
@@ -284,17 +296,22 @@ namespace TootTally.Replays
                     SetCurrentUserState(UserState.Playing);
             }
 
+            private static bool _lastIsTooting;
+
             [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
             [HarmonyPostfix]
-            public static void GameControllerIsNoteButtonPressedPostfixPatch(ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+            public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
             {
                 if (IsSpectating)
                     __result = _isTooting;
+                else if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
+                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __result);
+                _lastIsTooting = __result;
             }
 
             [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
             [HarmonyPostfix]
-            public static void OnPointSceneControllerStartSetInstance(PointSceneController __instance) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+            public static void OnPointSceneControllerStartSetInstance(PointSceneController __instance)
             {
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = null;
@@ -323,7 +340,7 @@ namespace TootTally.Replays
 
                 var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
 
-                if (_frameData.Count - 2 > _frameIndex && _lastFrame != null && _currentFrame != null)
+                if (_frameData.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
                     InterpolateCursorPosition(currentMapPosition, __instance);
                 if (_frameData.Count > 0)
                     PlaybackFrameData(currentMapPosition, __instance);
@@ -346,17 +363,11 @@ namespace TootTally.Replays
                     _lastFrame = _currentFrame;
                 }
 
-                while ((_currentFrame == null && _frameData.Count - 2 > _frameIndex) || (_frameData.Count - 2 > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                while ((_currentFrame == null && _frameData.Count > _frameIndex) || (_frameData.Count > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
                 {
-                    _currentFrame = _frameData[++_frameIndex];
+                    _currentFrame = _frameData[_frameIndex++];
                     if (_currentFrame != null)
-                    {
                         SetCursorPosition(__instance, _currentFrame.pointerPosition);
-                        __instance.totalscore = _currentFrame.totalScore;
-                        __instance.currenthealth = _currentFrame.health;
-                        __instance.highestcombo_level = _currentFrame.highestCombo;
-                        __instance.highestcombocounter = _currentFrame.currentCombo;
-                    }
 
                 }
             }
@@ -378,12 +389,17 @@ namespace TootTally.Replays
                 _tootData?.Add(tootData);
             }
 
+            public static void OnNoteDataReceived(int id, SocketNoteData noteData)
+            {
+                _noteData?.Add(noteData);
+            }
+
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if ((_currentTootData == null && _tootData.Count - 1 > _tootIndex) || (_tootData.Count - 1 > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                if ((_currentTootData == null && _tootData.Count - 1 > _tootIndex) || (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
                     _currentTootData = _tootData[++_tootIndex];
                 if (_currentTootData != null)
-                    _isTooting = !_currentTootData.isTooting;
+                    _isTooting = _currentTootData.isTooting;
             }
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
@@ -446,6 +462,7 @@ namespace TootTally.Replays
             {
                 _frameData.Clear();
                 _tootData.Clear();
+                _noteData.Clear();
                 _frameIndex = 0;
                 _tootIndex = 0;
                 _isTooting = false;
@@ -462,6 +479,7 @@ namespace TootTally.Replays
                     {
                         _frameData.Clear();
                         _tootData.Clear();
+                        _noteData.Clear();
                         _frameIndex = 0;
                         _tootIndex = 0;
 
@@ -534,6 +552,7 @@ namespace TootTally.Replays
             {
                 _frameData.Clear();
                 _tootData.Clear();
+                _noteData.Clear();
                 _frameIndex = 0;
                 _tootIndex = 0;
                 _isTooting = false;
@@ -589,6 +608,50 @@ namespace TootTally.Replays
                     SetCurrentUserState(UserState.Quitting);
             }
 
+            [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
+            [HarmonyPrefix]
+            public static void OnGetScoreAveragePrefixSetCurrentNote(GameController __instance)
+            {
+                if (IsHosting)
+                {
+                    hostedSpectatingSystem.SendNoteData(__instance.rainbowcontroller.champmode, __instance.multiplier, __instance.currentnoteindex,
+                        __instance.notescoreaverage, __instance.released_button_between_notes, __instance.totalscore, __instance.currenthealth, __instance.highestcombo_level);
+                }
+                else if (IsSpectating)
+                {
+                    if (_noteData != null && _noteData.Count > __instance.currentnoteindex)
+                        try
+                        {
+                            _currentNoteData = _noteData.Find(x => x.noteID == __instance.currentnoteindex);
+                        }
+                        catch (Exception)
+                        {
+                            _currentNoteData = null;
+                        }
+                    if (_currentNoteData != null)
+                    {
+                        __instance.rainbowcontroller.champmode = _currentNoteData.champMode;
+                        __instance.multiplier = _currentNoteData.multiplier;
+                        __instance.notescoreaverage = _currentNoteData.noteScoreAverage;
+                        __instance.released_button_between_notes = _currentNoteData.releasedButtonBetweenNotes;
+                        __instance.totalscore = _currentNoteData.totalScore;
+                        __instance.currenthealth = _currentNoteData.health;
+                        __instance.highestcombo_level = _currentNoteData.highestCombo;
+                    }
+                }
+            }
+
+            /*[HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
+            [HarmonyPostfix]
+            public static void OnGetScoreAveragePostfixSetTotalScore(GameController __instance)
+            {
+                if (IsHosting && _currentNoteData != null)
+                {
+                    _currentNoteData.totalScore = __instance.totalscore;
+                }
+            }*/
+
+
             private static float _elapsedTime;
             private static readonly float _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
 
@@ -610,22 +673,12 @@ namespace TootTally.Replays
                     if (IsHosting && _elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y, __instance.totalscore, __instance.highestcombo_level, __instance.highestcombocounter, __instance.currenthealth);
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
 
             }
 
-            private static bool _lastIsTooting;
-
-            [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
-            [HarmonyPostfix]
-            public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result)
-            {
-                if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
-                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __result);
-                _lastIsTooting = __result;
-            }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseRetryLevel))]
             [HarmonyPostfix]
