@@ -229,16 +229,17 @@ namespace TootTally.Replays
                     _lastFrame = null;
                     _currentFrame = null;
                     _currentTootData = null;
-                        /*new SocketFrameData()
-                    {
-                        currentCombo = 0,
-                        health = 0,
-                        highestCombo = 0,
-                        pointerPosition = 0,
-                        time = 0,
-                        noteHolder = 0,
-                        totalScore = 0,
-                    };*/
+                    _isTooting = false;
+                    /*new SocketFrameData()
+                {
+                    currentCombo = 0,
+                    health = 0,
+                    highestCombo = 0,
+                    pointerPosition = 0,
+                    time = 0,
+                    noteHolder = 0,
+                    totalScore = 0,
+                };*/
                     _elapsedTime = 0;
                 }
             }
@@ -356,7 +357,7 @@ namespace TootTally.Replays
                         __instance.highestcombo_level = _currentFrame.highestCombo;
                         __instance.highestcombocounter = _currentFrame.currentCombo;
                     }
-                       
+
                 }
             }
 
@@ -463,7 +464,6 @@ namespace TootTally.Replays
                         _tootData.Clear();
                         _frameIndex = 0;
                         _tootIndex = 0;
-                        _isTooting = false;
 
                         GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
 
