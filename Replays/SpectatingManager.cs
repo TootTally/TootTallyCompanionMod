@@ -380,8 +380,8 @@ namespace TootTally.Replays
 
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if ((_currentTootData == null && _tootData.Count - 2 > _tootIndex) || (_tootData.Count - 2 > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
-                    _currentTootData = _tootData[++_tootIndex];
+                if ((_currentTootData == null && _tootData.Count - 1 > _tootIndex) || (_tootData.Count - 1 > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                    _currentTootData = _tootData[_tootIndex++];
                 if (_currentTootData != null)
                     _isTooting = _currentTootData.isTooting;
             }
@@ -623,7 +623,7 @@ namespace TootTally.Replays
             public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result)
             {
                 if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
-                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __instance.notebuttonpressed);
+                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __result);
                 _lastIsTooting = __result;
             }
 
