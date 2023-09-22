@@ -382,11 +382,15 @@ namespace TootTally.Replays
             public static void OnFrameDataReceived(int id, SocketFrameData frameData)
             {
                 _frameData?.Add(frameData);
+                if (_frameData != null && _frameData.Count % 60 == 0) // Every Second ish
+                    _frameData.Sort((x, y) => x.noteHolder < y.noteHolder ? 1 : -1);
+
             }
 
             public static void OnTootDataReceived(int id, SocketTootData tootData)
             {
                 _tootData?.Add(tootData);
+                _tootData?.Sort((x, y) => x.noteHolder < y.noteHolder ? 1 : -1); //Hope I can find a better way to do this... We arent sure in what order we are getting the toot data
             }
 
             public static void OnNoteDataReceived(int id, SocketNoteData noteData)
@@ -396,8 +400,8 @@ namespace TootTally.Replays
 
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if ((_currentTootData == null && _tootData.Count - 1 > _tootIndex) || (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
-                    _currentTootData = _tootData[++_tootIndex];
+                if ((_currentTootData == null && _tootData.Count > _tootIndex) || (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                    _currentTootData = _tootData[_tootIndex++];
                 if (_currentTootData != null)
                     _isTooting = !_currentTootData.isTooting;
             }
