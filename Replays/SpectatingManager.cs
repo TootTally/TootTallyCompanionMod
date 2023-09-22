@@ -257,7 +257,7 @@ namespace TootTally.Replays
                 }
             }
 
-            private const float SYNC_BUFFER = 1.5f;
+            private const float SYNC_BUFFER = 1f;
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
             [HarmonyPrefix]
