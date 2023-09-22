@@ -327,9 +327,9 @@ namespace TootTally.Replays
             {
                 if (IsSpectating && _lastSpecState == UserState.PointScene && !__instance.clickedleave)
                     if (_currentSpecState == UserState.SelectingSong)
-                        __instance.clickCont();
+                        BackToLevelSelect();
                     else if (_currentSpecState == UserState.Playing)
-                        __instance.clickRetry();
+                        RetryFromPointScene();
             }
 
             public static void PlaybackSpectatingData(GameController __instance)
@@ -491,7 +491,7 @@ namespace TootTally.Replays
 
             private static void TryStartSong()
             {
-                if (_lastSongInfo != null)
+                if (_lastSongInfo != null && _lastSongInfo.trackRef != null)
                     if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                     {
                         _frameData.Clear();
