@@ -4,16 +4,17 @@ using System.Collections.Generic;
 using static TootTally.Replays.SpectatingManager;
 using TootTally.Utils;
 using WebSocketSharp;
+using System.Collections.Concurrent;
 
 namespace TootTally.Replays
 {
     public class SpectatingSystem : WebsocketManager
     {
-        private Stack<SocketFrameData> _receivedFrameDataStack;
-        private Stack<SocketTootData> _receivedTootDataStack;
-        private Stack<SocketNoteData> _receivedNoteDataStack;
-        private Stack<SocketSongInfo> _receivedSongInfoStack;
-        private Stack<SocketUserState> _receivedUserStateStack;
+        private ConcurrentQueue<SocketFrameData> _receivedFrameDataStack;
+        private ConcurrentQueue<SocketTootData> _receivedTootDataStack;
+        private ConcurrentQueue<SocketNoteData> _receivedNoteDataStack;
+        private ConcurrentQueue<SocketSongInfo> _receivedSongInfoStack;
+        private ConcurrentQueue<SocketUserState> _receivedUserStateStack;
 
         public Action<int, SocketFrameData> OnSocketFrameDataReceived;
         public Action<int, SocketTootData> OnSocketTootDataReceived;
@@ -23,11 +24,11 @@ namespace TootTally.Replays
 
         public SpectatingSystem(int id) : base(id)
         {
-            _receivedFrameDataStack = new Stack<SocketFrameData>();
-            _receivedTootDataStack = new Stack<SocketTootData>();
-            _receivedNoteDataStack = new Stack<SocketNoteData>();
-            _receivedSongInfoStack = new Stack<SocketSongInfo>();
-            _receivedUserStateStack = new Stack<SocketUserState>();
+            _receivedFrameDataStack = new ConcurrentQueue<SocketFrameData>();
+            _receivedTootDataStack = new ConcurrentQueue<SocketTootData>();
+            _receivedNoteDataStack = new ConcurrentQueue<SocketNoteData>();
+            _receivedSongInfoStack = new ConcurrentQueue<SocketSongInfo>();
+            _receivedUserStateStack = new ConcurrentQueue<SocketUserState>();
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
@@ -106,29 +107,29 @@ namespace TootTally.Replays
                 if (socketMessage is SocketSongInfo)
                 {
                     TootTallyLogger.DebugModeLog("SongInfo Detected");
-                    _receivedSongInfoStack.Push(socketMessage as SocketSongInfo);
+                    _receivedSongInfoStack.Enqueue(socketMessage as SocketSongInfo);
                     TootTallyLogger.LogInfo("SongInfo:" + e.Data);
                 }
                 else if (socketMessage is SocketFrameData)
                 {
-                    _receivedFrameDataStack.Push(socketMessage as SocketFrameData);
+                    _receivedFrameDataStack.Enqueue(socketMessage as SocketFrameData);
                 }
                 else if (socketMessage is SocketTootData)
                 {
                     TootTallyLogger.DebugModeLog("TootData Detected");
-                    _receivedTootDataStack.Push(socketMessage as SocketTootData);
+                    _receivedTootDataStack.Enqueue(socketMessage as SocketTootData);
 
                 }
                 else if (socketMessage is SocketUserState)
                 {
                     TootTallyLogger.DebugModeLog("UserState Detected");
-                    _receivedUserStateStack.Push(socketMessage as SocketUserState);
+                    _receivedUserStateStack.Enqueue(socketMessage as SocketUserState);
                     TootTallyLogger.LogInfo("UserState:" + e.Data);
                 }
                 else if (socketMessage is SocketNoteData)
                 {
                     TootTallyLogger.DebugModeLog("NoteData Detected");
-                    _receivedNoteDataStack.Push(socketMessage as SocketNoteData);
+                    _receivedNoteDataStack.Enqueue(socketMessage as SocketNoteData);
                 }
                 else
                 {
@@ -140,19 +141,19 @@ namespace TootTally.Replays
 
         public void UpdateStacks()
         {
-            if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryPop(out SocketFrameData frameData))
+            if (OnSocketFrameDataReceived != null && _receivedFrameDataStack.TryDequeue(out SocketFrameData frameData))
                 OnSocketFrameDataReceived.Invoke(_id, frameData);
 
-            if (OnSocketTootDataReceived != null && _receivedTootDataStack.TryPop(out SocketTootData tootData))
+            if (OnSocketTootDataReceived != null && _receivedTootDataStack.TryDequeue(out SocketTootData tootData))
                 OnSocketTootDataReceived.Invoke(_id, tootData);
 
-            if (OnSocketSongInfoReceived != null && _receivedSongInfoStack.TryPop(out SocketSongInfo songInfo))
+            if (OnSocketSongInfoReceived != null && _receivedSongInfoStack.TryDequeue(out SocketSongInfo songInfo))
                 OnSocketSongInfoReceived.Invoke(_id, songInfo);
 
-            if (OnSocketUserStateReceived != null && _receivedUserStateStack.TryPop(out SocketUserState userState))
+            if (OnSocketUserStateReceived != null && _receivedUserStateStack.TryDequeue(out SocketUserState userState))
                 OnSocketUserStateReceived.Invoke(_id, userState);
 
-            if (OnSocketNoteDataReceived != null && _receivedNoteDataStack.TryPop(out SocketNoteData noteData))
+            if (OnSocketNoteDataReceived != null && _receivedNoteDataStack.TryDequeue(out SocketNoteData noteData))
                 OnSocketNoteDataReceived.Invoke(_id, noteData);
 
         }

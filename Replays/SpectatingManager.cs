@@ -143,7 +143,7 @@ namespace TootTally.Replays
         public class SocketNoteData : SocketMessage
         {
             public int noteID { get; set; }
-            public float noteScoreAverage { get; set; }
+            public double noteScoreAverage { get; set; }
             public bool champMode { get; set; }
             public int multiplier { get; set; }
             public int totalScore { get; set; }
@@ -382,28 +382,12 @@ namespace TootTally.Replays
 
             public static void OnFrameDataReceived(int id, SocketFrameData frameData)
             {
-                if (_frameData != null)
-                {
-                    if (!_frameData.Any(x => x.noteHolder == frameData.noteHolder))
-                        _frameData.Add(frameData);
-                    if (_frameData.Count % 60 == 0) // Every Second ish
-                        _frameData.Sort((x, y) => y.noteHolder.CompareTo(x.noteHolder));
-                }
-                
-
+                _frameData?.Add(frameData);
             }
 
             public static void OnTootDataReceived(int id, SocketTootData tootData)
             {
-                if (_tootData != null)
-                {
-                    if (!_tootData.Any(x => x.noteHolder == tootData.noteHolder))
-                    {
-                        _tootData.Add(tootData);
-                        _tootData.Sort((x, y) => y.noteHolder.CompareTo(x.noteHolder));
-                    }
-                }
-                 //Hope I can find a better way to do this... We arent sure in what order we are getting the toot data
+                _tootData?.Add(tootData);
             }
 
             public static void OnNoteDataReceived(int id, SocketNoteData noteData)
@@ -637,12 +621,12 @@ namespace TootTally.Replays
                 else if (IsSpectating)
                 {
                     if (_noteData != null && _noteData.Count > 0 && _noteData.Last().noteID > __instance.currentnoteindex)
-                            _currentNoteData = _noteData.Find(x => x.noteID == __instance.currentnoteindex);
+                        _currentNoteData = _noteData.Find(x => x.noteID == __instance.currentnoteindex);
                     if (_currentNoteData != null)
                     {
                         __instance.rainbowcontroller.champmode = _currentNoteData.champMode;
                         __instance.multiplier = _currentNoteData.multiplier;
-                        __instance.notescoreaverage = _currentNoteData.noteScoreAverage;
+                        __instance.notescoreaverage = (float)_currentNoteData.noteScoreAverage;
                         __instance.released_button_between_notes = _currentNoteData.releasedButtonBetweenNotes;
                         __instance.totalscore = _currentNoteData.totalScore;
                         __instance.currenthealth = _currentNoteData.health;
