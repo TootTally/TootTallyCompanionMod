@@ -360,9 +360,7 @@ namespace TootTally.Replays
             {
 
                 if (_currentFrame != null && currentMapPosition <= _currentFrame.noteHolder)
-                {
                     _lastFrame = _currentFrame;
-                }
 
                 while ((_currentFrame == null && _frameData.Count > _frameIndex) || (_frameData.Count > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
                 {

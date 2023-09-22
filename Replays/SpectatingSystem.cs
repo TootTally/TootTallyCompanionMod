@@ -43,7 +43,7 @@ namespace TootTally.Replays
             SendToSocket(json);
         }
 
-        public void SendNoteData(bool champMode, int multiplier, int noteID, float noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
+        public void SendNoteData(bool champMode, int multiplier, int noteID, double noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
         {
             var note = new SocketNoteData()
             {
