@@ -11,6 +11,7 @@ using TootTally.CustomLeaderboard;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using UnityEngine.Playables;
 using static TootTally.Replays.SpectatingManager;
 
 namespace TootTally.Replays
@@ -381,16 +382,28 @@ namespace TootTally.Replays
 
             public static void OnFrameDataReceived(int id, SocketFrameData frameData)
             {
-                _frameData?.Add(frameData);
-                if (_frameData != null && _frameData.Count % 60 == 0) // Every Second ish
-                    _frameData.Sort((x, y) => x.noteHolder < y.noteHolder ? 1 : -1);
+                if (_frameData != null)
+                {
+                    if (!_frameData.Any(x => x.noteHolder == frameData.noteHolder))
+                        _frameData.Add(frameData);
+                    if (_frameData.Count % 60 == 0) // Every Second ish
+                        _frameData.Sort((x, y) => y.noteHolder.CompareTo(x.noteHolder));
+                }
+                
 
             }
 
             public static void OnTootDataReceived(int id, SocketTootData tootData)
             {
-                _tootData?.Add(tootData);
-                _tootData?.Sort((x, y) => x.noteHolder < y.noteHolder ? 1 : -1); //Hope I can find a better way to do this... We arent sure in what order we are getting the toot data
+                if (_tootData != null)
+                {
+                    if (!_tootData.Any(x => x.noteHolder == tootData.noteHolder))
+                    {
+                        _tootData.Add(tootData);
+                        _tootData.Sort((x, y) => y.noteHolder.CompareTo(x.noteHolder));
+                    }
+                }
+                 //Hope I can find a better way to do this... We arent sure in what order we are getting the toot data
             }
 
             public static void OnNoteDataReceived(int id, SocketNoteData noteData)
@@ -623,15 +636,8 @@ namespace TootTally.Replays
                 }
                 else if (IsSpectating)
                 {
-                    if (_noteData != null && _noteData.Count > __instance.currentnoteindex)
-                        try
-                        {
+                    if (_noteData != null && _noteData.Count > 0 && _noteData.Last().noteID > __instance.currentnoteindex)
                             _currentNoteData = _noteData.Find(x => x.noteID == __instance.currentnoteindex);
-                        }
-                        catch (Exception)
-                        {
-                            _currentNoteData = null;
-                        }
                     if (_currentNoteData != null)
                     {
                         __instance.rainbowcontroller.champmode = _currentNoteData.champMode;
