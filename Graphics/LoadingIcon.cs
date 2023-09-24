@@ -6,16 +6,16 @@ namespace TootTally.Graphics
 {
     public class LoadingIcon : MonoBehaviour
     {
-        private GameObject _iconHolder;
+        public GameObject iconHolder;
         private bool _isActive;
         private bool _recursiveAnimationActive;
         private CustomAnimation _currentAnimation;
 
         public LoadingIcon(GameObject iconHolder, bool isActive)
         {
-            _iconHolder = iconHolder;
+            this.iconHolder = iconHolder;
             _isActive = isActive;
-            _iconHolder.SetActive(isActive);
+            this.iconHolder.SetActive(isActive);
         }
 
         public void StartRecursiveAnimation()
@@ -36,9 +36,9 @@ namespace TootTally.Graphics
 
         public void RecursiveAnimation()
         {
-            _currentAnimation = AnimationManager.AddNewEulerAngleAnimation(_iconHolder, new Vector3(0, 0, 359), 0.9f, GetSecondDegreeAnimation(), (sender) =>
+            _currentAnimation = AnimationManager.AddNewEulerAngleAnimation(iconHolder, new Vector3(0, 0, 359), 0.9f, GetSecondDegreeAnimation(), (sender) =>
             {
-                _currentAnimation = AnimationManager.AddNewEulerAngleAnimation(_iconHolder, new Vector3(0, 0, 0), 0.9f, GetSecondDegreeAnimation(), (sender) =>
+                _currentAnimation = AnimationManager.AddNewEulerAngleAnimation(iconHolder, new Vector3(0, 0, 0), 0.9f, GetSecondDegreeAnimation(), (sender) =>
                 {
                     if (_recursiveAnimationActive)
                         RecursiveAnimation();
@@ -48,26 +48,28 @@ namespace TootTally.Graphics
 
         public void Show()
         {
-            _iconHolder.SetActive(true);
+            iconHolder.SetActive(true);
             _isActive = true;
         }
 
         public void Hide()
         {
-            _iconHolder.SetActive(false);
+            iconHolder.SetActive(false);
             _isActive = false;
         }
 
         public void ToggleShow()
         {
             _isActive = !_isActive;
-            _iconHolder.SetActive(_isActive);
+            iconHolder.SetActive(_isActive);
         }
+
+        public bool IsVisible() => _isActive;
 
         public void Dispose()
         {
             _currentAnimation?.Dispose();
-            GameObject.DestroyImmediate(_iconHolder);
+            GameObject.DestroyImmediate(iconHolder);
         }
 
         public EasingHelper.SecondOrderDynamics GetSecondDegreeAnimation() => new(0.8f, .5f, 1f);

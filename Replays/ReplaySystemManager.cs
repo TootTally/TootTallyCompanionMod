@@ -8,6 +8,7 @@ using TMPro;
 using TootTally.Compatibility;
 using TootTally.GameplayModifier;
 using TootTally.Graphics;
+using TootTally.Spectating;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;

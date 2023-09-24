@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TootTally.Utils;
 using WebSocketSharp;
 
-namespace TootTally.Replays
+namespace TootTally.Spectating
 {
     public class WebsocketManager
     {
@@ -71,7 +71,7 @@ namespace TootTally.Replays
         {
             var ws = new WebSocket(url);
             //if (Plugin.Instance.DebugMode.Value) 
-                //ws.Log.Level = LogLevel.Debug; //Too risky since it shows API KEY in the logs
+            //ws.Log.Level = LogLevel.Debug; //Too risky since it shows API KEY in the logs
             ws.OnError += (sender, e) => { TootTallyLogger.LogError(e.Message); };
             ws.OnOpen += OnWebSocketOpen;
             ws.OnClose += OnWebSocketClose;

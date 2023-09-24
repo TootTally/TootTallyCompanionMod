@@ -8,7 +8,7 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Utils.APIServices.SerializableClass;
 using TMPro;
-using TootTally.Replays;
+using TootTally.Spectating;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -261,13 +261,11 @@ namespace TootTally.TootTallyOverlay
 
         public static void OnSpectateButtonPress(int id)
         {
-            //if (Plugin.userInfo.id == 70)
-            //{
-            if (!SpectatingManager.IsAnyConnectionPending())
+            if (!SpectatingManager.IsAnyConnectionPending() && !(Plugin.userInfo.id == id && SpectatingManager.IsHosting))
+            {
                 SpectatingManager.CreateUniqueSpectatingConnection(id);
-            //}
-            //else
-            // PopUpNotifManager.DisplayNotif("Feature disabled... Will be available soon! ;)");
+                UpdateUsers();
+            }
         }
 
         private static void OnFriendResponse(bool value)

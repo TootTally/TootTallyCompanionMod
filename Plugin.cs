@@ -15,6 +15,7 @@ using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
 using TootTally.SongDownloader;
+using TootTally.Spectating;
 using TootTally.TootTallyOverlay;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -101,7 +102,7 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
-            _harmony.PatchAll(typeof(SpectatingManager.SpectatorManagerPatches));
+            _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
@@ -170,7 +171,9 @@ namespace TootTally
 
                 if (userInfo == null)
                 {
-                    var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, new Vector2(840, -440), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                    var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                    var rect = icon.iconHolder.GetComponent<RectTransform>();
+                    rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
                     icon.StartRecursiveAnimation();
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {

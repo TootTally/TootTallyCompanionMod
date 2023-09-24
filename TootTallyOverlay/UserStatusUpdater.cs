@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using TootTally.Replays;
+using TootTally.Spectating;
 
 namespace TootTally.TootTallyOverlay
 {

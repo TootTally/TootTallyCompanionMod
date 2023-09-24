@@ -4,6 +4,7 @@ using TMPro;
 using TootTally.CustomLeaderboard;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
+using TootTally.Spectating;
 using TootTally.TootTallyOverlay;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -646,7 +647,8 @@ namespace TootTally.Graphics
             {
                 card.transform.Find("LatencyBG").GetComponent<Image>().color = Color.cyan;
                 TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), Color.cyan, .1f);
-                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
+                if (!SpectatingManager.IsHosting)
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
             }
 
             return card;
@@ -1177,7 +1179,8 @@ namespace TootTally.Graphics
             try
             {
                 GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 TootTallyLogger.LogError($"Object {objectName} couldn't be deleted from {parent.name} parent");
             }

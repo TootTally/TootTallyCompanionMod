@@ -5,16 +5,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using TootTally.CustomLeaderboard;
+using TootTally.Replays;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.Playables;
-using static TootTally.Replays.SpectatingManager;
 
-namespace TootTally.Replays
+namespace TootTally.Spectating
 {
     public class SpectatingManager : MonoBehaviour
     {
@@ -27,6 +25,7 @@ namespace TootTally.Replays
         public void Awake()
         {
             _spectatingSystemList ??= new List<SpectatingSystem>();
+            SpectatingOverlay.Initialize();
             if (Plugin.Instance.AllowSpectate.Value)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id);
         }
@@ -37,6 +36,11 @@ namespace TootTally.Replays
 
             if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count > 0 && !IsHosting)
                 _spectatingSystemList.Last().RemoveFromManager();
+
+            if (IsAnyConnectionPending() && !SpectatingOverlay.IsLoadingIconVisible())
+                SpectatingOverlay.ShowLoadingIcon();
+            else if (!IsAnyConnectionPending() && SpectatingOverlay.IsLoadingIconVisible())
+                SpectatingOverlay.HideLoadingIcon();
         }
 
         public static void StopAllSpectator()
@@ -88,6 +92,14 @@ namespace TootTally.Replays
             }
         }
 
+        public static void OnHostConnection()
+        {
+        }
+        
+        public static void OnSpectatingConnection()
+        {
+        }
+
         public static bool IsAnyConnectionPending() => _spectatingSystemList.Any(x => x.ConnectionPending);
 
         public enum DataType
@@ -97,6 +109,7 @@ namespace TootTally.Replays
             FrameData,
             TootData,
             NoteData,
+            SpectatorInfo,
         }
 
         public enum UserState
@@ -152,6 +165,12 @@ namespace TootTally.Replays
             public int highestCombo { get; set; }
         }
 
+        public class SocketSpectatorInfo : SocketMessage
+        {
+            public int count { get; set; }
+            public List<string> spectators { get; set; }
+        }
+
         public class SocketDataConverter : JsonConverter
         {
             public override bool CanConvert(Type objectType) => objectType == typeof(SocketMessage);
@@ -174,6 +193,9 @@ namespace TootTally.Replays
                 if (jo["dataType"].Value<string>() == DataType.NoteData.ToString())
                     return jo.ToObject<SocketNoteData>(serializer);
 
+                if (jo["dataType"].Value<string>() == DataType.SpectatorInfo.ToString())
+                    return jo.ToObject<SocketSpectatorInfo>(serializer);
+
                 return null;
             }
 
@@ -189,7 +211,7 @@ namespace TootTally.Replays
         }
 
         #region patches
-        public static class SpectatorManagerPatches
+        public static class SpectatingManagerPatches
         {
             private static LevelSelectController _levelSelectControllerInstance;
             private static GameController _gameControllerInstance;
@@ -362,7 +384,7 @@ namespace TootTally.Replays
                 if (_currentFrame != null && currentMapPosition <= _currentFrame.noteHolder)
                     _lastFrame = _currentFrame;
 
-                while ((_currentFrame == null && _frameData.Count > _frameIndex) || (_frameData.Count > _frameIndex && currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                while (_currentFrame == null && _frameData.Count > _frameIndex || _frameData.Count > _frameIndex && currentMapPosition <= _currentFrame.noteHolder) //smaller or equal to because noteholder goes toward negative
                 {
                     _currentFrame = _frameData[_frameIndex++];
                     if (_currentFrame != null)
@@ -393,9 +415,18 @@ namespace TootTally.Replays
                 _noteData?.Add(noteData);
             }
 
+            public static void OnSpectatorDataReceived(int id, SocketSpectatorInfo specData)
+            {
+                if (IsHosting)
+                {
+                    //add overlay code here
+                    //PopUpNotifManager.DisplayNotif("Spectators: " + specData.count);
+                }
+            }
+
             public static void PlaybackTootData(float currentMapPosition, GameController __instance)
             {
-                if ((_currentTootData == null && _tootData.Count > _tootIndex) || (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                if (_currentTootData == null && _tootData.Count > _tootIndex || _tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder) //smaller or equal to because noteholder goes toward negative
                     _currentTootData = _tootData[_tootIndex++];
                 if (_currentTootData != null)
                     _isTooting = !_currentTootData.isTooting;
