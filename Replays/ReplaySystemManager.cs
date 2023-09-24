@@ -539,29 +539,32 @@ namespace TootTally.Replays
             if (AutoTootCompatibility.enabled && AutoTootCompatibility.WasAutoUsed)
             {
                 TootTallyLogger.LogInfo("AutoToot used, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("AutoToot used, skipping replay submission.", GameTheme.themeColors.notification.warningText);
                 return; // Don't submit anything if AutoToot was used.
             }
             if (HoverTootCompatibility.enabled && HoverTootCompatibility.DidToggleThisSong)
             {
                 TootTallyLogger.LogInfo("HoverToot used, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("HoverToot used, skipping replay submission.", GameTheme.themeColors.notification.warningText);
                 return; // Don't submit anything if HoverToot was used.
             }
             if (CircularBreathingCompatibility.enabled && CircularBreathingCompatibility.IsActivated)
             {
-                PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
                 TootTallyLogger.LogInfo("CircularBreathing used, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("Circular Breathing enabled, Score submission disabled.", GameTheme.themeColors.notification.warningText);
                 return; // Don't submit anything if Circular Breathing is enabled
             }
             if (_hasPaused)
             {
-                PopUpNotifManager.DisplayNotif("Pausing not allowed, Score submission disabled.", GameTheme.themeColors.notification.warningText);
                 TootTallyLogger.LogInfo("Paused during gameplay, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("Pausing not allowed, Score submission disabled.", GameTheme.themeColors.notification.warningText);
                 return; //Don't submit if paused during the play
             }
 
             if (_replayUUID == null)
             {
                 TootTallyLogger.LogInfo("Replay UUID was null, skipping replay submission.");
+                PopUpNotifManager.DisplayNotif("Replay UUID was null, skipping replay submission.", GameTheme.themeColors.notification.warningText);
                 return; //Dont save or upload if no UUID
             }
 
@@ -578,7 +581,10 @@ namespace TootTally.Replays
             }
 
             if (Plugin.userInfo.allowSubmit)
+            {
+                PopUpNotifManager.DisplayNotif("Unexpected error occured while submitting, skipping replay submission.", GameTheme.themeColors.notification.warningText);
                 TootTallyLogger.LogInfo("Unexpected error occured while submitting, allowSubmit is false, skipping replay submission.");
+            }
 
             SaveReplayToFile();
             if (Plugin.userInfo.username != "Guest" && Plugin.userInfo.allowSubmit) //Don't upload if logged in as a Guest or doesn't allowSubmit
