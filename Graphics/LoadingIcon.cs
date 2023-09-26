@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TootTally.Graphics
 {
-    public class LoadingIcon : MonoBehaviour
+    public class LoadingIcon
     {
         public GameObject iconHolder;
         private bool _isActive;

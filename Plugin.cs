@@ -47,6 +47,7 @@ namespace TootTally
         public ConfigEntry<bool> ShowCoolS { get; private set; }
         public ConfigEntry<bool> AllowSpectate { get; private set; }
         public ConfigEntry<bool> EnableLocalDiffCalc { get; private set; }
+        public ConfigEntry<bool> ShowSpectatorCount { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -72,6 +73,7 @@ namespace TootTally
             ShowCoolS = Config.Bind("General", "Show Cool S", false, "Show special graphic when getting SS and SSS on a song.");
             AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
             EnableLocalDiffCalc = Config.Bind("General", "Enable Local Diff Calc", true, "Enable Local Difficulty Calculation");
+            ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
@@ -91,6 +93,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
                 _tootTallyMainPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
                 _tootTallyMainPage.AddToggle("EnableLocalDiffCalc", new Vector2(400, 50), "Enable Local Diff Calc", EnableLocalDiffCalc);
+                _tootTallyMainPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
                 //Adding / Removing causes out of bound / index not found exceptions
@@ -282,21 +285,42 @@ namespace TootTally
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
+            private static Vector2 _screenSize;
+            private static int _numberOfScreens;
+
             /*[HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
             public static void OnGameControllerStart(GameController __instance)
             {
+                _screenSize = new Vector2(Screen.width, Screen.height);
+                _numberOfScreens = 4;
+                var screenRatio = _numberOfScreens / 2f;
                 var gameplayCanvas = GameObject.Find("GameplayCanvas");
-                gameplayCanvas.GetComponent<Canvas>().scaleFactor = 2f;
+                gameplayCanvas.GetComponent<Canvas>().scaleFactor = screenRatio;
 
-                var topLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
-                var topRightCam = GameObject.Instantiate(topLeftCam);
-                var bottomLeftCam = GameObject.Instantiate(topLeftCam);
-                var bottomRightCam = GameObject.Instantiate(topLeftCam);
-                topRightCam.pixelRect = new Rect(960, 0, 960, 540);
-                topLeftCam.pixelRect = new Rect(0, 0, 960, 540);
-                bottomLeftCam.pixelRect = new Rect(0, 540, 960, 540);
-                bottomRightCam.pixelRect = new Rect(960, 540, 960, 540);
+                var botLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
+                var botRightCam = GameObject.Instantiate(botLeftCam);
+                var topLeftCam = GameObject.Instantiate(botLeftCam);
+                var topRightCam = GameObject.Instantiate(botLeftCam);
+                botRightCam.pixelRect = new Rect(_screenSize.x / screenRatio, 0, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
+                botLeftCam.pixelRect = new Rect(0, 0, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
+                topLeftCam.pixelRect = new Rect(0, _screenSize.y / screenRatio, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
+                topRightCam.pixelRect = new Rect(_screenSize.x / screenRatio, _screenSize.y / screenRatio, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
+
+                var gameControllerInstance = GameObject.Find("GameController").gameObject;
+
+                var botRight = GameObject.Instantiate(gameplayCanvas);
+                botRight.GetComponent<Canvas>().worldCamera = botRightCam;
+                var botRightGameController = GameObject.Instantiate(gameControllerInstance);
+
+                var topLeft = GameObject.Instantiate(gameplayCanvas);
+                topLeft.GetComponent<Canvas>().worldCamera = topLeftCam;
+                var topLeftGameController = GameObject.Instantiate(gameControllerInstance);
+
+                var topRight = GameObject.Instantiate(gameplayCanvas);
+                topRight.GetComponent<Canvas>().worldCamera = topRightCam;
+                var topRightGameController = GameObject.Instantiate(gameControllerInstance);
+
             }*/
         }
     }

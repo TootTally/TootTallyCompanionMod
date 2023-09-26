@@ -41,6 +41,11 @@ namespace TootTally.Spectating
                 SpectatingOverlay.ShowLoadingIcon();
             else if (!IsAnyConnectionPending() && SpectatingOverlay.IsLoadingIconVisible())
                 SpectatingOverlay.HideLoadingIcon();
+
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+                SpectatingOverlay.UpdateViewerList(new SocketSpectatorInfo() { count = 1, spectators = new List<string>() { "" } });
+            if (Input.GetKeyDown(KeyCode.DownArrow))
+                SpectatingOverlay.UpdateViewerList(new SocketSpectatorInfo() { count = 0, spectators = new List<string>() });
         }
 
         public static void StopAllSpectator()
@@ -95,7 +100,7 @@ namespace TootTally.Spectating
         public static void OnHostConnection()
         {
         }
-        
+
         public static void OnSpectatingConnection()
         {
         }
@@ -114,12 +119,20 @@ namespace TootTally.Spectating
 
         public enum UserState
         {
+            None,
             SelectingSong,
             Paused,
             Playing,
             Restarting,
             Quitting,
             PointScene,
+        }
+        public enum SceneType
+        {
+            None,
+            LevelSelect,
+            GameController,
+            HomeController
         }
 
         public class SocketMessage
@@ -265,16 +278,6 @@ namespace TootTally.Spectating
                     _currentFrame = new SocketFrameData() { time = 0, noteHolder = 0, pointerPosition = 0 };
                     _currentTootData = new SocketTootData() { isTooting = false, noteHolder = 0 };
                     _isTooting = false;
-                    /*new SocketFrameData()
-                {
-                    currentCombo = 0,
-                    health = 0,
-                    highestCombo = 0,
-                    pointerPosition = 0,
-                    time = 0,
-                    noteHolder = 0,
-                    totalScore = 0,
-                };*/
                     _elapsedTime = 0;
                 }
             }
@@ -365,10 +368,12 @@ namespace TootTally.Spectating
 
                 if (_frameData.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
                     InterpolateCursorPosition(currentMapPosition, __instance);
+
                 if (_frameData.Count > 0)
                     PlaybackFrameData(currentMapPosition, __instance);
+
                 if (_tootData.Count > 0)
-                    PlaybackTootData(currentMapPosition, __instance);
+                    PlaybackTootData(currentMapPosition);
             }
 
             private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
@@ -380,16 +385,13 @@ namespace TootTally.Spectating
 
             private static void PlaybackFrameData(float currentMapPosition, GameController __instance)
             {
-
-                if (_currentFrame != null && currentMapPosition <= _currentFrame.noteHolder)
+                if (_lastFrame != _currentFrame && currentMapPosition <= _currentFrame.noteHolder)
                     _lastFrame = _currentFrame;
 
-                while (_currentFrame == null && _frameData.Count > _frameIndex || _frameData.Count > _frameIndex && currentMapPosition <= _currentFrame.noteHolder) //smaller or equal to because noteholder goes toward negative
+                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
                 {
-                    _currentFrame = _frameData[_frameIndex++];
-                    if (_currentFrame != null)
-                        SetCursorPosition(__instance, _currentFrame.pointerPosition);
-
+                    _frameIndex = _frameData.FindIndex(_frameIndex, x => currentMapPosition > x.noteHolder);
+                    _currentFrame = _frameData[_frameIndex];
                 }
             }
 
@@ -418,18 +420,16 @@ namespace TootTally.Spectating
             public static void OnSpectatorDataReceived(int id, SocketSpectatorInfo specData)
             {
                 if (IsHosting)
-                {
-                    //add overlay code here
-                    //PopUpNotifManager.DisplayNotif("Spectators: " + specData.count);
-                }
+                    SpectatingOverlay.UpdateViewerList(specData);
             }
 
-            public static void PlaybackTootData(float currentMapPosition, GameController __instance)
+            public static void PlaybackTootData(float currentMapPosition)
             {
-                if (_currentTootData == null && _tootData.Count > _tootIndex || _tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder) //smaller or equal to because noteholder goes toward negative
+                if (currentMapPosition <= _currentTootData.noteHolder && _isTooting != _currentTootData.isTooting)
+                    _isTooting = _currentTootData.isTooting;
+
+                if (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder) //smaller or equal to because noteholder goes toward negative
                     _currentTootData = _tootData[_tootIndex++];
-                if (_currentTootData != null)
-                    _isTooting = !_currentTootData.isTooting;
             }
 
             public static void OnSongInfoReceived(int id, SocketSongInfo info)
@@ -660,6 +660,7 @@ namespace TootTally.Spectating
                         __instance.totalscore = _currentNoteData.totalScore;
                         __instance.currenthealth = _currentNoteData.health;
                         __instance.highestcombo_level = _currentNoteData.highestCombo;
+                        _currentNoteData = null;
                     }
                 }
             }
@@ -720,6 +721,7 @@ namespace TootTally.Spectating
 
                 if (IsHosting)
                     hostedSpectatingSystem.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                SpectatingOverlay.HideViewerIcon();
                 _levelSelectControllerInstance = null;
             }
 
@@ -743,6 +745,8 @@ namespace TootTally.Spectating
             public static void OnBackButtonClick()
             {
                 _levelSelectControllerInstance = null;
+                if (IsHosting)
+                    SetCurrentUserState(UserState.None);
             }
 
             private static UserState _currentHostState;
@@ -753,6 +757,7 @@ namespace TootTally.Spectating
                 _lastHostState = _currentHostState;
                 _currentHostState = userState;
                 hostedSpectatingSystem.SendUserStateToSocket(userState);
+                SpectatingOverlay.SetCurrentUserState(userState);
             }
 
 

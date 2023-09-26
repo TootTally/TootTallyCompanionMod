@@ -334,6 +334,8 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.maskable = true;
             _leaderboardHeaderPrefab.enableWordWrapping = false;
             _leaderboardHeaderPrefab.gameObject.SetActive(true);
+            _leaderboardHeaderPrefab.enableAutoSizing = true;
+            _leaderboardHeaderPrefab.fontSizeMax = _leaderboardHeaderPrefab.fontSize;
 
             GameObject.DestroyImmediate(tempHeaderTxt.gameObject);
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
@@ -349,6 +351,8 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.enableWordWrapping = false;
             _leaderboardTextPrefab.gameObject.SetActive(true);
             _leaderboardTextPrefab.color = Color.white;
+            _leaderboardTextPrefab.enableAutoSizing = true;
+            _leaderboardTextPrefab.fontSizeMax = _leaderboardTextPrefab.fontSize;
 
 
             DestroyNumNameScoreFromSingleScorePrefab();
@@ -575,22 +579,29 @@ namespace TootTally.Graphics
 
         #region Create Objects
 
-        public static LoadingIcon CreateLoadingIcon(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, bool isActive, string name)
-        {
-            GameObject iconHolder = new GameObject(name, typeof(Image));
-            iconHolder.transform.SetParent(canvasTransform);
+        public static SpectatingViewerIcon CreateDefaultViewerIcon(Transform canvasTransform, string name) => new SpectatingViewerIcon(canvasTransform, Vector2.zero, Vector2.one * 80, name);
 
-            var rect = iconHolder.GetComponent<RectTransform>();
+        public static LoadingIcon CreateLoadingIcon(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, bool isActive, string name) =>
+            new LoadingIcon(CreateImageHolder(canvasTransform, position, size, sprite, name), isActive);
+
+        public static GameObject CreateImageHolder(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, string name)
+        {
+            GameObject imageHolder = new GameObject(name, typeof(Image));
+            imageHolder.transform.SetParent(canvasTransform);
+
+            var rect = imageHolder.GetComponent<RectTransform>();
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             rect.localScale = Vector3.one;
 
-            Image image = iconHolder.GetComponent<Image>();
+            Image image = imageHolder.GetComponent<Image>();
             image.preserveAspect = true;
             image.color = Color.white;
             image.sprite = sprite;
 
-            return new LoadingIcon(iconHolder, isActive);
+            image.gameObject.SetActive(true);
+
+            return imageHolder;
         }
 
         public static ProgressBar CreateProgressBar(Transform canvasTransform, Vector2 position, Vector2 size, bool active, string name)
@@ -1111,8 +1122,8 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player.Length > 20 ? scoreData.player.Substring(0, 20) : scoreData.player;
-            rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed.ToString("0.00")}x)";
+            rowEntry.username.text = scoreData.player;
+            rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;

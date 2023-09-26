@@ -580,7 +580,7 @@ namespace TootTally.Replays
                 return; //Dont save or upload if no UUID
             }
 
-            if (Plugin.userInfo.allowSubmit)
+            if (!Plugin.userInfo.allowSubmit)
             {
                 PopUpNotifManager.DisplayNotif("Unexpected error occured while submitting, skipping replay submission.", GameTheme.themeColors.notification.warningText);
                 TootTallyLogger.LogInfo("Unexpected error occured while submitting, allowSubmit is false, skipping replay submission.");
@@ -679,7 +679,7 @@ namespace TootTally.Replays
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
-                _currentGCInstance.syncTrackPositions((float)__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
+                _currentGCInstance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;

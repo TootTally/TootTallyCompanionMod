@@ -18,11 +18,11 @@ namespace TootTally.CustomLeaderboard
         {
             this.singleScore = singleScore;
             this.rank = rank;
-            rank.GetComponent<RectTransform>().sizeDelta = new Vector2(35, 35);
+            rank.GetComponent<RectTransform>().sizeDelta = new Vector2(45, 35);
             rank.alignment = TextAlignmentOptions.MidlineLeft;
 
             this.username = username;
-            username.GetComponent<RectTransform>().sizeDelta = new Vector2(180, 35);
+            username.GetComponent<RectTransform>().sizeDelta = new Vector2(170, 35);
             username.alignment = TextAlignmentOptions.MidlineLeft;
 
             this.score = score;
@@ -42,13 +42,13 @@ namespace TootTally.CustomLeaderboard
 
             this.hasBackground = hasBackground;
             imageStrip = this.singleScore.transform.Find("Image").gameObject.GetComponent<Image>();
-            this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
+            imageStrip.gameObject.SetActive(hasBackground); //yep... ¯\_(ツ)_/¯
         }
 
         public void ToggleBackground()
         {
             hasBackground = !hasBackground;
-            this.singleScore.transform.Find("Image").gameObject.SetActive(hasBackground);
+            imageStrip.gameObject.SetActive(hasBackground);
         }
 
         public void UpdateTheme()
