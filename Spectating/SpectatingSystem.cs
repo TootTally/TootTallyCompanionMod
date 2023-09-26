@@ -92,7 +92,7 @@ namespace TootTally.Spectating
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
             //TootTallyLogger.LogInfo(e.Data);
-            if (e.IsText && !IsHosting)
+            if (e.IsText)
             {
                 SocketMessage socketMessage;
                 try
@@ -104,42 +104,49 @@ namespace TootTally.Spectating
                     TootTallyLogger.LogInfo("Couldn't parse to data: " + e.Data);
                     return;
                 }
+                if (!IsHosting)
+                {
+                    if (socketMessage is SocketSongInfo info)
+                    {
+                        TootTallyLogger.DebugModeLog("SongInfo Detected");
+                        _receivedSongInfoQueue.Enqueue(info);
+                        return;
+                    }
+                    else if (socketMessage is SocketFrameData frame)
+                    {
+                        _receivedFrameDataQueue.Enqueue(frame);
+                        return;
+                    }
+                    else if (socketMessage is SocketTootData toot)
+                    {
+                        TootTallyLogger.DebugModeLog("TootData Detected");
+                        _receivedTootDataQueue.Enqueue(toot);
+                        return;
+                    }
+                    else if (socketMessage is SocketUserState state)
+                    {
+                        TootTallyLogger.DebugModeLog("UserState Detected");
+                        _receivedUserStateQueue.Enqueue(state);
+                        return;
+                    }
+                    else if (socketMessage is SocketNoteData note)
+                    {
+                        TootTallyLogger.DebugModeLog("NoteData Detected");
+                        _receivedNoteDataQueue.Enqueue(note);
+                        return;
+                    }
+                }
 
-                if (socketMessage is SocketSongInfo info)
-                {
-                    TootTallyLogger.DebugModeLog("SongInfo Detected");
-                    _receivedSongInfoQueue.Enqueue(info);
-                }
-                else if (socketMessage is SocketFrameData frame)
-                {
-                    _receivedFrameDataQueue.Enqueue(frame);
-                }
-                else if (socketMessage is SocketTootData toot)
-                {
-                    TootTallyLogger.DebugModeLog("TootData Detected");
-                    _receivedTootDataQueue.Enqueue(toot);
-
-                }
-                else if (socketMessage is SocketUserState state)
-                {
-                    TootTallyLogger.DebugModeLog("UserState Detected");
-                    _receivedUserStateQueue.Enqueue(state);
-                }
-                else if (socketMessage is SocketNoteData note)
-                {
-                    TootTallyLogger.DebugModeLog("NoteData Detected");
-                    _receivedNoteDataQueue.Enqueue(note);
-                }
-                else if (socketMessage is SocketSpectatorInfo spec)
+                if (socketMessage is SocketSpectatorInfo spec)
                 {
                     TootTallyLogger.DebugModeLog("SpecInfo Detected");
                     TootTallyLogger.LogInfo(e.Data);
                     _receivedSpecInfoQueue.Enqueue(spec);
+                    return;
                 }
-                else
-                {
-                    TootTallyLogger.DebugModeLog("Nothing Detected");
-                }
+
+                //If couldnt find type, end here.
+                TootTallyLogger.DebugModeLog("Nothing Detected");
             }
         }
 
@@ -176,7 +183,6 @@ namespace TootTally.Spectating
                 OnSocketFrameDataReceived = SpectatingManagerPatches.OnFrameDataReceived;
                 OnSocketTootDataReceived = SpectatingManagerPatches.OnTootDataReceived;
                 OnSocketNoteDataReceived = SpectatingManagerPatches.OnNoteDataReceived;
-                OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
                 OnSpectatingConnection();
                 PopUpNotifManager.DisplayNotif($"Waiting for host to pick a song...");
             }
@@ -185,6 +191,7 @@ namespace TootTally.Spectating
                 OnHostConnection();
                 SpectatingManagerPatches.SendCurrentUserState();
             }
+            OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
             base.OnWebSocketOpen(sender, e);
         }
 

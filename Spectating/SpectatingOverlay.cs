@@ -44,8 +44,16 @@ namespace TootTally.Spectating
 
         public static void UpdateViewerList(SocketSpectatorInfo spectatorInfo)
         {
-            _spectatorInfo = spectatorInfo;
-            _viewerIcon?.UpdateViewerCount(spectatorInfo.count);
+            if (spectatorInfo == null)
+            {
+                _viewerIcon?.UpdateViewerCount(0);
+                _spectatorInfo = null;
+            }
+            else
+            {
+                _spectatorInfo = spectatorInfo;
+                _viewerIcon?.UpdateViewerCount(spectatorInfo.count);
+            }
             UpdateViewIcon();
         }
 
@@ -57,14 +65,16 @@ namespace TootTally.Spectating
 
         public static void UpdateViewIcon()
         {
-            if (!Plugin.Instance.ShowSpectatorCount.Value || _viewerIcon == null || _spectatorInfo == null) return;
+            if (!Plugin.Instance.ShowSpectatorCount.Value || _viewerIcon == null) return;
 
-            if (IsInLevelSelect && _spectatorInfo.count > 0)
+            if (_spectatorInfo == null || _spectatorInfo.count < 1)
+                _viewerIcon.Hide();
+            else if (IsInLevelSelect)
             {
                 _viewerIcon.SetAnchorMinMax(new Vector2(.92f, .97f));
                 _viewerIcon.Show();
             }
-            else if (IsInGameController && _spectatorInfo.count > 0)
+            else if (IsInGameController)
             {
                 _viewerIcon.SetAnchorMinMax(new Vector2(.03f, .07f));
                 _viewerIcon.Show();
