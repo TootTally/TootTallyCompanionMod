@@ -326,7 +326,7 @@ namespace TootTally.Spectating
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
             [HarmonyPostfix]
-            public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result) // Take isNoteButtonPressed's return value and changed it to mine, hehe
+            public static void GameControllerIsNoteButtonPressedPostfixPatch(GameController __instance, ref bool __result)
             {
                 if (IsSpectating)
                     __result = _isTooting;

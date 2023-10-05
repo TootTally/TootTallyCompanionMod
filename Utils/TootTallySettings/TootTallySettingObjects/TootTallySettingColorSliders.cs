@@ -13,6 +13,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
 
         private float _length;
         private string _text;
+        private GameObject _bubble;
         private ConfigEntry<Color> _config;
 
         public TootTallySettingColorSliders(TootTallySettingPage page, string name, string text, float length, ConfigEntry<Color> config) : base(name, page)
@@ -33,14 +34,22 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             SetSlider(sliderR, _length, _config.Value.r, "Red", out labelR);
             SetSlider(sliderG, _length, _config.Value.g, "Green", out labelG);
             SetSlider(sliderB, _length, _config.Value.b, "Blue", out labelB);
+            _bubble = GameObjectFactory.CreateImageHolder(sliderR.transform, new Vector2(200,-60), Vector2.one * 64, AssetManager.GetSprite("PfpMask.png"), "ColorBubble");
+            var outline = _bubble.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = Vector2.one * 2f;
+            _bubble.GetComponent<Image>().color = new Color(sliderR.value, sliderG.value, sliderB.value);
 
             var handleTextR = sliderR.transform.Find("Handle Slide Area/Handle/SliderHandleText").GetComponent<TMP_Text>();
+            handleTextR.text = SliderValueToText(sliderR, _config.Value.r);
             sliderR.onValueChanged.AddListener((value) => { OnSliderValueChange(sliderB, handleTextR, value); });
 
             var handleTextG = sliderG.transform.Find("Handle Slide Area/Handle/SliderHandleText").GetComponent<TMP_Text>();
+            handleTextG.text = SliderValueToText(sliderG, _config.Value.g);
             sliderG.onValueChanged.AddListener((value) => { OnSliderValueChange(sliderB, handleTextG, value); });
 
             var handleTextB = sliderB.transform.Find("Handle Slide Area/Handle/SliderHandleText").GetComponent<TMP_Text>();
+            handleTextB.text = SliderValueToText(sliderB, _config.Value.b);
             sliderB.onValueChanged.AddListener((value) => { OnSliderValueChange(sliderB,handleTextB, value); });
 
             base.Initialize();
@@ -50,6 +59,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
         {
             label.text = SliderValueToText(s, value);
             UpdateConfig();
+            _bubble.GetComponent<Image>().color = new Color(sliderR.value, sliderG.value, sliderB.value);
         }
 
         public void UpdateConfig()

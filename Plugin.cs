@@ -37,7 +37,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public static int BUILDDATE = 20230920;
+        public static int BUILDDATE = 20231004;
 
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -171,7 +171,6 @@ namespace TootTally
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
-
                 if (userInfo == null)
                 {
                     var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");

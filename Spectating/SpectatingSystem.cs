@@ -88,65 +88,44 @@ namespace TootTally.Spectating
             SendToSocket(json);
         }
 
+        private static SocketMessage _socketMessage;
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
             //TootTallyLogger.LogInfo(e.Data);
             if (e.IsText)
             {
-                SocketMessage socketMessage;
                 try
                 {
-                    socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
+                    _socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
                 }
                 catch (Exception)
                 {
                     TootTallyLogger.LogInfo("Couldn't parse to data: " + e.Data);
+                    _socketMessage = null;
                     return;
                 }
                 if (!IsHosting)
                 {
-                    if (socketMessage is SocketSongInfo info)
-                    {
-                        TootTallyLogger.DebugModeLog("SongInfo Detected");
+                    if (_socketMessage is SocketSongInfo info)
                         _receivedSongInfoQueue.Enqueue(info);
-                        return;
-                    }
-                    else if (socketMessage is SocketFrameData frame)
-                    {
+                    else if (_socketMessage is SocketFrameData frame)
                         _receivedFrameDataQueue.Enqueue(frame);
-                        return;
-                    }
-                    else if (socketMessage is SocketTootData toot)
-                    {
-                        TootTallyLogger.DebugModeLog("TootData Detected");
+                    else if (_socketMessage is SocketTootData toot)
                         _receivedTootDataQueue.Enqueue(toot);
-                        return;
-                    }
-                    else if (socketMessage is SocketUserState state)
-                    {
-                        TootTallyLogger.DebugModeLog("UserState Detected");
+                    else if (_socketMessage is SocketUserState state)
                         _receivedUserStateQueue.Enqueue(state);
-                        return;
-                    }
-                    else if (socketMessage is SocketNoteData note)
-                    {
-                        TootTallyLogger.DebugModeLog("NoteData Detected");
+                    else if (_socketMessage is SocketNoteData note)
                         _receivedNoteDataQueue.Enqueue(note);
-                        return;
-                    }
                 }
 
-                if (socketMessage is SocketSpectatorInfo spec)
+                if (_socketMessage is SocketSpectatorInfo spec)
                 {
-                    TootTallyLogger.DebugModeLog("SpecInfo Detected");
                     TootTallyLogger.LogInfo(e.Data);
                     _receivedSpecInfoQueue.Enqueue(spec);
-                    return;
                 }
-
-                //If couldnt find type, end here.
-                TootTallyLogger.DebugModeLog("Nothing Detected");
+                //if end up here, nothing was found
+                _socketMessage = null;
             }
         }
 

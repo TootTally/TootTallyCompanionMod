@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine.XR.WSA;
 
 namespace TootTally.Utils.APIServices
 {
@@ -37,7 +38,11 @@ namespace TootTally.Utils.APIServices
             public string player;
             public string played_on;
             public string grade;
-            public int[] noteTally;
+            public int perfect;
+            public int nice;
+            public int okay;
+            public int meh;
+            public int nasty;
             public string replay_id;
             public int max_combo;
             public float percentage;
@@ -45,6 +50,8 @@ namespace TootTally.Utils.APIServices
             public float tt;
             public bool is_rated;
             public float replay_speed;
+
+            public int[] GetTally => new int[] { nasty, meh, okay, nice, perfect };
         }
 
         [Serializable]

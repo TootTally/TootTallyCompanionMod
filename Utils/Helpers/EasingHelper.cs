@@ -67,6 +67,7 @@ namespace TootTally.Utils.Helpers
                 this.r = r * z / PI2f;
             }
 
+
             public void SetStartVector(Vector3 startPosition) => this.startVector = newVector = startPosition;
 
 

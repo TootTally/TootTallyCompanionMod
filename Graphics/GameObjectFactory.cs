@@ -18,6 +18,7 @@ namespace TootTally.Graphics
     {
         private static CustomButton _buttonPrefab;
         private static TextMeshProUGUI _multicoloreTextPrefab, _comfortaaTextPrefab, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
+        private static GameObject _bubblePrefab;
         private static Slider _verticalSliderPrefab, _sliderPrefab;
         private static Slider _settingsPanelVolumeSlider;
         private static PopUpNotif _popUpNotifPrefab;
@@ -59,6 +60,7 @@ namespace TootTally.Graphics
             SetMulticoloreTextPrefab();
             SetComfortaaTextPrefab();
             SetNotificationPrefab();
+            SetBubblePrefab();
             SetCustomButtonPrefab();
             SetOverlayPanelPrefab();
             SetUserCardPrefab();
@@ -168,6 +170,33 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_popUpNotifPrefab);
         }
 
+        private static void SetBubblePrefab()
+        {
+            GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+            GameObject bufferPanel = mainCanvas.transform.Find("SettingsPanel/buffer_panel/window border").gameObject;
+
+            _bubblePrefab = GameObject.Instantiate(bufferPanel);
+            _bubblePrefab.name = "BubblePrefab";
+            GameObject.DestroyImmediate(_bubblePrefab.transform.Find("Window Body/all_settiings").gameObject);
+
+            CanvasGroup canvasGroup = _bubblePrefab.AddComponent<CanvasGroup>();
+            canvasGroup.blocksRaycasts = false;
+
+            RectTransform bubblePrefabRect = _bubblePrefab.GetComponent<RectTransform>();
+            bubblePrefabRect.sizeDelta = new Vector2(250, 100);
+            bubblePrefabRect.pivot = new Vector2(1, 0);
+
+            var text = GameObject.Instantiate(_multicoloreTextPrefab, _bubblePrefab.transform);
+            text.name = "BubbleText";
+            text.maskable = false;
+            text.enableWordWrapping = true; 
+            text.rectTransform.sizeDelta = bubblePrefabRect.sizeDelta;
+            text.gameObject.SetActive(true);
+
+            _bubblePrefab.SetActive(false);
+
+            GameObject.DontDestroyOnLoad(_bubblePrefab);
+        }
 
 
         private static void SetCustomButtonPrefab()
@@ -982,15 +1011,23 @@ namespace TootTally.Graphics
         {
             if (_isHomeControllerInitialized)
             {
-                _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
-                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
+                _popUpNotifPrefab.GetComponent<Image>().color =
+                    _bubblePrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+
+                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color =
+                    _bubblePrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color =
+                   _bubblePrefab.transform.Find("BubbleText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
+
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor =
+                   _bubblePrefab.transform.Find("BubbleText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
 
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
                 _userCardPrefab.transform.Find("LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _userCardPrefab.transform.Find("LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
 
                 TootTallyOverlayManager.UpdateTheme();
             }
@@ -1124,6 +1161,7 @@ namespace TootTally.Graphics
             rowEntry.name = name;
             rowEntry.username.text = scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
+            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175,200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally)));
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;
@@ -1141,7 +1179,11 @@ namespace TootTally.Graphics
             else
                 rowEntry.grade.color = gradeColor;
             if (scoreData.is_rated)
+            {
+
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
+                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo"));
+            }
             else
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
             rowEntry.replayId = scoreData.replay_id;
@@ -1170,6 +1212,34 @@ namespace TootTally.Graphics
             }
             return rowEntry;
         }
+
+        private static string GetTallyBubbleText(int[] tally) =>
+            tally != null ? $"Perfect: {tally[4]}\n" +
+                            $"Nice: {tally[3]}\n" +
+                            $"Okay: {tally[2]}\n" +
+                            $"Meh: {tally[1]}\n" +
+                            $"Nasty: {tally[0]}\n" : "No Tally";
+
+        public static GameObject CreateBubble(Vector2 size, string name, string text)
+        {
+            var bubble = GameObject.Instantiate(_bubblePrefab);
+            bubble.name = name;
+            bubble.GetComponent<RectTransform>().sizeDelta = size;
+            var textObj = bubble.transform.Find("BubbleText").GetComponent<TMP_Text>();
+            textObj.text = text;
+            textObj.rectTransform.sizeDelta = size;
+
+            return bubble.gameObject;
+        }
+
+        public static GameObject CreateBubble(Vector2 size, string name, Sprite sprite)
+        {
+            var imageObj = CreateImageHolder(null, Vector2.zero, size, sprite, name);
+            imageObj.GetComponent<Image>().maskable = false;
+            imageObj.AddComponent<CanvasGroup>().blocksRaycasts = false;
+            return imageObj;
+        }
+
 
         public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text, Color textColor)
         {
