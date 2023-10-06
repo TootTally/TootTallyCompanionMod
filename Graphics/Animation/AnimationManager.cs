@@ -60,6 +60,14 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
+        public static CustomAnimation AddNewRotationAnimation(GameObject gameObject, Vector3 targetVector,
+           float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.rotation.eulerAngles, targetVector, 1f, timeSpan, CustomAnimation.VectorType.Rotation, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+
         public static CustomAnimation AddNewAnimation(GameObject gameObject, Vector3 startingVector, Vector3 targetVector, float speedMultiplier,
             float timeSpan, CustomAnimation.VectorType vectorType, EasingHelper.SecondOrderDynamics secondDegreeAnimation, bool disposeOnFinish, Action<GameObject> onFinishCallback = null)
         {
