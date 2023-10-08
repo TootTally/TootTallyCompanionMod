@@ -120,6 +120,7 @@ namespace TootTally.Spectating
             None,
             SelectingSong,
             Paused,
+            GettingReady,
             Playing,
             Restarting,
             Quitting,
@@ -266,6 +267,8 @@ namespace TootTally.Spectating
             [HarmonyPostfix]
             public static void OnGameControllerStart(GameController __instance)
             {
+                if (IsHosting && _currentHostState != UserState.GettingReady)
+                    SetCurrentUserState(UserState.GettingReady);
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = __instance;
@@ -300,7 +303,7 @@ namespace TootTally.Spectating
             {
                 waitForSync = true;
 
-                if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER)
+                if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER || (_currentSpecState == UserState.GettingReady || _currentSpecState == UserState.Restarting))
                     waitForSync = false;
                 return waitForSync;
             }
@@ -475,12 +478,18 @@ namespace TootTally.Spectating
                             PauseSong();
                         break;
                     case UserState.Quitting:
-                        if (_gameControllerInstance != null)
+                        if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
                             QuitSong();
                         break;
                     case UserState.Restarting:
-                        if (_gameControllerInstance != null)
+                        if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
                             RestartSong();
+                        break;
+                    case UserState.GettingReady:
+                        if (_levelSelectControllerInstance != null)
+                            TryStartSong();
+                        else if (_gameControllerInstance != null)
+                            _waitingToSync = true;
                         break;
                 }
             }
@@ -693,22 +702,31 @@ namespace TootTally.Spectating
             {
                 if (!__instance.paused && !__instance.quitting && !__instance.retrying)
                 {
-                    if (IsSpectating && !_waitingToSync)
-                        PlaybackSpectatingData(__instance);
-                    else if (_waitingToSync && __instance.curtainc.doneanimating && !ShouldWaitForSync(out _waitingToSync))
+                    if (IsSpectating)
                     {
-                        PopUpNotifManager.DisplayNotif("Finished syncing with host.");
-                        SpectatingOverlay.SetCurrentUserState(UserState.Playing);
-                        __instance.startSong(false);
+                        if (_currentSpecState == UserState.SelectingSong)
+                            QuitSong();
+                        if (!_waitingToSync)
+                            PlaybackSpectatingData(__instance);
+                        else if (_waitingToSync && __instance.curtainc.doneanimating && !ShouldWaitForSync(out _waitingToSync))
+                        {
+                            PopUpNotifManager.DisplayNotif("Finished syncing with host.");
+                            SpectatingOverlay.SetCurrentUserState(UserState.Playing);
+                            __instance.startSong(false);
+                        }
                     }
-
-                    _elapsedTime += Time.deltaTime;
-                    if (IsHosting && _elapsedTime >= 1f / _targetFramerate)
+                    else if (IsHosting)
                     {
-                        _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        _elapsedTime += Time.deltaTime;
+                        if (_elapsedTime >= 1f / _targetFramerate)
+                        {
+                            _elapsedTime = 0f;
+                            hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        }
                     }
+                    
                 }
+                
 
             }
 
@@ -729,7 +747,10 @@ namespace TootTally.Spectating
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id); //Remake Hosting connection just in case it wasnt reopened correctly
 
                 if (IsHosting)
+                {
                     hostedSpectatingSystem.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed);
+                    hostedSpectatingSystem.SendUserStateToSocket(UserState.GettingReady);
+                }
                 SpectatingOverlay.HideViewerIcon();
                 _levelSelectControllerInstance = null;
             }
