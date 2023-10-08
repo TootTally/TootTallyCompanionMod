@@ -246,6 +246,7 @@ namespace TootTally.Spectating
             private static bool _waitingToSync;
             private static bool _spectatingStarting;
             private static bool _leftPointSelectScreen;
+            private static bool _wasSpectating;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
@@ -256,6 +257,7 @@ namespace TootTally.Spectating
                 _levelSelectControllerInstance = __instance;
                 _spectatingStarting = false;
                 _lastSongInfo = null;
+                _wasSpectating = false;
                 if (IsHosting)
                     SetCurrentUserState(UserState.SelectingSong);
                 else
@@ -272,7 +274,7 @@ namespace TootTally.Spectating
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = __instance;
-                _waitingToSync = IsSpectating;
+                _waitingToSync = _wasSpectating = IsSpectating;
                 if (IsSpectating)
                 {
                     _frameIndex = 0;
@@ -303,7 +305,7 @@ namespace TootTally.Spectating
             {
                 waitForSync = true;
 
-                if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER || (_currentSpecState == UserState.GettingReady || _currentSpecState == UserState.Restarting))
+                if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER && _currentSpecState != UserState.GettingReady && _currentSpecState != UserState.Restarting)
                     waitForSync = false;
                 return waitForSync;
             }
@@ -465,6 +467,7 @@ namespace TootTally.Spectating
                         if (_pointSceneControllerInstance != null)
                             BackToLevelSelect();
                         break;
+
                     case UserState.Playing:
                         if (_levelSelectControllerInstance != null)
                             TryStartSong();
@@ -473,18 +476,26 @@ namespace TootTally.Spectating
                         else if (_pointSceneControllerInstance != null)
                             RetryFromPointScene();
                         break;
+
                     case UserState.Paused:
                         if (_gameControllerInstance != null)
                             PauseSong();
                         break;
+
                     case UserState.Quitting:
-                        if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
+                        if (_gameControllerInstance != null && _waitingToSync)
+                            ClearSpectatingData();
+                        else if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
                             QuitSong();
                         break;
+
                     case UserState.Restarting:
-                        if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
+                        if (_gameControllerInstance != null && _waitingToSync)
+                            ClearSpectatingData();
+                        else if (_gameControllerInstance != null && !_gameControllerInstance.retrying && !_gameControllerInstance.quitting)
                             RestartSong();
                         break;
+
                     case UserState.GettingReady:
                         if (_levelSelectControllerInstance != null)
                             TryStartSong();
@@ -503,16 +514,21 @@ namespace TootTally.Spectating
 
             private static void RetryFromPointScene()
             {
+                ClearSpectatingData();
+                ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
+                GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
+                TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
+                _pointSceneControllerInstance.clickRetry();
+            }
+
+            private static void ClearSpectatingData()
+            {
                 _frameData.Clear();
                 _tootData.Clear();
                 _noteData.Clear();
                 _frameIndex = 0;
                 _tootIndex = 0;
                 _isTooting = false;
-                ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
-                GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
-                TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
-                _pointSceneControllerInstance.clickRetry();
             }
 
             private static void TryStartSong()
@@ -520,12 +536,7 @@ namespace TootTally.Spectating
                 if (_lastSongInfo != null && _lastSongInfo.trackRef != null)
                     if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                     {
-                        _frameData.Clear();
-                        _tootData.Clear();
-                        _noteData.Clear();
-                        _frameIndex = 0;
-                        _tootIndex = 0;
-
+                        ClearSpectatingData();
                         GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
 
                         GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
@@ -594,12 +605,7 @@ namespace TootTally.Spectating
 
             private static void RestartSong()
             {
-                _frameData.Clear();
-                _tootData.Clear();
-                _noteData.Clear();
-                _frameIndex = 0;
-                _tootIndex = 0;
-                _isTooting = false;
+                ClearSpectatingData();
                 _waitingToSync = IsSpectating;
                 _gameControllerInstance.pauseRetryLevel();
             }
