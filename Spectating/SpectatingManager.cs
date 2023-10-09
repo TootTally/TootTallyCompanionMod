@@ -20,6 +20,7 @@ namespace TootTally.Spectating
         public static JsonConverter[] _dataConverter = new JsonConverter[] { new SocketDataConverter() };
         private static List<SpectatingSystem> _spectatingSystemList;
         public static SpectatingSystem hostedSpectatingSystem;
+        public static int[] currentSpectatorIDList;
         public static bool IsHosting => hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected && hostedSpectatingSystem.IsHost;
         public static bool IsSpectating => _spectatingSystemList != null && !IsHosting && _spectatingSystemList.Any(x => x.IsConnected);
 
@@ -29,6 +30,7 @@ namespace TootTally.Spectating
             SpectatingOverlay.Initialize();
             if (Plugin.Instance.AllowSpectate.Value)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSpectatorIDList(idList => currentSpectatorIDList = idList));
         }
 
         public void Update()
@@ -94,6 +96,11 @@ namespace TootTally.Spectating
                 RemoveSpectator(hostedSpectatingSystem);
                 hostedSpectatingSystem = null;
             }
+        }
+
+        public static void UpdateSpectatorIDList()
+        {
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSpectatorIDList(idList => currentSpectatorIDList = idList));
         }
 
         public static void OnHostConnection()
@@ -265,8 +272,8 @@ namespace TootTally.Spectating
                     SetCurrentUserState(UserState.SelectingSong);
                 else
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
+                SpectatingOverlay.HidePauseText();
             }
-
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
@@ -579,6 +586,7 @@ namespace TootTally.Spectating
             private static void ResumeSong()
             {
                 _gameControllerInstance.pausecontroller.clickResume();
+                SpectatingOverlay.HidePauseText();
             }
 
             //Yoinked from DNSpy Token: 0x06000276 RID: 630 RVA: 0x000270A8 File Offset: 0x000252A8
@@ -611,6 +619,7 @@ namespace TootTally.Spectating
                 _gameControllerInstance.quitting = true;
                 ClearSpectatingData();
                 _gameControllerInstance.pauseQuitLevel();
+                SpectatingOverlay.HidePauseText();
             }
 
             private static void RestartSong()
@@ -618,6 +627,7 @@ namespace TootTally.Spectating
                 ClearSpectatingData();
                 _waitingToSync = IsSpectating;
                 _gameControllerInstance.pauseRetryLevel();
+                SpectatingOverlay.HidePauseText();
             }
 
             private static void SetTrackToSpectatingTrackref(string trackref)
@@ -643,6 +653,7 @@ namespace TootTally.Spectating
                 if (IsHosting)
                     SetCurrentUserState(UserState.Paused);
 
+
                 if (Input.GetKeyDown(KeyCode.Escape) && IsSpectating)
                 {
                     StopAllSpectator();
@@ -650,15 +661,21 @@ namespace TootTally.Spectating
                     __instance.gc.quitting = true;
                     __instance.gc.pauseQuitLevel();
                     PopUpNotifManager.DisplayNotif("Stopped spectating.");
+                } 
+                else if (IsSpectating)
+                {
+                    __instance.panelobj.SetActive(false);
+                    SpectatingOverlay.ShowPauseText();
                 }
             }
 
-            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.resumeFromPause))]
+            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.clickResume))]
             [HarmonyPostfix]
             public static void OnPauseSetUserStatus()
             {
                 if (IsHosting)
                     SetCurrentUserState(UserState.Playing);
+                
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
@@ -697,17 +714,6 @@ namespace TootTally.Spectating
                     }
                 }
             }
-
-            /*[HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
-            [HarmonyPostfix]
-            public static void OnGetScoreAveragePostfixSetTotalScore(GameController __instance)
-            {
-                if (IsHosting && _currentNoteData != null)
-                {
-                    _currentNoteData.totalScore = __instance.totalscore;
-                }
-            }*/
-
 
             private static float _elapsedTime;
             private static readonly float _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;

@@ -59,6 +59,7 @@ namespace TootTally.CustomLeaderboard
             ClearBaseLeaderboard();
             CustomizeGameMenuUI();
 
+            _leaderboard.transform.SetAsLastSibling();
             _globalLeaderboard = GameObjectFactory.CreateSteamLeaderboardFromPrefab(_leaderboard.transform, "GlobalLeaderboard");
             _globalLeaderboard.SetActive(true);
 

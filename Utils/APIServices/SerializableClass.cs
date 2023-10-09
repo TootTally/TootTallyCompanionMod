@@ -13,6 +13,12 @@ namespace TootTally.Utils.APIServices
         }
 
         [Serializable]
+        public class APIActiveSpectator
+        {
+            public int[] active;
+        }
+
+        [Serializable]
         public class TMBData
         {
             public string name;

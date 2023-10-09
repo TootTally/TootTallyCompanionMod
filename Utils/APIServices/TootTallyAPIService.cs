@@ -5,6 +5,7 @@ using System.Linq;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -15,6 +16,7 @@ namespace TootTally.Utils
     public static class TootTallyAPIService
     {
         public const string APIURL = "https://toottally.com";
+        public const string SPECURL = "https://spec.toottally.com";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
         public const string PFPURL = "https://cdn.toottally.com/profile/";
@@ -566,6 +568,19 @@ namespace TootTally.Utils
                 callback(new FileHelper.FileData() { size = Convert.ToInt64(webRequest.GetResponseHeader("Content-Length")), extension = webRequest.GetResponseHeader("Content-Type").Split('/').Last() });
             else
                 callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> GetSpectatorIDList(Action<int[]> callback)
+        {
+            string query = $"{SPECURL}/active";
+            UnityWebRequest webRequest = UnityWebRequest.Get(query);
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+            {
+                var idArray = JsonConvert.DeserializeObject<SerializableClass.APIActiveSpectator>(webRequest.downloadHandler.text).active;
+                callback(idArray);
+            }
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetOnlineFriends(Action<List<User>> callback)

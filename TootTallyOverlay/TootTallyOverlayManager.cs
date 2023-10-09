@@ -207,9 +207,10 @@ namespace TootTally.TootTallyOverlay
 
         public static void UpdateUsers()
         {
-            if (IsPanelActive)
+            if (IsPanelActive && !_isUpdating)
             {
                 _isUpdating = true;
+                SpectatingManager.UpdateSpectatorIDList();
                 if (_showFriends && _showAllSUsers)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFriendList(OnUpdateUsersResponse));
                 else if (_showAllSUsers)

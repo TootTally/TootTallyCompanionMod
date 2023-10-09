@@ -8,12 +8,16 @@ using UnityEngine;
 using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Spectating.SpectatingManager;
+using TootTally.Graphics.Animation;
+using static Mono.Security.X509.X520;
 
 namespace TootTally.Spectating
 {
     public static class SpectatingOverlay
     {
         private static GameObject _overlayCanvas;
+        private static GameObject _pauseTextHolder;
+        private static CustomAnimation _pauseTextHolderAnimation;
         private static LoadingIcon _loadingIcon;
         private static SpectatingViewerIcon _viewerIcon;
         private static bool _isInitialized;
@@ -38,6 +42,21 @@ namespace TootTally.Spectating
             rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
 
             _viewerIcon = GameObjectFactory.CreateDefaultViewerIcon(_overlayCanvas.transform, "ViewerIcon");
+
+            _pauseTextHolder = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1000,350), 8f, "PauseTextOverlay");
+            _pauseTextHolder.SetActive(false);
+            _pauseTextHolder.transform.Find("FSLatencyPanel").GetComponent<Image>().enabled = false;
+            var rectPauseText = _pauseTextHolder.GetComponent<RectTransform>();
+            rectPauseText.anchorMax = rectPauseText.anchorMin = rectPauseText.pivot = Vector2.one / 2f;
+            var pauseTextContainer = _pauseTextHolder.transform.Find("FSLatencyPanel/LatencyFG").gameObject;
+            GameObjectFactory.DestroyFromParent(pauseTextContainer, "title");
+            GameObjectFactory.DestroyFromParent(pauseTextContainer, "subtitle");
+            GameObjectFactory.DestroyFromParent(pauseTextContainer, "MainPage");
+
+            var pauseText = GameObjectFactory.CreateSingleText(pauseTextContainer.transform, "PauseText", "Host paused the song.\n Waiting for an action.", GameTheme.themeColors.leaderboard.text);
+            pauseText.fontSize = 72;
+            pauseText.alignment = TMPro.TextAlignmentOptions.Center;
+            pauseText.rectTransform.pivot = new Vector2(0, .5f);
 
             _isInitialized = true;
         }
@@ -90,16 +109,39 @@ namespace TootTally.Spectating
 
         public static void ShowLoadingIcon()
         {
-            _loadingIcon?.StartRecursiveAnimation();
-            _loadingIcon?.Show();
+            if (_loadingIcon == null) return;
+
+            _loadingIcon.StartRecursiveAnimation();
+            _loadingIcon.Show();
         }
 
         public static void HideLoadingIcon()
         {
-            _loadingIcon?.Hide();
-            _loadingIcon?.StopRecursiveAnimation(true);
+            if (_loadingIcon == null) return;
+
+            _loadingIcon.Hide();
+            _loadingIcon.StopRecursiveAnimation(true);
         }
         public static bool IsLoadingIconVisible() => _loadingIcon.IsVisible();
+
+        public static void ShowPauseText()
+        {
+            if (_pauseTextHolder == null) return;
+
+            _pauseTextHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1500);
+            _pauseTextHolder.SetActive(true);
+            _pauseTextHolderAnimation?.Dispose();
+            _pauseTextHolderAnimation = AnimationManager.AddNewPositionAnimation(_pauseTextHolder, Vector2.zero, 0.8f, new Utils.Helpers.EasingHelper.SecondOrderDynamics(2.25f, .94f, 1.15f));
+        }
+
+        public static void HidePauseText()
+        {
+            if (_pauseTextHolder == null) return;
+
+            _pauseTextHolderAnimation?.Dispose();
+            _pauseTextHolder.SetActive(false);
+
+        }
 
     }
 }

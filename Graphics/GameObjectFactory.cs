@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
@@ -189,7 +190,7 @@ namespace TootTally.Graphics
             var text = GameObject.Instantiate(_multicoloreTextPrefab, _bubblePrefab.transform);
             text.name = "BubbleText";
             text.maskable = false;
-            text.enableWordWrapping = true; 
+            text.enableWordWrapping = true;
             text.rectTransform.sizeDelta = bubblePrefabRect.sizeDelta;
             text.gameObject.SetActive(true);
 
@@ -681,7 +682,8 @@ namespace TootTally.Graphics
                 else
                     CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { TootTallyOverlayManager.OnAddButtonPress(user); });
                 CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { TootTallyOverlayManager.OpenUserProfile(user.id); });
-                CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
+                if (SpectatingManager.currentSpectatorIDList.Contains(user.id))
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
             }
             else
             {
@@ -1161,7 +1163,7 @@ namespace TootTally.Graphics
             rowEntry.name = name;
             rowEntry.username.text = scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
-            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175,200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally)));
+            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally)));
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;
