@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using Mono.Cecil.Cil;
 using System.Collections.Generic;
 using System.Linq;
 using TootTally.Graphics;
@@ -196,14 +197,16 @@ namespace TootTally.GameplayModifier
             };
         }
 
-        public static void LoadModifiersFromReplayString(string replayModifierString)
+        public static void LoadModifiersFromString(string replayModifierString)
         {
             _modifiersBackup = GetModifiersString();
             ClearAllModifiers();
+            if (replayModifierString == null) return;
+
             var replayModifierStringArray = replayModifierString.Split(',');
             if (replayModifierStringArray.Length <= 0)
             {
-                TootTallyLogger.LogInfo("No modifiers detected in replay.");
+                TootTallyLogger.LogInfo("No modifiers detected.");
                 return;
             }
 
@@ -215,7 +218,7 @@ namespace TootTally.GameplayModifier
             }
         }
 
-        public static void LoadBackedupModifiers() => LoadModifiersFromReplayString(_modifiersBackup);
+        public static void LoadBackedupModifiers() => LoadModifiersFromString(_modifiersBackup);
 
     }
 }

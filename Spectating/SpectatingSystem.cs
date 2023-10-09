@@ -33,9 +33,9 @@ namespace TootTally.Spectating
             _receivedSpecInfoQueue = new ConcurrentQueue<SocketSpectatorInfo>();
         }
 
-        public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed)
+        public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed, string gamemodifiers)
         {
-            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed });
+            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed, gamemodifiers = gamemodifiers });
             SendToSocket(json);
         }
 

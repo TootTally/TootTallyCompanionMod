@@ -284,7 +284,7 @@ namespace TootTally.Replays
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
             _replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
-            GameModifierManager.LoadModifiersFromReplayString(replayJson.gamemodifiers ?? "");
+            GameModifierManager.LoadModifiersFromString(replayJson.gamemodifiers ?? "");
             _replaybuilddate = replayJson.pluginbuilddate;
 
             return ReplayState.ReplayLoadSuccess;
