@@ -11,6 +11,7 @@ using static TootTally.Spectating.SpectatingManager;
 using TootTally.Graphics.Animation;
 using static Mono.Security.X509.X520;
 using TMPro;
+using TootTally.Utils.Helpers;
 
 namespace TootTally.Spectating
 {
@@ -66,7 +67,7 @@ namespace TootTally.Spectating
 
             _marqueeText = GameObjectFactory.CreateSingleText(_overlayCanvas.transform, "SpectatorMarqueeText", "PlaceHolder", new Color(1, 1, 1, .75f));
             _marqueeText.fontSize = 36;
-            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition = new Vector2(1200, 0);
+            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition = new Vector2(1300, 0);
             _marqueeText.rectTransform.anchorMin = _marqueeText.rectTransform.anchorMax = new Vector2(0, .2f);
             _marqueeText.rectTransform.pivot = new Vector2(0, .5f);
             _marqueeText.gameObject.SetActive(false);
@@ -144,7 +145,7 @@ namespace TootTally.Spectating
             _pauseTextHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -1500);
             _pauseTextHolder.SetActive(true);
             _pauseTextHolderAnimation?.Dispose();
-            _pauseTextHolderAnimation = AnimationManager.AddNewPositionAnimation(_pauseTextHolder, Vector2.zero, 0.8f, new Utils.Helpers.EasingHelper.SecondOrderDynamics(2.25f, .94f, 1.15f));
+            _pauseTextHolderAnimation = AnimationManager.AddNewPositionAnimation(_pauseTextHolder, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(2.25f, .94f, 1.15f));
         }
 
         public static void HidePauseText()
@@ -158,10 +159,11 @@ namespace TootTally.Spectating
 
         public static void ShowMarquee(string playerName, string songName, float songSpeed, string modifiers)
         {
+            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition;
             _marqueeText.text = $"Currently Spectating {playerName}\nPlaying {songName}";
             if (songSpeed != 1)
-                _marqueeText.text += $" [{songSpeed:0:00}] [{modifiers}]";
-            if (modifiers != null && modifiers != "")
+                _marqueeText.text += $" [{songSpeed:0.00}x]";
+            if (modifiers != null && modifiers != "None")
                 _marqueeText.text += $" [{modifiers}]";
             AnimateMarquee();
             _marqueeText.gameObject.SetActive(true);
@@ -169,7 +171,7 @@ namespace TootTally.Spectating
 
         public static void AnimateMarquee()
         {
-            _marqueeAnimation = AnimationManager.AddNewPositionAnimation(_marqueeText.gameObject, -_marqueeStartPosition, 60f, new Utils.Helpers.EasingHelper.SecondOrderDynamics(0.1f, 0f, 1f), (sender) =>
+            _marqueeAnimation = AnimationManager.AddNewPositionAnimation(_marqueeText.gameObject, -_marqueeStartPosition * 1.2f, 30f, new EasingHelper.SecondOrderDynamics(0.009f, 0f, 1f), (sender) =>
             {
                 _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition;
                 AnimateMarquee();
@@ -178,7 +180,9 @@ namespace TootTally.Spectating
 
         public static void HideMarquee()
         {
-            _marqueeAnimation.Dispose();
+            if (_marqueeText == null) return;
+
+            _marqueeAnimation?.Dispose();
             _marqueeText.gameObject.SetActive(false);
         }
 

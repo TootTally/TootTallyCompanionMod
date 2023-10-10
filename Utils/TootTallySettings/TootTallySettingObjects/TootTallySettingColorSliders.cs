@@ -89,7 +89,7 @@ namespace TootTally.Utils.TootTallySettings.TootTallySettingObjects
             else if (s.wholeNumbers)
                 text = value.ToString();
             else
-                text = $"{(s.wholeNumbers ? value : value * 100f):0:00}";
+                text = $"{(s.wholeNumbers ? value : value * 100f):0.00}";
             return text;
         }
 

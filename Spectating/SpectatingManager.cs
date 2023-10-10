@@ -299,6 +299,8 @@ namespace TootTally.Spectating
                     _currentTootData = new SocketTootData() { isTooting = false, noteHolder = 0 };
                     _isTooting = false;
                     _elapsedTime = 0;
+                    if (_lastTrackData != null)
+                        SpectatingOverlay.ShowMarquee(_spectatingSystemList.Last().spectatorName, _lastTrackData.trackname_short, _lastSongInfo.gameSpeed, _lastSongInfo.gamemodifiers);
                 }
             }
 
@@ -417,7 +419,7 @@ namespace TootTally.Spectating
                 if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
                 {
                     _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => currentMapPosition > x.noteHolder);
-                    if (_frameData.Count > _frameIndex)
+                    if (_frameData.Count > _frameIndex && _frameIndex != -1)
                         _currentFrame = _frameData[_frameIndex];
                 }
             }
@@ -535,8 +537,6 @@ namespace TootTally.Spectating
                 ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
                 GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
                 TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
-                if (_lastTrackData != null)
-                    SpectatingOverlay.ShowMarquee(_spectatingSystemList.Last().spectatorName, _lastTrackData.trackname_short, _lastSongInfo.gameSpeed, _lastSongInfo.gamemodifiers);
                 _pointSceneControllerInstance.clickRetry();
             }
 
@@ -570,7 +570,6 @@ namespace TootTally.Spectating
                                 _spectatingStarting = true;
                                 ReplaySystemManager.SetSpectatingMode();
                                 GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
-                                SpectatingOverlay.ShowMarquee(_spectatingSystemList.Last().spectatorName, _lastTrackData.trackname_short, _lastSongInfo.gameSpeed, _lastSongInfo.gamemodifiers);
                                 _levelSelectControllerInstance.clickPlay();
                                 SpectatingOverlay.SetCurrentUserState(UserState.None);
                             }
@@ -630,6 +629,7 @@ namespace TootTally.Spectating
                 ClearSpectatingData();
                 _gameControllerInstance.pauseQuitLevel();
                 SpectatingOverlay.HidePauseText();
+                SpectatingOverlay.HideMarquee();
             }
 
             private static void RestartSong()
@@ -638,6 +638,7 @@ namespace TootTally.Spectating
                 _waitingToSync = IsSpectating;
                 _gameControllerInstance.pauseRetryLevel();
                 SpectatingOverlay.HidePauseText();
+                SpectatingOverlay.HideMarquee();
             }
 
             private static void SetTrackToSpectatingTrackref(string trackref)
