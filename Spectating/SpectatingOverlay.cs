@@ -10,6 +10,7 @@ using TootTally.Utils;
 using static TootTally.Spectating.SpectatingManager;
 using TootTally.Graphics.Animation;
 using static Mono.Security.X509.X520;
+using TMPro;
 
 namespace TootTally.Spectating
 {
@@ -17,12 +18,17 @@ namespace TootTally.Spectating
     {
         private static GameObject _overlayCanvas;
         private static GameObject _pauseTextHolder;
-        private static CustomAnimation _pauseTextHolderAnimation;
+
+        private static CustomAnimation _pauseTextHolderAnimation, _marqueeAnimation;
+
         private static LoadingIcon _loadingIcon;
         private static SpectatingViewerIcon _viewerIcon;
         private static bool _isInitialized;
         private static SocketSpectatorInfo _spectatorInfo;
         private static UserState _currentUserState;
+
+        private static Vector2 _marqueeStartPosition;
+        private static TMP_Text _marqueeText;
 
         public static void Initialize()
         {
@@ -43,7 +49,7 @@ namespace TootTally.Spectating
 
             _viewerIcon = GameObjectFactory.CreateDefaultViewerIcon(_overlayCanvas.transform, "ViewerIcon");
 
-            _pauseTextHolder = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1000,350), 8f, "PauseTextOverlay");
+            _pauseTextHolder = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1000, 350), 8f, "PauseTextOverlay");
             _pauseTextHolder.SetActive(false);
             _pauseTextHolder.transform.Find("FSLatencyPanel").GetComponent<Image>().enabled = false;
             var rectPauseText = _pauseTextHolder.GetComponent<RectTransform>();
@@ -57,6 +63,13 @@ namespace TootTally.Spectating
             pauseText.fontSize = 72;
             pauseText.alignment = TMPro.TextAlignmentOptions.Center;
             pauseText.rectTransform.pivot = new Vector2(0, .5f);
+
+            _marqueeText = GameObjectFactory.CreateSingleText(_overlayCanvas.transform, "SpectatorMarqueeText", "PlaceHolder", new Color(1, 1, 1, .75f));
+            _marqueeText.fontSize = 36;
+            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition = new Vector2(1200, 0);
+            _marqueeText.rectTransform.anchorMin = _marqueeText.rectTransform.anchorMax = new Vector2(0, .2f);
+            _marqueeText.rectTransform.pivot = new Vector2(0, .5f);
+            _marqueeText.gameObject.SetActive(false);
 
             _isInitialized = true;
         }
@@ -141,6 +154,32 @@ namespace TootTally.Spectating
             _pauseTextHolderAnimation?.Dispose();
             _pauseTextHolder.SetActive(false);
 
+        }
+
+        public static void ShowMarquee(string playerName, string songName, float songSpeed, string modifiers)
+        {
+            _marqueeText.text = $"Currently Spectating {playerName}\nPlaying {songName}";
+            if (songSpeed != 1)
+                _marqueeText.text += $" [{songSpeed:0:00}] [{modifiers}]";
+            if (modifiers != null && modifiers != "")
+                _marqueeText.text += $" [{modifiers}]";
+            AnimateMarquee();
+            _marqueeText.gameObject.SetActive(true);
+        }
+
+        public static void AnimateMarquee()
+        {
+            _marqueeAnimation = AnimationManager.AddNewPositionAnimation(_marqueeText.gameObject, -_marqueeStartPosition, 60f, new Utils.Helpers.EasingHelper.SecondOrderDynamics(0.1f, 0f, 1f), (sender) =>
+            {
+                _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition;
+                AnimateMarquee();
+            });
+        }
+
+        public static void HideMarquee()
+        {
+            _marqueeAnimation.Dispose();
+            _marqueeText.gameObject.SetActive(false);
         }
 
     }

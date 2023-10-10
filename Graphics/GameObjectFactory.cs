@@ -683,14 +683,14 @@ namespace TootTally.Graphics
                     CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { TootTallyOverlayManager.OnAddButtonPress(user); });
                 CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { TootTallyOverlayManager.OpenUserProfile(user.id); });
                 if (SpectatingManager.currentSpectatorIDList.Contains(user.id))
-                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id, user.username); });
             }
             else
             {
                 card.transform.Find("LatencyBG").GetComponent<Image>().color = Color.cyan;
                 TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), Color.cyan, .1f);
                 if (!SpectatingManager.IsHosting)
-                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id); });
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id, user.username); });
             }
 
             return card;

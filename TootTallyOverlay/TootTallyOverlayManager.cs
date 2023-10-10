@@ -260,11 +260,11 @@ namespace TootTally.TootTallyOverlay
             Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
         public static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
 
-        public static void OnSpectateButtonPress(int id)
+        public static void OnSpectateButtonPress(int id, string name)
         {
             if (!SpectatingManager.IsAnyConnectionPending() && !(Plugin.userInfo.id == id && SpectatingManager.IsHosting))
             {
-                SpectatingManager.CreateUniqueSpectatingConnection(id);
+                SpectatingManager.CreateUniqueSpectatingConnection(id, name);
                 UpdateUsers();
             }
         }

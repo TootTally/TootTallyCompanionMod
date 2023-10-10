@@ -29,7 +29,7 @@ namespace TootTally.Spectating
             _spectatingSystemList ??= new List<SpectatingSystem>();
             SpectatingOverlay.Initialize();
             if (Plugin.Instance.AllowSpectate.Value)
-                CreateUniqueSpectatingConnection(Plugin.userInfo.id);
+                CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSpectatorIDList(idList => currentSpectatorIDList = idList));
         }
 
@@ -60,9 +60,9 @@ namespace TootTally.Spectating
             }
         }
 
-        public static SpectatingSystem CreateNewSpectatingConnection(int id)
+        public static SpectatingSystem CreateNewSpectatingConnection(int id, string name)
         {
-            var spec = new SpectatingSystem(id);
+            var spec = new SpectatingSystem(id, name);
             _spectatingSystemList.Add(spec);
             if (id == Plugin.userInfo.id)
                 hostedSpectatingSystem = spec;
@@ -81,16 +81,16 @@ namespace TootTally.Spectating
                 TootTallyLogger.LogInfo($"Couldnt find websocket in list.");
         }
 
-        public static SpectatingSystem CreateUniqueSpectatingConnection(int id)
+        public static SpectatingSystem CreateUniqueSpectatingConnection(int id, string name)
         {
             StopAllSpectator();
-            return CreateNewSpectatingConnection(id);
+            return CreateNewSpectatingConnection(id, name);
         }
 
         public static void OnAllowHostConfigChange(bool value)
         {
             if (value && hostedSpectatingSystem == null)
-                CreateUniqueSpectatingConnection(Plugin.userInfo.id);
+                CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             else if (!value && hostedSpectatingSystem != null)
             {
                 RemoveSpectator(hostedSpectatingSystem);
@@ -188,6 +188,7 @@ namespace TootTally.Spectating
 
         public class SocketSpectatorInfo : SocketMessage
         {
+            public string hostName { get; set; }
             public int count { get; set; }
             public List<string> spectators { get; set; }
         }
@@ -243,12 +244,15 @@ namespace TootTally.Spectating
             private static List<SocketFrameData> _frameData = new List<SocketFrameData>();
             private static List<SocketTootData> _tootData = new List<SocketTootData>();
             private static List<SocketNoteData> _noteData = new List<SocketNoteData>();
+
             private static SocketFrameData _lastFrame, _currentFrame;
             private static SocketTootData _currentTootData;
             private static SocketNoteData _currentNoteData;
 
             private static SocketSongInfo _lastSongInfo;
             private static SocketSongInfo _currentSongInfo;
+
+            private static TromboneTrack _lastTrackData;
 
             private static bool _isTooting;
             private static int _frameIndex;
@@ -273,6 +277,7 @@ namespace TootTally.Spectating
                 else
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
                 SpectatingOverlay.HidePauseText();
+                SpectatingOverlay.HideMarquee();
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
@@ -360,6 +365,7 @@ namespace TootTally.Spectating
                 _pointSceneControllerInstance = __instance;
                 if (IsHosting)
                     SetCurrentUserState(UserState.PointScene);
+                SpectatingOverlay.HideMarquee();
             }
 
             [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Update))]
@@ -529,6 +535,8 @@ namespace TootTally.Spectating
                 ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
                 GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
                 TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
+                if (_lastTrackData != null)
+                    SpectatingOverlay.ShowMarquee(_spectatingSystemList.Last().spectatorName, _lastTrackData.trackname_short, _lastSongInfo.gameSpeed, _lastSongInfo.gamemodifiers);
                 _pointSceneControllerInstance.clickRetry();
             }
 
@@ -548,6 +556,7 @@ namespace TootTally.Spectating
                     if (_lastSongInfo != null && _lastSongInfo.trackRef != null)
                         if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                         {
+                            _lastTrackData = TrackLookup.lookup(_lastSongInfo.trackRef);
                             ClearSpectatingData();
                             GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
 
@@ -561,6 +570,7 @@ namespace TootTally.Spectating
                                 _spectatingStarting = true;
                                 ReplaySystemManager.SetSpectatingMode();
                                 GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
+                                SpectatingOverlay.ShowMarquee(_spectatingSystemList.Last().spectatorName, _lastTrackData.trackname_short, _lastSongInfo.gameSpeed, _lastSongInfo.gamemodifiers);
                                 _levelSelectControllerInstance.clickPlay();
                                 SpectatingOverlay.SetCurrentUserState(UserState.None);
                             }
@@ -661,7 +671,7 @@ namespace TootTally.Spectating
                     __instance.gc.quitting = true;
                     __instance.gc.pauseQuitLevel();
                     PopUpNotifManager.DisplayNotif("Stopped spectating.");
-                } 
+                }
                 else if (IsSpectating)
                 {
                     __instance.panelobj.SetActive(false);
@@ -675,7 +685,7 @@ namespace TootTally.Spectating
             {
                 if (IsHosting)
                     SetCurrentUserState(UserState.Playing);
-                
+
             }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
@@ -724,7 +734,7 @@ namespace TootTally.Spectating
             {
                 if (IsSpectating)
                 {
-                    if (!__instance.quitting && !__instance.retrying && (_currentSpecState == UserState.SelectingSong ||  _lastSongInfo == null || _currentSongInfo == null || _lastSongInfo.trackRef != _currentSongInfo.trackRef))
+                    if (!__instance.quitting && !__instance.retrying && (_currentSpecState == UserState.SelectingSong || _lastSongInfo == null || _currentSongInfo == null || _lastSongInfo.trackRef != _currentSongInfo.trackRef))
                         QuitSong();
                     if (!_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
                         PlaybackSpectatingData(__instance);
@@ -760,7 +770,7 @@ namespace TootTally.Spectating
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
                 if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value)
-                    CreateUniqueSpectatingConnection(Plugin.userInfo.id); //Remake Hosting connection just in case it wasnt reopened correctly
+                    CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
 
                 if (IsHosting)
                 {

@@ -16,6 +16,7 @@ namespace TootTally.Spectating
         private ConcurrentQueue<SocketUserState> _receivedUserStateQueue;
         private ConcurrentQueue<SocketSpectatorInfo> _receivedSpecInfoQueue;
 
+        //int ID is for future tournament host so you can sort data when receiving it :)
         public Action<int, SocketFrameData> OnSocketFrameDataReceived;
         public Action<int, SocketTootData> OnSocketTootDataReceived;
         public Action<int, SocketNoteData> OnSocketNoteDataReceived;
@@ -23,8 +24,12 @@ namespace TootTally.Spectating
         public Action<int, SocketSongInfo> OnSocketSongInfoReceived;
         public Action<int, SocketSpectatorInfo> OnSocketSpecInfoReceived;
 
-        public SpectatingSystem(int id) : base(id)
+        public int GetSpectatorUserId => _id;
+        public string spectatorName;
+
+        public SpectatingSystem(int id, string name) : base(id)
         {
+            spectatorName = name;
             _receivedFrameDataQueue = new ConcurrentQueue<SocketFrameData>();
             _receivedTootDataQueue = new ConcurrentQueue<SocketTootData>();
             _receivedNoteDataQueue = new ConcurrentQueue<SocketNoteData>();
