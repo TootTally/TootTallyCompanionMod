@@ -32,6 +32,7 @@ namespace TootTally.CustomLeaderboard
         private List<SerializableClass.ScoreDataFromDB> _scoreDataList;
 
         private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _profilePopup;
+        private GameObject _ratedIcon;
         private LoadingIcon _loadingSwirly, _profilePopupLoadingSwirly;
         private Text _errorText;
         private TMP_Text _diffRating;
@@ -88,7 +89,7 @@ namespace TootTally.CustomLeaderboard
             _tabs = panelBody.transform.Find("tabs").gameObject; //Hidden until icons are loaded
             SetTabsImages();
 
-            _loadingSwirly = GameObjectFactory.CreateLoadingIcon(panelBody.transform, new Vector2(-20,0), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "LeaderboardLoadingSwirly");
+            _loadingSwirly = GameObjectFactory.CreateLoadingIcon(panelBody.transform, new Vector2(-20, 0), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "LeaderboardLoadingSwirly");
             _loadingSwirly.StartRecursiveAnimation();
             _loadingSwirly.Show();
 
@@ -106,22 +107,37 @@ namespace TootTally.CustomLeaderboard
             SetOnSliderValueChangeEvent();
 
             GameObject diffBar = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "diff bar");
+            GameObject.DestroyImmediate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty text").gameObject);
+            var t = GameObjectFactory.CreateSingleText(diffBar.transform, "Difficulty Text", "Difficulty:", Color.white, GameObjectFactory.TextFont.Multicolore);
+            t.alignment = TextAlignmentOptions.Left;
+            t.margin = new Vector2(80, 4);
+            t.fontSize = 16;
+
             GameObject diffStarsHolder = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty stars");
             _diffRatingMaskRectangle = diffStarsHolder.GetComponent<RectTransform>();
             _diffRatingMaskRectangle.anchoredPosition = new Vector2(-284, -48);
             _diffRatingMaskRectangle.sizeDelta = new Vector2(0, 30);
-            diffStarsHolder.AddComponent<Mask>();
-            Image imageMask = diffStarsHolder.AddComponent<Image>();
-            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
+            var mask = diffStarsHolder.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+            diffStarsHolder.AddComponent<Image>();
+            //imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
             _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
             _diffRating.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
             _diffRating.outlineWidth = 0.2f;
             _diffRating.fontSize = 20;
             _diffRating.alignment = TextAlignmentOptions.MidlineRight;
-            _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
+            _diffRating.rectTransform.sizeDelta = new Vector2(450, 30);
+            _diffRating.rectTransform.anchorMin = _diffRating.rectTransform.anchorMax = new Vector2(0, .5f);
+            _diffRating.rectTransform.offsetMin = Vector2.zero;
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
+
+            _ratedIcon = GameObjectFactory.CreateImageHolder(_globalLeaderboard.transform, new Vector2(350, 180), Vector2.one * 42f, AssetManager.GetSprite("rated64.png"), "RatedChartIcon");
+            var bubble = _ratedIcon.AddComponent<BubblePopupHandler>();
+            bubble.Initialize(GameObjectFactory.CreateBubble(new Vector2(300, 40), "RatedIconBubble", "This chart is rated.", 6, 12));
+
+            _levelSelectControllerInstance.sortdrop.transform.SetAsLastSibling();
         }
 
         public void OnPointerEnter()
@@ -272,6 +288,7 @@ namespace TootTally.CustomLeaderboard
         public void UpdateLeaderboard(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
         {
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
+            _ratedIcon.SetActive(false);
             _scrollableSliderHandler.ResetAcceleration();
 
             var trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
@@ -304,6 +321,7 @@ namespace TootTally.CustomLeaderboard
                         _speedToDiffDict = new Dictionary<int, float>();
                         if (songData.is_rated)
                         {
+                            _ratedIcon.SetActive(true);
                             for (int i = 0; i <= 29; i++)
                             {
                                 float diffIndex = (int)(i / 5f);

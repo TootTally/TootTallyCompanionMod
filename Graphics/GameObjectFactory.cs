@@ -1163,7 +1163,7 @@ namespace TootTally.Graphics
             rowEntry.name = name;
             rowEntry.username.text = scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
-            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally)));
+            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally), 10));
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;
@@ -1184,7 +1184,7 @@ namespace TootTally.Graphics
             {
 
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
-                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo"));
+                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo", 10));
             }
             else
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
@@ -1222,14 +1222,20 @@ namespace TootTally.Graphics
                             $"Meh: {tally[1]}\n" +
                             $"Nasty: {tally[0]}\n" : "No Tally";
 
-        public static GameObject CreateBubble(Vector2 size, string name, string text)
+        public static GameObject CreateBubble(Vector2 size, string name, string text, float borderThiccness, int fontSize = 22)
         {
             var bubble = GameObject.Instantiate(_bubblePrefab);
             bubble.name = name;
             bubble.GetComponent<RectTransform>().sizeDelta = size;
+            bubble.transform.Find("Window Body").GetComponent<RectTransform>().sizeDelta = -(Vector2.one * borderThiccness);
+
             var textObj = bubble.transform.Find("BubbleText").GetComponent<TMP_Text>();
             textObj.text = text;
+            textObj.fontSize = fontSize;
+            textObj.fontSizeMax = fontSize;
+            textObj.enableAutoSizing = true;
             textObj.rectTransform.sizeDelta = size;
+            textObj.margin = Vector3.one * borderThiccness;
 
             return bubble.gameObject;
         }

@@ -59,6 +59,7 @@ namespace TootTally.Utils
             "glow.png",
             "SpectatorIcon.png",
             "UsersIcon.png",
+            "rated64.png",
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;
