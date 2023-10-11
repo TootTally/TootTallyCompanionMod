@@ -22,6 +22,7 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace TootTally
 {
@@ -284,43 +285,6 @@ namespace TootTally
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
-            private static Vector2 _screenSize;
-            private static int _numberOfScreens;
-
-            /*[HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-            [HarmonyPostfix]
-            public static void OnGameControllerStart(GameController __instance)
-            {
-                _screenSize = new Vector2(Screen.width, Screen.height);
-                _numberOfScreens = 4;
-                var screenRatio = _numberOfScreens / 2f;
-                var gameplayCanvas = GameObject.Find("GameplayCanvas");
-                gameplayCanvas.GetComponent<Canvas>().scaleFactor = screenRatio;
-
-                var botLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
-                var botRightCam = GameObject.Instantiate(botLeftCam);
-                var topLeftCam = GameObject.Instantiate(botLeftCam);
-                var topRightCam = GameObject.Instantiate(botLeftCam);
-                botRightCam.pixelRect = new Rect(_screenSize.x / screenRatio, 0, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
-                botLeftCam.pixelRect = new Rect(0, 0, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
-                topLeftCam.pixelRect = new Rect(0, _screenSize.y / screenRatio, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
-                topRightCam.pixelRect = new Rect(_screenSize.x / screenRatio, _screenSize.y / screenRatio, _screenSize.x / screenRatio, _screenSize.y / screenRatio);
-
-                var gameControllerInstance = GameObject.Find("GameController").gameObject;
-
-                var botRight = GameObject.Instantiate(gameplayCanvas);
-                botRight.GetComponent<Canvas>().worldCamera = botRightCam;
-                var botRightGameController = GameObject.Instantiate(gameControllerInstance);
-
-                var topLeft = GameObject.Instantiate(gameplayCanvas);
-                topLeft.GetComponent<Canvas>().worldCamera = topLeftCam;
-                var topLeftGameController = GameObject.Instantiate(gameControllerInstance);
-
-                var topRight = GameObject.Instantiate(gameplayCanvas);
-                topRight.GetComponent<Canvas>().worldCamera = topRightCam;
-                var topRightGameController = GameObject.Instantiate(gameControllerInstance);
-
-            }*/
         }
     }
 }

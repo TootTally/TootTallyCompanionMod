@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using TootTally.CustomLeaderboard;
 using TootTally.GameplayModifier;
 using TootTally.Replays;
@@ -63,10 +64,30 @@ namespace TootTally.Spectating
         public static SpectatingSystem CreateNewSpectatingConnection(int id, string name)
         {
             var spec = new SpectatingSystem(id, name);
+            spec.OnWebSocketOpenCallback = OnSpectatingConnect;
             _spectatingSystemList.Add(spec);
             if (id == Plugin.userInfo.id)
                 hostedSpectatingSystem = spec;
             return spec;
+        }
+
+        public static void OnSpectatingConnect(SpectatingSystem sender)
+        {
+            if (!sender.IsHost)
+            {
+                sender.OnSocketSongInfoReceived = SpectatingManagerPatches.OnSongInfoReceived;
+                sender.OnSocketUserStateReceived = SpectatingManagerPatches.OnUserStateReceived;
+                sender.OnSocketFrameDataReceived = SpectatingManagerPatches.OnFrameDataReceived;
+                sender.OnSocketTootDataReceived = SpectatingManagerPatches.OnTootDataReceived;
+                sender.OnSocketNoteDataReceived = SpectatingManagerPatches.OnNoteDataReceived;
+                PopUpNotifManager.DisplayNotif($"Waiting for host to pick a song...");
+            }
+            else
+            {
+                OnHostConnection();
+                SpectatingManagerPatches.SendCurrentUserState();
+            }
+            sender.OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
         }
 
         public static void RemoveSpectator(SpectatingSystem spectator)
@@ -104,10 +125,6 @@ namespace TootTally.Spectating
         }
 
         public static void OnHostConnection()
-        {
-        }
-
-        public static void OnSpectatingConnection()
         {
         }
 
@@ -161,6 +178,7 @@ namespace TootTally.Spectating
 
         public class SocketTootData : SocketMessage
         {
+            public double time { get; set; }
             public double noteHolder { get; set; }
             public bool isTooting { get; set; }
         }
@@ -296,7 +314,7 @@ namespace TootTally.Spectating
                     _tootIndex = 0;
                     _lastFrame = null;
                     _currentFrame = new SocketFrameData() { time = 0, noteHolder = 0, pointerPosition = 0 };
-                    _currentTootData = new SocketTootData() { isTooting = false, noteHolder = 0 };
+                    _currentTootData = new SocketTootData() { time = 0, isTooting = false, noteHolder = 0 };
                     _isTooting = false;
                     _elapsedTime = 0;
                     if (_lastTrackData != null)
@@ -354,7 +372,7 @@ namespace TootTally.Spectating
                 if (IsSpectating)
                     __result = _isTooting;
                 else if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
-                    hostedSpectatingSystem.SendTootData(__instance.noteholderr.anchoredPosition.x, __result);
+                    hostedSpectatingSystem.SendTootData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __result);
                 _lastIsTooting = __result;
             }
 
@@ -431,22 +449,22 @@ namespace TootTally.Spectating
                 __instance.pointer.transform.localPosition = pointerPosition;
             }
 
-            public static void OnFrameDataReceived(int id, SocketFrameData frameData)
+            public static void OnFrameDataReceived(SocketFrameData frameData)
             {
                 _frameData?.Add(frameData);
             }
 
-            public static void OnTootDataReceived(int id, SocketTootData tootData)
+            public static void OnTootDataReceived(SocketTootData tootData)
             {
                 _tootData?.Add(tootData);
             }
 
-            public static void OnNoteDataReceived(int id, SocketNoteData noteData)
+            public static void OnNoteDataReceived(SocketNoteData noteData)
             {
                 _noteData?.Add(noteData);
             }
 
-            public static void OnSpectatorDataReceived(int id, SocketSpectatorInfo specData)
+            public static void OnSpectatorDataReceived(SocketSpectatorInfo specData)
             {
                 SpectatingOverlay.UpdateViewerList(specData);
             }
@@ -460,7 +478,7 @@ namespace TootTally.Spectating
                     _currentTootData = _tootData[_tootIndex++];
             }
 
-            public static void OnSongInfoReceived(int id, SocketSongInfo info)
+            public static void OnSongInfoReceived(SocketSongInfo info)
             {
                 if (info == null || info.trackRef == null || info.gameSpeed <= 0f)
                 {
@@ -470,7 +488,7 @@ namespace TootTally.Spectating
                 _lastSongInfo = info;
             }
 
-            public static void OnUserStateReceived(int id, SocketUserState userState)
+            public static void OnUserStateReceived(SocketUserState userState)
             {
                 if (IsSpectating)
                     UserStateHandler((UserState)userState.userState);

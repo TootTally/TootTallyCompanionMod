@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using static TootTally.Spectating.SpectatingManager;
 using TootTally.Utils;
 using WebSocketSharp;
 using System.Collections.Concurrent;
+using static TootTally.Spectating.SpectatingManager;
 
 namespace TootTally.Spectating
 {
@@ -17,12 +17,14 @@ namespace TootTally.Spectating
         private ConcurrentQueue<SocketSpectatorInfo> _receivedSpecInfoQueue;
 
         //int ID is for future tournament host so you can sort data when receiving it :)
-        public Action<int, SocketFrameData> OnSocketFrameDataReceived;
-        public Action<int, SocketTootData> OnSocketTootDataReceived;
-        public Action<int, SocketNoteData> OnSocketNoteDataReceived;
-        public Action<int, SocketUserState> OnSocketUserStateReceived;
-        public Action<int, SocketSongInfo> OnSocketSongInfoReceived;
-        public Action<int, SocketSpectatorInfo> OnSocketSpecInfoReceived;
+        public Action<SocketFrameData> OnSocketFrameDataReceived;
+        public Action<SocketTootData> OnSocketTootDataReceived;
+        public Action<SocketNoteData> OnSocketNoteDataReceived;
+        public Action<SocketUserState> OnSocketUserStateReceived;
+        public Action<SocketSongInfo> OnSocketSongInfoReceived;
+        public Action<SocketSpectatorInfo> OnSocketSpecInfoReceived;
+
+        public Action<SpectatingSystem> OnWebSocketOpenCallback;
 
         public int GetSpectatorUserId => _id;
         public string spectatorName;
@@ -81,11 +83,12 @@ namespace TootTally.Spectating
             SendToSocket(json);
         }
 
-        public void SendTootData(double noteHolder, bool isTooting)
+        public void SendTootData(double time, double noteHolder, bool isTooting)
         {
             var tootFrame = new SocketTootData()
             {
                 dataType = DataType.TootData.ToString(),
+                time = time,
                 noteHolder = noteHolder,
                 isTooting = isTooting
             };
@@ -97,7 +100,6 @@ namespace TootTally.Spectating
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
-            //TootTallyLogger.LogInfo(e.Data);
             if (e.IsText)
             {
                 try
@@ -110,7 +112,7 @@ namespace TootTally.Spectating
                     _socketMessage = null;
                     return;
                 }
-                if (!IsHosting)
+                if (!IsHost)
                 {
                     if (_socketMessage is SocketSongInfo info)
                         _receivedSongInfoQueue.Enqueue(info);
@@ -137,45 +139,32 @@ namespace TootTally.Spectating
 
         public void UpdateStacks()
         {
+            if (ConnectionPending) return;
+
             if (OnSocketFrameDataReceived != null && _receivedFrameDataQueue.TryDequeue(out SocketFrameData frameData))
-                OnSocketFrameDataReceived.Invoke(_id, frameData);
+                OnSocketFrameDataReceived.Invoke(frameData);
 
             if (OnSocketTootDataReceived != null && _receivedTootDataQueue.TryDequeue(out SocketTootData tootData))
-                OnSocketTootDataReceived.Invoke(_id, tootData);
+                OnSocketTootDataReceived.Invoke(tootData);
 
             if (OnSocketSongInfoReceived != null && _receivedSongInfoQueue.TryDequeue(out SocketSongInfo songInfo))
-                OnSocketSongInfoReceived.Invoke(_id, songInfo);
+                OnSocketSongInfoReceived.Invoke(songInfo);
 
             if (OnSocketUserStateReceived != null && _receivedUserStateQueue.TryDequeue(out SocketUserState userState))
-                OnSocketUserStateReceived.Invoke(_id, userState);
+                OnSocketUserStateReceived.Invoke(userState);
 
             if (OnSocketNoteDataReceived != null && _receivedNoteDataQueue.TryDequeue(out SocketNoteData noteData))
-                OnSocketNoteDataReceived.Invoke(_id, noteData);
+                OnSocketNoteDataReceived.Invoke(noteData);
 
             if (OnSocketSpecInfoReceived != null && _receivedSpecInfoQueue.TryDequeue(out SocketSpectatorInfo specInfo))
-                OnSocketSpecInfoReceived.Invoke(_id, specInfo);
+                OnSocketSpecInfoReceived.Invoke(specInfo);
 
         }
 
         protected override void OnWebSocketOpen(object sender, EventArgs e)
         {
             PopUpNotifManager.DisplayNotif($"Connected to spectating server.");
-            if (!IsHost)
-            {
-                OnSocketSongInfoReceived = SpectatingManagerPatches.OnSongInfoReceived;
-                OnSocketUserStateReceived = SpectatingManagerPatches.OnUserStateReceived;
-                OnSocketFrameDataReceived = SpectatingManagerPatches.OnFrameDataReceived;
-                OnSocketTootDataReceived = SpectatingManagerPatches.OnTootDataReceived;
-                OnSocketNoteDataReceived = SpectatingManagerPatches.OnNoteDataReceived;
-                OnSpectatingConnection();
-                PopUpNotifManager.DisplayNotif($"Waiting for host to pick a song...");
-            }
-            else
-            {
-                OnHostConnection();
-                SpectatingManagerPatches.SendCurrentUserState();
-            }
-            OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
+            OnWebSocketOpenCallback?.Invoke(this);                   
             base.OnWebSocketOpen(sender, e);
         }
 
