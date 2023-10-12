@@ -757,6 +757,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(usernameInputHolder.GetComponent<Text>());
             usernameInputHolder.name = "UsernameInput";
             InputField usernameInput = usernameInputHolder.AddComponent<InputField>();
+            usernameInput.onEndEdit.AddListener(text => usernameInput.text = text);
             usernameInput.textComponent = usernameInputTextHolder.GetComponent<Text>();
             usernameInput.textComponent.alignment = TextAnchor.MiddleCenter;
             usernameInput.image = usernameInputHolder.AddComponent<Image>();
@@ -772,6 +773,7 @@ namespace TootTally.Graphics
             GameObject passwordInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
             passwordInputHolder.name = "PasswordInput";
             InputField passwordInput = passwordInputHolder.GetComponent<InputField>();
+            passwordInput.onEndEdit.AddListener(text => passwordInput.text = text);
             passwordInput.inputType = InputField.InputType.Password;
             passwordInput.textComponent = passwordInputHolder.transform.Find("Text").GetComponent<Text>();
             passwordInput.image = latencyFGPanel.GetComponent<Image>();
@@ -840,6 +842,7 @@ namespace TootTally.Graphics
                 GameObject confirmInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
                 confirmInputHolder.name = "ConfirmInput";
                 InputField confirmInput = confirmInputHolder.GetComponent<InputField>();
+                confirmInput.onEndEdit.AddListener(text => confirmInput.text = text);
                 confirmInput.inputType = InputField.InputType.Password;
                 confirmInput.textComponent = confirmInputHolder.transform.Find("Text").GetComponent<Text>();
                 confirmInput.image = latencyFGPanel.GetComponent<Image>();
@@ -856,7 +859,7 @@ namespace TootTally.Graphics
                         PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
                         return;
                     }
-                    if (!passwordInput.text.ToLower().Contains("password") || passwordInput.text.Length <= 5)
+                    if (passwordInput.text.ToLower().Contains("password") || passwordInput.text.Length <= 5 || passwordInput.text.ToLower().Contains(usernameInput.text))
                     {
                         if (passwordInput.text.Length <= 5)
                             PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
