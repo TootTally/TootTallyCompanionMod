@@ -1,12 +1,12 @@
 # TootTally Companion Mod
 
-> Version: 0.4.0
+> Version: 0.5.0
 
 The companion mod for submitting scores to [TootTally](https://toottally.com/)
 
 **JOIN US IN THE [TOOTTALLY DISCORD!](https://discord.gg/9jQmVEDVTp)**
 
-Still in active development, this mod aims to be an alternative to the Steam Leaderboards for custom charts played using [TrombLoader](https://github.com/NyxTheShield/TrombLoader/).
+Still in active development, this mod aims to be an alternative to the Steam Leaderboards for custom charts played using [TrombLoader](https://github.com/tc-mods/TrombLoader).
 
 ### Instructions
 

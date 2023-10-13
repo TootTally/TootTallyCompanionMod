@@ -1,5 +1,21 @@
 #### Changelog:
 
+`v0.4.0` -> `v0.5.0`
+
+```diff
++ Spectator mode, You can now watch your trombuddies play live with ultra low latency!
++ In game SongDownloads. Download your favorite charts from the toottally setting page MoreSongs
++ We will add more search filters in the future as well as making this accessible directly in the Level Selection Screen.
++ Added Rated Icon next to the leaderboard for rated charts
++ Fixed TootTally login page requiring the user to press enter after each input
++ Added minimal password restrictions to login page (must be more than 5 characters and not contain your username)
++ Improved scrolling on leaderboard and setting pages
++ Fixed several edge case bugs with the leaderboard and trombuddies panel
++ Added option to remove 'Cool S'
+```
+
+-----
+
 `v0.3.4` -> `v0.4.0`
 
 ```diff
