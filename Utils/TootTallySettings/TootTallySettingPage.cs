@@ -49,7 +49,6 @@ namespace TootTally.Utils.TootTallySettings
             _verticalSlider = TootTallySettingObjectFactory.CreateVerticalSlider(_fullPanel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
             _verticalSlider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, _verticalSlider.value); });
             _scrollableSliderHandler = _verticalSlider.gameObject.AddComponent<ScrollableSliderHandler>();
-            _scrollableSliderHandler.slider = _verticalSlider;
             _scrollableSliderHandler.enabled = false;
 
             gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;

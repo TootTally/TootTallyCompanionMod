@@ -12,12 +12,14 @@ namespace TootTally.Graphics
         private EventTrigger _parentTrigger;
         private CustomAnimation _positionAnimation;
         private CustomAnimation _scaleAnimation;
+        private bool _useWorldPosition;
 
-        public void Initialize(GameObject bubble)
+        public void Initialize(GameObject bubble, bool useWorldPosition = true)
         {
-            this._bubble = bubble;
-            this._bubble.transform.SetParent(transform);
-            this._bubble.transform.position = transform.position;
+            _bubble = bubble;
+            _bubble.transform.SetParent(transform);
+            _bubble.transform.position = transform.position;
+            _useWorldPosition = useWorldPosition;
         }
 
         public void Awake()
@@ -42,7 +44,10 @@ namespace TootTally.Graphics
         {
             var v3 = Input.mousePosition;
             v3.z = 10;
-            _positionAnimation?.SetTargetVector(Camera.main.ScreenToWorldPoint(v3));
+            if (_useWorldPosition)
+                _positionAnimation?.SetTargetVector(Camera.main.ScreenToWorldPoint(v3));
+            else
+                _positionAnimation?.SetTargetVector(v3);
         }
 
         private void OnPointerEnter()
@@ -53,7 +58,7 @@ namespace TootTally.Graphics
             _scaleAnimation?.Dispose();
             _bubble.transform.localScale = Vector2.zero;
             _bubble.SetActive(true);
-            _positionAnimation = AnimationManager.AddNewTransformPositionAnimation(_bubble, Camera.main.ScreenToWorldPoint(Input.mousePosition), 999f, GetSecondDegreeAnimation());
+            _positionAnimation = AnimationManager.AddNewTransformPositionAnimation(_bubble, _useWorldPosition ? Camera.main.ScreenToWorldPoint(Input.mousePosition) : Input.mousePosition, 999f, GetSecondDegreeAnimation());
             _scaleAnimation = AnimationManager.AddNewTransformScaleAnimation(_bubble, Vector3.one, 0.8f, GetSecondDegreeAnimation());
         }
 
@@ -64,7 +69,7 @@ namespace TootTally.Graphics
             _positionAnimation?.Dispose();
             _positionAnimation = null;
             _scaleAnimation?.Dispose();
-            _scaleAnimation = AnimationManager.AddNewTransformScaleAnimation(_bubble, Vector2.zero, 0.8f, GetSecondDegreeAnimation(), delegate
+            _scaleAnimation = AnimationManager.AddNewTransformScaleAnimation(_bubble, Vector2.zero, 0.8f, GetSecondDegreeAnimationExit(), delegate
             {
                 _bubble.SetActive(false);
             });
@@ -72,6 +77,7 @@ namespace TootTally.Graphics
         }
 
         public EasingHelper.SecondOrderDynamics GetSecondDegreeAnimation() => new(2.5f, .85f, 1f);
+        public EasingHelper.SecondOrderDynamics GetSecondDegreeAnimationExit() => new(2.65f, 1f, 1f);
 
     }
 }

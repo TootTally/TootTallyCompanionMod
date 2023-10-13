@@ -341,7 +341,10 @@ namespace TootTally.Spectating
                 waitForSync = true;
 
                 if (_frameData != null && _frameData.Count > 0 && _frameData.Last().time >= SYNC_BUFFER && _currentSpecState != UserState.GettingReady && _currentSpecState != UserState.Restarting)
+                {
+                    SpectatingOverlay.SetCurrentUserState(UserState.Playing);
                     waitForSync = false;
+                }
                 return waitForSync;
             }
 
@@ -640,7 +643,7 @@ namespace TootTally.Spectating
                 }
             }
 
-            private static void QuitSong()
+            public static void QuitSong()
             {
                 _gameControllerInstance.paused = true;
                 _gameControllerInstance.quitting = true;
@@ -760,7 +763,6 @@ namespace TootTally.Spectating
                     else if (_waitingToSync && __instance.curtainc.doneanimating && !ShouldWaitForSync(out _waitingToSync))
                     {
                         PopUpNotifManager.DisplayNotif("Finished syncing with host.");
-                        SpectatingOverlay.SetCurrentUserState(UserState.Playing);
                         __instance.startSong(false);
                     }
                 }

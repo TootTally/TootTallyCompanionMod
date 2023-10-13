@@ -98,8 +98,6 @@ namespace TootTally.CustomLeaderboard
             _slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
 
             _scrollableSliderHandler = _slider.gameObject.AddComponent<ScrollableSliderHandler>();
-            _scrollableSliderHandler.slider = _slider;
-            _scrollableSliderHandler.accelerationMult = 0.8f;
 
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
             _sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
@@ -135,7 +133,7 @@ namespace TootTally.CustomLeaderboard
 
             _ratedIcon = GameObjectFactory.CreateImageHolder(_globalLeaderboard.transform, new Vector2(350, 180), Vector2.one * 42f, AssetManager.GetSprite("rated64.png"), "RatedChartIcon");
             var bubble = _ratedIcon.AddComponent<BubblePopupHandler>();
-            bubble.Initialize(GameObjectFactory.CreateBubble(new Vector2(300, 40), "RatedIconBubble", "This chart is rated.", 6, 12));
+            bubble.Initialize(GameObjectFactory.CreateBubble(new Vector2(300, 40), "RatedIconBubble", "This chart is rated.", 6, true, 12));
 
             _levelSelectControllerInstance.sortdrop.transform.SetAsLastSibling();
         }

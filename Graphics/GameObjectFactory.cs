@@ -187,7 +187,9 @@ namespace TootTally.Graphics
             bubblePrefabRect.sizeDelta = new Vector2(250, 100);
             bubblePrefabRect.pivot = new Vector2(1, 0);
 
-            var text = GameObject.Instantiate(_multicoloreTextPrefab, _bubblePrefab.transform);
+
+
+            var text = GameObject.Instantiate(_multicoloreTextPrefab, _bubblePrefab.transform.Find("Window Body"));
             text.name = "BubbleText";
             text.maskable = false;
             text.enableWordWrapping = true;
@@ -1023,10 +1025,10 @@ namespace TootTally.Graphics
                     _bubblePrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
 
                 _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color =
-                   _bubblePrefab.transform.Find("BubbleText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
+                   _bubblePrefab.transform.Find("Window Body/BubbleText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
 
                 _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor =
-                   _bubblePrefab.transform.Find("BubbleText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
+                   _bubblePrefab.transform.Find("Window Body/BubbleText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
 
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
@@ -1166,7 +1168,7 @@ namespace TootTally.Graphics
             rowEntry.name = name;
             rowEntry.username.text = scoreData.player;
             rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
-            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally), 10));
+            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally), 10, false));
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;
@@ -1187,7 +1189,7 @@ namespace TootTally.Graphics
             {
 
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
-                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo", 10));
+                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo", 10, true));
             }
             else
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
@@ -1225,22 +1227,46 @@ namespace TootTally.Graphics
                             $"Meh: {tally[1]}\n" +
                             $"Nasty: {tally[0]}\n" : "No Tally";
 
-        public static GameObject CreateBubble(Vector2 size, string name, string text, float borderThiccness, int fontSize = 22)
+        public static GameObject CreateBubble(Vector2 size, string name, string text) => CreateBubble(size, name, text, new Vector2(1, 0), 6, false);
+        public static GameObject CreateBubble(Vector2 size, string name, string text, int borderThiccness, bool autoResize, int fontSize = 22) => CreateBubble(size, name, text, new Vector2(1, 0), 6, autoResize, fontSize);
+
+        public static GameObject CreateBubble(Vector2 size, string name, string text, Vector2 alignement, int borderThiccness, bool autoResize, int fontSize = 22)
         {
             var bubble = GameObject.Instantiate(_bubblePrefab);
             bubble.name = name;
             bubble.GetComponent<RectTransform>().sizeDelta = size;
-            bubble.transform.Find("Window Body").GetComponent<RectTransform>().sizeDelta = -(Vector2.one * borderThiccness);
+            bubble.GetComponent<RectTransform>().pivot = alignement;
+            var windowbody = bubble.transform.Find("Window Body");
+            windowbody.GetComponent<RectTransform>().sizeDelta = -(Vector2.one * borderThiccness);
 
-            var textObj = bubble.transform.Find("BubbleText").GetComponent<TMP_Text>();
+            var textObj = windowbody.Find("BubbleText").GetComponent<TMP_Text>();
             textObj.text = text;
             textObj.fontSize = fontSize;
             textObj.fontSizeMax = fontSize;
-            textObj.enableAutoSizing = true;
             textObj.rectTransform.sizeDelta = size;
             textObj.margin = Vector3.one * borderThiccness;
 
-            return bubble.gameObject;
+            if (autoResize)
+            {
+                AddAutoSizeToObject(windowbody.gameObject, borderThiccness);
+                AddAutoSizeToObject(bubble, borderThiccness);
+            }
+            else
+                textObj.enableAutoSizing = true;
+
+            return bubble;
+        }
+
+        private static void AddAutoSizeToObject(GameObject obj, int padding)
+        {
+            var contentFitter = obj.AddComponent<ContentSizeFitter>();
+            contentFitter.verticalFit = contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var vertical = obj.AddComponent<VerticalLayoutGroup>();
+            vertical.childForceExpandHeight = vertical.childForceExpandWidth = false;
+            vertical.childScaleHeight = vertical.childScaleWidth = false;
+            vertical.childControlHeight = vertical.childControlWidth = true;
+            vertical.padding = new RectOffset(padding, padding, padding, padding);
         }
 
         public static GameObject CreateBubble(Vector2 size, string name, Sprite sprite)

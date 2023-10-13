@@ -20,6 +20,8 @@ namespace TootTally.Spectating
         private RectTransform _imageRect;
         private TMP_Text _text;
         private CustomAnimation _currentRotAnimation, _currentScaleAnimation;
+        private GameObject _bubble;
+        private TMP_Text _bubbleText;
         private bool _isActive;
         private int _lastCount;
         public bool isInitialized;
@@ -31,6 +33,12 @@ namespace TootTally.Spectating
             _imageHolder.AddComponent<Outline>();
             _imageHolder.SetActive(false);
 
+            var bHandler = _imageHolder.AddComponent<BubblePopupHandler>();
+            _bubble = GameObjectFactory.CreateBubble(new Vector2(300, 300), "ViewerListBubble", "PlaceHolder", new Vector2(0, 0), 6, true, 18);
+            bHandler.Initialize(_bubble, false);
+            _bubbleText = _bubble.transform.Find("Window Body/BubbleText").GetComponent<TMP_Text>();
+            _bubbleText.lineSpacing = 40f;
+
             _imageRect = _imageHolder.GetComponent<RectTransform>();
             SetAnchorMinMax(new Vector2(.03f, .07f));
             _imageRect.anchoredPosition = new Vector2(7, 0); //slight offset to the right cause cant do more that 0.0X precision on anchorMax/Min
@@ -41,13 +49,22 @@ namespace TootTally.Spectating
             _lastCount = 0;
         }
 
-        public void UpdateViewerCount(int count)
+        public void UpdateViewerList(SocketSpectatorInfo specInfo)
         {
-            if (_lastCount == count) return;
+            if (specInfo == null)
+            {
+                _lastCount = 0;
+                return;
+            }
 
-            _lastCount = count;
-            _text.text = count.ToString();
-            OnViewerCountChange();
+            if (_lastCount != specInfo.count)
+            {
+                _lastCount = specInfo.count;
+                _text.text = specInfo.count.ToString();
+                OnViewerCountChange();
+            }
+
+            _bubbleText.text = GetBubbleStringFromSpecInfo(specInfo);
         }
 
         public void OnViewerCountChange()
@@ -55,7 +72,10 @@ namespace TootTally.Spectating
             //MaybeAnimation
         }
 
+        private string GetBubbleStringFromSpecInfo(SocketSpectatorInfo specInfo) => string.Concat(specInfo.spectators.Select(name => name + "\n"));
+
         public void SetAnchorMinMax(Vector2 anchor) => _imageRect.anchorMax = _imageRect.anchorMin = anchor;
+        public void SetBubblePivot(Vector2 pivot) => _bubble.GetComponent<RectTransform>().pivot = pivot;
 
         private void SetRectToDefault()
         {

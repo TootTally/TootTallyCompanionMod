@@ -18,6 +18,7 @@ namespace TootTally.Spectating
     public static class SpectatingOverlay
     {
         private static GameObject _overlayCanvas;
+
         private static GameObject _pauseTextHolder;
 
         private static CustomAnimation _pauseTextHolderAnimation, _marqueeAnimation;
@@ -28,6 +29,8 @@ namespace TootTally.Spectating
         private static SocketSpectatorInfo _spectatorInfo;
         private static UserState _currentUserState;
 
+        private static CustomButton _stopSpectatingButton;
+
         private static Vector2 _marqueeStartPosition;
         private static TMP_Text _marqueeText;
 
@@ -36,13 +39,27 @@ namespace TootTally.Spectating
             _overlayCanvas = new GameObject("TootTallySpectatorOverlayCanvas");
             _overlayCanvas.SetActive(true);
             GameObject.DontDestroyOnLoad(_overlayCanvas);
+
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = true;
             canvas.sortingOrder = 2;
+
+            GraphicRaycaster raycaster = _overlayCanvas.AddComponent<GraphicRaycaster>();
+
             CanvasScaler scaler = _overlayCanvas.AddComponent<CanvasScaler>();
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+            _stopSpectatingButton = GameObjectFactory.CreateCustomButton(_overlayCanvas.transform, Vector2.zero, new Vector2(200, 60), "Stop\nSpectating", "StopSpectatingButton", OnStopSpectatingButtonClick);
+            _stopSpectatingButton.gameObject.SetActive(false);
+
+            _marqueeText = GameObjectFactory.CreateSingleText(_overlayCanvas.transform, "SpectatorMarqueeText", "PlaceHolder", new Color(1, 1, 1, .75f));
+            _marqueeText.fontSize = 36;
+            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition = new Vector2(1300, 0);
+            _marqueeText.rectTransform.anchorMin = _marqueeText.rectTransform.anchorMax = new Vector2(0, .2f);
+            _marqueeText.rectTransform.pivot = new Vector2(0, .5f);
+            _marqueeText.gameObject.SetActive(false);
 
             _loadingIcon = GameObjectFactory.CreateLoadingIcon(_overlayCanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), false, "SpectatorLoadingSwirly");
             var rect = _loadingIcon.iconHolder.GetComponent<RectTransform>();
@@ -65,28 +82,13 @@ namespace TootTally.Spectating
             pauseText.alignment = TMPro.TextAlignmentOptions.Center;
             pauseText.rectTransform.pivot = new Vector2(0, .5f);
 
-            _marqueeText = GameObjectFactory.CreateSingleText(_overlayCanvas.transform, "SpectatorMarqueeText", "PlaceHolder", new Color(1, 1, 1, .75f));
-            _marqueeText.fontSize = 36;
-            _marqueeText.rectTransform.anchoredPosition = _marqueeStartPosition = new Vector2(1300, 0);
-            _marqueeText.rectTransform.anchorMin = _marqueeText.rectTransform.anchorMax = new Vector2(0, .2f);
-            _marqueeText.rectTransform.pivot = new Vector2(0, .5f);
-            _marqueeText.gameObject.SetActive(false);
-
             _isInitialized = true;
         }
 
         public static void UpdateViewerList(SocketSpectatorInfo spectatorInfo)
         {
-            if (spectatorInfo == null)
-            {
-                _viewerIcon?.UpdateViewerCount(0);
-                _spectatorInfo = null;
-            }
-            else
-            {
-                _spectatorInfo = spectatorInfo;
-                _viewerIcon?.UpdateViewerCount(spectatorInfo.count);
-            }
+            _spectatorInfo = spectatorInfo;
+            _viewerIcon?.UpdateViewerList(spectatorInfo);
             UpdateViewIcon();
         }
 
@@ -94,6 +96,15 @@ namespace TootTally.Spectating
         {
             _currentUserState = newUserState;
             UpdateViewIcon();
+            UpdateStopSpectatingButton();
+        }
+
+        public static void OnStopSpectatingButtonClick()
+        {
+            StopAllSpectator();
+            _stopSpectatingButton.gameObject.SetActive(false);
+            if (IsInGameController)
+                SpectatingManagerPatches.QuitSong();
         }
 
         public static void UpdateViewIcon()
@@ -105,14 +116,33 @@ namespace TootTally.Spectating
             else if (IsInLevelSelect)
             {
                 _viewerIcon.SetAnchorMinMax(new Vector2(.92f, .97f));
+                _viewerIcon.SetBubblePivot(Vector2.one);
                 _viewerIcon.Show();
             }
             else if (IsInGameController)
             {
                 _viewerIcon.SetAnchorMinMax(new Vector2(.03f, .07f));
+                _viewerIcon.SetBubblePivot(Vector2.zero);
                 _viewerIcon.Show();
             }
             else _viewerIcon.Hide();
+        }
+
+        public static void UpdateStopSpectatingButton()
+        {
+            if (SpectatingManager.IsSpectating)
+                if (IsInLevelSelect)
+                {
+                    _stopSpectatingButton.gameObject.SetActive(true);
+                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.14f, 0.88f);
+                }
+                else if (IsInGameController)
+                {
+                    _stopSpectatingButton.gameObject.SetActive(true);
+                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.2f, 0.09f);
+                }
+                else
+                    _stopSpectatingButton.gameObject.SetActive(false);
         }
 
         private static bool IsInGameController => _currentUserState == UserState.Playing || _currentUserState == UserState.Paused;
@@ -155,6 +185,16 @@ namespace TootTally.Spectating
             _pauseTextHolderAnimation?.Dispose();
             _pauseTextHolder.SetActive(false);
 
+        }
+
+        public static void ShowStopSpectatingButton()
+        {
+            _stopSpectatingButton?.gameObject.SetActive(true);
+        }
+
+        public static void HideStopSpectatingButton()
+        {
+            _stopSpectatingButton?.gameObject.SetActive(false);
         }
 
         public static void ShowMarquee(string playerName, string songName, float songSpeed, string modifiers)

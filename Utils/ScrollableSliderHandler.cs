@@ -6,18 +6,32 @@ namespace TootTally.Utils
 {
     public class ScrollableSliderHandler : MonoBehaviour
     {
-        public Slider slider;
         public float accelerationMult = 1f;
 
+        private Slider _slider;
         private float _acceleration;
         private float _deceleration = 10f;
 
+        public void Awake()
+        {
+            try
+            {
+                _slider = GetComponent<Slider>();
+            }
+            catch
+            {
+                TootTallyLogger.LogError("ScrollableHanlder was not attached to a slider.");
+                GameObject.DestroyImmediate(gameObject);
+            }
+        }
+
+
         public void Update()
         {
-            if (slider == null) return;
+            if (_slider == null) return;
 
             if (Input.mouseScrollDelta.y != 0)
-                AddScrollAcceleration(Input.mouseScrollDelta.y * ((slider.maxValue - slider.minValue)/100f));
+                AddScrollAcceleration(Input.mouseScrollDelta.y * ((_slider.maxValue - _slider.minValue)/100f));
             UpdateScrolling();
         }
 
@@ -28,14 +42,14 @@ namespace TootTally.Utils
 
         private void UpdateScrolling()
         {
-            if (slider.value < slider.minValue)
+            if (_slider.value < _slider.minValue)
             {
-                slider.value = slider.minValue;
+                _slider.value = _slider.minValue;
                 _acceleration = 0;
             }
-            else if (slider.value > slider.maxValue)
+            else if (_slider.value > _slider.maxValue)
             {
-                slider.value = slider.maxValue;
+                _slider.value = _slider.maxValue;
                 _acceleration = 0;
             }
             else
@@ -44,7 +58,7 @@ namespace TootTally.Utils
                     _acceleration = 0f;
                 else
                     _acceleration -= (_acceleration * _deceleration) * Time.deltaTime;
-                slider.value += _acceleration * Time.deltaTime;
+                _slider.value += _acceleration * Time.deltaTime;
             }
         }
 
