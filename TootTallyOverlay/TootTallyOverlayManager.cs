@@ -8,7 +8,7 @@ using TootTally.Graphics;
 using TootTally.Utils;
 using static TootTally.Utils.APIServices.SerializableClass;
 using TMPro;
-using System.Linq;
+using TootTally.Spectating;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -53,6 +53,8 @@ namespace TootTally.TootTallyOverlay
             _overlayCanvas = new GameObject("TootTallyOverlayCanvas");
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 1;
             CanvasScaler scaler = _overlayCanvas.AddComponent<CanvasScaler>();
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -205,9 +207,10 @@ namespace TootTally.TootTallyOverlay
 
         public static void UpdateUsers()
         {
-            if (IsPanelActive)
+            if (IsPanelActive && !_isUpdating)
             {
                 _isUpdating = true;
+                SpectatingManager.UpdateSpectatorIDList();
                 if (_showFriends && _showAllSUsers)
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFriendList(OnUpdateUsersResponse));
                 else if (_showAllSUsers)
@@ -256,6 +259,16 @@ namespace TootTally.TootTallyOverlay
         public static void OnRemoveButtonPress(User user) =>
             Plugin.Instance.StartCoroutine(TootTallyAPIService.RemoveFriend(user.id, OnFriendResponse));
         public static void OpenUserProfile(int id) => Application.OpenURL($"https://toottally.com/profile/{id}");
+
+        public static void OnSpectateButtonPress(int id, string name)
+        {
+            if (!SpectatingManager.IsAnyConnectionPending() && !(Plugin.userInfo.id == id && SpectatingManager.IsHosting))
+            {
+                SpectatingManager.CreateUniqueSpectatingConnection(id, name);
+                UpdateUsers();
+            }
+        }
+
         private static void OnFriendResponse(bool value)
         {
             if (value)

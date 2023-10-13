@@ -179,18 +179,8 @@ namespace TootTally.Utils.TootTallySettings
             verticalLayoutGroup.childScaleHeight = verticalLayoutGroup.childScaleWidth = false;
             verticalLayoutGroup.padding = new RectOffset(100, 100, 20, 20);
             verticalLayoutGroup.spacing = elementSpacing;
-            GameObjectFactory.CreateCustomButton(panel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
-            Slider slider = TootTallySettingObjectFactory.CreateVerticalSlider(panel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
-
-            slider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, slider.value); });
 
             return panel;
-        }
-
-        private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
-        {
-            var gridPanelRect = gridPanel.GetComponent<RectTransform>();
-            gridPanelRect.anchoredPosition = new Vector2(gridPanelRect.anchoredPosition.x, (value * gridPanelRect.sizeDelta.y) - (1-value) * 150f); //This is so scuffed I fucking love it
         }
 
         public static Slider CreateSlider(Transform canvasTransform, string name, float min, float max, bool integerOnly)
@@ -223,18 +213,24 @@ namespace TootTally.Utils.TootTallySettings
             return slider;
         }
 
-        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, ConfigEntry<bool> config)
+        public static Toggle CreateToggle(Transform canvasTransform, string name, Vector2 size, string text, ConfigEntry<bool> config = null)
         {
             var toggle = GameObject.Instantiate(_togglePrefab, canvasTransform);
-            toggle.transform.Find("Label").GetComponent<Text>().text = text;
             RectTransform rect = toggle.GetComponent<RectTransform>();
             rect.pivot = Vector3.zero;
             rect.anchoredPosition = Vector3.zero;
             rect.sizeDelta = size;
             toggle.name = name;
-            toggle.isOn = config.Value;
-            toggle.onValueChanged.AddListener((value) => config.Value = value);
+            if (config != null)
+            {
+                toggle.isOn = config.Value;
+                toggle.onValueChanged.AddListener((value) => config.Value = value);
+            }
+            else
+                toggle.isOn = false;
 
+
+            toggle.transform.Find("Label").GetComponent<Text>().text = text;
             return toggle;
         }
 

@@ -18,7 +18,6 @@ namespace TootTally.Utils.TootTallySettings
         private static GameObject _mainMenu, _mainSettingPanel, _settingPanelGridHolder;
         public static Transform GetSettingPanelGridHolderTransform { get => _settingPanelGridHolder.transform; }
         
-        private static GameObject _sliderPrefab;
         private static List<TootTallySettingPage> _settingPageList;
         private static TootTallySettingPage _currentActivePage;
 
@@ -38,7 +37,7 @@ namespace TootTally.Utils.TootTallySettings
             GameObject mainCanvas = GameObject.Find("MainCanvas");
             _mainMenu = mainCanvas.transform.Find("MainMenu").gameObject;
 
-            var btn = GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1661, -456), new Vector2(164, 164), AssetManager.GetSprite("icon.png"), "TTSettingsOpenButton", delegate
+            var btn = GameObjectFactory.CreateCustomButton(_mainMenu.transform, new Vector2(-1661, -456), new Vector2(164, 164), AssetManager.GetSprite("icon.png"), false, "TTSettingsOpenButton", delegate
             {
                 AnimationManager.AddNewPositionAnimation(_mainMenu, new Vector2(1940, 0), 1.5f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
             });
@@ -87,6 +86,22 @@ namespace TootTally.Utils.TootTallySettings
             }
 
             page = new TootTallySettingPage(pageName, headerText, elementSpacing, bgColor);
+            page.OnPageAdd();
+            _settingPageList.Add(page);
+
+            return page;
+        }
+
+        public static TootTallySettingPage AddNewPage(TootTallySettingPage settingPage)
+        {
+            var page = GetSettingPageByName(settingPage.name);
+            if (page != null)
+            {
+                TootTallyLogger.LogInfo($"Page {page.name} already exist.");
+                return page;
+            }
+
+            page = settingPage;
             page.OnPageAdd();
             _settingPageList.Add(page);
 

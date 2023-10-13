@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Linq;
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
-using TootTally.GameplayModifier;
 using TootTally.Graphics.Animation;
 using TootTally.Replays;
+using TootTally.Spectating;
 using TootTally.TootTallyOverlay;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -18,7 +19,9 @@ namespace TootTally.Graphics
     {
         private static CustomButton _buttonPrefab;
         private static TextMeshProUGUI _multicoloreTextPrefab, _comfortaaTextPrefab, _leaderboardHeaderPrefab, _leaderboardTextPrefab;
+        private static GameObject _bubblePrefab;
         private static Slider _verticalSliderPrefab, _sliderPrefab;
+        private static Slider _settingsPanelVolumeSlider;
         private static PopUpNotif _popUpNotifPrefab;
 
         private static GameObject _settingsGraphics, _creditPanel;
@@ -29,8 +32,6 @@ namespace TootTally.Graphics
 
         private static bool _isHomeControllerInitialized;
         private static bool _isLevelSelectControllerInitialized;
-        private static bool _isPlaytestAnimsInitialized;
-
 
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
@@ -38,6 +39,9 @@ namespace TootTally.Graphics
         static void YoinkSettingsGraphicsHomeController(HomeController __instance)
         {
             _settingsGraphics = __instance.fullsettingspanel.transform.Find("Settings").gameObject;
+            _settingsPanelVolumeSlider = GameObject.Instantiate(__instance.set_sld_volume_tromb);
+            _settingsPanelVolumeSlider.gameObject.SetActive(false);
+            GameObject.DontDestroyOnLoad(_settingsPanelVolumeSlider);
             _creditPanel = __instance.ext_credits_go.transform.parent.gameObject;
             OnHomeControllerInitialize();
         }
@@ -57,6 +61,7 @@ namespace TootTally.Graphics
             SetMulticoloreTextPrefab();
             SetComfortaaTextPrefab();
             SetNotificationPrefab();
+            SetBubblePrefab();
             SetCustomButtonPrefab();
             SetOverlayPanelPrefab();
             SetUserCardPrefab();
@@ -166,6 +171,35 @@ namespace TootTally.Graphics
             GameObject.DontDestroyOnLoad(_popUpNotifPrefab);
         }
 
+        private static void SetBubblePrefab()
+        {
+            GameObject mainCanvas = GameObject.Find("MainCanvas").gameObject;
+            GameObject bufferPanel = mainCanvas.transform.Find("SettingsPanel/buffer_panel/window border").gameObject;
+
+            _bubblePrefab = GameObject.Instantiate(bufferPanel);
+            _bubblePrefab.name = "BubblePrefab";
+            GameObject.DestroyImmediate(_bubblePrefab.transform.Find("Window Body/all_settiings").gameObject);
+
+            CanvasGroup canvasGroup = _bubblePrefab.AddComponent<CanvasGroup>();
+            canvasGroup.blocksRaycasts = false;
+
+            RectTransform bubblePrefabRect = _bubblePrefab.GetComponent<RectTransform>();
+            bubblePrefabRect.sizeDelta = new Vector2(250, 100);
+            bubblePrefabRect.pivot = new Vector2(1, 0);
+
+
+
+            var text = GameObject.Instantiate(_multicoloreTextPrefab, _bubblePrefab.transform.Find("Window Body"));
+            text.name = "BubbleText";
+            text.maskable = false;
+            text.enableWordWrapping = true;
+            text.rectTransform.sizeDelta = bubblePrefabRect.sizeDelta;
+            text.gameObject.SetActive(true);
+
+            _bubblePrefab.SetActive(false);
+
+            GameObject.DontDestroyOnLoad(_bubblePrefab);
+        }
 
 
         private static void SetCustomButtonPrefab()
@@ -229,11 +263,11 @@ namespace TootTally.Graphics
             DestroyFromParent(_panelBodyPrefab, "txt_songname");
             DestroyFromParent(_panelBodyPrefab, "rule");
             DestroyFromParent(_panelBodyPrefab, "HelpBtn");
+            DestroyFromParent(_panelBodyPrefab, "loadingspinner_parent");
 
             SetTabsInPanelBody();
             SetErrorsInPanelBody();
             SetScoreboardInPanelBody();
-            SetSwirlyInPanelBody();
             AddSliderInPanelBody();
         }
 
@@ -274,7 +308,6 @@ namespace TootTally.Graphics
 
             errorsHolder.SetActive(false);
 
-            //_errorText = _errorsHolder.transform.Find("error_noleaderboard").GetComponent<Text>();
             errorsHolder.transform.Find("error_noleaderboard").gameObject.SetActive(true);
         }
 
@@ -292,13 +325,6 @@ namespace TootTally.Graphics
             RectTransform scoreboardRectTransform = scoreboard.GetComponent<RectTransform>();
             scoreboardRectTransform.anchoredPosition = new Vector2(-30, -10);
             scoreboardRectTransform.sizeDelta = new Vector2(-80, -20);
-        }
-
-        private static void SetSwirlyInPanelBody()
-        {
-            GameObject loadingSwirly = _panelBodyPrefab.transform.Find("loadingspinner_parent").gameObject; //Contains swirly, spin the container and not swirly.
-            loadingSwirly.GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, 5);
-            loadingSwirly.SetActive(true);
         }
 
         private static void AddSliderInPanelBody()
@@ -340,6 +366,8 @@ namespace TootTally.Graphics
             _leaderboardHeaderPrefab.maskable = true;
             _leaderboardHeaderPrefab.enableWordWrapping = false;
             _leaderboardHeaderPrefab.gameObject.SetActive(true);
+            _leaderboardHeaderPrefab.enableAutoSizing = true;
+            _leaderboardHeaderPrefab.fontSizeMax = _leaderboardHeaderPrefab.fontSize;
 
             GameObject.DestroyImmediate(tempHeaderTxt.gameObject);
             GameObject.DontDestroyOnLoad(_leaderboardHeaderPrefab.gameObject);
@@ -355,6 +383,8 @@ namespace TootTally.Graphics
             _leaderboardTextPrefab.enableWordWrapping = false;
             _leaderboardTextPrefab.gameObject.SetActive(true);
             _leaderboardTextPrefab.color = Color.white;
+            _leaderboardTextPrefab.enableAutoSizing = true;
+            _leaderboardTextPrefab.fontSizeMax = _leaderboardTextPrefab.fontSize;
 
 
             DestroyNumNameScoreFromSingleScorePrefab();
@@ -581,6 +611,50 @@ namespace TootTally.Graphics
 
         #region Create Objects
 
+        public static SpectatingViewerIcon CreateDefaultViewerIcon(Transform canvasTransform, string name) => new SpectatingViewerIcon(canvasTransform, Vector2.zero, Vector2.one * 80, name);
+
+        public static LoadingIcon CreateLoadingIcon(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, bool isActive, string name) =>
+            new LoadingIcon(CreateImageHolder(canvasTransform, position, size, sprite, name), isActive);
+
+        public static GameObject CreateImageHolder(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, string name)
+        {
+            GameObject imageHolder = new GameObject(name, typeof(Image));
+            imageHolder.transform.SetParent(canvasTransform);
+
+            var rect = imageHolder.GetComponent<RectTransform>();
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            rect.localScale = Vector3.one;
+
+            Image image = imageHolder.GetComponent<Image>();
+            image.preserveAspect = true;
+            image.color = Color.white;
+            image.sprite = sprite;
+
+            image.gameObject.SetActive(true);
+
+            return imageHolder;
+        }
+
+        public static ProgressBar CreateProgressBar(Transform canvasTransform, Vector2 position, Vector2 size, bool active, string name)
+        {
+            Slider slider = GameObject.Instantiate(_settingsPanelVolumeSlider, canvasTransform);
+            DestroyFromParent(slider.gameObject, "Handle Slide Area");
+            slider.name = name;
+            slider.onValueChanged = new Slider.SliderEvent();
+            RectTransform rect = slider.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.2f); //line up centered and slightly higher than the lowest point
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            rect.pivot = new Vector2(0.5f, 1f);
+            slider.minValue = slider.value = 0f;
+            slider.maxValue = 1f;
+            slider.interactable = false;
+            slider.wholeNumbers = false;
+            ProgressBar bar = new ProgressBar(slider, active);
+            return bar;
+        }
+
         public static GameObject CreateUserCard(Transform canvasTransform, SerializableClass.User user, string status)
         {
             GameObject card = GameObject.Instantiate(_userCardPrefab, canvasTransform);
@@ -610,18 +684,22 @@ namespace TootTally.Graphics
                 else
                     CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "+", "AddFriendButton", delegate { TootTallyOverlayManager.OnAddButtonPress(user); });
                 CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "P", "OpenProfileButton", delegate { TootTallyOverlayManager.OpenUserProfile(user.id); });
+                if (SpectatingManager.currentSpectatorIDList.Contains(user.id))
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id, user.username); });
             }
             else
             {
                 card.transform.Find("LatencyBG").GetComponent<Image>().color = Color.cyan;
                 TintImage(card.transform.Find("LatencyFG").GetComponent<Image>(), Color.cyan, .1f);
+                if (!SpectatingManager.IsHosting)
+                    CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { TootTallyOverlayManager.OnSpectateButtonPress(user.id, user.username); });
             }
 
             return card;
         }
 
         private static void TintImage(Image image, Color tint, float percent) =>
-            image.color = new Color(image.color.r * (1f-percent) + tint.r * percent, image.color.g * (1f - percent) + tint.g * percent, image.color.b * (1f - percent) + tint.b * percent);
+            image.color = new Color(image.color.r * (1f - percent) + tint.r * percent, image.color.g * (1f - percent) + tint.g * percent, image.color.b * (1f - percent) + tint.b * percent);
 
         private static Color UserFriendStatusToColor(string status) =>
             status switch
@@ -650,7 +728,7 @@ namespace TootTally.Graphics
             Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
             title.text = "TootTally Login";
             title.color = GameTheme.themeColors.notification.defaultText;
-            subtitle.text = "This is an early version of TootTally's in-game login page.";
+            subtitle.text = "Press ENTER after typing your username and password to confirm the inputs.";
             subtitle.color = GameTheme.themeColors.notification.defaultText;
 
 
@@ -681,6 +759,7 @@ namespace TootTally.Graphics
             GameObject.DestroyImmediate(usernameInputHolder.GetComponent<Text>());
             usernameInputHolder.name = "UsernameInput";
             InputField usernameInput = usernameInputHolder.AddComponent<InputField>();
+            usernameInput.onEndEdit.AddListener(text => usernameInput.text = text);
             usernameInput.textComponent = usernameInputTextHolder.GetComponent<Text>();
             usernameInput.textComponent.alignment = TextAnchor.MiddleCenter;
             usernameInput.image = usernameInputHolder.AddComponent<Image>();
@@ -696,6 +775,7 @@ namespace TootTally.Graphics
             GameObject passwordInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
             passwordInputHolder.name = "PasswordInput";
             InputField passwordInput = passwordInputHolder.GetComponent<InputField>();
+            passwordInput.onEndEdit.AddListener(text => passwordInput.text = text);
             passwordInput.inputType = InputField.InputType.Password;
             passwordInput.textComponent = passwordInputHolder.transform.Find("Text").GetComponent<Text>();
             passwordInput.image = latencyFGPanel.GetComponent<Image>();
@@ -708,22 +788,7 @@ namespace TootTally.Graphics
             loginButton.onClick = new Button.ButtonClickedEvent();
             loginButton.onClick.AddListener(delegate
             {
-                __instance.playSfx(4);// click button sfx
-                if (usernameInput.text == "" || usernameInput.text.Contains("username"))
-                {
-                    PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
-                    return;
-                }
-                if (!passwordInput.text.Contains("password") || passwordInput.text.Length <= 5)
-                {
-                    if (passwordInput.text.Length <= 5)
-                        PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
-                    else
-                        PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
-                    return;
-                }
-
-
+                __instance.playSfx(4);// click button sfx             
                 PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
                 {
@@ -779,20 +844,36 @@ namespace TootTally.Graphics
                 GameObject confirmInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
                 confirmInputHolder.name = "ConfirmInput";
                 InputField confirmInput = confirmInputHolder.GetComponent<InputField>();
+                confirmInput.onEndEdit.AddListener(text => confirmInput.text = text);
                 confirmInput.inputType = InputField.InputType.Password;
                 confirmInput.textComponent = confirmInputHolder.transform.Find("Text").GetComponent<Text>();
                 confirmInput.image = latencyFGPanel.GetComponent<Image>();
-                confirmInput.text = "Password";
+                confirmInput.text = "Confirm";
                 GameObject.DestroyImmediate(signUpButton.gameObject);
                 loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
                 loginButton.onClick.RemoveAllListeners();
                 loginButton.onClick.AddListener(delegate
                 {
                     __instance.playSfx(4);// click button sfx
+
+                    if (usernameInput.text == "" || usernameInput.text.ToLower().Contains("username"))
+                    {
+                        PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
+                        return;
+                    }
+                    if (passwordInput.text.ToLower().Contains("password") || passwordInput.text.Length <= 5 || passwordInput.text.ToLower().Contains(usernameInput.text))
+                    {
+                        if (passwordInput.text.Length <= 5)
+                            PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
+                        else
+                            PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
+                        return;
+                    }
+
                     if (passwordInput.text != confirmInput.text)
                     {
                         passwordInput.text = "";
-                        confirmInput.text = "";
+                        confirmInput.text = "Confirm";
                         PopUpNotifManager.DisplayNotif($"Passwords did not match! Type your password again.", GameTheme.themeColors.notification.errorText);
                         return; //skip requests
                     }
@@ -864,7 +945,7 @@ namespace TootTally.Graphics
             newButton.textHolder.text = text;
             newButton.textHolder.alignment = TextAnchor.MiddleCenter;
             newButton.textHolder.fontSize = 22;
-            newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Overflow;
+            newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Wrap;
             newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
             newButton.textHolder.color = GameTheme.themeColors.replayButton.text;
 
@@ -878,12 +959,16 @@ namespace TootTally.Graphics
             return newButton;
         }
 
+        //Backward Compatibility
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
+        => CreateCustomButton(canvasTransform, anchoredPosition, size, sprite, true, name, onClick);
+
+        public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, bool isImageThemable, string name, Action onClick = null)
         {
             CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
             newButton.name = name;
             //newButton.button.GetComponent<Image>().sprite = sprite;
-            
+
             ColorBlock btnColors = newButton.button.colors;
             btnColors.normalColor = GameTheme.themeColors.replayButton.colors.normalColor;
             btnColors.highlightedColor = GameTheme.themeColors.replayButton.colors.highlightedColor;
@@ -896,7 +981,7 @@ namespace TootTally.Graphics
             imageHolder.transform.localScale = new Vector3(.81f, .81f);
             GameObject.DestroyImmediate(imageHolder.GetComponent<Text>());
             Image image = imageHolder.AddComponent<Image>();
-            image.color = GameTheme.themeColors.replayButton.text;
+            image.color = isImageThemable ? GameTheme.themeColors.replayButton.text : Color.white;
             image.preserveAspect = true;
             image.maskable = true;
             image.sprite = sprite;
@@ -925,7 +1010,7 @@ namespace TootTally.Graphics
             rect.pivot = Vector2.one / 2f;
             rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
             rect.localScale = Vector2.zero;
-            rect.eulerAngles = active? new Vector3(0,0,8) : Vector3.zero;
+            rect.eulerAngles = active ? new Vector3(0, 0, 8) : Vector3.zero;
             return btn;
         }
 
@@ -933,15 +1018,23 @@ namespace TootTally.Graphics
         {
             if (_isHomeControllerInitialized)
             {
-                _popUpNotifPrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
-                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
-                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
+                _popUpNotifPrefab.GetComponent<Image>().color =
+                    _bubblePrefab.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
+
+                _popUpNotifPrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color =
+                    _bubblePrefab.transform.Find("Window Body").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().color =
+                   _bubblePrefab.transform.Find("Window Body/BubbleText").GetComponent<TMP_Text>().color = GameTheme.themeColors.notification.defaultText;
+
+                _popUpNotifPrefab.transform.Find("NotifText").GetComponent<TMP_Text>().outlineColor =
+                   _bubblePrefab.transform.Find("Window Body/BubbleText").GetComponent<TMP_Text>().outlineColor = GameTheme.themeColors.notification.textOutline;
 
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _overlayPanelPrefab.transform.Find("FSLatencyPanel/LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
                 _userCardPrefab.transform.Find("LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
                 _userCardPrefab.transform.Find("LatencyFG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
+
 
                 TootTallyOverlayManager.UpdateTheme();
             }
@@ -1073,8 +1166,9 @@ namespace TootTally.Graphics
         {
             LeaderboardRowEntry rowEntry = GameObject.Instantiate(_singleRowPrefab, canvasTransform);
             rowEntry.name = name;
-            rowEntry.username.text = scoreData.player.Length > 20 ? scoreData.player.Substring(0, 20) : scoreData.player;
-            rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed.ToString("0.00")}x)";
+            rowEntry.username.text = scoreData.player;
+            rowEntry.score.text = string.Format("{0:n0}", scoreData.score) + $" ({scoreData.replay_speed:0.00}x)";
+            rowEntry.score.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(175, 200), $"{rowEntry.name}ScoreBubble", GetTallyBubbleText(scoreData.GetTally), 10, false));
             rowEntry.rank.text = "#" + count;
             rowEntry.percent.text = scoreData.percentage.ToString("0.00") + "%";
             rowEntry.grade.text = scoreData.grade;
@@ -1092,7 +1186,11 @@ namespace TootTally.Graphics
             else
                 rowEntry.grade.color = gradeColor;
             if (scoreData.is_rated)
+            {
+
                 rowEntry.maxcombo.text = (int)scoreData.tt + "tt";
+                rowEntry.maxcombo.gameObject.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(new Vector2(150, 75), $"{rowEntry.name}ComboBubble", $"{scoreData.max_combo} combo", 10, true));
+            }
             else
                 rowEntry.maxcombo.text = scoreData.max_combo + "x";
             rowEntry.replayId = scoreData.replay_id;
@@ -1122,6 +1220,64 @@ namespace TootTally.Graphics
             return rowEntry;
         }
 
+        private static string GetTallyBubbleText(int[] tally) =>
+            tally != null ? $"Perfect: {tally[4]}\n" +
+                            $"Nice: {tally[3]}\n" +
+                            $"Okay: {tally[2]}\n" +
+                            $"Meh: {tally[1]}\n" +
+                            $"Nasty: {tally[0]}\n" : "No Tally";
+
+        public static GameObject CreateBubble(Vector2 size, string name, string text) => CreateBubble(size, name, text, new Vector2(1, 0), 6, false);
+        public static GameObject CreateBubble(Vector2 size, string name, string text, int borderThiccness, bool autoResize, int fontSize = 22) => CreateBubble(size, name, text, new Vector2(1, 0), 6, autoResize, fontSize);
+
+        public static GameObject CreateBubble(Vector2 size, string name, string text, Vector2 alignement, int borderThiccness, bool autoResize, int fontSize = 22)
+        {
+            var bubble = GameObject.Instantiate(_bubblePrefab);
+            bubble.name = name;
+            bubble.GetComponent<RectTransform>().sizeDelta = size;
+            bubble.GetComponent<RectTransform>().pivot = alignement;
+            var windowbody = bubble.transform.Find("Window Body");
+            windowbody.GetComponent<RectTransform>().sizeDelta = -(Vector2.one * borderThiccness);
+
+            var textObj = windowbody.Find("BubbleText").GetComponent<TMP_Text>();
+            textObj.text = text;
+            textObj.fontSize = fontSize;
+            textObj.fontSizeMax = fontSize;
+            textObj.rectTransform.sizeDelta = size;
+            textObj.margin = Vector3.one * borderThiccness;
+
+            if (autoResize)
+            {
+                AddAutoSizeToObject(windowbody.gameObject, borderThiccness);
+                AddAutoSizeToObject(bubble, borderThiccness);
+            }
+            else
+                textObj.enableAutoSizing = true;
+
+            return bubble;
+        }
+
+        private static void AddAutoSizeToObject(GameObject obj, int padding)
+        {
+            var contentFitter = obj.AddComponent<ContentSizeFitter>();
+            contentFitter.verticalFit = contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var vertical = obj.AddComponent<VerticalLayoutGroup>();
+            vertical.childForceExpandHeight = vertical.childForceExpandWidth = false;
+            vertical.childScaleHeight = vertical.childScaleWidth = false;
+            vertical.childControlHeight = vertical.childControlWidth = true;
+            vertical.padding = new RectOffset(padding, padding, padding, padding);
+        }
+
+        public static GameObject CreateBubble(Vector2 size, string name, Sprite sprite)
+        {
+            var imageObj = CreateImageHolder(null, Vector2.zero, size, sprite, name);
+            imageObj.GetComponent<Image>().maskable = false;
+            imageObj.AddComponent<CanvasGroup>().blocksRaycasts = false;
+            return imageObj;
+        }
+
+
         public static PopUpNotif CreateNotif(Transform canvasTransform, string name, string text, Color textColor)
         {
             PopUpNotif notif = GameObject.Instantiate(_popUpNotifPrefab, canvasTransform);
@@ -1136,7 +1292,17 @@ namespace TootTally.Graphics
 
         #endregion
 
-        public static void DestroyFromParent(GameObject parent, string objectName) => GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+        public static void DestroyFromParent(GameObject parent, string objectName)
+        {
+            try
+            {
+                GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
+            }
+            catch (Exception e)
+            {
+                TootTallyLogger.LogError($"Object {objectName} couldn't be deleted from {parent.name} parent");
+            }
+        }
 
         public enum TextFont
         {

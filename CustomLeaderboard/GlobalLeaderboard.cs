@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
 using TMPro;
-using TootTally.GameplayModifier;
 using TootTally.Graphics;
 using TootTally.Utils;
 using TootTally.Utils.APIServices;
@@ -20,8 +19,7 @@ namespace TootTally.CustomLeaderboard
     {
         #region constants
         private const string ERROR_NO_LEADERBOARD_FOUND_TEXT = "Could not find a leaderboard for this track.\n <size=15>Be the first one to set a score on the track!</size>"; //lol
-        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Clicking Play should automatically upload the chart\n if you have it turned on in your TootTally.cfg file</size>";
-        private const float SWIRLY_SPEED = 0.5f;
+        private const string ERROR_NO_SONGHASH_FOUND_TEXT = "This chart is not uploaded to TootTally...\n <size=15>Please upload the chart to TootTally.com\n or use TootBender on discord to create the leaderboard.</size>";
         private static Dictionary<string, Color> gradeToColorDict = new Dictionary<string, Color> { { "SSS", Color.yellow }, { "SS", Color.yellow }, { "S", Color.yellow }, { "A", Color.green }, { "B", new Color(0, .4f, 1f) }, { "C", Color.magenta }, { "D", Color.red }, { "F", Color.grey }, };
         private static string[] tabsImageNames = { "profile64.png", "global64.png", "local64.png" };
         private static float[] _starSizeDeltaPositions = { 0, 20, 58, 96, 134, 172, 210, 248, 285, 324, 361 };
@@ -33,10 +31,9 @@ namespace TootTally.CustomLeaderboard
 
         private List<SerializableClass.ScoreDataFromDB> _scoreDataList;
 
-        private GraphicRaycaster _globalLeaderboardGraphicRaycaster;
-        private List<RaycastResult> _raycastHitList;
-
-        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _loadingSwirly, _profilePopupLoadingSwirly, _profilePopup;
+        private GameObject _leaderboard, _globalLeaderboard, _scoreboard, _errorsHolder, _tabs, _profilePopup;
+        private GameObject _ratedIcon;
+        private LoadingIcon _loadingSwirly, _profilePopupLoadingSwirly;
         private Text _errorText;
         private TMP_Text _diffRating;
         private Vector2 _starRatingMaskSizeTarget;
@@ -44,14 +41,14 @@ namespace TootTally.CustomLeaderboard
         private List<LeaderboardRowEntry> _scoreGameObjectList;
         private SerializableClass.SongDataFromDB _songData;
         private Slider _slider, _gameSpeedSlider;
+        private ScrollableSliderHandler _scrollableSliderHandler;
         private GameObject _sliderHandle;
 
         private Dictionary<int, float> _speedToDiffDict;
 
         private int _currentSelectedSongHash, _localScoreId;
         public bool HasLeaderboard => _leaderboard != null;
-
-        private float _scrollAcceleration;
+        public bool IsMouseOver;
 
         private EasingHelper.SecondOrderDynamics _starMaskAnimation;
 
@@ -63,10 +60,20 @@ namespace TootTally.CustomLeaderboard
             ClearBaseLeaderboard();
             CustomizeGameMenuUI();
 
+            _leaderboard.transform.SetAsLastSibling();
             _globalLeaderboard = GameObjectFactory.CreateSteamLeaderboardFromPrefab(_leaderboard.transform, "GlobalLeaderboard");
             _globalLeaderboard.SetActive(true);
-            _globalLeaderboardGraphicRaycaster = _globalLeaderboard.GetComponent<GraphicRaycaster>();
-            _raycastHitList = new List<RaycastResult>();
+
+            EventTrigger leaderboardHitboxEvent = _globalLeaderboard.AddComponent<EventTrigger>();
+            EventTrigger.Entry pointerEnterEvent = new EventTrigger.Entry();
+            pointerEnterEvent.eventID = EventTriggerType.PointerEnter;
+            pointerEnterEvent.callback.AddListener((data) => OnPointerEnter());
+            leaderboardHitboxEvent.triggers.Add(pointerEnterEvent);
+
+            EventTrigger.Entry pointerExitEvent = new EventTrigger.Entry();
+            pointerExitEvent.eventID = EventTriggerType.PointerExit;
+            pointerExitEvent.callback.AddListener((data) => OnPointerExit());
+            leaderboardHitboxEvent.triggers.Add(pointerExitEvent);
 
 
             GameObject panelBody = _globalLeaderboard.transform.Find("PanelBody").gameObject;
@@ -82,34 +89,63 @@ namespace TootTally.CustomLeaderboard
             _tabs = panelBody.transform.Find("tabs").gameObject; //Hidden until icons are loaded
             SetTabsImages();
 
-            _loadingSwirly = panelBody.transform.Find("loadingspinner_parent").gameObject;
-            ShowLoadingSwirly();
+            _loadingSwirly = GameObjectFactory.CreateLoadingIcon(panelBody.transform, new Vector2(-20, 0), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "LeaderboardLoadingSwirly");
+            _loadingSwirly.StartRecursiveAnimation();
+            _loadingSwirly.Show();
 
             _slider = panelBody.transform.Find("LeaderboardVerticalSlider").gameObject.GetComponent<Slider>();
             _slider.transform.Find("Fill Area/Fill").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.fill;
             _slider.transform.Find("Background").GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.background;
+
+            _scrollableSliderHandler = _slider.gameObject.AddComponent<ScrollableSliderHandler>();
+
             _sliderHandle = _slider.transform.Find("Handle").gameObject;
             _sliderHandle.GetComponent<Image>().color = GameTheme.themeColors.leaderboard.slider.handle;
 
             SetOnSliderValueChangeEvent();
 
             GameObject diffBar = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "diff bar");
+            GameObject.DestroyImmediate(GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty text").gameObject);
+            var t = GameObjectFactory.CreateSingleText(diffBar.transform, "Difficulty Text", "Difficulty:", Color.white, GameObjectFactory.TextFont.Multicolore);
+            t.alignment = TextAlignmentOptions.Left;
+            t.margin = new Vector2(80, 4);
+            t.fontSize = 16;
+
             GameObject diffStarsHolder = GameObject.Find(GameObjectPathHelper.FULLSCREEN_PANEL_PATH + "difficulty stars");
             _diffRatingMaskRectangle = diffStarsHolder.GetComponent<RectTransform>();
             _diffRatingMaskRectangle.anchoredPosition = new Vector2(-284, -48);
             _diffRatingMaskRectangle.sizeDelta = new Vector2(0, 30);
-            diffStarsHolder.AddComponent<Mask>();
-            Image imageMask = diffStarsHolder.AddComponent<Image>();
-            imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
+            var mask = diffStarsHolder.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+            diffStarsHolder.AddComponent<Image>();
+            //imageMask.color = new Color(0, 0, 0, 0.01f); //if set at 0 stars wont display ?__?
             diffBar.GetComponent<RectTransform>().sizeDelta += new Vector2(41.5f, 0);
             _diffRating = GameObjectFactory.CreateSingleText(diffBar.transform, "diffRating", "", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
             _diffRating.outlineColor = GameTheme.themeColors.leaderboard.textOutline;
             _diffRating.outlineWidth = 0.2f;
             _diffRating.fontSize = 20;
             _diffRating.alignment = TextAlignmentOptions.MidlineRight;
-            _diffRating.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(450, 30);
+            _diffRating.rectTransform.sizeDelta = new Vector2(450, 30);
+            _diffRating.rectTransform.anchorMin = _diffRating.rectTransform.anchorMax = new Vector2(0, .5f);
+            _diffRating.rectTransform.offsetMin = Vector2.zero;
 
             _starMaskAnimation = new EasingHelper.SecondOrderDynamics(1.23f, 1f, 1.2f);
+
+            _ratedIcon = GameObjectFactory.CreateImageHolder(_globalLeaderboard.transform, new Vector2(350, 180), Vector2.one * 42f, AssetManager.GetSprite("rated64.png"), "RatedChartIcon");
+            var bubble = _ratedIcon.AddComponent<BubblePopupHandler>();
+            bubble.Initialize(GameObjectFactory.CreateBubble(new Vector2(300, 40), "RatedIconBubble", "This chart is rated.", 6, true, 12));
+
+            _levelSelectControllerInstance.sortdrop.transform.SetAsLastSibling();
+        }
+
+        public void OnPointerEnter()
+        {
+            _scrollableSliderHandler.enabled = IsMouseOver = true;
+        }
+
+        public void OnPointerExit()
+        {
+            _scrollableSliderHandler.enabled = IsMouseOver = false;
         }
 
         public void ClearBaseLeaderboard()
@@ -186,10 +222,11 @@ namespace TootTally.CustomLeaderboard
 
                 GameObject ttHitbox = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(381, -207), new Vector2(72, 72), "ProfilePopupHitbox");
                 GameObjectFactory.CreateSingleText(ttHitbox.transform, "ProfilePopupHitboxText", "P", GameTheme.themeColors.leaderboard.text, GameObjectFactory.TextFont.Multicolore);
-                GameObject.DestroyImmediate(ttHitbox.transform.Find("loadingspinner_parent").gameObject);
 
                 _profilePopup = GameObjectFactory.CreateDefaultPanel(fullScreenPanelCanvas.transform, new Vector2(525, -300), new Vector2(450, 270), "TootTallyScorePanel");
-                _profilePopupLoadingSwirly = _profilePopup.transform.Find("loadingspinner_parent").gameObject;
+                _profilePopupLoadingSwirly = GameObjectFactory.CreateLoadingIcon(_profilePopup.transform, Vector2.zero, new Vector2(96, 96), AssetManager.GetSprite("icon.png"), true, "ProfilePopupLoadingSwirly");
+                _profilePopupLoadingSwirly.Show();
+                _profilePopupLoadingSwirly.StartRecursiveAnimation();
 
                 var scoresbody = _profilePopup.transform.Find("scoresbody").gameObject;
 
@@ -208,12 +245,12 @@ namespace TootTally.CustomLeaderboard
                 {
                     AssetManager.GetProfilePictureByID(user.id, (sprite) =>
                     {
-                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, "Pfp", OpenUserProfile);
+                        var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, false, "Pfp", OpenUserProfile);
                         i.transform.SetSiblingIndex(0);
                     });
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
                     var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt):0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
-                    _profilePopupLoadingSwirly.gameObject.SetActive(false);
+                    _profilePopupLoadingSwirly.Dispose();
                 }));
 
                 new SlideTooltip(ttHitbox, _profilePopup, new Vector2(525, -300), new Vector2(282, -155));
@@ -249,7 +286,8 @@ namespace TootTally.CustomLeaderboard
         public void UpdateLeaderboard(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, Action<LeaderboardState> callback)
         {
             _globalLeaderboard.SetActive(true); //for some reasons its needed to display the leaderboard
-            _scrollAcceleration = 0;
+            _ratedIcon.SetActive(false);
+            _scrollableSliderHandler.ResetAcceleration();
 
             var trackRef = ___alltrackslist[_levelSelectControllerInstance.songindex].trackref;
             var track = TrackLookup.lookup(trackRef);
@@ -281,6 +319,7 @@ namespace TootTally.CustomLeaderboard
                         _speedToDiffDict = new Dictionary<int, float>();
                         if (songData.is_rated)
                         {
+                            _ratedIcon.SetActive(true);
                             for (int i = 0; i <= 29; i++)
                             {
                                 float diffIndex = (int)(i / 5f);
@@ -312,6 +351,7 @@ namespace TootTally.CustomLeaderboard
                     if (scoreDataList != null)
                     {
                         _scoreDataList = scoreDataList;
+                        _scrollableSliderHandler.accelerationMult = 8f / _scoreDataList.Count;
                         callback(LeaderboardState.ReadyToRefresh);
                     }
                     else
@@ -327,6 +367,9 @@ namespace TootTally.CustomLeaderboard
             }));
             Plugin.Instance.StartCoroutine(_currentLeaderboardCoroutines.Last());
         }
+
+        public void ShowLoadingSwirly() => _loadingSwirly.Show();
+        public void HideLoadingSwirly() => _loadingSwirly.Hide();
 
         public void RefreshLeaderboard()
         {
@@ -359,9 +402,6 @@ namespace TootTally.CustomLeaderboard
             _slider.onValueChanged.AddListener((float _value) =>
             {
                 _slider.value = Mathf.Clamp(_value, 0, 1);
-                if (_value == 0f || _value == 1f)
-                    _scrollAcceleration = 0;
-
 
                 foreach (LeaderboardRowEntry row in _scoreGameObjectList)
                 {
@@ -378,34 +418,12 @@ namespace TootTally.CustomLeaderboard
             });
         }
 
-        public void UpdateRaycastHitList()
-        {
-            PointerEventData pointerData = new PointerEventData(null);
-            pointerData.position = Input.mousePosition;
-            _raycastHitList.Clear();
-            _globalLeaderboardGraphicRaycaster.Raycast(pointerData, _raycastHitList);
-        }
-
         public void UpdateStarRatingAnimation()
         {
             _diffRatingMaskRectangle.sizeDelta = _starMaskAnimation.GetNewVector(_starRatingMaskSizeTarget, Time.deltaTime);
         }
 
-        public bool IsMouseOver() => _raycastHitList.Count > 0;
-
-        public bool IsScrollAccelerationNotNull() => _scrollAcceleration != 0;
-
-        public void UpdateScrolling()
-        {
-            _slider.value += _scrollAcceleration * Time.deltaTime;
-            _scrollAcceleration *= 130f * Time.deltaTime; //Abitrary value just so it looks nice / feel nice
-        }
-
-        public void AddScrollAcceleration(float value)
-        {
-            if (_scoreGameObjectList.Count > 8)
-                _scrollAcceleration -= (value * 0.01f) / Time.deltaTime;
-        }
+        public bool IsScrollingEnabled() => _scrollableSliderHandler.enabled;
 
         public void ClearLeaderboard()
         {
@@ -420,7 +438,6 @@ namespace TootTally.CustomLeaderboard
         }
 
         public void ShowSlider() => _slider.gameObject.SetActive(true); public void HideSlider() => _slider.gameObject.SetActive(false);
-        public void ShowLoadingSwirly() => _loadingSwirly.SetActive(true); public void HideLoadingSwirly() => _loadingSwirly.SetActive(false);
         public void ShowErrorText() => _errorsHolder.SetActive(true); public void HideErrorText() => _errorsHolder.SetActive(false);
 
         public void OpenUserProfile() => Application.OpenURL("https://toottally.com/profile/" + Plugin.userInfo.id);
@@ -436,15 +453,6 @@ namespace TootTally.CustomLeaderboard
                 _slider.value = _localScoreId / (_scoreGameObjectList.Count - 8f);
                 _slider.onValueChanged.Invoke(_slider.value);
             }
-
-        }
-
-
-        public void UpdateLoadingSwirlyAnimation()
-        {
-            _loadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-            _profilePopupLoadingSwirly?.GetComponent<RectTransform>().Rotate(0, 0, 1000 * Time.deltaTime * SWIRLY_SPEED);
-
         }
 
         private void SetTabsImages()
@@ -459,6 +467,8 @@ namespace TootTally.CustomLeaderboard
             }
             _tabs.SetActive(true);
         }
+
+        public void SetGameSpeedSliderValue(float value) => _gameSpeedSlider.value = value;
 
         public enum LeaderboardState
         {

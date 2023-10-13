@@ -32,7 +32,7 @@ namespace TootTally.TootTallyOverlay
 
         public static void SetUserStatus(UserStatus newStatus)
         {
-            if (!_isInitialized) return;
+            if (!_isInitialized || Plugin.userInfo.id == 0) return;
 
             _currentStatus = newStatus;
             OnTimerEnd();

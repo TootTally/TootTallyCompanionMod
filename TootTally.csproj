@@ -4,9 +4,10 @@
 		<TargetFramework>net472</TargetFramework>
 		<AssemblyName>TootTally</AssemblyName>
 		<Description>Companion mod for TootTally.com</Description>
-		<Version>0.4.0</Version>
+		<Version>0.5.0</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
+		<SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</SourceRevisionId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -17,6 +18,7 @@
 		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.5.0" />
 		<PackageReference Include="TromboneChamp.TrombLoader" Version="2.0.0-rc.1" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.4.40" />
+		<PackageReference Include="websocket-sharp-customheaders" Version="1.0.2.31869" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">

@@ -1,5 +1,6 @@
 ﻿using BepInEx.Configuration;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,12 +9,15 @@ namespace TootTally.Utils.TootTallySettings
     public class TootTallySettingDropdown : BaseTootTallySettingObject
     {
         public Dropdown dropdown;
+        public TMP_Text label;
         private string[] _optionValues;
         private ConfigEntry<string> _config;
-        public TootTallySettingDropdown(TootTallySettingPage page, string name, ConfigEntry<string> config, string[] optionValues = null) : base(name, page)
+        private string _text;
+        public TootTallySettingDropdown(TootTallySettingPage page, string name, string text, ConfigEntry<string> config, string[] optionValues = null) : base(name, page)
         {
             _optionValues = optionValues;
             _config = config;
+            _text = text;
             if (TootTallySettingsManager.isInitialized)
                 Initialize();
         }
@@ -26,6 +30,10 @@ namespace TootTally.Utils.TootTallySettings
                 AddOptions(_config.Value);
             dropdown.value = dropdown.options.FindIndex(x => x.text == _config.Value);
             dropdown.onValueChanged.AddListener((value) => { _config.Value = dropdown.options[value].text; });
+            //Gonna rework that at some point.
+            /*label = GameObjectFactory.CreateSingleText(dropdown.transform, $"{name}Label", _text, GameTheme.themeColors.leaderboard.text);
+            label.rectTransform.anchoredPosition = new Vector2(0, 35);
+            label.alignment = TextAlignmentOptions.TopLeft;*/
 
             base.Initialize();
         }
@@ -37,7 +45,8 @@ namespace TootTally.Utils.TootTallySettings
 
         public override void Dispose()
         {
-            GameObject.DestroyImmediate(dropdown.gameObject);
+            if (dropdown != null)
+                GameObject.DestroyImmediate(dropdown.gameObject);
         }
     }
 }

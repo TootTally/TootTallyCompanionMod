@@ -88,6 +88,7 @@ namespace TootTally.Replays
                 && _frameData.Last()[(int)FrameDataStructure.NoteHolder] != _lastFrameData[(int)FrameDataStructure.NoteHolder]
                 && _frameData.Last()[(int)FrameDataStructure.MousePositionY] != _lastFrameData[(int)FrameDataStructure.MousePositionY]))
                 _frameData.Add(new int[] { (int)noteHolderPosition, (int)pointerPos, (int)mousePosX, (int)mousePosY });
+           
         }
 
         public void RecordNoteDataPrefix(GameController __instance)
@@ -98,8 +99,9 @@ namespace TootTally.Replays
             var currentHealth = __instance.currenthealth;
             var noteScoreAverage = __instance.notescoreaverage * 1000;
 
-            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1, (int)noteScoreAverage });
+            _noteData.Add(new int[] { noteIndex, totalScore, multiplier, (int)currentHealth, -1, (int)noteScoreAverage });           
         }
+
 
         public void RecordToot(GameController __instance)
         {
@@ -139,6 +141,7 @@ namespace TootTally.Replays
             else
             {
                 var tmb = SongDataHelper.GenerateBaseTmb(track);
+                //FileHelper.WriteJsonToFile(Paths.BepInExRootPath, "basetmb.tmb", tmb);
                 songHash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(tmb));
             }
 
@@ -216,6 +219,7 @@ namespace TootTally.Replays
         #endregion
 
         #region ReplayPlayer
+
         public void OnReplayPlayerStart()
         {
             _lastTiming = 0;
@@ -280,7 +284,7 @@ namespace TootTally.Replays
             _replayUsername = replayJson.username;
             _replaySong = replayJson.song;
             _replaySpeed = replayJson.gamespeedmultiplier != 0 ? replayJson.gamespeedmultiplier : 1f;
-            GameModifierManager.LoadModifiersFromReplayString(replayJson.gamemodifiers ?? "");
+            GameModifierManager.LoadModifiersFromString(replayJson.gamemodifiers ?? "");
             _replaybuilddate = replayJson.pluginbuilddate;
 
             return ReplayState.ReplayLoadSuccess;
@@ -337,6 +341,7 @@ namespace TootTally.Replays
                 _frameIndex++;
             }
         }
+
         private void PlaybackTootData(float currentMapPosition, GameController __instance)
         {
             if (_tootData.Count > _tootIndex && currentMapPosition <= _tootData[_tootIndex][(int)TootDataStructure.NoteHolder])

@@ -53,7 +53,7 @@ namespace TootTally.Utils.TootTallySettings
             else if (slider.wholeNumbers)
                 text = value.ToString();
             else
-                text = $"{(_integerOnly ? value:value*100f):0:00}";
+                text = $"{(_integerOnly ? value:value*100f):0.00}";
             return text;
         }
 

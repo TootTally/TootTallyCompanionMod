@@ -20,7 +20,7 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
-        public static CustomAnimation AddNewPositionAnimation(GameObject gameObject, Vector2 targetVector,
+        public static CustomAnimation AddNewPositionAnimation(GameObject gameObject, Vector3 targetVector,
             float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, gameObject.GetComponent<RectTransform>().anchoredPosition, targetVector, 1f, timeSpan, CustomAnimation.VectorType.Position, secondDegreeAnimation, true, onFinishCallback);
@@ -28,7 +28,7 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
-        public static CustomAnimation AddNewSizeDeltaAnimation(GameObject gameObject, Vector2 targetVector,
+        public static CustomAnimation AddNewSizeDeltaAnimation(GameObject gameObject, Vector3 targetVector,
             float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, gameObject.GetComponent<RectTransform>().sizeDelta, targetVector, 1f, timeSpan, CustomAnimation.VectorType.SizeDelta, secondDegreeAnimation, true, onFinishCallback);
@@ -60,7 +60,15 @@ namespace TootTally.Graphics.Animation
             return anim;
         }
 
-        public static CustomAnimation AddNewAnimation(GameObject gameObject, Vector2 startingVector, Vector2 targetVector, float speedMultiplier,
+        public static CustomAnimation AddNewRotationAnimation(GameObject gameObject, Vector3 targetVector,
+           float timeSpan, EasingHelper.SecondOrderDynamics secondDegreeAnimation, Action<GameObject> onFinishCallback = null)
+        {
+            CustomAnimation anim = new CustomAnimation(gameObject, gameObject.transform.rotation.eulerAngles, targetVector, 1f, timeSpan, CustomAnimation.VectorType.Rotation, secondDegreeAnimation, true, onFinishCallback);
+            AddToList(anim);
+            return anim;
+        }
+
+        public static CustomAnimation AddNewAnimation(GameObject gameObject, Vector3 startingVector, Vector3 targetVector, float speedMultiplier,
             float timeSpan, CustomAnimation.VectorType vectorType, EasingHelper.SecondOrderDynamics secondDegreeAnimation, bool disposeOnFinish, Action<GameObject> onFinishCallback = null)
         {
             CustomAnimation anim = new CustomAnimation(gameObject, startingVector, targetVector, speedMultiplier, timeSpan, vectorType, secondDegreeAnimation, disposeOnFinish, onFinishCallback);

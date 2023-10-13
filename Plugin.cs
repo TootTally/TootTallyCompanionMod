@@ -1,23 +1,28 @@
 ﻿using BaboonAPI.Hooks.Initializer;
+using BaboonAPI.Hooks.Tracks;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
-using HarmonyLib;
-using UnityEngine;
-using System.Collections.Generic;
-using TootTally.Graphics;
-using TootTally.Replays;
-using TootTally.Utils;
-using TootTally.CustomLeaderboard;
-using TootTally.Utils.Helpers;
-using TootTally.Discord;
-using TootTally.Graphics.Animation;
 using BepInEx.Logging;
-using TootTally.Utils.TootTallySettings;
+using HarmonyLib;
+using Microsoft.FSharp.Collections;
 using System;
-using TootTally.Utils.APIServices;
-using TootTally.TootTallyOverlay;
+using System.Collections.Generic;
+using TootTally.CustomLeaderboard;
+using TootTally.Discord;
 using TootTally.GameplayModifier;
+using TootTally.Graphics;
+using TootTally.Graphics.Animation;
+using TootTally.Replays;
+using TootTally.SongDownloader;
+using TootTally.Spectating;
+using TootTally.TootTallyOverlay;
+using TootTally.Utils;
+using TootTally.Utils.APIServices;
+using TootTally.Utils.Helpers;
+using TootTally.Utils.TootTallySettings;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace TootTally
 {
@@ -33,12 +38,17 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public const int BUILDDATE = 20230810;
+        public static int BUILDDATE = 20231013;
+
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
 
         public ConfigEntry<bool> DebugMode { get; private set; }
         public ConfigEntry<bool> ShowLeaderboard { get; private set; }
+        public ConfigEntry<bool> ShowCoolS { get; private set; }
+        public ConfigEntry<bool> AllowSpectate { get; private set; }
+        public ConfigEntry<bool> EnableLocalDiffCalc { get; private set; }
+        public ConfigEntry<bool> ShowSpectatorCount { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -47,24 +57,29 @@ namespace TootTally
 
         private static TootTallySettingPage _tootTallyMainPage;
         private static TootTallySettingPage _tootTallyModulePage;
+        private static SongDownloadPage _songDownloadPage;
 
         private void Awake()
         {
             if (Instance != null) return; // Make sure that this is a singleton (even though it's highly unlikely for duplicates to happen)
             Instance = this;
-
             _harmony = new Harmony(Info.Metadata.GUID);
-            TootTallyLogger.Initialize();
+            gameObject.AddComponent<TootTallyLogger>();
 
             // Config
-            APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions");
+            APIKey = Config.Bind("API Setup", "API Key", "SignUpOnTootTally.com", "API Key for Score Submissions.");
             ShouldDisplayToasts = Config.Bind("General", "Display Toasts", true, "Activate toast notifications for important events.");
             DebugMode = Config.Bind("General", "Debug Mode", false, "Add extra logging information for debugging.");
-            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select");
+            ShowLeaderboard = Config.Bind("General", "Show Leaderboard", true, "Show TootTally Leaderboard on Song Select.");
+            ShowCoolS = Config.Bind("General", "Show Cool S", false, "Show special graphic when getting SS and SSS on a song.");
+            AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
+            EnableLocalDiffCalc = Config.Bind("General", "Enable Local Diff Calc", true, "Enable Local Difficulty Calculation");
+            ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
             _tootTallyModulePage = TootTallySettingsManager.AddNewPage("TTModules", "TTModules", 20f, new Color(.1f, .1f, .1f, .3f));
+            _songDownloadPage = TootTallySettingsManager.AddNewPage(new SongDownloadPage()) as SongDownloadPage; //Prevents the same page from being accidently created twice
 
             GameInitializationEvent.Register(Info, TryInitialize);
         }
@@ -73,10 +88,16 @@ namespace TootTally
         {
             if (_tootTallyMainPage != null)
             {
-                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", ShouldDisplayToasts);
-                _tootTallyMainPage.AddToggle("DebugMode", DebugMode);
-                _tootTallyMainPage.AddToggle("ShowLeaderboard", ShowLeaderboard);
-                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(350, 100), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                _tootTallyMainPage.AddToggle("ShouldDisplayToasts", new Vector2(400, 50), "Display Toasts", ShouldDisplayToasts);
+                _tootTallyMainPage.AddToggle("DebugMode", new Vector2(400, 50), "Debug Mode", DebugMode);
+                _tootTallyMainPage.AddToggle("ShowLeaderboard", new Vector2(400, 50), "Show Leaderboards", ShowLeaderboard);
+                _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
+                _tootTallyMainPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
+                _tootTallyMainPage.AddToggle("EnableLocalDiffCalc", new Vector2(400, 50), "Enable Local Diff Calc", EnableLocalDiffCalc);
+                _tootTallyMainPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
+                _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
+                //Adding / Removing causes out of bound / index not found exceptions
             }
             AssetManager.LoadAssets();
             GameThemeManager.Initialize();
@@ -85,18 +106,18 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameThemeManager));
             _harmony.PatchAll(typeof(TootTallySettingsManager));
             _harmony.PatchAll(typeof(ReplaySystemManager));
+            _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
             _harmony.PatchAll(typeof(GlobalLeaderboardManager));
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
             _harmony.PatchAll(typeof(UserStatusUpdater));
-
             //Managers
             gameObject.AddComponent<PopUpNotifManager>();
             gameObject.AddComponent<AnimationManager>();
             gameObject.AddComponent<DiscordRPCManager>();
-
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {Application.version}");
+            TracksLoadedEvent.EVENT.Register(new UserLogin.TracksLoaderListener());
         }
 
         public static void AddModule(ITootTallyModule module)
@@ -127,6 +148,8 @@ namespace TootTally
             }
         }
 
+        public void ReloadTracks() => TrackLookup.reload();
+
         private static void ModuleConfigEnabled_SettingChanged(ITootTallyModule module)
         {
             if (module.ModuleConfigEnabled.Value)
@@ -151,8 +174,13 @@ namespace TootTally
             {
                 if (userInfo == null)
                 {
+                    var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                    var rect = icon.iconHolder.GetComponent<RectTransform>();
+                    rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
+                    icon.StartRecursiveAnimation();
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
+                        icon.Dispose();
                         if (user != null)
                         {
                             OnUserLogin(user);
@@ -162,16 +190,13 @@ namespace TootTally
                                 loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
                                 AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
                             }
-
                         }
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
                     {
                         if (version.CompareTo(PluginInfo.PLUGIN_VERSION) > 0)
-                        {
                             PopUpNotifManager.DisplayNotif("New update available!\nNow available on Thunderstore", GameTheme.themeColors.notification.warningText, 8.5f);
-                        }
                     }));
                 }
             }
@@ -198,9 +223,39 @@ namespace TootTally
                 }));
             }
 
+            private static bool _isReloadingSongs;
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
+            [HarmonyPostfix]
+            public static void OnLevelSelectControllerUpdateDetectRefreshSongs(LevelSelectController __instance)
+            {
+                if (!_isReloadingSongs)
+                {
+                    if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
+                    {
+                        _isReloadingSongs = true;
+                        PopUpNotifManager.DisplayNotif("Reloading tracks... Lag is normal.");
+                        Plugin.Instance.Invoke("ReloadTracks", 0.5f);
+                    }
+                }
+            }
+
+            public class TracksLoaderListener : TracksLoadedEvent.Listener
+            {
+                public void OnTracksLoaded(FSharpList<TromboneTrack> value)
+                {
+                    _isReloadingSongs = false;
+                }
+            }
+
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.doFastScreenShake))]
             [HarmonyPrefix]
-            public static bool GetRidOfThatScreenShakePls(HomeController __instance) => false; //THANKS GOD
+            public static bool GetRidOfThatScreenShakePls() => false; //THANKS GOD
+
+            [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
+            [HarmonyPostfix]
+            public static void ChangePauseCanvasOrderingLayout(PauseCanvasController __instance) => __instance.gc.pausecanvas.GetComponent<Canvas>().sortingOrder = 0;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPrefix]
@@ -223,27 +278,13 @@ namespace TootTally
                 {
                     userInfo.allowSubmit = allowSubmit;
                 }));
+
+                Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
                 Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
                 Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
                 UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
-            /*[HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
-            [HarmonyPostfix]
-            public static void OnGameControllerStart(GameController __instance)
-            {
-                var gameplayCanvas = GameObject.Find("GameplayCanvas");
-                gameplayCanvas.GetComponent<Canvas>().scaleFactor = 2f;
-
-                var topLeftCam = GameObject.Find("GameplayCam").GetComponent<Camera>();
-                var topRightCam = GameObject.Instantiate(topLeftCam);
-                var bottomLeftCam = GameObject.Instantiate(topLeftCam);
-                var bottomRightCam = GameObject.Instantiate(topLeftCam);
-                topRightCam.pixelRect = new Rect(960, 0, 960, 540);
-                topLeftCam.pixelRect = new Rect(0, 0, 960, 540);
-                bottomLeftCam.pixelRect = new Rect(0, 540, 960, 540);
-                bottomRightCam.pixelRect = new Rect(960, 540, 960, 540);
-            }*/
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using TootTally.Spectating;
 
 namespace TootTally.TootTallyOverlay
 {
@@ -37,8 +38,14 @@ namespace TootTally.TootTallyOverlay
         [HarmonyPostfix]
         public static void SetPlayingUserStatus()
         {
-            var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
-            UserStatusManager.SetUserStatus(status);
+            if (SpectatingManager.IsSpectating)
+                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Spectating);
+            else
+            {
+                var status = Replays.ReplaySystemManager.wasPlayingReplay ? UserStatusManager.UserStatus.WatchingReplay : UserStatusManager.UserStatus.Playing;
+                UserStatusManager.SetUserStatus(status);
+            }
+
         }
     }
 }

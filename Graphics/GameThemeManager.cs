@@ -80,6 +80,7 @@ namespace TootTally.Graphics
             List<string> fileNames = new List<string>();
             fileNames.AddRange(new string[] { "Day", "Night", "Random", "Default" });
             filePaths.ToList().ForEach(path => fileNames.Add(Path.GetFileNameWithoutExtension(path)));
+            mainPage.AddLabel("GameThemesLabel", "Game Theme", 24f, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
             mainPage.AddDropdown("Themes", option.Theme, fileNames.ToArray()); //Have to fix dropdown default value not working
             mainPage.AddButton("ResetThemeButton", new Vector2(350, 50), "Refresh Theme", RefreshTheme);
 
@@ -306,7 +307,6 @@ namespace TootTally.Graphics
             #endregion
 
             #region RandomButton
-            //TODO FIX RANDOM BUTTON
             try
             {
                 __instance.btnrandom.transform.Find("Text").GetComponent<Text>().color = GameTheme.themeColors.randomButton.text;
@@ -548,14 +548,6 @@ namespace TootTally.Graphics
             foreach (SpriteRenderer sr in __instance.wavesprites)
                 sr.color = __instance.gameObject.name == "BGWave" ? GameTheme.themeColors.background.waves : GameTheme.themeColors.background.waves2;
         }
-
-        /*[HarmonyPatch(typeof(HumanPuppetController), nameof(HumanPuppetController.setTextures))]
-        [HarmonyPostfix]
-        public static void Test(HumanPuppetController __instance)
-        {
-            if (option.CustomTrombColor.Value)
-                __instance.trombmaterials[__instance.trombone_texture_index].SetColor("_Color", new Color(option.TrombRed.Value, option.TrombGreen.Value, option.TrombBlue.Value));
-        }*/
 
         public static void OverwriteGameObjectSpriteAndColor(GameObject gameObject, string spriteName, Color spriteColor)
         {

@@ -20,6 +20,8 @@ namespace TootTally.Utils
             _notifCanvas = new GameObject("NotifCanvas");
             Canvas canvas = _notifCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 1;
             CanvasScaler scaler = _notifCanvas.AddComponent<CanvasScaler>();
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -33,17 +35,14 @@ namespace TootTally.Utils
 
         public static void DisplayNotif(string message, Color textColor, float lifespan = 6f)
         {
-            if (!IsInitialized) return;
+            if (!IsInitialized || !Plugin.Instance.ShouldDisplayToasts.Value) return;
 
-            if (Plugin.Instance.ShouldDisplayToasts.Value)
-            {
-                _notifCanvas.SetActive(false);
-                _notifCanvas.SetActive(true);//reset the order to make sure its on top
-                PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
-                notif.Initialize(lifespan, new Vector2(695, -400));
-                _toAddNotificationList.Add(notif);
-            }
+            PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
+            notif.Initialize(lifespan, new Vector2(695, -400));
+            _toAddNotificationList.Add(notif);
         }
+
+        public static void DisplayNotif(string message) => DisplayNotif(message, GameTheme.themeColors.notification.defaultText);
 
         private static void OnNotifCountChangeSetNewPosition()
         {
@@ -61,6 +60,8 @@ namespace TootTally.Utils
 
             if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
             {
+                for (int i = 0; i < _toAddNotificationList.Count; i++)
+                    _toAddNotificationList[i].gameObject.SetActive(true);
                 _activeNotificationList.AddRange(_toAddNotificationList);
                 OnNotifCountChangeSetNewPosition();
                 _toAddNotificationList.Clear();
@@ -78,7 +79,7 @@ namespace TootTally.Utils
                 OnNotifCountChangeSetNewPosition();
                 _toRemoveNotificationList.Clear();
             }
-              
+
         }
 
         public static void QueueToRemovedFromList(PopUpNotif notif) => _toRemoveNotificationList.Add(notif);

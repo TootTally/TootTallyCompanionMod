@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine.XR.WSA;
 
 namespace TootTally.Utils.APIServices
 {
@@ -9,6 +10,12 @@ namespace TootTally.Utils.APIServices
         public class TMBFile
         {
             public string tmb;
+        }
+
+        [Serializable]
+        public class APIActiveSpectator
+        {
+            public int[] active;
         }
 
         [Serializable]
@@ -37,7 +44,11 @@ namespace TootTally.Utils.APIServices
             public string player;
             public string played_on;
             public string grade;
-            public int[] noteTally;
+            public int perfect;
+            public int nice;
+            public int okay;
+            public int meh;
+            public int nasty;
             public string replay_id;
             public int max_combo;
             public float percentage;
@@ -45,11 +56,14 @@ namespace TootTally.Utils.APIServices
             public float tt;
             public bool is_rated;
             public float replay_speed;
+
+            public int[] GetTally => new int[] { nasty, meh, okay, nice, perfect };
         }
 
         [Serializable]
         public class SongDataFromDB
         {
+            public int id;
             public float difficulty;
             public float tap;
             public float aim;
@@ -62,14 +76,18 @@ namespace TootTally.Utils.APIServices
             public string short_name;
             public string author;
             public string download;
+            public string mirror;
             public string charter;
             public string track_ref;
+            public float song_length;
         }
 
         [Serializable]
         public class SongInfoFromDB
         {
             public float count;
+            public string next;
+            public string previous;
             public SongDataFromDB[] results;
         }
 

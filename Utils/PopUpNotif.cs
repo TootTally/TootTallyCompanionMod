@@ -36,7 +36,6 @@ namespace TootTally.Utils
             _textHolder.color = _textColor;
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _lifespan = lifespan;
-            gameObject.SetActive(true);
         }
         public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize)
         {

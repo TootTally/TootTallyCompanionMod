@@ -1,17 +1,12 @@
 ﻿using HarmonyLib;
-using Steamworks;
-using System;
-using System.CodeDom;
+using Mono.Cecil.Cil;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using UnityEngine;
-using UnityEngine.Networking.Match;
 using UnityEngine.UI;
 
 namespace TootTally.GameplayModifier
@@ -48,7 +43,6 @@ namespace TootTally.GameplayModifier
             _modifierPanel = GameObjectFactory.CreateDefaultPanel(__instance.fullpanel.transform, new Vector2(-35, 60), new Vector2(300, 200), "ModifierPanel");
             _modifierPanel.SetActive(false);
             _modifierPanel.transform.localScale = Vector2.zero;
-            GameObjectFactory.DestroyFromParent(_modifierPanel, "loadingspinner_parent");
             _modifierPanelContainer = _modifierPanel.transform.Find("scoresbody").gameObject;
             _modifierPanelContainer.AddComponent<Mask>();
             var gridLayoutGroup = _modifierPanelContainer.AddComponent<GridLayoutGroup>();
@@ -203,14 +197,16 @@ namespace TootTally.GameplayModifier
             };
         }
 
-        public static void LoadModifiersFromReplayString(string replayModifierString)
+        public static void LoadModifiersFromString(string replayModifierString)
         {
             _modifiersBackup = GetModifiersString();
             ClearAllModifiers();
+            if (replayModifierString == null) return;
+
             var replayModifierStringArray = replayModifierString.Split(',');
             if (replayModifierStringArray.Length <= 0)
             {
-                TootTallyLogger.LogInfo("No modifiers detected in replay.");
+                TootTallyLogger.LogInfo("No modifiers detected.");
                 return;
             }
 
@@ -222,7 +218,7 @@ namespace TootTally.GameplayModifier
             }
         }
 
-        public static void LoadBackedupModifiers() => LoadModifiersFromReplayString(_modifiersBackup);
+        public static void LoadBackedupModifiers() => LoadModifiersFromString(_modifiersBackup);
 
     }
 }

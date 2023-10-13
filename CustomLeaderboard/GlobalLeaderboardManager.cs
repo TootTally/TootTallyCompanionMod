@@ -49,19 +49,8 @@ namespace TootTally.CustomLeaderboard
         {
             if (globalLeaderboard == null) return;
 
-            if (!_hasLeaderboardFinishedLoading)
-                globalLeaderboard.UpdateLoadingSwirlyAnimation();
-            else
+            if (_hasLeaderboardFinishedLoading)
                 globalLeaderboard.UpdateStarRatingAnimation();
-
-            globalLeaderboard.UpdateRaycastHitList();
-
-            if (globalLeaderboard.IsMouseOver() && Input.mouseScrollDelta.y != 0 && !TootTallyOverlayManager.IsPanelActive)
-                globalLeaderboard.AddScrollAcceleration(Input.mouseScrollDelta.y);
-
-            if (globalLeaderboard.IsScrollAccelerationNotNull())
-                globalLeaderboard.UpdateScrolling();
-
         }
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.sortTracks))]
@@ -70,6 +59,24 @@ namespace TootTally.CustomLeaderboard
         {
             if (globalLeaderboard != null && globalLeaderboard.HasLeaderboard)
                 UpdateLeaderboardOnAdvanceSongsPostfix(___alltrackslist, __instance);
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
+        [HarmonyPostfix]
+        static void OnLevelSelectControllerClickPlayDeleteLeaderboard(LevelSelectController __instance)
+        {
+            if (globalLeaderboard == null) return;
+            globalLeaderboard.CancelAndClearAllCoroutineInList();
+            globalLeaderboard = null;
+        }
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickBack))]
+        [HarmonyPostfix]
+        static void OnLevelSelectControllerClickBackDeleteLeaderboard(LevelSelectController __instance)
+        {
+            if (globalLeaderboard == null) return;
+            globalLeaderboard.CancelAndClearAllCoroutineInList();
+            globalLeaderboard = null;
         }
 
 
@@ -101,7 +108,7 @@ namespace TootTally.CustomLeaderboard
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
         [HarmonyPrefix]
         private static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs(); //NO SCROLLING WOO
-        private static bool ShouldScrollSongs() => globalLeaderboard == null || (!globalLeaderboard.IsMouseOver() || Input.mouseScrollDelta.y == 0f) && !TootTallyOverlayManager.IsPanelActive; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
+        private static bool ShouldScrollSongs() => globalLeaderboard == null || (!globalLeaderboard.IsMouseOver || Input.mouseScrollDelta.y == 0f) && !TootTallyOverlayManager.IsPanelActive; //scroll songs if mouse isn't over the leaderboard and you aren't using mousewheel
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.showButtonsAfterRandomizing))]
         [HarmonyPostfix]
@@ -162,6 +169,12 @@ namespace TootTally.CustomLeaderboard
 
         }
 
+
+        public static void SetGameSpeedSlider(float speed)
+        {
+            TootTallyLogger.LogInfo("GameSpeed Set: " + speed);
+            globalLeaderboard?.SetGameSpeedSliderValue(speed);
+        }
         #endregion
     }
 }
