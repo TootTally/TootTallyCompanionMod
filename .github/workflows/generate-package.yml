@@ -13,7 +13,7 @@ jobs:
       - name: Generate TootTally Directory
         run: |
           mkdir TootTally-TootTally
-          mkdir Thunderstore/Downloads/
+          mkdir Thunderstore/plugins/Downloads/
           mv Thunderstore/* TootTally-TootTally/
           mv bin/Debug/net472/TootTally.dll TootTally-TootTally/plugins/TootTally.dll
       - name: Upload directory as job artifact
