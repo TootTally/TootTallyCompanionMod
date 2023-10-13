@@ -1,5 +1,13 @@
 name: Generate TootTally Thunderstore Package
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
 jobs:
   Build-Package:
     runs-on: ubuntu-latest
@@ -13,7 +21,6 @@ jobs:
       - name: Generate TootTally Directory
         run: |
           mkdir TootTally-TootTally
-          mkdir Thunderstore/plugins/Downloads/
           mv Thunderstore/* TootTally-TootTally/
           mv bin/Debug/net472/TootTally.dll TootTally-TootTally/plugins/TootTally.dll
       - name: Upload directory as job artifact

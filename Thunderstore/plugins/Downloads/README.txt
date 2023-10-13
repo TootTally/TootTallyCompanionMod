@@ -1,0 +1,1 @@
+This folder is being used by TootTally to temporarily save your in-game downloaded charts to.
