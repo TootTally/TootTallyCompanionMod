@@ -295,7 +295,10 @@ namespace TootTally.Spectating
                 else if (IsSpectating)
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
                 else if (Plugin.Instance.AllowSpectate.Value)
+                {
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
+                    SpectatingOverlay.HideViewerIcon();
+                }
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
             }
