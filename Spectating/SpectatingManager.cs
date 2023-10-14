@@ -292,8 +292,13 @@ namespace TootTally.Spectating
                 _wasSpectating = false;
                 if (IsHosting)
                     SetCurrentUserState(UserState.SelectingSong);
-                else
+                else if (IsSpectating)
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
+                else if (Plugin.Instance.AllowSpectate.Value)
+                {
+                    CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
+                    SpectatingOverlay.HideViewerIcon();
+                }
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
             }
@@ -303,7 +308,11 @@ namespace TootTally.Spectating
             public static void OnGameControllerStart(GameController __instance)
             {
                 if (IsHosting && _currentHostState != UserState.GettingReady)
+                {
+                    if (_lastHostSongInfo != null)
+                        hostedSpectatingSystem.SendSongInfoToSocket(_lastHostSongInfo);
                     SetCurrentUserState(UserState.GettingReady);
+                }
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = __instance;
@@ -786,16 +795,27 @@ namespace TootTally.Spectating
                     SetCurrentUserState(UserState.Restarting);
             }
 
+            private static SocketSongInfo _lastHostSongInfo;
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
             [HarmonyPostfix]
             public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
             {
+                _lastHostSongInfo = new SocketSongInfo
+                {
+                    trackRef = __instance.alltrackslist[__instance.songindex].trackref,
+                    songID = 0,
+                    gameSpeed = ReplaySystemManager.gameSpeedMultiplier,
+                    scrollSpeed = GlobalVariables.gamescrollspeed,
+                    gamemodifiers = GameModifierManager.GetModifiersString()
+                };
+
                 if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value)
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
 
                 if (IsHosting)
                 {
-                    hostedSpectatingSystem.SendSongInfoToSocket(__instance.alltrackslist[__instance.songindex].trackref, 0, ReplaySystemManager.gameSpeedMultiplier, GlobalVariables.gamescrollspeed, GameModifierManager.GetModifiersString());
+                    hostedSpectatingSystem.SendSongInfoToSocket(_lastHostSongInfo);
                     hostedSpectatingSystem.SendUserStateToSocket(UserState.GettingReady);
                 }
 
