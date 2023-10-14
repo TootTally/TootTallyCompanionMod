@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,9 +8,9 @@ namespace TootTally.Utils
 {
     public class PopUpNotifManager : MonoBehaviour
     {
-        private static List<PopUpNotif> _toAddNotificationList;
         private static List<PopUpNotif> _activeNotificationList;
         private static List<PopUpNotif> _toRemoveNotificationList;
+        private static ConcurrentQueue<PopUpNotifData> _pendingNotifications;
         private static GameObject _notifCanvas;
         private static bool IsInitialized;
 
@@ -27,7 +28,7 @@ namespace TootTally.Utils
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
             GameObject.DontDestroyOnLoad(_notifCanvas);
-            _toAddNotificationList = new List<PopUpNotif>();
+            _pendingNotifications = new ConcurrentQueue<PopUpNotifData>();
             _activeNotificationList = new List<PopUpNotif>();
             _toRemoveNotificationList = new List<PopUpNotif>();
             IsInitialized = true;
@@ -37,9 +38,7 @@ namespace TootTally.Utils
         {
             if (!IsInitialized || !Plugin.Instance.ShouldDisplayToasts.Value) return;
 
-            PopUpNotif notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", message, textColor);
-            notif.Initialize(lifespan, new Vector2(695, -400));
-            _toAddNotificationList.Add(notif);
+            _pendingNotifications.Enqueue(new PopUpNotifData(message, textColor, lifespan));
         }
 
         public static void DisplayNotif(string message) => DisplayNotif(message, GameTheme.themeColors.notification.defaultText);
@@ -58,17 +57,17 @@ namespace TootTally.Utils
         {
             if (!IsInitialized) return;
 
-            if (_toAddNotificationList != null && _toAddNotificationList.Count > 0)
+            while (_pendingNotifications != null && _pendingNotifications.Count > 0 && _pendingNotifications.TryDequeue(out PopUpNotifData notifData))
             {
-                for (int i = 0; i < _toAddNotificationList.Count; i++)
-                    _toAddNotificationList[i].gameObject.SetActive(true);
-                _activeNotificationList.AddRange(_toAddNotificationList);
+                var notif = GameObjectFactory.CreateNotif(_notifCanvas.transform, "Notification", notifData.message, notifData.textColor);
+                notif.Initialize(notifData.lifespan, new Vector2(695, -400));
+                notif.gameObject.SetActive(true);
+                _activeNotificationList.Add(notif);
                 OnNotifCountChangeSetNewPosition();
-                _toAddNotificationList.Clear();
             }
 
-            if (_activeNotificationList != null)
-                _activeNotificationList.ForEach(notif => notif.Update());
+            _activeNotificationList?.ForEach(notif => notif.Update());
+            
             if (_toRemoveNotificationList != null && _toRemoveNotificationList.Count > 0)
             {
                 foreach (PopUpNotif notif in _toRemoveNotificationList)
@@ -83,5 +82,19 @@ namespace TootTally.Utils
         }
 
         public static void QueueToRemovedFromList(PopUpNotif notif) => _toRemoveNotificationList.Add(notif);
+
+        private class PopUpNotifData
+        {
+            public PopUpNotifData(string message, Color textColor, float lifespan)
+            {
+                this.message = message;
+                this.textColor = textColor;
+                this.lifespan = lifespan;
+            }
+
+            public string message { get; set; }
+            public Color textColor { get; set; }
+            public float lifespan { get; set; }
+        }
     }
 }
