@@ -26,7 +26,7 @@ namespace TootTally.Utils
         public void Initialize(float lifespan, Vector2 endPosition)
         {
             this._rectTransform = gameObject.GetComponent<RectTransform>();
-            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.3f, 0.75f, 0.75f);
+            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.4f, 0.85f, 0.75f);
             SetTransitionToNewPosition(endPosition);
             this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<TMP_Text>();
             _textHolder.GetComponent<RectTransform>().sizeDelta = _rectTransform.sizeDelta - Vector2.one * 20;
@@ -40,7 +40,7 @@ namespace TootTally.Utils
         public void Initialize(float lifespan, Vector2 endPosition, Vector2 textRectSize)
         {
             this._rectTransform = gameObject.GetComponent<RectTransform>();
-            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.3f, 0.75f, 0.75f);
+            _secondOrderDynamic = new EasingHelper.SecondOrderDynamics(1.4f, 0.85f, 0.75f);
             SetTransitionToNewPosition(endPosition);
             this._textHolder = gameObject.transform.Find("NotifText").gameObject.GetComponent<TMP_Text>();
             _textHolder.GetComponent<RectTransform>().sizeDelta = textRectSize;
