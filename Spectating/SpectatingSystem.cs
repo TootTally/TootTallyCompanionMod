@@ -52,57 +52,53 @@ namespace TootTally.Spectating
             SendToSocket(JsonConvert.SerializeObject(songInfo));
         }
 
+
         public void SendUserStateToSocket(UserState userState)
         {
             var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
             SendToSocket(json);
         }
 
+        private SocketNoteData _socketNoteDataHolder = new SocketNoteData();
         public void SendNoteData(bool champMode, int multiplier, int noteID, double noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
         {
-            var note = new SocketNoteData()
-            {
-                dataType = DataType.NoteData.ToString(),
-                champMode = champMode,
-                multiplier = multiplier,
-                noteID = noteID,
-                noteScoreAverage = noteScoreAverage,
-                releasedButtonBetweenNotes = releasedButtonBetweenNotes,
-                totalScore = totalScore,
-                health = health,
-                highestCombo = highestCombo
-            };
-            var json = JsonConvert.SerializeObject(note);
+            _socketNoteDataHolder.dataType = DataType.NoteData.ToString();
+            _socketNoteDataHolder.champMode = champMode;
+            _socketNoteDataHolder.multiplier = multiplier;
+            _socketNoteDataHolder.noteID = noteID;
+            _socketNoteDataHolder.noteScoreAverage = noteScoreAverage;
+            _socketNoteDataHolder.releasedButtonBetweenNotes = releasedButtonBetweenNotes;
+            _socketNoteDataHolder.totalScore = totalScore;
+            _socketNoteDataHolder.health = health;
+            _socketNoteDataHolder.highestCombo = highestCombo;
+
+            var json = JsonConvert.SerializeObject(_socketNoteDataHolder);
             SendToSocket(json);
         }
 
+        private SocketFrameData _socketFrameDataHolder = new SocketFrameData();
         public void SendFrameData(double time, double noteHolder, float pointerPosition)
         {
-            var frame = new SocketFrameData()
-            {
-                dataType = DataType.FrameData.ToString(),
-                time = time,
-                noteHolder = noteHolder,
-                pointerPosition = pointerPosition,
-            };
-            var json = JsonConvert.SerializeObject(frame);
+            _socketFrameDataHolder.dataType = DataType.FrameData.ToString();
+            _socketFrameDataHolder.time = time;
+            _socketFrameDataHolder.noteHolder = noteHolder;
+            _socketFrameDataHolder.pointerPosition = pointerPosition;
+            var json = JsonConvert.SerializeObject(_socketFrameDataHolder);
             SendToSocket(json);
         }
 
+        private SocketTootData _socketTootDataHolder = new SocketTootData();
         public void SendTootData(double time, double noteHolder, bool isTooting)
         {
-            var tootFrame = new SocketTootData()
-            {
-                dataType = DataType.TootData.ToString(),
-                time = time,
-                noteHolder = noteHolder,
-                isTooting = isTooting
-            };
-            var json = JsonConvert.SerializeObject(tootFrame);
+            _socketTootDataHolder.dataType = DataType.TootData.ToString();
+            _socketTootDataHolder.time = time;
+            _socketTootDataHolder.noteHolder = noteHolder;
+            _socketTootDataHolder.isTooting = isTooting;
+            var json = JsonConvert.SerializeObject(_socketTootDataHolder);
             SendToSocket(json);
         }
 
-        private static SocketMessage _socketMessage;
+        private SocketMessage _socketMessage;
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
