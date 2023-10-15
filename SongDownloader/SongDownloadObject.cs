@@ -131,6 +131,8 @@ namespace TootTally.SongDownloader
                 {
                     string downloadDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Downloads/");
                     string fileName = $"{_song.id}.zip";
+                    if (!Directory.Exists(downloadDir))
+                        Directory.CreateDirectory(downloadDir);
                     FileHelper.WriteBytesToFile(downloadDir, fileName, data);
 
                     string source = Path.Combine(downloadDir, fileName);

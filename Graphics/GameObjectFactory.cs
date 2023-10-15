@@ -592,9 +592,9 @@ namespace TootTally.Graphics
 
             var pfpImage = pfpTemp.GetComponent<Image>();
             outlineTemp.transform.SetSiblingIndex(0);
-            //outlineImage.sprite = AssetManager.GetSprite("PfpMask.png");
             outlineImage.enabled = false;
             pfpImage.sprite = AssetManager.GetSprite("icon.png");
+            pfpImage.preserveAspect = false;
 
             var layoutElement = outlineTemp.AddComponent<LayoutElement>();
             layoutElement.minHeight = layoutElement.minWidth = 96;

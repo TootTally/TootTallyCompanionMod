@@ -41,7 +41,7 @@ namespace TootTally.CustomLeaderboard
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.populateScores))]
         [HarmonyPrefix]
-        static bool DontPopulateBaseGameLeaderboard() => false;
+        static bool DontPopulateBaseGameLeaderboard() => !Plugin.Instance.ShowLeaderboard.Value;
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Update))]
         [HarmonyPostfix]
