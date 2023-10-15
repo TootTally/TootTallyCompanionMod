@@ -46,6 +46,12 @@ namespace TootTally.Spectating
             SendToSocket(json);
         }
 
+        public void SendSongInfoToSocket(SocketSongInfo songInfo)
+        {
+            songInfo.dataType = DataType.SongInfo.ToString();
+            SendToSocket(JsonConvert.SerializeObject(songInfo));
+        }
+
         public void SendUserStateToSocket(UserState userState)
         {
             var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
