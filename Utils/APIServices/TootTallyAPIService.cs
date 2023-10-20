@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BepInEx;
-using LocalTootTallyDiffCalcV2;
+using TootTallyDiffCalcTTV2;
 using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.APIServices;

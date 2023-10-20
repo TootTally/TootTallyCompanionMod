@@ -133,10 +133,20 @@ namespace TootTally.Replays
             }
             else
             {
-                //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
                 TootTallyLogger.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
+            }
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.fixAudioMixerStuff))]
+        [HarmonyPostfix]
+        public static void OnFixAudioMixerStuffPostFix(GameController __instance)
+        {
+            if (gameSpeedMultiplier != 1f && !Plugin.Instance.ChangePitchSpeed.Value)
+            {
+                __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                __instance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
             }
         }
 
@@ -328,7 +338,7 @@ namespace TootTally.Replays
                     break;
             }
 
-            if (__instance.noteplaying)
+            if (__instance.noteplaying && Plugin.Instance.ChangePitchSpeed.Value)
             {
                 __instance.currentnotesound.pitch *= gameSpeedMultiplier;
             }
@@ -647,6 +657,14 @@ namespace TootTally.Replays
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+                if (!Plugin.Instance.ChangePitchSpeed.Value)
+                {
+                    __instance.audmix.SetFloat("pitchShifterMult", 1f / (_replaySpeedSlider.value * gameSpeedMultiplier));
+                }
+                else
+                {
+                    __instance.audmix.SetFloat("pitchShifterMult", 1f / _replaySpeedSlider.value);
+                }
                 EventSystem.current.SetSelectedGameObject(null);
             });
 
