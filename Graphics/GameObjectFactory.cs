@@ -1298,7 +1298,7 @@ namespace TootTally.Graphics
             {
                 GameObject.DestroyImmediate(parent.transform.Find(objectName).gameObject);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 TootTallyLogger.LogError($"Object {objectName} couldn't be deleted from {parent.name} parent");
             }

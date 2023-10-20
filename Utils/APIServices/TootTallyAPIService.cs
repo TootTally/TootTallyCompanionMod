@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using BepInEx;
+using LocalTootTallyDiffCalcV2;
 using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.APIServices;
@@ -33,6 +35,19 @@ namespace TootTally.Utils
             }
             else
                 callback(0); //hash 0 is null
+
+        }
+
+        public static async void GetLocalChartRatings(string tmbPath, Action<Chart> callback)
+        {
+            Chart chart = null;
+            TootTallyLogger.LogInfo($"Looking for {tmbPath}");
+            await Task.Run(() => chart = ChartReader.LoadChart(tmbPath));
+            if (chart != null)
+            {
+                TootTallyLogger.LogInfo($"{chart.shortName} processed locally in {chart.calculationTime.TotalMilliseconds}ms");
+                callback(chart);
+            }
 
         }
 
@@ -262,7 +277,7 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, Action<byte[]> callback) //Progress barless for old twitch plugin versions
         {
             UnityWebRequest webRequest = UnityWebRequest.Get(downloadlink);
-            
+
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, downloadlink))

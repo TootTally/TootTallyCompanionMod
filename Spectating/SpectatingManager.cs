@@ -277,7 +277,6 @@ namespace TootTally.Spectating
             private static int _tootIndex;
             private static bool _waitingToSync;
             private static bool _spectatingStarting;
-            private static bool _leftPointSelectScreen;
             private static bool _wasSpectating;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -748,6 +747,8 @@ namespace TootTally.Spectating
                         __instance.multiplier = _currentNoteData.multiplier;
                         __instance.notescoreaverage = (float)_currentNoteData.noteScoreAverage;
                         __instance.released_button_between_notes = _currentNoteData.releasedButtonBetweenNotes;
+                        if (__instance.currentscore < 0)
+                            __instance.totalscore = _currentNoteData.totalScore;
                         __instance.totalscore = _currentNoteData.totalScore;
                         __instance.currenthealth = _currentNoteData.health;
                         __instance.highestcombo_level = _currentNoteData.highestCombo;
