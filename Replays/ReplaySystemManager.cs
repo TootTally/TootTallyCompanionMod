@@ -140,26 +140,14 @@ namespace TootTally.Replays
             }
         }
 
-        [HarmonyPatch(typeof(GameController), nameof(GameController.fixAudioMixerStuff))]
-        [HarmonyPostfix]
-        public static void OnFixAudioMixerStuffPostFix(GameController __instance)
-        {
-            if (gameSpeedMultiplier != 1f)
-            {
-                __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
-                __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
-            }
-        }
-
         [HarmonyPatch(typeof(GameController), nameof(GameController.startDance))]
         [HarmonyPostfix]
         public static void OnGameControllerStartDanceFixSpeedBackup(GameController __instance)
         {
-            if (gameSpeedMultiplier != 1f && _currentGCInstance.musictrack.pitch != gameSpeedMultiplier)
+            if (gameSpeedMultiplier != 1f && __instance.musictrack.pitch != gameSpeedMultiplier)
             {
                 __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
-                _currentGCInstance.musictrack.pitch = gameSpeedMultiplier;
+                __instance.musictrack.pitch = gameSpeedMultiplier;
                 TootTallyLogger.LogInfo("BACKUP: GameSpeed set to " + gameSpeedMultiplier);
             }
         }
@@ -338,6 +326,11 @@ namespace TootTally.Replays
                     if (_pauseArrowDestination != null && _pauseArrow != null)
                         _pauseArrow.GetComponent<RectTransform>().anchoredPosition = _pausePointerAnimation.GetNewVector(_pauseArrowDestination, Time.deltaTime);
                     break;
+            }
+
+            if (__instance.noteplaying)
+            {
+                __instance.currentnotesound.pitch *= gameSpeedMultiplier;
             }
 
             float value = 0;
@@ -654,7 +647,6 @@ namespace TootTally.Replays
                 Time.timeScale = _replaySpeedSlider.value;
                 replaySpeedSliderText.text = BetterScrollSpeedSliderPatcher.SliderValueToText(_replaySpeedSlider.value);
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                _currentGCInstance.audmix.SetFloat("pitchShifterMult", 1f / (_replaySpeedSlider.value * gameSpeedMultiplier));
                 EventSystem.current.SetSelectedGameObject(null);
             });
 
@@ -679,7 +671,7 @@ namespace TootTally.Replays
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
                 __instance.musictrack.time = __instance.musictrack.clip.length * value;
-                _currentGCInstance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
+                __instance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
                 var oldIndex = __instance.currentnoteindex;
                 var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
                 __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
