@@ -133,6 +133,7 @@ namespace TootTally.Replays
             }
             else
             {
+                //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 _currentGCInstance.musictrack.pitch = gameSpeedMultiplier; // SPEEEEEEEEEEEED
                 TootTallyLogger.LogInfo("GameSpeed set to " + gameSpeedMultiplier);
