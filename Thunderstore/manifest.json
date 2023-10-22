@@ -6,7 +6,6 @@
     "dependencies": [
         "TromboneChamps-TrombLoader-2.1.0",
         "TromboneChamps-BaboonAPI-2.5.0",
-        "emmett-TrombSettings-1.0.1",
         "BepInEx-BepInExPack_TromboneChamp-5.4.21"
     ]
 }

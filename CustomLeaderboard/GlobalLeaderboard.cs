@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
-using LocalTootTallyDiffCalcV2;
+using TootTallyDiffCalcTTV2;
 using TMPro;
 using TootTally.Graphics;
 using TootTally.Utils;
@@ -41,7 +41,7 @@ namespace TootTally.CustomLeaderboard
         private RectTransform _diffRatingMaskRectangle;
         private List<LeaderboardRowEntry> _scoreGameObjectList;
         private SerializableClass.SongDataFromDB _songData;
-        private Chart _localSongData;
+        //private Chart _localSongData;
         private Slider _slider, _gameSpeedSlider;
         private ScrollableSliderHandler _scrollableSliderHandler;
         private GameObject _sliderHandle;
@@ -313,7 +313,7 @@ namespace TootTally.CustomLeaderboard
                 }
                 else
                     _currentSelectedSongHash = songHashInDB;
-                _localSongData = null;
+                //_localSongData = null;
                 _songData = null;
                 _scoreDataList = null;
                 _speedToDiffDict = null;

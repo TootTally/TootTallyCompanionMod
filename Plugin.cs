@@ -49,6 +49,7 @@ namespace TootTally
         public ConfigEntry<bool> AllowSpectate { get; private set; }
         public ConfigEntry<bool> EnableLocalDiffCalc { get; private set; }
         public ConfigEntry<bool> ShowSpectatorCount { get; private set; }
+        public ConfigEntry<bool> ChangePitchSpeed { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -75,6 +76,7 @@ namespace TootTally
             AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
             EnableLocalDiffCalc = Config.Bind("General", "Enable Local Diff Calc", true, "Enable Local Difficulty Calculation");
             ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
+            ChangePitchSpeed = Config.Bind("General", "Change Pitch Speed", false, "Change the pitch on speed changes");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
@@ -95,6 +97,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
                 //_tootTallyMainPage.AddToggle("EnableLocalDiffCalc", new Vector2(400, 50), "Enable Local Diff Calc", EnableLocalDiffCalc);
                 _tootTallyMainPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
+                _tootTallyMainPage.AddToggle("ChangePitchSpeed", new Vector2(400, 50), "Change Pitch Speed", ChangePitchSpeed);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
                 //Adding / Removing causes out of bound / index not found exceptions
