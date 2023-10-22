@@ -14,7 +14,6 @@ using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Scripting;
 using UnityEngine.UI;
 using UnityEngine.Video;
 using static TootTally.Utils.APIServices.SerializableClass;
@@ -23,6 +22,8 @@ namespace TootTally.Replays
 {
     public static class ReplaySystemManager
     {
+        public static List<string> incompatibleReplayPluginBuildDate = new List<string> { "20230106" };
+
         private const float SWIRLY_SPEED = 0.5f;
 
         private static int _targetFramerate;
@@ -65,7 +66,7 @@ namespace TootTally.Replays
             }
 
             if (_replayFileName == null)
-                OnRecordingStart(__instance);
+                OnRecordingStart();
             else if (_replayFileName == "Spectating")
             {
                 _replayManagerState = ReplayManagerState.Spectating;
@@ -170,7 +171,7 @@ namespace TootTally.Replays
             {
                 case ReplayManagerState.Recording:
                     if (_hasReleaseToot && _lastIsTooting != __result)
-                        _replay.RecordToot(__instance);
+                        _replay.RecordToot(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __result);
                     break;
                 case ReplayManagerState.Replaying:
                     __result = _replay.GetIsTooting;
@@ -300,16 +301,24 @@ namespace TootTally.Replays
                     if (_elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0;
-                        _replay.RecordFrameData(__instance);
+                        _replay.RecordFrameData(__instance, __instance.musictrack.time, __instance.noteholderr.anchoredPosition.x);
                     }
                     break;
                 case ReplayManagerState.Replaying:
                     if (!_hasRewindReplay && !__instance.retrying) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
-                        _replay.PlaybackReplay(__instance);
+                        _replay.PlaybackReplay(__instance, __instance.musictrack.time);
                     _hasRewindReplay = false;
                     break;
             }
         }
+        [HarmonyPatch(typeof(GameController), nameof(GameController.doScoreText))]
+        [HarmonyPostfix]
+        public static void OnDoScoreSaveLastTally(object[] __args)
+        {
+            if (_replayManagerState == ReplayManagerState.Recording)
+                _replay.SaveLastNoteTally((int)__args[0]);
+        }
+
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
         [HarmonyPostfix]
         public static void GameControllerUpdatePostfixPatch(GameController __instance)
@@ -370,7 +379,7 @@ namespace TootTally.Replays
                     _replay.RecordNoteDataPrefix(__instance);
                     break;
                 case ReplayManagerState.Replaying:
-                    _replay.SetNoteScore(__instance);
+                    _replay.SetNoteScorePrefix(__instance);
                     break;
             }
         }
@@ -384,6 +393,9 @@ namespace TootTally.Replays
             {
                 case ReplayManagerState.Recording:
                     _replay.RecordNoteDataPostfix(__instance);
+                    break;
+                case ReplayManagerState.Replaying:
+                    _replay.SetNoteScorePostFix(__instance);
                     break;
             }
 
@@ -511,13 +523,12 @@ namespace TootTally.Replays
             }));
         }
 
-        public static void OnRecordingStart(GameController __instance)
+        public static void OnRecordingStart()
         {
             wasPlayingReplay = _hasPaused = _hasReleaseToot = false;
             _elapsedTime = 0;
             _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate; //Could let the user choose replay framerate... but risky for when they will upload to our server
-            _replay.ClearData();
-            _replay.SetupRecording(__instance);
+            _replay.SetupRecording(_targetFramerate);
             _replayManagerState = ReplayManagerState.Recording;
         }
 
@@ -603,7 +614,7 @@ namespace TootTally.Replays
 
             try
             {
-                FileHelper.WriteJsonToFile(replayDir + "\\", _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID, _targetFramerate));
+                FileHelper.WriteJsonToFile(replayDir + "\\", _replayUUID + ".ttr", _replay.GetRecordedReplayJson(_replayUUID));
             }
             catch (Exception e)
             {
@@ -710,7 +721,6 @@ namespace TootTally.Replays
         {
             _replayIndicatorMarquee = GameObjectFactory.CreateSingleText(canvasTransform, "ReplayMarquee", "", new Color(1f, 1f, 1f, 0.75f));
             _replayIndicatorMarquee.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 60);
-            //_replayIndicatorMarquee.outlineWidth = 0.2f //doesn't work... don't know why.
             _replayIndicatorMarquee.fontSize = 14;
             _replayIndicatorMarquee.transform.localPosition = _marqueeStartingPosition;
             _replayIndicatorMarquee.enableWordWrapping = true;
@@ -725,7 +735,7 @@ namespace TootTally.Replays
         public static void TrySubmitReplay(int submitAttemptCount)
         {
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.WaitForSecondsCallback(submitAttemptCount == 0 ? 0:3f, delegate
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.WaitForSecondsCallback(submitAttemptCount == 0 ? 0 : 3f, delegate
             {
                 //Using replayUUID as a name
                 Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
@@ -783,7 +793,6 @@ namespace TootTally.Replays
 
         public static void OnReplayingStop()
         {
-            _replay.OnReplayPlayerStop();
             _replayFileName = null;
             GlobalVariables.localsave.tracks_played--;
             Time.timeScale = 1f;
