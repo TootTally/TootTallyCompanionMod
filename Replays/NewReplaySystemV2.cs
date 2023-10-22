@@ -35,10 +35,9 @@ namespace TootTally.Replays
         private bool _wasTouchScreenUsed;
         private bool _wasTabletUsed;
         private bool _isTooting;
+        private int _maxCombo;
         public bool GetIsTooting { get => _currentToot.O == 1; }
 
-        private float _nextPositionTarget, _lastPosition;
-        private float _nextTimingTarget, _lastTiming;
         public string GetUsername { get => _replayData.username; }
         public string GetSongName { get => _replayData.song; }
 
@@ -65,6 +64,12 @@ namespace TootTally.Replays
             TootTallyLogger.LogInfo($"Replay recording finished at {_replayData.endtime}");
         }
 
+        public void SetUsernameAndSongName(string username, string songname)
+        {
+            _replayData.username = username;
+            _replayData.song = songname;
+        }
+
         public void RecordFrameData(GameController __instance, float time, float noteHolderPosition)
         {
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
@@ -79,9 +84,15 @@ namespace TootTally.Replays
 
         }
 
+        public void RecordNoteDataPostfix(GameController __instance)
+        {
+            _currentNote = new NoteData(__instance.notescoreaverage, __instance.released_button_between_notes ? 1 : 0);
+        }
+
         public void RecordNoteDataPrefix(GameController __instance)
         {
-            _currentNote = new NoteData(__instance.currentnoteindex, __instance.notescoreaverage, __instance.highestcombocounter, __instance.multiplier, __instance.totalscore, __instance.released_button_between_notes ? 1 : 0, __instance.currenthealth, __instance.highestcombo_level);
+            _currentNote.PostFixConstructor(__instance.currentnoteindex, __instance.highestcombocounter, __instance.multiplier, __instance.totalscore, __instance.currenthealth, __instance.highestcombo_level,
+                new int[] {__instance.scores_A, __instance.scores_B, __instance.scores_C, __instance.scores_D, __instance.scores_F, });
             _replayData.notedata.Add(_currentNote);
         }
 
@@ -95,16 +106,9 @@ namespace TootTally.Replays
         {
             _replayData.uuid = uuid;
             _replayData.input = GetInputTypeString();
-            _replayData.finalscore = _finalScore;
-            _replayData.maxcombo = _highestCombo;
-            _replayData.finalnotetallies = new int[]
-            {
-                _scores_A,
-                _scores_B,
-                _scores_C,
-                _scores_D,
-                _scores_F
-            };
+            _replayData.finalscore = GlobalVariables.gameplay_scoretotal;
+            _replayData.maxcombo = _maxCombo;
+            _replayData.finalnotetallies = _replayData.notedata.Last().TL;
 
             return JsonConvert.SerializeObject(_replayData);
         }
@@ -116,9 +120,6 @@ namespace TootTally.Replays
                 return "Touch";
             return "Mouse";
         }
-        private static bool CheckIfSameValue(int index1, int index2, int dataIndex, List<int[]> dataList) => dataList[index1][dataIndex] == dataList[index2][dataIndex];
-
-        private static List<int[]> GetDuplicatesFromDataList(float valueToFind, int dataIndex, List<int[]> dataList) => dataList.FindAll(data => data[dataIndex] == valueToFind);
         #endregion
 
         #region ReplayPlayer
@@ -127,8 +128,6 @@ namespace TootTally.Replays
         {
             _frameIndex = 0;
             _tootIndex = 0;
-            _noteIndex = 0;
-            _replayNoteTally = new int[5];
             _isTooting = false;
         }
 
@@ -138,14 +137,7 @@ namespace TootTally.Replays
             _tootIndex = Mathf.Clamp(_replayData.tootdata.FindIndex(frame => frame.T > newTiming) - 1, 0, _replayData.tootdata.Count - 1);
 
             if (__instance.currentnoteindex != 0)
-                __instance.currentscore = _noteData.Find(note => note[(int)NoteData.I] == __instance.currentnoteindex - 1)[(int)NoteData.S];
-        }
-
-
-        public void OnReplayPlayerStop()
-        {
-            GlobalVariables.gameplay_notescores = _finalNoteTally;
-            GlobalVariables.gameplay_scoretotal = _finalTotalScore;
+                __instance.currentscore = _replayData.notedata.Find(note => note.I == __instance.currentnoteindex - 1).S;
         }
 
         public ReplayState LoadReplay(string replayFileName)
@@ -184,12 +176,14 @@ namespace TootTally.Replays
             Cursor.visible = true;
             if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
-            __instance.totalscore = _totalScore;
-            if (_frameData.Count > _frameIndex && _lastPosition != 0)
-                InterpolateCursorPosition(time, __instance);
+            PlaybackFrameData(time);
+            PlaybackTootData(time);
 
-            PlaybackFrameData(time, __instance);
-            PlaybackTootData(time, __instance);
+            if (_replayData.framedata.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
+                InterpolateCursorPosition(time, __instance);
+            else if (_currentFrame != null && _replayData.framedata.Count < _frameIndex)
+                SetCursorPosition(__instance, _currentFrame.P);
+
         }
 
         private void InterpolateCursorPosition(float time, GameController __instance)
@@ -225,17 +219,29 @@ namespace TootTally.Replays
                 _currentToot = _replayData.tootdata[_tootIndex++];
         }
 
-        public void SetNoteScore(GameController __instance)
+        public void SetNoteScorePrefix(GameController __instance)
         {
-            var note = _noteData.Find(x => x[(int)NoteData.I] == __instance.currentnoteindex);
-
-            if (note != null)
+            if (_replayData.notedata.Last().I > __instance.currentnoteindex)
+                _currentNote = _replayData.notedata.Find(x => x.I == __instance.currentnoteindex);
+            if (_currentNote != null)
             {
-                __instance.totalscore = _totalScore = note[(int)NoteData.S]; //total score has to be set postfix as well because notes SOMEHOW still give more points than they should during replay...
-                __instance.multiplier = note[(int)NoteData.M];
-                __instance.currenthealth = note[(int)NoteData.CurrentHealth];
-                int tallyIndex = Mathf.Clamp(note[(int)NoteData.NoteJudgement], 0, 4); //Temporary fix for note tally being -1 sometimes?
-                _replayNoteTally[tallyIndex]++;
+                __instance.notescoreaverage = _currentNote.NS;
+                __instance.released_button_between_notes = _currentNote.R == 1;
+            }
+        }
+
+        public void SetNoteScorePostFix(GameController __instance)
+        {
+            if (_currentNote != null)
+            {
+                __instance.rainbowcontroller.champmode = _currentNote.C == 1;
+                __instance.multiplier = _currentNote.M;
+                if (__instance.currentscore < 0)
+                    __instance.currentscore = _currentNote.S;
+                __instance.totalscore = _currentNote.S;
+                __instance.currenthealth = _currentNote.H;
+                __instance.highestcombo_level = _currentNote.HC;
+                _currentNote = null;
             }
         }
 
@@ -252,12 +258,6 @@ namespace TootTally.Replays
         {
             TootTallyLogger.LogInfo("Replay data cleared");
             _replayData.ClearData();
-        }
-
-        public void SetUsernameAndSongName(string username, string songname)
-        {
-            _replayUsername = username;
-            _replaySong = songname;
         }
 
         [Serializable]
@@ -362,25 +362,32 @@ namespace TootTally.Replays
 
         private class NoteData
         {
-            public int I { get; set; } //NoteIndex
-            public float NS { get; set; } //NoteScoreAverage
-            public int C { get; set; } //Combo
-            public int M { get; set; } // Multiplier
-            public int S { get; set; } //TotalScore
-            public int R { get; set; } //ReleasedBetweenNotes
-            public float H { get; set; } //Health
-            public int HC { get; set; } //HighestCombo
-            public NoteData(int index, float noteScore, int combo, int multiplier, int totalScore, int releasedBetweenNotes, float health, int highestCombo)
+            public int I { get; set; } //NoteIndex Post
+            public float NS { get; set; } //NoteScoreAverage Pre
+            public int C { get; set; } //Combo Post
+            public int M { get; set; } // Multiplier Post 
+            public int S { get; set; } //TotalScore Post
+            public int R { get; set; } //ReleasedBetweenNotes Pre
+            public float H { get; set; } //Health Post
+            public int HC { get; set; } //HighestCombo Post
+            public int[] TL { get; set; }
+            public NoteData(float noteScore,int releasedBetweenNotes)
+            {
+                NS = noteScore;
+                R = releasedBetweenNotes;
+            }
+
+            public void PostFixConstructor(int index, int combo, int multiplier, int totalScore, float health, int highestCombo, int[] tL)
             {
                 I = index;
-                NS = noteScore;
                 C = combo;
                 M = multiplier;
                 S = totalScore;
-                R = releasedBetweenNotes;
                 H = health;
                 HC = highestCombo;
+                TL = tL;
             }
+
         }
 
         public enum ReplayState
