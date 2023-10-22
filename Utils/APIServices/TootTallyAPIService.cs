@@ -235,6 +235,12 @@ namespace TootTally.Utils
                 callback(null);
         }
 
+        public static IEnumerator<WaitForSeconds> WaitForSecondsCallback(float seconds, Action callback)
+        {
+            yield return new WaitForSeconds(seconds);
+            callback();
+        }
+
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");

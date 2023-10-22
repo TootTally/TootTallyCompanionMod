@@ -17,6 +17,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Scripting;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using static TootTally.Utils.APIServices.SerializableClass;
 
 namespace TootTally.Replays
 {
@@ -77,7 +78,6 @@ namespace TootTally.Replays
                 SetReplayUI(__instance);
             }
 
-            GarbageCollector.GCMode = GarbageCollector.Mode.Disabled;
             _pausePointerAnimation = new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0.85f);
 
         }
@@ -186,7 +186,7 @@ namespace TootTally.Replays
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         public static void PointSceneControllerPostfixPatch()
         {
             switch (_replayManagerState)
@@ -199,9 +199,6 @@ namespace TootTally.Replays
                     OnReplayingStop();
                     break;
             }
-
-
-            GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
@@ -414,7 +411,6 @@ namespace TootTally.Replays
             _pauseArrow = __instance.pausearrow;
             _hasPaused = true;
             _replayManagerState = ReplayManagerState.Paused;
-            GarbageCollector.GCMode = GarbageCollector.Mode.Enabled;
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.pauseQuitLevel))]
@@ -713,40 +709,67 @@ namespace TootTally.Replays
 
         private static void SendReplayFileToServer()
         {
-            //Using replayUUID as a name
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
+            var submitAttemptCount = 0;
+            TrySubmitReplay(submitAttemptCount);
+        }
+
+        public static void TrySubmitReplay(int submitAttemptCount)
+        {
+
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.WaitForSecondsCallback(submitAttemptCount == 0 ? 0:3f, delegate
             {
-                if (replaySubmissionReply == null)
+                //Using replayUUID as a name
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
                 {
-                    _loadingSwirly.Dispose();
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Score submission disabled for that map.", GameTheme.themeColors.leaderboard.text);
-                    return;
-                }
-                if (replaySubmissionReply.tt != 0)
-                {
-                    _loadingSwirly.Dispose();
-                    var rankDiff = Math.Abs(replaySubmissionReply.ranking - Plugin.userInfo.rank);
-                    var displayMessage = "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!\n" : "\n");
-                    displayMessage += $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt\n";
-                    if (replaySubmissionReply.isBestPlay)
-                        displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (+{rankDiff})";
-                    PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replaySubmissionReply.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
-                    if (!replaySubmissionReply.isBestPlay)
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"{replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    if (replaySubmissionReply == null)
+                    {
+                        TootTallyLogger.LogInfo($"Replay failed to submit, attempt #{submitAttemptCount}...");
+                        submitAttemptCount++;
+                        if (submitAttemptCount <= 3) // 3 extra attempts, delayed by 3 seconds each
+                            TrySubmitReplay(submitAttemptCount);
+                        else
+                        {
+                            TootTallyLogger.LogInfo($"Replay failed to submit after {submitAttemptCount} attempts, skipping replay submission.");
+                            _loadingSwirly?.Dispose();
+                            GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Score submission disabled for that map.", GameTheme.themeColors.leaderboard.text);
+                        }
+                        return;
+                    }
                     else
                     {
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replaySubmissionReply.position} {replaySubmissionReply.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
-                        GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Global Rank: {Plugin.userInfo.rank} -> {replaySubmissionReply.ranking} (<color=\"green\">+{rankDiff}</color>)", GameTheme.themeColors.leaderboard.text);
+                        OnReplaySubmittedRequestSuccess(replaySubmissionReply);
+                        return;
                     }
-                }
+                }));
+            }));
+        }
+
+        public static void OnReplaySubmittedRequestSuccess(ReplaySubmissionReply replay)
+        {
+            if (replay.tt != 0)
+            {
+                _loadingSwirly?.Dispose();
+                var rankDiff = Math.Abs(replay.ranking - Plugin.userInfo.rank);
+                var displayMessage = "Replay submitted." + (replay.isBestPlay ? " New Personal best!\n" : "\n");
+                displayMessage += $"#{replay.position} {replay.tt:0.00}tt\n";
+                if (replay.isBestPlay)
+                    displayMessage += $"Rank: {Plugin.userInfo.rank} -> {replay.ranking} (+{rankDiff})";
+                PopUpNotifManager.DisplayNotif(displayMessage, GameTheme.themeColors.notification.defaultText);
+                GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextSubmit", "Replay submitted." + (replay.isBestPlay ? " New Personal best!" : ""), GameTheme.themeColors.leaderboard.text);
+                if (!replay.isBestPlay)
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"{replay.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
                 else
                 {
-                    _loadingSwirly.Dispose();
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Map not rated, no data found.", GameTheme.themeColors.leaderboard.text);
-                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"Score position: #{replaySubmissionReply.position}", GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"#{replay.position} {replay.tt:0.00}tt", GameTheme.themeColors.leaderboard.text);
+                    GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextRank", $"Global Rank: {Plugin.userInfo.rank} -> {replay.ranking} (<color=\"green\">+{rankDiff}</color>)", GameTheme.themeColors.leaderboard.text);
                 }
-            }));
+            }
+            else
+            {
+                _loadingSwirly?.Dispose();
+                GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextMain", "Map not rated, no data found.", GameTheme.themeColors.leaderboard.text);
+                GameObjectFactory.CreateSingleText(_tootTallyScorePanel.transform, "TextPosition", $"Score position: #{replay.position}", GameTheme.themeColors.leaderboard.text);
+            }
         }
 
         public static void OnReplayingStop()
