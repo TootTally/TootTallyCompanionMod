@@ -25,19 +25,19 @@ namespace TootTally.Spectating
 
         public void SendToSocket(byte[] data)
         {
-            _websocket.Send(data);
+            _websocket.SendAsync(data, delegate { });
         }
 
         public void SendToSocket(string data)
         {
-            _websocket.Send(data);
+            _websocket.SendAsync(data, delegate { });
         }
 
         protected virtual void OnDataReceived(object sender, MessageEventArgs e) { }
 
         protected virtual void CloseWebsocket()
         {
-            _websocket.Close();
+            _websocket.CloseAsync();
             TootTallyLogger.LogInfo("Disconnecting from " + _websocket.Url);
             _websocket = null;
         }

@@ -735,15 +735,15 @@ namespace TootTally.Replays
         public static void TrySubmitReplay(int submitAttemptCount)
         {
 
-            Plugin.Instance.StartCoroutine(TootTallyAPIService.WaitForSecondsCallback(submitAttemptCount == 0 ? 0 : 3f, delegate
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.WaitForSecondsCallback(submitAttemptCount * 6f, delegate
             {
                 //Using replayUUID as a name
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply) =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.SubmitReplay(_replayUUID + ".ttr", _replayUUID, (replaySubmissionReply, retry) =>
                 {
-                    if (replaySubmissionReply == null)
+                    if (replaySubmissionReply == null && retry)
                     {
-                        TootTallyLogger.LogInfo($"Replay failed to submit, attempt #{submitAttemptCount}...");
                         submitAttemptCount++;
+                        TootTallyLogger.LogInfo($"Replay failed to submit, attempt #{submitAttemptCount}...");
                         if (submitAttemptCount <= 3) // 3 extra attempts, delayed by 3 seconds each
                             TrySubmitReplay(submitAttemptCount);
                         else
