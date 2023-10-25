@@ -22,7 +22,6 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TootTally
 {
@@ -38,7 +37,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public static int BUILDDATE = 20231014;
+        public static int BUILDDATE = 20231025;
 
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -168,6 +167,7 @@ namespace TootTally
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
             }
         }
+        private static LoadingIcon _loginLoadingIcon;
 
         private class UserLogin
         {
@@ -175,15 +175,17 @@ namespace TootTally
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
+                _loginLoadingIcon?.Dispose();
                 if (userInfo == null)
                 {
-                    var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
-                    var rect = icon.iconHolder.GetComponent<RectTransform>();
+                    _loginLoadingIcon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                    var rect = _loginLoadingIcon.iconHolder.GetComponent<RectTransform>();
                     rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
-                    icon.StartRecursiveAnimation();
+                    _loginLoadingIcon.StartRecursiveAnimation();
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
-                        icon.Dispose();
+                        _loginLoadingIcon.Dispose();
+                        _loginLoadingIcon = null;
                         if (user != null)
                         {
                             OnUserLogin(user);

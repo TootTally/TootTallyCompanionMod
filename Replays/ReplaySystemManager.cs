@@ -648,6 +648,7 @@ namespace TootTally.Replays
             floatingSpeedText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-2, 30);
 
             //Text inside the slider
+            #region Text Inside Slider
             TMP_Text replaySpeedSliderText = GameObjectFactory.CreateSingleText(sliderHandle.transform, "replaySliderText", "100", Color.black);
             replaySpeedSliderText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 5);
             replaySpeedSliderText.GetComponent<RectTransform>().sizeDelta = new Vector2(20, 21);
@@ -673,7 +674,7 @@ namespace TootTally.Replays
                 }
                 EventSystem.current.SetSelectedGameObject(null);
             });
-
+            #endregion
 
             _replaySpeedSlider.gameObject.SetActive(true);
             _replaySpeedSlider.gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-150, 190);
