@@ -4,7 +4,7 @@
 		<TargetFramework>net472</TargetFramework>
 		<AssemblyName>TootTally</AssemblyName>
 		<Description>Companion mod for TootTally.com</Description>
-		<Version>0.6.0</Version>
+		<Version>0.5.2</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</SourceRevisionId>
