@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using BepInEx;
 using Newtonsoft.Json;
 using TootTally.Graphics;
@@ -35,6 +36,19 @@ namespace TootTally.Utils
                 callback(0); //hash 0 is null
 
         }
+
+        /*public static async void GetLocalChartRatings(string tmbPath, Action<Chart> callback)
+        {
+            Chart chart = null;
+            TootTallyLogger.LogInfo($"Looking for {tmbPath}");
+            await Task.Run(() => chart = ChartReader.LoadChart(tmbPath));
+            if (chart != null)
+            {
+                TootTallyLogger.LogInfo($"{chart.shortName} processed locally in {chart.calculationTime.TotalMilliseconds}ms");
+                callback(chart);
+            }
+
+        }*/
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromAPIKey(Action<User> callback)
         {
@@ -186,7 +200,7 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo("Stopped UUID: " + replayUUID);
         }
 
-        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid, Action<ReplaySubmissionReply> callback)
+        public static IEnumerator<UnityWebRequestAsyncOperation> SubmitReplay(string replayFileName, string uuid, Action<ReplaySubmissionReply, bool> callback)
         {
             string replayDir = Path.Combine(Paths.BepInExRootPath, "Replays/");
 
@@ -214,10 +228,16 @@ namespace TootTally.Utils
             if (!HasError(webRequest, query))
             {
                 TootTallyLogger.LogInfo($"Replay Sent.");
-                callback(JsonConvert.DeserializeObject<ReplaySubmissionReply>(webRequest.downloadHandler.text));
+                callback(JsonConvert.DeserializeObject<ReplaySubmissionReply>(webRequest.downloadHandler.text), false);
             }
             else
-                callback(null);
+                callback(null, webRequest.responseCode >= 500);
+        }
+
+        public static IEnumerator<WaitForSeconds> WaitForSecondsCallback(float seconds, Action callback)
+        {
+            yield return new WaitForSeconds(seconds);
+            callback();
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadReplay(string uuid, Action<string> callback)
@@ -262,7 +282,7 @@ namespace TootTally.Utils
         public static IEnumerator<UnityWebRequestAsyncOperation> DownloadZipFromServer(string downloadlink, Action<byte[]> callback) //Progress barless for old twitch plugin versions
         {
             UnityWebRequest webRequest = UnityWebRequest.Get(downloadlink);
-            
+
             yield return webRequest.SendWebRequest();
 
             if (!HasError(webRequest, downloadlink))

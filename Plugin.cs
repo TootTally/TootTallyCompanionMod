@@ -22,7 +22,6 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TootTally
 {
@@ -38,7 +37,7 @@ namespace TootTally
         public const string PLUGIN_FOLDER_NAME = "TootTally-TootTally";
         public static Plugin Instance;
         public static SerializableClass.User userInfo; //Temporary public
-        public static int BUILDDATE = 20231014;
+        public static int BUILDDATE = 20231025;
 
         internal ConfigEntry<string> APIKey { get; private set; }
         public ConfigEntry<bool> ShouldDisplayToasts { get; private set; }
@@ -49,6 +48,7 @@ namespace TootTally
         public ConfigEntry<bool> AllowSpectate { get; private set; }
         public ConfigEntry<bool> EnableLocalDiffCalc { get; private set; }
         public ConfigEntry<bool> ShowSpectatorCount { get; private set; }
+        public ConfigEntry<bool> ChangePitchSpeed { get; private set; }
 
         public static List<ITootTallyModule> TootTallyModules { get; private set; }
 
@@ -75,6 +75,7 @@ namespace TootTally
             AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
             EnableLocalDiffCalc = Config.Bind("General", "Enable Local Diff Calc", true, "Enable Local Difficulty Calculation");
             ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
+            ChangePitchSpeed = Config.Bind("General", "Change Pitch Speed", false, "Change the pitch on speed changes");
 
             TootTallyModules = new List<ITootTallyModule>();
             _tootTallyMainPage = TootTallySettingsManager.AddNewPage("TootTally", "TootTally", 40f, new Color(.1f, .1f, .1f, .3f));
@@ -93,8 +94,9 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShowLeaderboard", new Vector2(400, 50), "Show Leaderboards", ShowLeaderboard);
                 _tootTallyMainPage.AddToggle("ShowCoolS", new Vector2(400, 50), "Show cool-s", ShowCoolS);
                 _tootTallyMainPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
-                _tootTallyMainPage.AddToggle("EnableLocalDiffCalc", new Vector2(400, 50), "Enable Local Diff Calc", EnableLocalDiffCalc);
+                //_tootTallyMainPage.AddToggle("EnableLocalDiffCalc", new Vector2(400, 50), "Enable Local Diff Calc", EnableLocalDiffCalc);
                 _tootTallyMainPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
+                _tootTallyMainPage.AddToggle("ChangePitchSpeed", new Vector2(400, 50), "Change Pitch Speed", ChangePitchSpeed);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
                 //Adding / Removing causes out of bound / index not found exceptions
@@ -165,6 +167,21 @@ namespace TootTally
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
             }
         }
+        private static LoadingIcon _loginLoadingIcon;
+
+        public static void OnUserLogin(SerializableClass.User user)
+        {
+            userInfo = user;
+            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
+            {
+                userInfo.allowSubmit = allowSubmit;
+            }));
+
+            Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
+            Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
+            Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
+            UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
+        }
 
         private class UserLogin
         {
@@ -172,15 +189,18 @@ namespace TootTally
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
+                _messagesReceived ??= new List<SerializableClass.Message>();
+                _loginLoadingIcon?.Dispose();
                 if (userInfo == null)
                 {
-                    var icon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
-                    var rect = icon.iconHolder.GetComponent<RectTransform>();
+                    _loginLoadingIcon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
+                    var rect = _loginLoadingIcon.iconHolder.GetComponent<RectTransform>();
                     rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
-                    icon.StartRecursiveAnimation();
+                    _loginLoadingIcon.StartRecursiveAnimation();
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
-                        icon.Dispose();
+                        _loginLoadingIcon.Dispose();
+                        _loginLoadingIcon = null;
                         if (user != null)
                         {
                             OnUserLogin(user);
@@ -268,21 +288,6 @@ namespace TootTally
                         if (user != null)
                             OnUserLogin(user);
                     }));
-            }
-
-            private static void OnUserLogin(SerializableClass.User user)
-            {
-                _messagesReceived = new List<SerializableClass.Message>();
-                userInfo = user;
-                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
-                {
-                    userInfo.allowSubmit = allowSubmit;
-                }));
-
-                Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
-                Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
-                Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
-                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
         }

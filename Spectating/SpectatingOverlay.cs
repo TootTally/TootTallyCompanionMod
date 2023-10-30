@@ -43,7 +43,7 @@ namespace TootTally.Spectating
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = true;
-            canvas.sortingOrder = 2;
+            canvas.sortingOrder = 0;
 
             GraphicRaycaster raycaster = _overlayCanvas.AddComponent<GraphicRaycaster>();
 
@@ -87,6 +87,8 @@ namespace TootTally.Spectating
 
         public static void UpdateViewerList(SocketSpectatorInfo spectatorInfo)
         {
+            if (!_isInitialized) return;
+
             _spectatorInfo = spectatorInfo;
             _viewerIcon?.UpdateViewerList(spectatorInfo);
             UpdateViewIcon();
@@ -94,6 +96,8 @@ namespace TootTally.Spectating
 
         public static void SetCurrentUserState(UserState newUserState)
         {
+            if (!_isInitialized) return;
+
             _currentUserState = newUserState;
             UpdateViewIcon();
             UpdateStopSpectatingButton();
@@ -101,6 +105,8 @@ namespace TootTally.Spectating
 
         public static void OnStopSpectatingButtonClick()
         {
+            if (!_isInitialized) return;
+
             StopAllSpectator();
             _stopSpectatingButton.gameObject.SetActive(false);
             if (IsInGameController)
@@ -109,7 +115,7 @@ namespace TootTally.Spectating
 
         public static void UpdateViewIcon()
         {
-            if (!Plugin.Instance.ShowSpectatorCount.Value || _viewerIcon == null) return;
+            if (!Plugin.Instance.ShowSpectatorCount.Value || _viewerIcon == null || !_isInitialized) return;
 
             if (_spectatorInfo == null || _spectatorInfo.count < 1)
                 _viewerIcon.Hide();
@@ -130,6 +136,8 @@ namespace TootTally.Spectating
 
         public static void UpdateStopSpectatingButton()
         {
+            if (!_isInitialized) return;
+
             if (SpectatingManager.IsSpectating)
                 if (IsInLevelSelect)
                 {

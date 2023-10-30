@@ -13,7 +13,6 @@ namespace TootTally.CustomLeaderboard
 
         private static bool _hasGreetedUser;
         private static GlobalLeaderboard globalLeaderboard;
-
         #region HarmonyPatches
 
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
