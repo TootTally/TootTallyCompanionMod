@@ -197,10 +197,9 @@ namespace TootTally.Replays
 
             string jsonFileFromZip = FileHelper.ReadJsonFromFile(replayDir, replayFileName + ".ttr");
 
-            var replayVersion = JsonConvert.DeserializeObject<ReplayVersion>(jsonFileFromZip);
-            TootTallyLogger.LogInfo("Replay version: " + replayVersion);
+            var replayVersion = JsonConvert.DeserializeObject<ReplayVersion>(jsonFileFromZip).version;
             _replayData = JsonConvert.DeserializeObject<ReplayData>(jsonFileFromZip);
-            _isOldReplay = replayVersion.version == null || IsOldReplayVersion(replayVersion.version);
+            _isOldReplay = replayVersion == null || IsOldReplayVersion(replayVersion);
             if (_isOldReplay)
                 ConvertToCurrentReplayVersion(ref _replayData);
 

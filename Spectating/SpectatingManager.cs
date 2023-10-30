@@ -41,6 +41,8 @@ namespace TootTally.Spectating
             if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count > 0 && !IsHosting)
             {
                 SpectatingOverlay.UpdateViewerList(null);
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
                 _spectatingSystemList.Last().RemoveFromManager();
             }
 
@@ -586,21 +588,18 @@ namespace TootTally.Spectating
                         if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                         {
                             _lastTrackData = TrackLookup.lookup(_lastSongInfo.trackRef);
-                            ClearSpectatingData();
-                            GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
-
-                            GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
-                            TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
-
                             SetTrackToSpectatingTrackref(_lastSongInfo.trackRef);
                             if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == _lastSongInfo.trackRef)
                             {
                                 _currentSongInfo = _lastSongInfo;
                                 _spectatingStarting = true;
+                                ClearSpectatingData();
                                 ReplaySystemManager.SetSpectatingMode();
+                                GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
+                                GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
+                                TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
                                 GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
                                 _levelSelectControllerInstance.clickPlay();
-                                SpectatingOverlay.SetCurrentUserState(UserState.None);
                             }
                             else
                             {
@@ -612,7 +611,7 @@ namespace TootTally.Spectating
                         {
 
                             TootTallyLogger.LogInfo("Do not own the song " + _lastSongInfo.trackRef);
-                            PopUpNotifManager.DisplayNotif($"Do not own the song #{_lastSongInfo.songID}");
+                            PopUpNotifManager.DisplayNotif($"Do not own the song #{_lastSongInfo.trackRef}");
                         }
                     else
                         PopUpNotifManager.DisplayNotif($"No SongInfo from host.");
@@ -696,10 +695,11 @@ namespace TootTally.Spectating
 
                 if (Input.GetKeyDown(KeyCode.Escape) && IsSpectating)
                 {
-                    StopAllSpectator();
+                    SpectatingOverlay.SetCurrentUserState(UserState.None);
                     SpectatingOverlay.UpdateViewerList(null);
                     __instance.gc.quitting = true;
                     __instance.gc.pauseQuitLevel();
+                    StopAllSpectator();
                     PopUpNotifManager.DisplayNotif("Stopped spectating.");
                 }
                 else if (IsSpectating)
@@ -785,6 +785,7 @@ namespace TootTally.Spectating
                         hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
+                
             }
 
 
@@ -842,6 +843,8 @@ namespace TootTally.Spectating
             [HarmonyPostfix]
             public static void OnBackButtonClick()
             {
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
                 _levelSelectControllerInstance = null;
                 if (IsHosting)
                     SetCurrentUserState(UserState.None);

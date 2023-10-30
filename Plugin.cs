@@ -169,12 +169,27 @@ namespace TootTally
         }
         private static LoadingIcon _loginLoadingIcon;
 
+        public static void OnUserLogin(SerializableClass.User user)
+        {
+            userInfo = user;
+            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
+            {
+                userInfo.allowSubmit = allowSubmit;
+            }));
+
+            Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
+            Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
+            Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
+            UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
+        }
+
         private class UserLogin
         {
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
+                _messagesReceived ??= new List<SerializableClass.Message>();
                 _loginLoadingIcon?.Dispose();
                 if (userInfo == null)
                 {
@@ -273,21 +288,6 @@ namespace TootTally
                         if (user != null)
                             OnUserLogin(user);
                     }));
-            }
-
-            private static void OnUserLogin(SerializableClass.User user)
-            {
-                _messagesReceived = new List<SerializableClass.Message>();
-                userInfo = user;
-                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
-                {
-                    userInfo.allowSubmit = allowSubmit;
-                }));
-
-                Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
-                Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
-                Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
-                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
             }
 
         }

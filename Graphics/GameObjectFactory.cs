@@ -806,6 +806,7 @@ namespace TootTally.Graphics
                             return;
                         }
                         PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
+                        Plugin.OnUserLogin(user);
                         Plugin.userInfo = user;
                         Plugin.Instance.APIKey.Value = user.api_key;
                         AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));

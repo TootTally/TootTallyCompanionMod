@@ -43,7 +43,7 @@ namespace TootTally.Spectating
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = true;
-            canvas.sortingOrder = 2;
+            canvas.sortingOrder = 0;
 
             GraphicRaycaster raycaster = _overlayCanvas.AddComponent<GraphicRaycaster>();
 
