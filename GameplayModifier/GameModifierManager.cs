@@ -86,7 +86,7 @@ namespace TootTally.GameplayModifier
         private static void ShowModifierPanel()
         {
             if (_modifierPanel == null) return;
-            if (_modifierPanel.active)
+            if (_modifierPanel.activeSelf)
                 PopUpNotifManager.DisplayNotif("Stop trying to breaking my stuff... -_-", GameTheme.themeColors.notification.defaultText);
             _canClickButtons = false;
 

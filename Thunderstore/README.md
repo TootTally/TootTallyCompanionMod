@@ -1,6 +1,6 @@
 # TootTally Companion Mod
 
-> Version: 0.5.0
+> Version: 0.5.2
 
 The companion mod for submitting scores to [TootTally](https://toottally.com/)
 

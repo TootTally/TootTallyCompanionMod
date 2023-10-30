@@ -1,6 +1,6 @@
 {
     "name": "TootTally",
-    "version_number": "0.5.0",
+    "version_number": "0.5.2",
     "website_url": "https://toottally.com/",
     "description": "Competitive leaderboards and replays for Trombone Champ",
     "dependencies": [

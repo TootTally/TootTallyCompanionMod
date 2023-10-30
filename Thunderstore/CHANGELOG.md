@@ -1,5 +1,26 @@
 #### Changelog:
 
+`v0.5.1` -> `v0.5.2`
+
+```diff
++ ReplayV2: Much more accurate Replay Recorder and Replay Viewer
++ Replays now tries to submit 4 times if failed to submit
++ Added option to change the trombone pitch when playing at different game speed
++ Massively improved spectator performance
++ Several minor UI bug fixes for spectator mode
+```
+
+`v0.5.0` -> `v0.5.1`
+
+```diff
++ Creates Download directory by default if it doesn't exist
++ Fix rare crashes when generating notifications async
++ Fixed local scores not showing when hiding leaderboard
++ Small visual tweaks for trombuddies
++ Memory optimization for spectator mode
++ SongInfo is sent on GameControllerStart, which mean it will boot spectator into a song if the host restarts.
+```
+
 `v0.4.0` -> `v0.5.0`
 
 ```diff
