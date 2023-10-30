@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BepInEx;
-using TootTallyDiffCalcTTV2;
 using Newtonsoft.Json;
 using TootTally.Graphics;
 using TootTally.Utils.APIServices;
@@ -38,7 +37,7 @@ namespace TootTally.Utils
 
         }
 
-        public static async void GetLocalChartRatings(string tmbPath, Action<Chart> callback)
+        /*public static async void GetLocalChartRatings(string tmbPath, Action<Chart> callback)
         {
             Chart chart = null;
             TootTallyLogger.LogInfo($"Looking for {tmbPath}");
@@ -49,7 +48,7 @@ namespace TootTally.Utils
                 callback(chart);
             }
 
-        }
+        }*/
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetUserFromAPIKey(Action<User> callback)
         {

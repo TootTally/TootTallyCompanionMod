@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using BaboonAPI.Hooks.Tracks;
-using TootTallyDiffCalcTTV2;
 using TMPro;
 using TootTally.Graphics;
 using TootTally.Utils;
