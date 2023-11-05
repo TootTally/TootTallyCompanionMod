@@ -107,9 +107,9 @@ namespace TootTally.Spectating
         {
             if (!_isInitialized) return;
 
-            StopAllSpectator();
             if (IsInGameController)
                 SpectatingManagerPatches.QuitSong();
+            StopAllSpectator();
         }
 
         public static void UpdateViewIcon()
@@ -137,19 +137,19 @@ namespace TootTally.Spectating
         {
             if (!_isInitialized) return;
 
-            if (SpectatingManager.IsSpectating)
-                if (IsInLevelSelect)
-                {
-                    _stopSpectatingButton.gameObject.SetActive(true);
-                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.14f, 0.88f);
-                }
-                else if (IsInGameController)
-                {
-                    _stopSpectatingButton.gameObject.SetActive(true);
-                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.2f, 0.09f);
-                }
-                else
-                    _stopSpectatingButton.gameObject.SetActive(false);
+            if (IsInLevelSelect && SpectatingManager.IsSpectating)
+            {
+                _stopSpectatingButton.gameObject.SetActive(true);
+                _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.14f, 0.88f);
+            }
+            else if (IsInGameController && SpectatingManager.IsSpectating)
+            {
+                _stopSpectatingButton.gameObject.SetActive(true);
+                _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.2f, 0.09f);
+            }
+            else
+                _stopSpectatingButton.gameObject.SetActive(false);
+
         }
 
         private static bool IsInGameController => _currentUserState == UserState.Playing || _currentUserState == UserState.Paused;

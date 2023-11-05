@@ -404,6 +404,8 @@ namespace TootTally.Spectating
                 _pointSceneControllerInstance = __instance;
                 if (IsHosting)
                     SetCurrentUserState(UserState.PointScene);
+                SpectatingOverlay.HideViewerIcon();
+                SpectatingOverlay.HideStopSpectatingButton();
                 SpectatingOverlay.HideMarquee();
             }
 
@@ -664,6 +666,8 @@ namespace TootTally.Spectating
                 _gameControllerInstance.pauseQuitLevel();
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
             }
 
             private static void RestartSong()
@@ -673,6 +677,8 @@ namespace TootTally.Spectating
                 _gameControllerInstance.pauseRetryLevel();
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
             }
 
             private static void SetTrackToSpectatingTrackref(string trackref)
