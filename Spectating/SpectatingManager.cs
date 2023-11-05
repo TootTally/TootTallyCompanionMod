@@ -28,8 +28,7 @@ namespace TootTally.Spectating
         public void Awake()
         {
             _spectatingSystemList ??= new List<SpectatingSystem>();
-            SpectatingOverlay.Initialize();
-            if (Plugin.Instance.AllowSpectate.Value)
+            if (Plugin.Instance.AllowSpectate.Value && Plugin.userInfo != null && Plugin.userInfo.id != 0)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSpectatorIDList(idList => currentSpectatorIDList = idList));
         }
@@ -54,8 +53,10 @@ namespace TootTally.Spectating
 
         public static void StopAllSpectator()
         {
-            if (_spectatingSystemList != null)
+            if (_spectatingSystemList != null && _spectatingSystemList.Count > 0)
             {
+                SpectatingOverlay.UpdateViewerList(null);
+                SpectatingOverlay.SetCurrentUserState(UserState.None);
                 for (int i = 0; i < _spectatingSystemList.Count;)
                     RemoveSpectator(_spectatingSystemList[i]);
                 if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
@@ -112,7 +113,7 @@ namespace TootTally.Spectating
 
         public static void OnAllowHostConfigChange(bool value)
         {
-            if (value && hostedSpectatingSystem == null)
+            if (value && hostedSpectatingSystem == null && Plugin.userInfo.id != 0)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             else if (!value && hostedSpectatingSystem != null)
             {
@@ -281,6 +282,11 @@ namespace TootTally.Spectating
             private static bool _spectatingStarting;
             private static bool _wasSpectating;
 
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+
+            public static void InitOverlay() { SpectatingOverlay.Initialize(); }
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void SetLevelSelectUserStatusOnAdvanceSongs(LevelSelectController __instance)
@@ -295,7 +301,7 @@ namespace TootTally.Spectating
                     SetCurrentUserState(UserState.SelectingSong);
                 else if (IsSpectating)
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
-                else if (Plugin.Instance.AllowSpectate.Value)
+                else if (Plugin.Instance.AllowSpectate.Value && Plugin.userInfo.id != 0)
                 {
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
                     SpectatingOverlay.HideViewerIcon();
@@ -447,7 +453,7 @@ namespace TootTally.Spectating
                 if (_lastFrame != _currentFrame && currentMapPosition <= _currentFrame.noteHolder)
                     _lastFrame = _currentFrame;
 
-                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder))
                 {
                     _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => currentMapPosition > x.noteHolder);
                     if (_frameData.Count > _frameIndex && _frameIndex != -1)
@@ -695,8 +701,7 @@ namespace TootTally.Spectating
 
                 if (Input.GetKeyDown(KeyCode.Escape) && IsSpectating)
                 {
-                    SpectatingOverlay.SetCurrentUserState(UserState.None);
-                    SpectatingOverlay.UpdateViewerList(null);
+
                     __instance.gc.quitting = true;
                     __instance.gc.pauseQuitLevel();
                     StopAllSpectator();
@@ -782,10 +787,10 @@ namespace TootTally.Spectating
                     if (_elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time + (__instance.latency_offset / 1000f), __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
-                
+
             }
 
 
@@ -812,7 +817,7 @@ namespace TootTally.Spectating
                     gamemodifiers = GameModifierManager.GetModifiersString()
                 };
 
-                if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value)
+                if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value && Plugin.userInfo.id != 0)
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
 
                 if (IsHosting)

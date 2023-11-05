@@ -68,7 +68,15 @@ namespace TootTally.Graphics
 
         }
 
-        public static string SliderValueToText(float value) => ((int)(value * 100)).ToString();
+        public static string SliderValueToText(float value)
+        {
+            //return Mathf.RoundToInt(value * 100).ToString();
+
+            if (value >= 1)
+                return Mathf.FloorToInt(value * 100).ToString();
+            else
+                return Mathf.CeilToInt(value * 100).ToString();
+        }
     }
     public class Options
     {

@@ -108,7 +108,6 @@ namespace TootTally.Spectating
             if (!_isInitialized) return;
 
             StopAllSpectator();
-            _stopSpectatingButton.gameObject.SetActive(false);
             if (IsInGameController)
                 SpectatingManagerPatches.QuitSong();
         }

@@ -31,8 +31,6 @@ namespace TootTally.GameplayModifier
         static void OnLevelSelectControllerStartPostfix(LevelSelectController __instance)
         {
             if (!_isInitialized) Initialize();
-
-
             _modifierButtonDict.Clear();
 
             _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", false, ShowModifierPanel);
@@ -96,9 +94,10 @@ namespace TootTally.GameplayModifier
 
             _showModifierPanelButton.transform.localScale = Vector2.zero;
             _openAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one / 2f, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f));
-            AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), (sender) =>
+            AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), sender =>
             {
-                _modifierButtonDict.Values.Do(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f), (sender) => { _canClickButtons = true; }));
+                _canClickButtons = true;
+                _modifierButtonDict.Values.Do(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f)));
             });
         }
 
@@ -123,14 +122,14 @@ namespace TootTally.GameplayModifier
             _canClickButtons = false;
             if (!_gameModifierDict.ContainsKey(modifierType))
             {
-                AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
+                AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.15f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), sender => { _canClickButtons = true; });
                 _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(true);
                 PopUpNotifManager.DisplayNotif($"{modifierType} mod enabled.", GameTheme.themeColors.notification.defaultText);
                 Add(modifierType);
                 return;
             }
 
-            AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.5f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
+            AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.15f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), sender => { _canClickButtons = true; });
             _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(false);
             PopUpNotifManager.DisplayNotif($"{modifierType} mod disabled.", GameTheme.themeColors.notification.defaultText);
             Remove(modifierType);

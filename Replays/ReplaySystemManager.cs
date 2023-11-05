@@ -306,10 +306,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     if (!_hasRewindReplay && !__instance.retrying) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
-                    {
-                        double time = (double)__instance.musictrack.timeSamples / __instance.musictrack.clip.samples * __instance.musictrack.clip.length;
-                        _replay.PlaybackReplay(__instance, (float)time);
-                    }
+                        _replay.PlaybackReplay(__instance, __instance.musictrack.time);
                     _hasRewindReplay = false;
                     break;
             }
@@ -632,6 +629,7 @@ namespace TootTally.Replays
             SetReplaySpeedSlider(UIHolder.transform, __instance);
             SetReplayTimestampSlider(UIHolder.transform, __instance);
             SetReplayMarquees(UIHolder.transform);
+            __instance.pointer.transform.localPosition -= new Vector3(2, 0, 0); //Small fix for cursor position
         }
 
 

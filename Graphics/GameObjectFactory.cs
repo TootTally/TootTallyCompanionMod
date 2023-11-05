@@ -709,6 +709,7 @@ namespace TootTally.Graphics
                 _ => new Color(0, 0, 0, 1),
             };
 
+        //TODO: Redo this from scratch jesus this is uggly
         public static GameObject CreateLoginPanel(HomeController __instance)
         {
             GameObject playTesterPopup = __instance.ext_credits_go.transform.parent.gameObject;
@@ -807,8 +808,6 @@ namespace TootTally.Graphics
                         }
                         PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
                         Plugin.OnUserLogin(user);
-                        Plugin.userInfo = user;
-                        Plugin.Instance.APIKey.Value = user.api_key;
                         AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
                         AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
                         {
@@ -879,7 +878,7 @@ namespace TootTally.Graphics
                         return; //skip requests
                     }
                     PopUpNotifManager.DisplayNotif($"Sending sign up request... Please wait.", GameTheme.themeColors.notification.defaultText);
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(usernameInput.text, passwordInput.text, confirmInput.text, (isValid) =>
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(usernameInput.text, passwordInput.text, confirmInput.text, isValid =>
                     {
                         if (isValid)
                         {
@@ -888,15 +887,15 @@ namespace TootTally.Graphics
                             {
                                 if (token.token != "")
                                 {
-                                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, (user) =>
+                                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, user =>
                                     {
                                         if (user != null)
                                         {
                                             PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
-                                            Plugin.userInfo = user;
+                                            Plugin.OnUserLogin(user);
                                             Plugin.Instance.APIKey.Value = user.api_key;
                                             AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                                            AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
+                                            AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), sender =>
                                             {
                                                 GameObject.DestroyImmediate(sender);
                                             });

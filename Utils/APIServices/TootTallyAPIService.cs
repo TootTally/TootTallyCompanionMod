@@ -18,6 +18,7 @@ namespace TootTally.Utils
     {
         public const string APIURL = "https://toottally.com";
         public const string SPECURL = "https://spec.toottally.com";
+        public const string MULTURL = "https://spec.toottally.com/mp";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
         public const string PFPURL = "https://cdn.toottally.com/profile/";
@@ -618,6 +619,22 @@ namespace TootTally.Utils
                 var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
                 callback(userList);
             }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> CreateMultiplayerServerRequest(string name, string description, string password, int maxPlayer, Action<string> callback)
+        {
+            string query = $"{MULTURL}/create";
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequestWithHeader(query, data, new List<string[]> { new string[] { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } });
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback(webRequest.downloadHandler.text);
             else
                 callback(null);
         }

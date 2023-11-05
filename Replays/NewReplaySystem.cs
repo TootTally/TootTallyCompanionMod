@@ -64,6 +64,10 @@ namespace TootTally.Replays
                 _replayData.songhash = SongDataHelper.GetSongHash(track);
             else
                 _replayData.songhash = SongDataHelper.CalcSHA256Hash(Encoding.UTF8.GetBytes(SongDataHelper.GenerateBaseTmb(track)));
+
+            _currentFrame = new dynamic[5];
+            _currentNote = new dynamic[9];
+            _currentToot = new dynamic[3];
             TootTallyLogger.LogInfo("Started recording replay");
         }
 
@@ -90,12 +94,17 @@ namespace TootTally.Replays
         {
             if (Input.touchCount > 0) _wasTouchScreenUsed = true;
 
-            _currentFrame = new dynamic[] { Round(time, 10f), Round(noteHolderPosition, 10f), Round(__instance.pointer.transform.localPosition.y), (int)Input.mousePosition.x, (int)Input.mousePosition.y };
+            _currentFrame[0] = Round(time, 10f);
+            _currentFrame[1] = Round(noteHolderPosition, 10f);
+            _currentFrame[2] = Round(__instance.pointer.transform.localPosition.y);
+            _currentFrame[3] = (int)Input.mousePosition.x;
+            _currentFrame[4] = (int)Input.mousePosition.y;
 
             if (_lastFrame == null || (_currentFrame[2] != _lastFrame[2] && _currentFrame[1] != _lastFrame[1] && _currentFrame[4] != _lastFrame[4]))
             {
-                _replayData.framedata.Add(_currentFrame);
-                _lastFrame = _currentFrame;
+                var clone = (dynamic[])_currentFrame.Clone();
+                _replayData.framedata.Add(clone);
+                _lastFrame = clone;
             }
 
         }
@@ -105,7 +114,6 @@ namespace TootTally.Replays
 
         public void RecordNoteDataPrefix(GameController __instance)
         {
-            _currentNote = new dynamic[9];
             _currentNote[0] = Round(__instance.notescoreaverage);
             _currentNote[1] = __instance.released_button_between_notes ? 1 : 0;
         }
@@ -119,7 +127,7 @@ namespace TootTally.Replays
             _currentNote[6] = Round(__instance.currenthealth);
             _currentNote[7] = _maxCombo = __instance.highestcombo_level;
             _currentNote[8] = _lastTally;
-            _replayData.notedata.Add(_currentNote);
+            _replayData.notedata.Add((dynamic[])_currentNote.Clone());
         }
 
         private int _lastTally;
@@ -128,7 +136,10 @@ namespace TootTally.Replays
 
         public void RecordToot(float time, float noteHolderPosition, bool isTooting)
         {
-            _replayData.tootdata.Add(new dynamic[] { Round(time, 10f), Round(noteHolderPosition, 10f), isTooting ? 1 : 0 });
+            _currentToot[0] = Round(time, 10f);
+            _currentToot[1] = Round(noteHolderPosition, 10f);
+            _currentToot[2] = isTooting ? 1 : 0;
+            _replayData.tootdata.Add((dynamic[])_currentToot.Clone());
         }
 
         public string GetRecordedReplayJson(string uuid)
@@ -280,7 +291,8 @@ namespace TootTally.Replays
             if (_isOldReplay)
                 time = (_replayData.pluginbuilddate < 20230705 ?
                  Math.Abs(__instance.noteholder.transform.position.x) : Math.Abs(__instance.noteholderr.anchoredPosition.x)) * GetNoteHolderPrecisionMultiplier();
-
+            else
+                time = time - (__instance.latency_offset / 1000f) + (_replayData.audiolatency / 1000f);
             PlaybackTimeFrameData(time);
             PlaybackTimeTootData(time);
             if (_replayData.framedata.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
@@ -365,7 +377,7 @@ namespace TootTally.Replays
         #region Utils
         public void SetCursorPosition(GameController __instance, float newPosition)
         {
-            Vector3 pointerPosition = __instance.pointer.transform.localPosition;
+            Vector2 pointerPosition = __instance.pointer.transform.localPosition;
             pointerPosition.y = newPosition;
             __instance.pointer.transform.localPosition = pointerPosition;
         }

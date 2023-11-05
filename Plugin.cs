@@ -6,8 +6,10 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using Microsoft.FSharp.Collections;
+using Rewired.ComponentControls.Data;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TootTally.CustomLeaderboard;
 using TootTally.Discord;
 using TootTally.GameplayModifier;
@@ -22,6 +24,7 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using TootTally.Utils.TootTallySettings;
 using UnityEngine;
+using static UnityEngine.GridBrushBase;
 
 namespace TootTally
 {
@@ -87,6 +90,8 @@ namespace TootTally
 
         private void TryInitialize()
         {
+            userInfo = new SerializableClass.User() { allowSubmit = false, id = 0, username = "Guess" };
+
             if (_tootTallyMainPage != null)
             {
                 _tootTallyMainPage.AddToggle("ShouldDisplayToasts", new Vector2(400, 50), "Display Toasts", ShouldDisplayToasts);
@@ -98,6 +103,7 @@ namespace TootTally
                 _tootTallyMainPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
                 _tootTallyMainPage.AddToggle("ChangePitchSpeed", new Vector2(400, 50), "Change Pitch Speed", ChangePitchSpeed);
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
+                //_tootTallyMainPage.AddButton("OpenLoginButton", new Vector2(400, 60), "Open Login Panel", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
                 //Adding / Removing causes out of bound / index not found exceptions
             }
@@ -113,13 +119,22 @@ namespace TootTally
             _harmony.PatchAll(typeof(GameModifierManager));
             _harmony.PatchAll(typeof(DiscordRPCManager));
             _harmony.PatchAll(typeof(UserStatusUpdater));
+            _harmony.PatchAll(typeof(TootTallyMainPatches));
             //Managers
             gameObject.AddComponent<PopUpNotifManager>();
             gameObject.AddComponent<AnimationManager>();
             gameObject.AddComponent<DiscordRPCManager>();
+
             TootTallyLogger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} [Build {BUILDDATE}] is loaded!");
             TootTallyLogger.LogInfo($"Game Version: {Application.version}");
             TracksLoadedEvent.EVENT.Register(new UserLogin.TracksLoaderListener());
+        }
+
+        public void OnHomeControllerStartInitalizeManagers()
+        {
+            Instance.gameObject.AddComponent<SpectatingManager>();
+            Instance.gameObject.AddComponent<TootTallyOverlayManager>();
+            Instance.gameObject.AddComponent<UserStatusManager>();
         }
 
         public static void AddModule(ITootTallyModule module)
@@ -167,50 +182,48 @@ namespace TootTally
                 PopUpNotifManager.DisplayNotif($"Module {module.Name} Disabled.", GameTheme.themeColors.notification.defaultText);
             }
         }
-        private static LoadingIcon _loginLoadingIcon;
 
         public static void OnUserLogin(SerializableClass.User user)
         {
             userInfo = user;
-            Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
+            if (userInfo.api_key != null && userInfo.api_key != "")
+                Plugin.Instance.APIKey.Value = userInfo.api_key;
+            if (userInfo.id == 0)
             {
-                userInfo.allowSubmit = allowSubmit;
-            }));
+                userInfo.allowSubmit = false;
+            }
+            else
+            {
+                Instance.StartCoroutine(TootTallyAPIService.SendModInfo(Chainloader.PluginInfos, allowSubmit =>
+                {
+                    userInfo.allowSubmit = allowSubmit;
+                }));
+                UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
+            }
+        }
 
-            Plugin.Instance.gameObject.AddComponent<SpectatingManager>();
-            Plugin.Instance.gameObject.AddComponent<TootTallyOverlayManager>();
-            Plugin.Instance.gameObject.AddComponent<UserStatusManager>();
-            UserStatusManager.SetUserStatus(UserStatusManager.UserStatus.Online);
+        private class TootTallyMainPatches
+        {
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+            public static void OnHomeControllerStartInitalize() => Instance.OnHomeControllerStartInitalizeManagers();
         }
 
         private class UserLogin
         {
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPrefix]
             public static void OnHomeControllerStartLoginUser(HomeController __instance)
             {
                 _messagesReceived ??= new List<SerializableClass.Message>();
-                _loginLoadingIcon?.Dispose();
-                if (userInfo == null)
+                if (userInfo.id == 0)
                 {
-                    _loginLoadingIcon = GameObjectFactory.CreateLoadingIcon(__instance.fullcanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), true, "UserLoginSwirly");
-                    var rect = _loginLoadingIcon.iconHolder.GetComponent<RectTransform>();
-                    rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
-                    _loginLoadingIcon.StartRecursiveAnimation();
                     Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
                     {
-                        _loginLoadingIcon.Dispose();
-                        _loginLoadingIcon = null;
-                        if (user != null)
-                        {
-                            OnUserLogin(user);
-                            if (user.id == 0)
-                            {
-                                GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
-                                loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
-                                AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
-                            }
-                        }
+                        OnUserLogin(user);
+                        if (user.id == 0)
+                            OpenLoginPanel(__instance);
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
@@ -221,13 +234,20 @@ namespace TootTally
                 }
             }
 
+            private static void OpenLoginPanel(HomeController __instance)
+            {
+                GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
+                loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
+                AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+            }
+
             private static List<SerializableClass.Message> _messagesReceived;
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void OnLevelSelectScreenGetMessagesFromServer(LevelSelectController __instance)
             {
-                if (userInfo == null || userInfo.id == 0) return; //Do not receive massages if not logged in
+                if (userInfo.id == 0) return; //Do not receive massages if not logged in
 
                 Instance.StartCoroutine(TootTallyAPIService.GetMessageFromAPIKey((messages) =>
                 {
@@ -281,13 +301,8 @@ namespace TootTally
             [HarmonyPrefix]
             public static void UpdateUserInfoOnLevelSelect()
             {
-                //in case they failed to login. Try logging in again
-                if (userInfo == null || userInfo.id == 0)
-                    Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey((user) =>
-                    {
-                        if (user != null)
-                            OnUserLogin(user);
-                    }));
+                if (userInfo.id == 0)
+                    Instance.StartCoroutine(TootTallyAPIService.GetUserFromAPIKey(OnUserLogin));
             }
 
         }

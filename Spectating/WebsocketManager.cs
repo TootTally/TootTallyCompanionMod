@@ -7,20 +7,22 @@ namespace TootTally.Spectating
 {
     public class WebsocketManager
     {
-        private const string SPEC_URL = "wss://spec.toottally.com:443/spec/";
         private const string VERSION = "1.3.0";
 
         private WebSocket _websocket;
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
-        public bool ConnectionPending { get; private set; }
-        protected int _id { get; private set; }
+        public bool ConnectionPending { get; protected set; }
 
-        public WebsocketManager(int id)
+        protected string _id { get; private set; }
+        protected string _url { get; private set; }
+        protected string _version { get; private set; }
+
+        public WebsocketManager(string id, string url, string version)
         {
+            _url = url;
             _id = id;
-            ConnectionPending = true;
-            ConnectToWebSocketServer(id);
+            _version = version;
         }
 
         public void SendToSocket(byte[] data)
@@ -58,12 +60,12 @@ namespace TootTally.Spectating
         }
 
 
-        public void ConnectToWebSocketServer(int userId)
+        public void ConnectToWebSocketServer(string url, bool isHost)
         {
-            _websocket = CreateNewWebSocket(SPEC_URL + userId);
+            _websocket = CreateNewWebSocket(url);
             _websocket.CustomHeaders = new Dictionary<string, string>() { { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value }, { "Version", VERSION } };
             TootTallyLogger.LogInfo($"Connecting to WebSocket server...");
-            IsHost = userId == Plugin.userInfo.id;
+            IsHost = isHost;
             _websocket.ConnectAsync();
         }
 
