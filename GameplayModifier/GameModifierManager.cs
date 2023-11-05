@@ -161,6 +161,17 @@ namespace TootTally.GameplayModifier
             }
         }
 
+        [HarmonyPatch(typeof(GameController), nameof(GameController.doScoreText))]
+        [HarmonyPostfix]
+        public static void UpdateBurtalMode(GameController __instance)
+        {
+            if (!_isInitialized) return;
+
+            _gameModifierDict.TryGetValue(GameModifiers.ModifierType.Brutal, out GameModifierBase b);
+            if (b != null)
+                (b as GameModifiers.Brutal).UpdateSpeed(__instance);
+        }
+
         public static void Remove(GameModifiers.ModifierType modifierType)
         {
             _gameModifierDict.Remove(modifierType);

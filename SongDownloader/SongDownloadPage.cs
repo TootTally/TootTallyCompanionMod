@@ -114,6 +114,9 @@ namespace TootTally.SongDownloader
             _loadingIcon.Hide();
             _verticalSlider.value = 0;
             searchInfo.results.OrderByDescending(x => x.id).ToList()?.ForEach(AddSongToPage);
+
+            _verticalSlider.gameObject.SetActive(searchInfo.results.Length > 5);
+            _scrollableSliderHandler.enabled = searchInfo.results.Length > 5;
             if (searchInfo.next != null)
                 _nextButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-350, -175), new Vector2(50, 50), ">>", $"{name}NextButton", () => Search(searchInfo.next, false)).gameObject;
             if (searchInfo.previous != null)

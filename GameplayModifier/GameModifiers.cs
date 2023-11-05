@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Steamworks;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Xml.Linq;
+using TMPro;
 using TootTally.Replays;
 using TootTally.Utils;
 using UnityEngine;
@@ -126,8 +130,7 @@ namespace TootTally.GameplayModifier
             }
 
             public static Color GetColorZeroAlpha(Color color) => new(color.r, color.g, color.b, 0);
-        }
-
+        }   
 
         public class Flashlight : GameModifierBase
         {
@@ -187,25 +190,39 @@ namespace TootTally.GameplayModifier
 
             public override ModifierType ModifierType => ModifierType.Brutal;
 
+            private float _defaultSpeed;
+            private float _speed;
+            private int _lastCombo;
 
             public override void Initialize(GameController __instance)
             {
-                ReplaySystemManager.gameSpeedMultiplier = 1f;
+                _defaultSpeed = ReplaySystemManager.gameSpeedMultiplier;
+                _speed = _defaultSpeed;
+                _lastCombo = 0;
             }
 
             public override void Update(GameController __instance)
             {
-                if (__instance.paused || __instance.quitting || __instance.retrying)
-                    Time.timeScale = 1f;
-                else
+                if (__instance.paused || __instance.quitting || __instance.retrying || __instance.level_finished)
                 {
-                    if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
-                        __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                    Time.timeScale = Mathf.Clamp(1 + (__instance.highestcombocounter / 100f), 1, 2);
-                    __instance.musictrack.pitch = Time.timeScale;
-                    __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
+                    _speed = _defaultSpeed;
+                    Time.timeScale = 1f;
                 }
-                
+                else if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
+                    __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
+            }
+
+            public void UpdateSpeed(GameController __instance)
+            {
+                if (_lastCombo != __instance.highestcombocounter || __instance.highestcombocounter == 0)
+                {
+                    var shouldIncreaseSpeed = _lastCombo < __instance.highestcombocounter && __instance.highestcombocounter != 0;
+                    _speed = Mathf.Clamp(_speed + (shouldIncreaseSpeed ? .015f : -.07f), _defaultSpeed, 2f);
+                    Time.timeScale = _speed / _defaultSpeed;
+                    __instance.musictrack.pitch = _speed;
+                    __instance.audmix.SetFloat("pitchShifterMult", 1f / _speed);
+                }
+                _lastCombo = __instance.highestcombocounter;
             }
         }
 
