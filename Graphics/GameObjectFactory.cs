@@ -995,9 +995,11 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, bool active, Action onClick = null)
+        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, string description, bool active, Action onClick = null)
         {
             var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
+            if (description != "")
+                btn.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(Vector2.zero, $"{name}Bubble", description, 6, true, 16));
             var glow = new GameObject("glow", typeof(Image));
             var image = glow.GetComponent<Image>();
             image.maskable = true;

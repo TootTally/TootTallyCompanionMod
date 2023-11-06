@@ -33,7 +33,7 @@ namespace TootTally.GameplayModifier
             if (!_isInitialized) Initialize();
             _modifierButtonDict.Clear();
 
-            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", false, ShowModifierPanel);
+            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", "", false, ShowModifierPanel);
             _showModifierPanelButton.transform.localScale = Vector2.one;
             _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
             _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
@@ -54,15 +54,15 @@ namespace TootTally.GameplayModifier
             layout.ignoreLayout = true;
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Hidden,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Hidden),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton","Hidden: Notes will disappear as they\n approach the left", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Hidden),
                 delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Flashlight,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Flashlight),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", "Flashlight: Only a small circle around the\n cursor is visible", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Flashlight),
                 delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", "Burtal: Game will speed up if you do good and\n slows down when you are bad", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
                 delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
         }
 
