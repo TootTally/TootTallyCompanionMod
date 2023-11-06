@@ -20,7 +20,11 @@ namespace TootTally.CustomLeaderboard
         static void OnLevelSelectControllerStartPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
         {
             _hasLeaderboardFinishedLoading = false;
-            if (!Plugin.Instance.ShowLeaderboard.Value) return;
+            if (!Plugin.Instance.ShowLeaderboard.Value)
+            {
+                BetterScrollSpeedSliderPatcher.PatchScrollSpeedSlider();
+                return;
+            }
 
             globalLeaderboard = new GlobalLeaderboard();
             globalLeaderboard.Initialize(__instance);
@@ -166,13 +170,6 @@ namespace TootTally.CustomLeaderboard
                 globalLeaderboard.HideLoadingSwirly();
             }
 
-        }
-
-
-        public static void SetGameSpeedSlider(float speed)
-        {
-            TootTallyLogger.LogInfo("GameSpeed Set: " + speed);
-            globalLeaderboard?.SetGameSpeedSliderValue(speed);
         }
         #endregion
     }

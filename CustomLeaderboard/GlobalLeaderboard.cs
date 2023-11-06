@@ -473,8 +473,6 @@ namespace TootTally.CustomLeaderboard
             _tabs.SetActive(true);
         }
 
-        public void SetGameSpeedSliderValue(float value) => _gameSpeedSlider.value = value;
-
         public enum LeaderboardState
         {
             None,

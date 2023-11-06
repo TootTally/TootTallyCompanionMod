@@ -65,6 +65,17 @@ namespace TootTally.Replays
                 return;
             }
 
+            if (GlobalVariables.turbomode)
+            {
+                gameSpeedMultiplier = 2f;
+            }
+            else if (GlobalVariables.practicemode != 1f)
+            {
+                gameSpeedMultiplier = GlobalVariables.practicemode;
+            }
+            else if (!Plugin.Instance.ShowLeaderboard.Value)
+                gameSpeedMultiplier = 1f;
+
             if (_replayFileName == null)
                 OnRecordingStart();
             else if (_replayFileName == "Spectating")
@@ -130,7 +141,7 @@ namespace TootTally.Replays
                     TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
             }
-            else
+            else if (Plugin.Instance.ShowLeaderboard.Value)
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
@@ -143,7 +154,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnFixAudioMixerStuffPostFix(GameController __instance)
         {
-            if (gameSpeedMultiplier != 1f && !Plugin.Instance.ChangePitchSpeed.Value)
+            if (gameSpeedMultiplier != 1f && !Plugin.Instance.ChangePitchSpeed.Value && Plugin.Instance.ShowLeaderboard.Value)
             {
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
                 __instance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
@@ -154,7 +165,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnGameControllerStartDanceFixSpeedBackup(GameController __instance)
         {
-            if (gameSpeedMultiplier != 1f && __instance.musictrack.pitch != gameSpeedMultiplier)
+            if (gameSpeedMultiplier != 1f && __instance.musictrack.pitch != gameSpeedMultiplier && Plugin.Instance.ShowLeaderboard.Value)
             {
                 __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 __instance.musictrack.pitch = gameSpeedMultiplier;

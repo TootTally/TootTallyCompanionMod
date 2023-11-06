@@ -604,7 +604,7 @@ namespace TootTally.Spectating
                                 _spectatingStarting = true;
                                 ClearSpectatingData();
                                 ReplaySystemManager.SetSpectatingMode();
-                                GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
+                                ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
                                 GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
                                 TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
                                 GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);

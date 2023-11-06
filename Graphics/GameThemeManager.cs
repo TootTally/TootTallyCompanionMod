@@ -520,12 +520,18 @@ namespace TootTally.Graphics
         {
             for (int i = 0; i < 10; i++)
             {
+                if (!Plugin.Instance.ShowLeaderboard.Value && i >= __instance.alltrackslist[__instance.songindex].difficulty) break;
+
                 if (!GameTheme.isDefault)
                     __instance.diffstars[i].color = Color.Lerp(GameTheme.themeColors.diffStar.gradientStart, GameTheme.themeColors.diffStar.gradientEnd, i / 9f);
-                else
+                else 
                     __instance.diffstars[i].color = Color.white;
-                __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
-                __instance.diffstars[i].maskable = true;
+
+                if (Plugin.Instance.ShowLeaderboard.Value)
+                {
+                    __instance.diffstars[i].gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 19, 0);
+                    __instance.diffstars[i].maskable = true;
+                }
             }
             if (GameTheme.isDefault || songyear == null) return;
             songyear.text = __instance.songyear.text;
