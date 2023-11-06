@@ -32,6 +32,13 @@ namespace TootTally.Utils.TootTallySettings
         {
             slider = TootTallySettingObjectFactory.CreateSlider(_page.gridPanel.transform, name, _min, _max, _integerOnly);
             slider.GetComponent<RectTransform>().sizeDelta = new Vector2(_length, 20);
+
+            if (_config.Description.Description != null && _config.Description.Description.Length > 0)
+            {
+                var bubble = slider.gameObject.AddComponent<BubblePopupHandler>();
+                bubble.Initialize(GameObjectFactory.CreateBubble(Vector2.zero, $"{name}Bubble", _config.Description.Description, Vector2.zero, 6, true), true);
+            }
+
             var handleText = slider.transform.Find("Handle Slide Area/Handle/SliderHandleText").GetComponent<TMP_Text>();
             handleText.rectTransform.anchoredPosition = Vector2.zero;
             handleText.rectTransform.sizeDelta = new Vector2(35, 0);

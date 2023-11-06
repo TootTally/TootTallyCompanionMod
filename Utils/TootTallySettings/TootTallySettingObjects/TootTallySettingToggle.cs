@@ -1,4 +1,5 @@
 ﻿using BepInEx.Configuration;
+using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -25,6 +26,13 @@ namespace TootTally.Utils.TootTallySettings
         public override void Initialize()
         {
             toggle = TootTallySettingObjectFactory.CreateToggle(_page.gridPanel.transform, name, _size, _text, _config);
+
+            if (_config.Description.Description != null && _config.Description.Description.Length > 0)
+            {
+                var bubble = toggle.gameObject.AddComponent<BubblePopupHandler>();
+                bubble.Initialize(GameObjectFactory.CreateBubble(Vector2.zero, $"{name}Bubble", _config.Description.Description, Vector2.zero, 6, true), true);
+            }
+
             if (_onValueChange != null)
                 toggle.onValueChanged.AddListener(_onValueChange);
             base.Initialize();

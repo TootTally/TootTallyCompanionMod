@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using System.Linq;
 using TMPro;
+using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,6 +25,11 @@ namespace TootTally.Utils.TootTallySettings
         public override void Initialize()
         {
             dropdown = TootTallySettingObjectFactory.CreateDropdown(_page.gridPanel.transform, name);
+            if (_config.Description.Description != null && _config.Description.Description.Length > 0)
+            {
+                var bubble = dropdown.gameObject.AddComponent<BubblePopupHandler>();
+                bubble.Initialize(GameObjectFactory.CreateBubble(Vector2.zero, $"{name}Bubble", _config.Description.Description, Vector2.zero, 6, true), true);
+            }
             if (_optionValues != null)
                 AddOptions(_optionValues);
             if (!_optionValues.Contains(_config.Value))

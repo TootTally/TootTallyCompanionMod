@@ -135,7 +135,8 @@ namespace TootTally.Utils.TootTallySettings
             OnHide();
         }
 
-        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, string description = "", Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, description, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddButton(name, size, text, "", OnClick);
         public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
 
         public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, ConfigEntry<float> config, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, config, integerOnly)) as TootTallySettingSlider;
@@ -147,8 +148,9 @@ namespace TootTally.Utils.TootTallySettings
         public TootTallySettingDropdown AddDropdown(string name, string text, ConfigEntry<string> config, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, text, config, optionValues)) as TootTallySettingDropdown;
         public TootTallySettingDropdown AddDropdown(string name, ConfigEntry<string> config, params string[] optionValues) => AddDropdown(name, name, config, optionValues);
 
-        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
-        public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
+        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, string description = "", bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, description, isPassword, onSubmit)) as TootTallySettingTextField;
+        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddTextField(name, size, fontSize, defaultValue,"", isPassword, onSubmit);
+        public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddTextField(name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword, onSubmit);
         
         public TootTallySettingColorSliders AddColorSliders(string name, string text, float length, ConfigEntry<Color> config) => AddSettingObjectToList(new TootTallySettingColorSliders(this, name, text, length, config)) as TootTallySettingColorSliders;
         public TootTallySettingColorSliders AddColorSliders(string name, string text, ConfigEntry<Color> config) => AddColorSliders(name, text, DEFAULT_SLIDER_LENGTH, config);
