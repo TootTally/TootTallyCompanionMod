@@ -320,6 +320,7 @@ namespace TootTally.Spectating
                         hostedSpectatingSystem.SendSongInfoToSocket(_lastHostSongInfo);
                     SetCurrentUserState(UserState.GettingReady);
                 }
+                _isQuickRestarting = false;
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = __instance;
@@ -769,6 +770,7 @@ namespace TootTally.Spectating
             }
 
             private static float _elapsedTime;
+            private static bool _isQuickRestarting;
             private static readonly float _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
@@ -795,6 +797,11 @@ namespace TootTally.Spectating
                         _elapsedTime = 0f;
                         hostedSpectatingSystem.SendFrameData(__instance.musictrack.time + (__instance.latency_offset / 1000f), __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
+                }
+                else if (IsHosting && __instance.restarttimer > .4f && !_isQuickRestarting)
+                {
+                    _isQuickRestarting = true;
+                    SetCurrentUserState(UserState.Restarting);
                 }
 
             }

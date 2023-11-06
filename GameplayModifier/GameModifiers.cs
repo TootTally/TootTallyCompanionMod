@@ -8,6 +8,7 @@ using TootTally.Replays;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
+using static Unity.Audio.Handle;
 
 namespace TootTally.GameplayModifier
 {
@@ -23,20 +24,18 @@ namespace TootTally.GameplayModifier
             public Hidden() : base() { }
 
             public static List<GameObject> _allnoteList;
-            public static List<GameObject> _processedNotes;
             public static List<FullNoteComponents> _activeNotesComponents;
             public static List<FullNoteComponents> _notesToRemove;
             public static Color _headOutColor, _headInColor, _headOutColorLerpEnd, _headInColorLerpEnd;
             public static Color _tailOutColor, _tailInColor, _tailOutColorLerpEnd, _tailInColorLerpEnd;
             public static Color _bodyOutStartColor, _bodyOutEndColor, _bodyOutStartColorLerpEnd, _bodyOutEndColorLerpEnd;
             public static Color _bodyInStartColor, _bodyInEndColor, _bodyInStartColorLerpEnd, _bodyInEndColorLerpEnd;
-            public const float START_FADEOUT_POSX = 3.8f;
-            public const float END_FADEOUT_POSX = -0.75f;
+            public const float START_FADEOUT_POSX = 3.7f;
+            public const float END_FADEOUT_POSX = -0.7f;
 
             public override void Initialize(GameController __instance)
             {
                 _allnoteList = __instance.allnotes;
-                _processedNotes = new List<GameObject>();
                 _activeNotesComponents = new List<FullNoteComponents>();
                 _notesToRemove = new List<FullNoteComponents>();
 
@@ -69,9 +68,10 @@ namespace TootTally.GameplayModifier
 
             public override void Update(GameController __instance)
             {
-                foreach (GameObject currentNote in _allnoteList.Where(n => !_processedNotes.Contains(n)))
+                //Start pos * 2.7f is roughly the complete right of the screen, which means the notes are added as they enter the screen
+                foreach (GameObject currentNote in _allnoteList.Where(n => n.transform.position.x <= START_FADEOUT_POSX * 2.7f && !_activeNotesComponents.Any(c => c.note == n)))
                 {
-                    if (currentNote.transform.position.x <= START_FADEOUT_POSX && currentNote.transform.Find("EndPoint").position.x > END_FADEOUT_POSX + 1)
+                    if (currentNote.transform.position.x <= START_FADEOUT_POSX * 2.7f && currentNote.transform.Find("EndPoint").position.x > END_FADEOUT_POSX + 1)
                     {
                         var noteComp = new FullNoteComponents()
                         {
@@ -83,7 +83,11 @@ namespace TootTally.GameplayModifier
                             line = currentNote.transform.Find("Line").GetComponent<LineRenderer>(),
                             note = currentNote,
                         };
-                        _processedNotes.Add(currentNote);
+
+                        noteComp.outlineLine.startColor = _bodyOutStartColor;
+                        noteComp.outlineLine.endColor = _bodyOutEndColor;
+                        noteComp.line.startColor = _bodyInStartColor;
+                        noteComp.line.endColor = _bodyInEndColor;
                         _activeNotesComponents.Add(noteComp);
                     }
                 }
@@ -130,7 +134,7 @@ namespace TootTally.GameplayModifier
             }
 
             public static Color GetColorZeroAlpha(Color color) => new(color.r, color.g, color.b, 0);
-        }   
+        }
 
         public class Flashlight : GameModifierBase
         {
