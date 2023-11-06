@@ -62,7 +62,7 @@ namespace TootTally.GameplayModifier
                 delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", "Burtal: Game will speed up if you do good and\n slows down when you are bad", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", "Brutal: Game will speed up if you do good and\n slow down when you are bad", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
                 delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
         }
 

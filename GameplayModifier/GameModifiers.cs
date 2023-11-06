@@ -151,19 +151,14 @@ namespace TootTally.GameplayModifier
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 rightSquare.transform.SetParent(__instance.pointer.transform);
                 rightSquare.transform.position = new Vector3(5, 0, 1);
-                rightSquare.transform.localScale = new Vector2(IsAspect16_10() ? 8.8f : 8.35f, 20);
+                rightSquare.transform.localScale = new Vector2(IsAspect16_10() ? 8.75f : 8.3f, 20);
                 var image = rightSquare.GetComponent<Image>();
                 image.maskable = true;
                 image.color = new Color(0, 0, 0, 1f);
                 var topSquare = GameObject.Instantiate(rightSquare, __instance.pointer.transform);
                 var bottomSquare = GameObject.Instantiate(topSquare, __instance.pointer.transform);
                 var cursorMask = GameObject.Instantiate(topSquare, __instance.pointer.transform);
-                if (Camera.main.aspect >= 1.7)
-                    Debug.Log("16:9");
-                else if (Camera.main.aspect >= 1.5)
-                    Debug.Log("3:2");
-                else
-                    Debug.Log("4:3");
+
                 topSquare.transform.localScale = new Vector2(8.35f, 3f);
                 topSquare.GetComponent<RectTransform>().pivot = new Vector2(0.5f, -0.45f);
 
