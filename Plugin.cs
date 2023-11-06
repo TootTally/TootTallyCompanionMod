@@ -130,11 +130,16 @@ namespace TootTally
             TracksLoadedEvent.EVENT.Register(new UserLogin.TracksLoaderListener());
         }
 
+        private bool _areManagersInitialized;
+
         public void OnHomeControllerStartInitalizeManagers()
         {
+            if (_areManagersInitialized) return;
+
             Instance.gameObject.AddComponent<SpectatingManager>();
             Instance.gameObject.AddComponent<TootTallyOverlayManager>();
             Instance.gameObject.AddComponent<UserStatusManager>();
+            _areManagersInitialized = true;
         }
 
         public static void AddModule(ITootTallyModule module)
