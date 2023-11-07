@@ -661,7 +661,6 @@ namespace TootTally.Spectating
 
             public static void QuitSong()
             {
-                _gameControllerInstance.paused = true;
                 _gameControllerInstance.quitting = true;
                 ClearSpectatingData();
                 _gameControllerInstance.pauseQuitLevel();
@@ -675,6 +674,7 @@ namespace TootTally.Spectating
             {
                 ClearSpectatingData();
                 _waitingToSync = IsSpectating;
+                _gameControllerInstance.quitting = true;
                 _gameControllerInstance.pauseRetryLevel();
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();

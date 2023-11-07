@@ -27,12 +27,12 @@ namespace TootTally.Spectating
 
         public void SendToSocket(byte[] data)
         {
-            _websocket.SendAsync(data, delegate { });
+            _websocket.SendAsync(data, null);
         }
 
         public void SendToSocket(string data)
         {
-            _websocket.SendAsync(data, delegate { });
+            _websocket.SendAsync(data, null);
         }
 
         protected virtual void OnDataReceived(object sender, MessageEventArgs e) { }
