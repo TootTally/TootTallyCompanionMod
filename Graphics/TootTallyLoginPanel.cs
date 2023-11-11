@@ -264,9 +264,7 @@ namespace TootTally.Graphics
 
         private void ReturnPage(string titleText = "")
         {
-            if (_previousPage == null)
-                Hide();
-            else
+            if (_previousPage != null)
             {
                 if (titleText == "")
                     _titleText.text = "Welcome To Toottally";
@@ -279,8 +277,17 @@ namespace TootTally.Graphics
 
         private void ReturnToHomePage()
         {
-            ChangePage(_menuMain);
-            _previousPage = null;
+            if (_activePage == _menuMain)
+                Hide();
+            else
+            {
+                _titleText.text = "Welcome To Toottally";
+                ChangePage(_menuMain);
+                _previousPage = null;
+            }
+
+
+
         }
 
         public void ApplyTheme()
