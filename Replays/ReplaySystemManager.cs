@@ -55,6 +55,13 @@ namespace TootTally.Replays
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+        [HarmonyPrefix]
+        public static void GameControllerPrefixPatch(GameController __instance)
+        {
+            wasPlayingReplay = _replayFileName != null && _replayFileName != "Spectating";
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
@@ -547,7 +554,6 @@ namespace TootTally.Replays
         {
             _replay.OnReplayPlayerStart();
             _lastIsTooting = _hasRewindReplay = false;
-            wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
             TootTallyLogger.LogInfo("Replay Started");
         }
@@ -707,23 +713,23 @@ namespace TootTally.Replays
 
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
-                __instance.musictrack.time = __instance.musictrack.clip.length * value;
-                __instance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
-                var oldIndex = __instance.currentnoteindex;
-                var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
-                __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
-                __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
-                __instance.beatstoshow = __instance.currentnoteindex + 64; // hardcoded 64 for now but ultimately depends on what people use in Trombloader's config
-                for (int i = __instance.currentnoteindex; i <= oldIndex + 64; i++)
+                for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
                 {
+                    LeanTween.cancel(__instance.allnotes[i]);
                     __instance.allnotes[i].GetComponent<RectTransform>().localScale = Vector3.one;
                     __instance.allnotes[i].SetActive(i <= __instance.beatstoshow);
                 }
 
+                __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                __instance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
+                __instance.currentnoteindex = Mathf.Clamp(__instance.leveldata.FindIndex(note => note[0] * __instance.defaultnotelength >= Mathf.Abs((float)__instance.track_xpos_smoothscrolling)) - 1, 0, __instance.leveldata.Count);
+                __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
+                __instance.beatstoshow = __instance.currentnoteindex + TrombLoader.Plugin.Instance.beatsToShow.Value;
+                _replay.OnReplayRewind(__instance.musictrack.time, __instance);
+
                 for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
                     __instance.allnotes[i].SetActive(true);
 
-                _replay.OnReplayRewind(noteHolderNewLocalPosX, __instance);
                 _hasRewindReplay = true;
                 EventSystem.current.SetSelectedGameObject(null);
             });

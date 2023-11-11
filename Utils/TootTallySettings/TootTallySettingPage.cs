@@ -30,6 +30,7 @@ namespace TootTally.Utils.TootTallySettings
         protected ScrollableSliderHandler _scrollableSliderHandler;
         public GameObject gridPanel;
         private Color _bgColor;
+        private bool _isInitialized;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
         {
             this.name = pageName;
@@ -56,6 +57,7 @@ namespace TootTally.Utils.TootTallySettings
 
             _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
             _settingObjectList.ForEach(obj => obj.Initialize());
+            _isInitialized = true;
         }
 
         public virtual void OnPageAdd() { }
@@ -79,8 +81,8 @@ namespace TootTally.Utils.TootTallySettings
                 TootTallyLogger.LogInfo($"{name} object couldn't be found.");
                 return;
             }
-
             RemoveSettingObjectFromList(settingObject);
+            UpdateVerticalSlider();
         }
         private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
         {
@@ -92,7 +94,11 @@ namespace TootTally.Utils.TootTallySettings
         {
             if (!settingObject.isDisposed)
                 settingObject.Dispose();
+
             _settingObjectList.Remove(settingObject);
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
         }
 
         public void RemoveAllObjects()
@@ -100,11 +106,18 @@ namespace TootTally.Utils.TootTallySettings
             BaseTootTallySettingObject[] allObjectsList = new BaseTootTallySettingObject[_settingObjectList.Count];
             _settingObjectList.CopyTo(allObjectsList);
             allObjectsList.ToList().ForEach(o => o.Remove());
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
         }
 
         public BaseTootTallySettingObject AddSettingObjectToList(BaseTootTallySettingObject settingObject)
         {
             _settingObjectList.Add(settingObject);
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
+
             return settingObject;
         }
 
@@ -120,10 +133,15 @@ namespace TootTally.Utils.TootTallySettings
         public void Show()
         {
             _fullPanel.SetActive(true);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(gridPanel.GetComponent<RectTransform>());
-            _verticalSlider.gameObject.SetActive(gridPanel.GetComponent<RectTransform>().sizeDelta.y > 0f);
-            _scrollableSliderHandler.enabled = gridPanel.GetComponent<RectTransform>().sizeDelta.y > 0f;
+            UpdateVerticalSlider();
             OnShow();
+        }
+
+        private void UpdateVerticalSlider()
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridPanel.GetComponent<RectTransform>());
+            _verticalSlider.gameObject.SetActive(gridPanel.GetComponent<RectTransform>().sizeDelta.y > -100f);
+            _scrollableSliderHandler.enabled = gridPanel.GetComponent<RectTransform>().sizeDelta.y > -100f;
         }
 
         internal virtual void OnHide() { }

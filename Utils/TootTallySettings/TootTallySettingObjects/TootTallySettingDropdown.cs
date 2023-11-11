@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
@@ -14,6 +15,7 @@ namespace TootTally.Utils.TootTallySettings
         private string[] _optionValues;
         private ConfigEntry<string> _config;
         private string _text;
+        private BubblePopupHandler _bubble;
         public TootTallySettingDropdown(TootTallySettingPage page, string name, string text, ConfigEntry<string> config, string[] optionValues = null) : base(name, page)
         {
             _optionValues = optionValues;
@@ -25,17 +27,21 @@ namespace TootTally.Utils.TootTallySettings
         public override void Initialize()
         {
             dropdown = TootTallySettingObjectFactory.CreateDropdown(_page.gridPanel.transform, name);
-            if (_config.Description.Description != null && _config.Description.Description.Length > 0)
-            {
-                var bubble = dropdown.gameObject.AddComponent<BubblePopupHandler>();
-                bubble.Initialize(GameObjectFactory.CreateBubble(Vector2.zero, $"{name}Bubble", _config.Description.Description, Vector2.zero, 6, true), true);
-            }
+
             if (_optionValues != null)
                 AddOptions(_optionValues);
             if (!_optionValues.Contains(_config.Value))
                 AddOptions(_config.Value);
+
             dropdown.value = dropdown.options.FindIndex(x => x.text == _config.Value);
             dropdown.onValueChanged.AddListener((value) => { _config.Value = dropdown.options[value].text; });
+
+            if (_config.Description.Description != null && _config.Description.Description.Length > 0)
+            {
+                _bubble = dropdown.gameObject.AddComponent<BubblePopupHandler>();
+                _bubble.Initialize(GameObjectFactory.CreateBubble(Vector2.zero, $"{name}Bubble", _config.Description.Description, Vector2.zero, 6, true), true);
+            }
+
             //Gonna rework that at some point.
             /*label = GameObjectFactory.CreateSingleText(dropdown.transform, $"{name}Label", _text, GameTheme.themeColors.leaderboard.text);
             label.rectTransform.anchoredPosition = new Vector2(0, 35);

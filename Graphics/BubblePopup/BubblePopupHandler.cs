@@ -58,6 +58,7 @@ namespace TootTally.Graphics
             _scaleAnimation?.Dispose();
             _bubble.transform.localScale = Vector2.zero;
             _bubble.SetActive(true);
+            _bubble.transform.SetSiblingIndex(0);
             _positionAnimation = AnimationManager.AddNewTransformPositionAnimation(_bubble, _useWorldPosition ? Camera.main.ScreenToWorldPoint(Input.mousePosition) : Input.mousePosition, 999f, GetSecondDegreeAnimation());
             _scaleAnimation = AnimationManager.AddNewTransformScaleAnimation(_bubble, Vector3.one, 0.8f, GetSecondDegreeAnimation());
         }

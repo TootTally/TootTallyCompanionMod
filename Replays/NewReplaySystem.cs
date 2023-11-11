@@ -197,6 +197,10 @@ namespace TootTally.Replays
             _frameIndex = Mathf.Clamp(_replayData.framedata.FindIndex(frame => (float)frame[(int)FDStruct.T] > newTiming) - 1, 0, _replayData.framedata.Count - 1);
             _tootIndex = Mathf.Clamp(_replayData.tootdata.FindIndex(frame => (float)frame[(int)TDStruct.T] > newTiming) - 1, 0, _replayData.tootdata.Count - 1);
 
+            _currentFrame = _replayData.framedata[_frameIndex];
+            _currentToot = _replayData.tootdata[_tootIndex];
+            _isTooting = false;
+
             if (__instance.currentnoteindex != 0)
                 __instance.currentscore = (int)_replayData.notedata.Find(note => (int)note[(int)NDStruct.I] == __instance.currentnoteindex - 1)[(int)NDStruct.S];
         }
@@ -241,6 +245,7 @@ namespace TootTally.Replays
 
         private void ConvertToCurrentReplayVersion(ref ReplayData replayData)
         {
+            PopUpNotifManager.DisplayNotif("Converting old replay format...");
 
             dynamic[][] frameData = new dynamic[replayData.framedata.Count][];
             for (int i = 0; i < replayData.framedata.Count; i++)
@@ -301,7 +306,7 @@ namespace TootTally.Replays
                 time = (_replayData.pluginbuilddate < 20230705 ?
                  Math.Abs(__instance.noteholder.transform.position.x) : Math.Abs(__instance.noteholderr.anchoredPosition.x)) * GetNoteHolderPrecisionMultiplier();
             else
-                time = time - (__instance.latency_offset / 1000f) + (_replayData.audiolatency / 1000f);
+                time = time + ((_replayData.audiolatency / 1000f) - (__instance.latency_offset / 1000f));
             PlaybackTimeFrameData(time);
             PlaybackTimeTootData(time);
             if (_replayData.framedata.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
