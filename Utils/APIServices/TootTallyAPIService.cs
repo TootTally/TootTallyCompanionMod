@@ -120,17 +120,10 @@ namespace TootTally.Utils
             {
                 user = JsonConvert.DeserializeObject<User>(webRequest.downloadHandler.text);
                 TootTallyLogger.LogInfo($"Welcome, {user.username}!");
+                callback(user);
             }
             else
-            {
-                user = new User()
-                {
-                    username = "Guest",
-                    id = 0,
-                };
-                TootTallyLogger.LogInfo($"Logged in with Guest Account");
-            }
-            callback(user);
+                callback(null);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLoginToken(string username, string password, Action<LoginToken> callback)
@@ -170,7 +163,8 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo($"Account {username} created!");
                 callback(true);
             }
-            callback(false);
+            else
+                callback(false);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)

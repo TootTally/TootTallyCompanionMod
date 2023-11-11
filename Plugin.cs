@@ -105,9 +105,11 @@ namespace TootTally
                 _tootTallyMainPage.AddButton("OpenTromBuddiesButton", new Vector2(400, 60), "Open TromBuddies", TootTallyOverlayManager.TogglePanel);
                 //_tootTallyMainPage.AddButton("OpenLoginButton", new Vector2(400, 60), "Open Login Panel", TootTallyOverlayManager.TogglePanel);
                 _tootTallyMainPage.AddButton("ReloadAllSongButton", new Vector2(400, 60), "Reload Songs", ReloadTracks);
+                _tootTallyMainPage.AddButton("OpenLoginPage", new Vector2(400, 60), "Open Login Page", UserLogin.OpenLoginPanel);
                 //Adding / Removing causes out of bound / index not found exceptions
             }
             AssetManager.LoadAssets();
+            AssetBundleManager.LoadAssets();
             GameThemeManager.Initialize();
             _harmony.PatchAll(typeof(UserLogin));
             _harmony.PatchAll(typeof(GameObjectFactory));
@@ -228,7 +230,7 @@ namespace TootTally
                     {
                         OnUserLogin(user);
                         if (user.id == 0)
-                            OpenLoginPanel(__instance);
+                            OpenLoginPanel();
                     }));
 
                     Instance.StartCoroutine(ThunderstoreAPIService.GetMostRecentModVersion(version =>
@@ -239,11 +241,12 @@ namespace TootTally
                 }
             }
 
-            private static void OpenLoginPanel(HomeController __instance)
+            private static TootTallyLoginPanel _loginPanel;
+
+            public static void OpenLoginPanel()
             {
-                GameObject loginPanel = GameObjectFactory.CreateLoginPanel(__instance);
-                loginPanel.transform.Find("FSLatencyPanel").GetComponent<RectTransform>().localScale = Vector2.zero;
-                AnimationManager.AddNewScaleAnimation(loginPanel.transform.Find("FSLatencyPanel").gameObject, Vector2.one, 1f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f));
+                _loginPanel ??= new TootTallyLoginPanel();
+                _loginPanel.Show();
             }
 
             private static List<SerializableClass.Message> _messagesReceived;
