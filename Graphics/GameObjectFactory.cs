@@ -719,7 +719,7 @@ namespace TootTally.Graphics
 
             var pfp = leftContent.transform.parent.Find("PFP/ImageMask/Image").GetComponent<Image>();
             if (user.picture != null)
-                AssetManager.GetProfilePictureByID(user.id, (sprite) => pfp.sprite = sprite);
+                AssetManager.GetProfilePictureByID(user.id, sprite => pfp.sprite = sprite);
 
 
             var t1 = CreateSingleText(leftContent.transform, "Name", $"{user.username}", GameTheme.themeColors.leaderboard.text);

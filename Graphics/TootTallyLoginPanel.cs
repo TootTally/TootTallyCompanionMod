@@ -17,7 +17,7 @@ namespace TootTally.Graphics
         private Canvas _canvas;
         private GameObject _gameObject;
         private GameObject _mainPanelBG, _mainPanelFG;
-        private GameObject _menuMain, _loginMain, _signUpMain, _helpMain, _loadingMain;
+        private GameObject _menuMain, _loginMain, _signUpMain, _helpMain, _loadingMain, _keybindsMain;
         private GameObject _topPanel, _bottomPanel;
         private GameObject _topLeftContainer, _topRightContainer;
         private GameObject _bottomLeftContainer, _bottomRightContainer;
@@ -27,6 +27,10 @@ namespace TootTally.Graphics
 
         private TMP_InputField _loginUsername, _loginPassword;
         private TMP_InputField _signUpUsername, _signUpPassword, _signUpConfirm;
+
+        private TMP_Text _fatHelpText;
+        private TMP_Text _leftKeybindsText;
+        private TMP_Text _rightKeybindsText;
 
         public TootTallyLoginPanel()
         {
@@ -46,8 +50,9 @@ namespace TootTally.Graphics
             _signUpMain = _mainPanelFG.transform.GetChild(3).gameObject;
             _helpMain = _mainPanelFG.transform.GetChild(4).gameObject;
             _loadingMain = _mainPanelFG.transform.GetChild(5).gameObject;
+            _keybindsMain = _mainPanelFG.transform.GetChild(6).gameObject;
 
-            _bottomPanel = _mainPanelFG.transform.GetChild(6).gameObject;
+            _bottomPanel = _mainPanelFG.transform.GetChild(7).gameObject;
             _bottomLeftContainer = _bottomPanel.gameObject.transform.GetChild(0).gameObject;
             _bottomRightContainer = _bottomPanel.gameObject.transform.GetChild(1).gameObject;
 
@@ -67,7 +72,7 @@ namespace TootTally.Graphics
 
             GameObjectFactory.CreateClickableImageHolder(_bottomRightContainer.transform, Vector2.zero, Vector2.one * 92, AssetManager.GetSprite("toottally128.png"), "TootTallyIcon", () => { OnLogoButtonClick(LogoNames.TootTally); });
             GameObjectFactory.CreateClickableImageHolder(_bottomRightContainer.transform, Vector2.zero, Vector2.one * 72, AssetManager.GetSprite("patreon128.png"), "PatreonButton", () => { OnLogoButtonClick(LogoNames.Patreon); });
-            GameObjectFactory.CreateClickableImageHolder(_bottomRightContainer.transform, Vector2.zero, Vector2.one * 72, AssetManager.GetSprite("twitter128.png"), "TwitterButton", () => { OnLogoButtonClick(LogoNames.Twitter); });
+            GameObjectFactory.CreateClickableImageHolder(_bottomRightContainer.transform, Vector2.zero, Vector2.one * 86, AssetManager.GetSprite("twitter128.png"), "TwitterButton", () => { OnLogoButtonClick(LogoNames.Twitter); });
             GameObjectFactory.CreateClickableImageHolder(_bottomRightContainer.transform, Vector2.zero, Vector2.one * 96, AssetManager.GetSprite("discord128.png"), "DiscordButton", () => { OnLogoButtonClick(LogoNames.Discord); });
             #endregion
 
@@ -99,17 +104,37 @@ namespace TootTally.Graphics
 
 
             #region HelpMenu
+            _fatHelpText = GameObjectFactory.CreateSingleText(_helpMain.transform, "FatTextBox", GetFatHelpText(), Color.white);
+            _fatHelpText.fontSize = 26;
+            _fatHelpText.alignment = TextAlignmentOptions.TopJustified;
+            _fatHelpText.margin = new Vector2(0, 40);
+            _fatHelpText.lineSpacing = 5;
+            _fatHelpText.paragraphSpacing = 50;
+            _fatHelpText.rectTransform.sizeDelta = new Vector2(1250, 600);
 
+            GameObjectFactory.CreateCustomButton(_helpMain.transform, Vector2.zero, new Vector2(225, 45), "Keybinds", "KeybindsButton", OnKeybindsButtonPress);
             #endregion
 
             #region Loading
             _loadingIcon = GameObjectFactory.CreateLoadingIcon(_loadingMain.transform, Vector2.zero, Vector2.one * 64, AssetManager.GetSprite("toottally128.png"), false, "LoadingIcon");
+            _loadingIcon.Show();
+            _loadingIcon.StartRecursiveAnimation();
+            #endregion
+
+            #region KeybindsMenu
+            _leftKeybindsText = GameObjectFactory.CreateSingleText(_keybindsMain.transform, "KeybindLeftTextBox", GetTrombuddiesText() + GetSongMenuText() + GetSpectatorModeText(), Color.white);
+            _leftKeybindsText.margin = new Vector2(200, 60);
+            _rightKeybindsText = GameObjectFactory.CreateSingleText(_keybindsMain.transform, "KeybindRightTextBox", GetSongOrganizerText(), Color.white);
+            _rightKeybindsText.margin = new Vector2(0, 60);
+            _rightKeybindsText.lineSpacing = _leftKeybindsText.lineSpacing = 5;
+            _rightKeybindsText.alignment = _leftKeybindsText.alignment = TextAlignmentOptions.TopLeft;
             #endregion
         }
 
+        //TODO: clean up that function
         private void OnSubmitLogin()
         {
-            ShowLoading();
+            ChangePage(_loadingMain);
             PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(_loginUsername.text, _loginPassword.text, (token) =>
             {
@@ -141,6 +166,7 @@ namespace TootTally.Graphics
             ChangePage(_loginMain);
         }
 
+        //TODO: clean up that function too
         private void OnSubmitSignUp()
         {
             if (!IsValidUsername(_signUpUsername.text))
@@ -165,7 +191,7 @@ namespace TootTally.Graphics
                 return; //skip requests
             }
             PopUpNotifManager.DisplayNotif($"Sending sign up request... Please wait.", GameTheme.themeColors.notification.defaultText);
-            ShowLoading();
+            ChangePage(_loadingMain);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(_signUpUsername.text, _signUpPassword.text, _signUpConfirm.text, isValid =>
             {
                 if (isValid)
@@ -209,19 +235,6 @@ namespace TootTally.Graphics
         private bool IsValidUsername(string username) => username != "" && !username.ToLower().Contains("username");
         private bool IsValidPassword(string password) => !password.ToLower().Contains("password") && password.Length > 5 && !password.ToLower().Contains(_signUpUsername.text);
 
-        private void ShowLoading()
-        {
-            _loadingIcon.Show();
-            _loadingIcon.StartRecursiveAnimation();
-            ChangePage(_loadingMain);
-        }
-
-        private void HideLoading()
-        {
-            _loadingIcon.StopRecursiveAnimation(true);
-            _loadingIcon.Hide();
-        }
-
         private void OnSignUpButtonClick()
         {
             _titleText.text = "TootTally Sign-up";
@@ -234,6 +247,7 @@ namespace TootTally.Graphics
             switch (logoName)
             {
                 case LogoNames.Question:
+                    _titleText.text = "";
                     ChangePage(_helpMain);
                     break;
                 case LogoNames.TootTally:
@@ -252,6 +266,12 @@ namespace TootTally.Graphics
                     Application.OpenURL("https://discord.gg/9jQmVEDVTp");
                     break;
             }
+        }
+
+        private void OnKeybindsButtonPress()
+        {
+            _titleText.text = "Keybinds";
+            ChangePage(_keybindsMain);
         }
 
         private void ChangePage(GameObject targetPage)
@@ -304,6 +324,7 @@ namespace TootTally.Graphics
 
         public void Hide()
         {
+            _loadingIcon?.StopRecursiveAnimation(true);
             AnimationManager.AddNewScaleAnimation(_mainPanelBG, Vector2.zero, .7f, new EasingHelper.SecondOrderDynamics(1.75f, 0.75f, 1f), sender => _gameObject.SetActive(false));
         }
 
@@ -317,6 +338,30 @@ namespace TootTally.Graphics
             Twitter,
             Discord
         }
+
+        public string GetFatHelpText() => "<size=62><b>CURIOUS ABOUT ACCOUNTS?</b></size>\n\n" +
+        "Creating an account with us is completely optional and we want you to enjoy TootTally your way. " +
+        "if you decide to sign up, you'll gain access to having your scores saved in the TootTally Database, Twitch Integration, Multiplayer and Tournaments. " +
+        "It's a great way to enhance your experience, keep track of your progress and get to know the community a little better.\n\n" +
+        //second paragraph
+        "If you prefer to toot alone, that's cool too! You can still " +
+        "enjoy the core features of TootTally that makes Trombone Champ an awesome addition to " +
+        "your rhythm game experience. Feel free to skip for now - you can always sign up later inside of TootTally Settings or on our Website.\n" +
+        "Happy Tooting!";
+
+        public string GetTrombuddiesText() => "<size=48><b>Trombuddies</b></size>\n" +
+            "\tF2 - Toggle Trombuddies\n" +
+            "\tF3 - Toggle show all users\n" +
+            "\tF4 - Toggle show friends only\n" +
+            "\t?? - Secret\n\n";
+        public string GetSongMenuText() => "<size=48><b>Song Select Screen</b></size>\n" +
+            "\tCtrl+R - Reload song list\n" +
+            "\tF5 - Random Song\n" +
+            "\tF8 - Twitch Requests\n\n";
+        public string GetSpectatorModeText() => "<size=48><b>Spectator Mode</b></size>\n" +
+            "\tShift+Esc - Refresh Song List\n\n";
+        public string GetSongOrganizerText() => "<size=48><b>Song Organizer</b></size>\n" +
+            "\tCtrl+F - Search for songs\n\n";
 
     }
 }
