@@ -13,6 +13,7 @@ namespace TootTally.Graphics
         private CustomAnimation _positionAnimation;
         private CustomAnimation _scaleAnimation;
         private bool _useWorldPosition;
+        private bool _isActive;
 
         public void Initialize(GameObject bubble, bool useWorldPosition = true)
         {
@@ -42,23 +43,33 @@ namespace TootTally.Graphics
 
         public void Update()
         {
-            var v3 = Input.mousePosition;
-            v3.z = 10;
-            if (_useWorldPosition)
-                _positionAnimation?.SetTargetVector(Camera.main.ScreenToWorldPoint(v3));
-            else
-                _positionAnimation?.SetTargetVector(v3);
+            
+            if (_isActive)
+            {
+                var v3 = Input.mousePosition;
+                v3.z = 10;
+                if (_useWorldPosition)
+                    _positionAnimation?.SetTargetVector(Camera.main.ScreenToWorldPoint(v3));
+                else
+                    _positionAnimation?.SetTargetVector(v3);
+            }
+              
+            
+
+            if (Input.GetMouseButtonDown(0) && _isActive)
+                OnPointerExit();
         }
 
         private void OnPointerEnter()
         {
             if (_bubble == null) return;
 
+            _isActive = true;
             _positionAnimation?.Dispose();
             _scaleAnimation?.Dispose();
             _bubble.transform.localScale = Vector2.zero;
             _bubble.SetActive(true);
-            _bubble.transform.SetSiblingIndex(0);
+            _bubble.transform.SetAsLastSibling();
             _positionAnimation = AnimationManager.AddNewTransformPositionAnimation(_bubble, _useWorldPosition ? Camera.main.ScreenToWorldPoint(Input.mousePosition) : Input.mousePosition, 999f, GetSecondDegreeAnimation());
             _scaleAnimation = AnimationManager.AddNewTransformScaleAnimation(_bubble, Vector3.one, 0.8f, GetSecondDegreeAnimation());
         }
@@ -67,6 +78,7 @@ namespace TootTally.Graphics
         {
             if (_bubble == null) return;
 
+            _isActive = false;
             _positionAnimation?.Dispose();
             _positionAnimation = null;
             _scaleAnimation?.Dispose();

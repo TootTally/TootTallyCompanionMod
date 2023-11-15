@@ -66,6 +66,7 @@ namespace TootTally.Utils
             "twitter128.png",
             "discord128.png",
             "question128.png",
+            "refresh.png"
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;

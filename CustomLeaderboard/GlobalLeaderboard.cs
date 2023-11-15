@@ -242,15 +242,18 @@ namespace TootTally.CustomLeaderboard
                 verticalLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
                 verticalLayoutGroup.childForceExpandHeight = verticalLayoutGroup.childForceExpandWidth = true;
 
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, (user) =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromID(Plugin.userInfo.id, user =>
                 {
-                    AssetManager.GetProfilePictureByID(user.id, (sprite) =>
+                    AssetManager.GetProfilePictureByID(user.id, sprite =>
                     {
                         var i = GameObjectFactory.CreateCustomButton(scoresbody.transform, Vector2.zero, new Vector2(sprite.rect.width, sprite.rect.height), sprite, false, "Pfp", OpenUserProfile);
                         i.transform.SetSiblingIndex(0);
                     });
+                    if (Plugin.userInfo.tt == 0)
+                        Plugin.userInfo.tt = user.tt;
+
                     var t = GameObjectFactory.CreateSingleText(mainPanel.transform, "NameLabel", $"{user.username} #{user.rank}", GameTheme.themeColors.leaderboard.text);
-                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">+{(user.tt - Plugin.userInfo.tt):0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
+                    var t2 = GameObjectFactory.CreateSingleText(mainPanel.transform, "TTLabel", $"{user.tt}tt (<color=\"green\">{(user.tt - Plugin.userInfo.tt > 0?"+":"")}{user.tt - Plugin.userInfo.tt:0.00}tt</color>)", GameTheme.themeColors.leaderboard.text);
                     _profilePopupLoadingSwirly.Dispose();
                 }));
 
