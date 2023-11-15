@@ -1,9 +1,9 @@
 ﻿using BepInEx.Configuration;
+using System;
 using System.Linq;
 using TMPro;
 using TootTally.Graphics;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TootTally.Utils.TootTallySettings
@@ -13,29 +13,56 @@ namespace TootTally.Utils.TootTallySettings
         public Dropdown dropdown;
         public TMP_Text label;
         private string[] _optionValues;
-        private ConfigEntry<string> _config;
-        private string _text;
+        private ConfigEntryBase _config;
         private BubblePopupHandler _bubble;
+
         public TootTallySettingDropdown(TootTallySettingPage page, string name, string text, ConfigEntry<string> config, string[] optionValues = null) : base(name, page)
         {
-            _optionValues = optionValues;
             _config = config;
-            _text = text;
+            _optionValues = optionValues;
             if (TootTallySettingsManager.isInitialized)
+            {
                 Initialize();
+            }
         }
+
+        public TootTallySettingDropdown(TootTallySettingPage page, string name, ConfigEntryBase config) : base(name, page)
+        {
+            _config = config;
+            if (TootTallySettingsManager.isInitialized)
+            {
+                Initialize();
+            }
+        }
+
+        public void ConfigureDropdownEnum()
+        {
+            dropdown.AddOptions(Enum.GetNames(_config.BoxedValue.GetType()).ToList());
+            dropdown.value = (int)_config.BoxedValue;
+            dropdown.onValueChanged.AddListener(value => { _config.BoxedValue = value; });
+        }
+
+        public void ConfigureDropdownString()
+        {
+            if (_optionValues != null)
+                AddOptions(_optionValues);
+            if (!_optionValues.Contains(_config.BoxedValue))
+                AddOptions(_config.BoxedValue.ToString());
+
+            dropdown.value = dropdown.options.FindIndex(x => x.text == _config.BoxedValue.ToString());
+            dropdown.onValueChanged.AddListener(value => { _config.BoxedValue = dropdown.options[value].text; });
+        }
+
+        public void AddOptions(params string[] name)
+        {
+            if (name.Length != 0)
+                dropdown.AddOptions(name.ToList());
+        }
+
         public override void Initialize()
         {
             dropdown = TootTallySettingObjectFactory.CreateDropdown(_page.gridPanel.transform, name);
-
-            if (_optionValues != null)
-                AddOptions(_optionValues);
-            if (!_optionValues.Contains(_config.Value))
-                AddOptions(_config.Value);
-
-            dropdown.value = dropdown.options.FindIndex(x => x.text == _config.Value);
-            dropdown.onValueChanged.AddListener((value) => { _config.Value = dropdown.options[value].text; });
-
+            if (_config.BoxedValue.GetType() == typeof(string)) ConfigureDropdownString(); else ConfigureDropdownEnum();
             if (_config.Description.Description != null && _config.Description.Description.Length > 0)
             {
                 _bubble = dropdown.gameObject.AddComponent<BubblePopupHandler>();
@@ -48,11 +75,6 @@ namespace TootTally.Utils.TootTallySettings
             label.alignment = TextAlignmentOptions.TopLeft;*/
 
             base.Initialize();
-        }
-        public void AddOptions(params string[] name)
-        {
-            if (name.Length != 0)
-                dropdown.AddOptions(name.ToList());
         }
 
         public override void Dispose()

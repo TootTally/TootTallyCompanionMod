@@ -238,9 +238,7 @@ namespace TootTally.Utils.TootTallySettings
         {
             var dropdown = GameObject.Instantiate(_dropdownPrefab, canvasTransform);
             dropdown.name = name;
-
             return dropdown;
-
         }
 
         public static TMP_InputField CreateInputField(Transform canvasTransform, string name, Vector2 size, float fontSize, string text, bool isPassword)

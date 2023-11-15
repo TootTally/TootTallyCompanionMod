@@ -165,6 +165,7 @@ namespace TootTally.Utils.TootTallySettings
 
         public TootTallySettingDropdown AddDropdown(string name, string text, ConfigEntry<string> config, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, text, config, optionValues)) as TootTallySettingDropdown;
         public TootTallySettingDropdown AddDropdown(string name, ConfigEntry<string> config, params string[] optionValues) => AddDropdown(name, name, config, optionValues);
+        public TootTallySettingDropdown AddDropdown(string name, ConfigEntryBase config) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, config)) as TootTallySettingDropdown;
 
         public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, string description = "", bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, description, isPassword, onSubmit)) as TootTallySettingTextField;
         public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddTextField(name, size, fontSize, defaultValue,"", isPassword, onSubmit);
