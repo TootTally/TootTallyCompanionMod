@@ -64,6 +64,10 @@ namespace TootTally.GameplayModifier
             _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal,
                 GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", "Brutal: Game will speed up if you do good and\n slow down when you are bad", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
                 delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
+
+            _modifierButtonDict.Add(GameModifiers.ModifierType.InstaFail,
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("IF.png"), "InstaFailButton", "Insta Fail: Restart the song as soon as you miss.", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.InstaFail),
+                delegate { Toggle(GameModifiers.ModifierType.InstaFail); }));
         }
 
         public static void Initialize()
@@ -75,6 +79,7 @@ namespace TootTally.GameplayModifier
                 {"HD", GameModifiers.ModifierType.Hidden },
                 {"FL", GameModifiers.ModifierType.Flashlight },
                 {"BT", GameModifiers.ModifierType.Brutal },
+                {"IF", GameModifiers.ModifierType.InstaFail },
             };
             _modifierTypesToRemove = new List<GameModifierBase>();
             _modifiersBackup = "None";
@@ -163,13 +168,19 @@ namespace TootTally.GameplayModifier
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.doScoreText))]
         [HarmonyPostfix]
-        public static void UpdateBurtalMode(GameController __instance)
+        public static void UpdateBurtalMode(GameController __instance, int whichtext)
         {
             if (!_isInitialized) return;
 
-            _gameModifierDict.TryGetValue(GameModifiers.ModifierType.Brutal, out GameModifierBase b);
-            if (b != null)
-                (b as GameModifiers.Brutal).UpdateSpeed(__instance);
+            _gameModifierDict.TryGetValue(GameModifiers.ModifierType.Brutal, out GameModifierBase brutal);
+            brutal?.SpecialUpdate(__instance);
+
+            if (whichtext <= 2)
+            {
+                _gameModifierDict.TryGetValue(GameModifiers.ModifierType.InstaFail, out GameModifierBase instaFail);
+                instaFail?.SpecialUpdate(__instance);
+            }
+            
         }
 
         public static void Remove(GameModifiers.ModifierType modifierType)
@@ -203,6 +214,9 @@ namespace TootTally.GameplayModifier
                     break;
                 case GameModifiers.ModifierType.Brutal:
                     _gameModifierDict.Add(GameModifiers.ModifierType.Brutal, new GameModifiers.Brutal());
+                    break;
+                case GameModifiers.ModifierType.InstaFail:
+                    _gameModifierDict.Add(GameModifiers.ModifierType.InstaFail, new GameModifiers.InstaFails());
                     break;
             };
         }

@@ -54,6 +54,7 @@ namespace TootTally.Utils
             "HD.png",
             "FL.png",
             "BT.png",
+            "IF.png",
             "FLMask.png",
             "ModifierButton.png",
             "glow.png",

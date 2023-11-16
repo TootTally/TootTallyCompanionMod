@@ -211,7 +211,7 @@ namespace TootTally.GameplayModifier
                     __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
             }
 
-            public void UpdateSpeed(GameController __instance)
+            public override void SpecialUpdate(GameController __instance)
             {
                 if (_lastCombo != __instance.highestcombocounter || __instance.highestcombocounter == 0)
                 {
@@ -225,11 +225,38 @@ namespace TootTally.GameplayModifier
             }
         }
 
+        public class InstaFails : GameModifierBase
+        {
+            public override string Name => "IF";
+
+            public override ModifierType ModifierType => ModifierType.InstaFail;
+
+            public override void Initialize(GameController __instance) { }
+
+            public override void Update(GameController __instance) { }
+
+            public override void SpecialUpdate(GameController __instance)
+            {
+                if (!__instance.paused && !__instance.quitting && !__instance.retrying && !__instance.level_finished)
+                {
+                    __instance.notebuttonpressed = false;
+                    __instance.musictrack.Pause();
+                    __instance.sfxrefs.backfromfreeplay.Play();
+                    __instance.curtainc.closeCurtain(true);
+                    __instance.paused = true;
+                    __instance.retrying = true;
+                    __instance.quitting = true;
+                }
+            }
+
+        }
+
         public enum ModifierType
         {
             Hidden,
             Flashlight,
-            Brutal
+            Brutal,
+            InstaFail
         }
     }
 }
