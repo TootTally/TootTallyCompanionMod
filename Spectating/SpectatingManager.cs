@@ -597,24 +597,15 @@ namespace TootTally.Spectating
                         if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                         {
                             _lastTrackData = TrackLookup.lookup(_lastSongInfo.trackRef);
-                            SetTrackToSpectatingTrackref(_lastSongInfo.trackRef);
-                            if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == _lastSongInfo.trackRef)
-                            {
-                                _currentSongInfo = _lastSongInfo;
-                                _spectatingStarting = true;
-                                ClearSpectatingData();
-                                ReplaySystemManager.SetSpectatingMode();
-                                ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
-                                GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
-                                TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
-                                GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
-                                _levelSelectControllerInstance.clickPlay();
-                            }
-                            else
-                            {
-                                PopUpNotifManager.DisplayNotif($"Clear song organizer filters for auto start to work properly.");
-                                TootTallyLogger.LogWarning("Clear song organizer filters for auto start to work properly.");
-                            }
+                            _currentSongInfo = _lastSongInfo;
+                            _spectatingStarting = true;
+                            ClearSpectatingData();
+                            ReplaySystemManager.SetSpectatingMode();
+                            ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
+                            GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
+                            TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
+                            GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
+                            ClickPlay(_lastTrackData);
                         }
                         else
                         {
@@ -628,6 +619,20 @@ namespace TootTally.Spectating
                     PopUpNotifManager.DisplayNotif($"Waiting for host to start a song.");
 
             }
+
+            //Yoinked from DNSpy~ish: Token: 0x0600041F RID: 1055 RVA: 0x0003CFAC File Offset: 0x0003B1AC
+            private static void ClickPlay(TromboneTrack track)
+            {
+                _levelSelectControllerInstance.back_clicked = true;
+                _levelSelectControllerInstance.bgmus.Stop();
+                _levelSelectControllerInstance.clipPlayer.cancelCrossfades();
+                _levelSelectControllerInstance.doSfx(_levelSelectControllerInstance.sfx_musend);
+                LeanTween.moveX(_levelSelectControllerInstance.playbtnobj, 640f, 0.6f).setEaseInQuart();
+                GlobalVariables.chosen_track = track.trackref;
+                GlobalVariables.chosen_track_data = TrackLookup.toTrackData(track);
+                _levelSelectControllerInstance.fadeOut("loader", 0.65f);
+            }
+
 
             private static void ResumeSong()
             {
@@ -680,22 +685,6 @@ namespace TootTally.Spectating
                 SpectatingOverlay.HideMarquee();
                 SpectatingOverlay.HideStopSpectatingButton();
                 SpectatingOverlay.HideViewerIcon();
-            }
-
-            private static void SetTrackToSpectatingTrackref(string trackref)
-            {
-                if (_levelSelectControllerInstance == null) return;
-                for (int i = 0; i < _levelSelectControllerInstance.alltrackslist.Count; i++)
-                {
-                    if (_levelSelectControllerInstance.alltrackslist[i].trackref == trackref)
-                    {
-                        if (i - _levelSelectControllerInstance.songindex != 0)
-                        {
-                            _levelSelectControllerInstance.advanceSongs(i - _levelSelectControllerInstance.songindex, true);
-                            return;
-                        }
-                    }
-                }
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
