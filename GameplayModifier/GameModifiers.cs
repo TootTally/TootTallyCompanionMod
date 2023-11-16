@@ -5,6 +5,7 @@ using System.Net;
 using System.Xml.Linq;
 using TMPro;
 using TootTally.Replays;
+using TootTally.Spectating;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
@@ -237,15 +238,13 @@ namespace TootTally.GameplayModifier
 
             public override void SpecialUpdate(GameController __instance)
             {
-                if (!__instance.paused && !__instance.quitting && !__instance.retrying && !__instance.level_finished)
+                if (!__instance.paused && !__instance.quitting && !__instance.retrying && !__instance.level_finished && !SpectatingManager.IsSpectating)
                 {
                     __instance.notebuttonpressed = false;
                     __instance.musictrack.Pause();
                     __instance.sfxrefs.backfromfreeplay.Play();
-                    __instance.curtainc.closeCurtain(true);
-                    __instance.paused = true;
-                    __instance.retrying = true;
                     __instance.quitting = true;
+                    __instance.pauseRetryLevel();
                 }
             }
 
