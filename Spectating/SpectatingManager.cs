@@ -45,10 +45,6 @@ namespace TootTally.Spectating
                 _spectatingSystemList.Last().RemoveFromManager();
             }
 
-            if (IsAnyConnectionPending() && !SpectatingOverlay.IsLoadingIconVisible())
-                SpectatingOverlay.ShowLoadingIcon();
-            else if (!IsAnyConnectionPending() && SpectatingOverlay.IsLoadingIconVisible())
-                SpectatingOverlay.HideLoadingIcon();
         }
 
         public static void StopAllSpectator()
