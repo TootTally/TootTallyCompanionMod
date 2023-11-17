@@ -181,6 +181,11 @@ namespace TootTally.Spectating
                 CloseWebsocket();
         }
 
+        public void CancelConnection()
+        {
+            CloseWebsocket();
+        }
+
         public void RemoveFromManager()
         {
             RemoveSpectator(this);

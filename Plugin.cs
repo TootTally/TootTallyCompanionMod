@@ -288,6 +288,13 @@ namespace TootTally
                 }
             }
 
+            [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+            [HarmonyPostfix]
+            public static void OnGameControllerStartCancelPendingConnections()
+            {
+                SpectatingManager.CancelPendingConnections();
+            }
+
             public class TracksLoaderListener : TracksLoadedEvent.Listener
             {
                 public void OnTracksLoaded(FSharpList<TromboneTrack> value)

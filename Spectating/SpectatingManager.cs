@@ -60,6 +60,22 @@ namespace TootTally.Spectating
             }
         }
 
+        public static void CancelPendingConnections()
+        {
+
+            var toRemoveList = _spectatingSystemList?.Where(x => x.ConnectionPending);
+            if (toRemoveList.Count() > 0)
+            {
+                List<SpectatingSystem> canceledSpec = new();
+                toRemoveList.ToList().ForEach(spec =>
+                {
+                    spec.CancelConnection();
+                    canceledSpec.Add(spec);
+                });
+                canceledSpec.ForEach(RemoveSpectator);
+            }
+        }
+
         public static SpectatingSystem CreateNewSpectatingConnection(int id, string name)
         {
             var spec = new SpectatingSystem(id, name);
