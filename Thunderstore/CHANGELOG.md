@@ -1,5 +1,30 @@
 #### Changelog:
 
+`v0.5.3` -> `v0.5.4`
+
+```diff
+Updates
++ Updated spectator mode for (up coming) Multiplayer mode
++ Reworked Brutal Mode
++ Pressing ESC in TootTallySettings bring you back to the main menu (Thanks emmett)
++ Removed Loading Icon on the bottom right of the screen
+
+Fixes:
++ Fixed scroll speed slider value not snapping to 100
++ Fixed having to restart game after login / sign up for the first time
++ Fixed quick restart not working for spectators
++ Fixed several bugs when ShowLeaderboard option is turned off
++ Fixed HD modifier not working with Game Optimizer
++ Fixed Replay rewind not working as intended
+
+Features:
++ New TootTally Login Panel
++ Added InstaFail game modifier
++ Added Download All button to SongDownloader
++ Added config description bubble to TootTallySettings objects
++ Added description bubble to game modifier buttons
+```
+
 `v0.5.1` -> `v0.5.3`
 
 ```diff
