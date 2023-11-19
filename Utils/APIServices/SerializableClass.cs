@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine.XR.WSA;
 
 namespace TootTally.Utils.APIServices
 {
@@ -261,31 +260,6 @@ namespace TootTally.Utils.APIServices
         {
             public string access_token;
         }
-
-        [Serializable]
-        public class MultiplayerLobbyInfo
-        {
-            public int id;
-            public string name;
-            public string title;
-            public string password;
-            public int maxPlayerCount;
-            public string currentState;
-            public float ping;
-            public List<MultiplayerUserInfo> users;
-        }
-
-        [Serializable]
-        public class MultiplayerUserInfo
-        {
-            public int id;
-            public string username;
-            public string country;
-            public int rank;
-            public string state; // states like "spectator" "ready" "not ready" etc.
-        }
-
-
 
         [Serializable]
         public class ThunderstoreLatestData

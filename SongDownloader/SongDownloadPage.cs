@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using HarmonyLib;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using TootTally.Graphics;
@@ -16,12 +17,14 @@ namespace TootTally.SongDownloader
         private TMP_InputField _inputField;
         private GameObject _searchButton;
         private GameObject _nextButton, _prevButton;
+        private GameObject _downloadAllButton;
         private Toggle _toggleRated, _toggleUnrated;
         private LoadingIcon _loadingIcon;
         internal GameObject songRowPrefab;
         private List<string> _trackRefList;
         private List<string> _newDownloadedTrackRefs;
-        
+        private List<SongDownloadObject> _downloadObjectList;
+
 
         public SongDownloadPage() : base("MoreSongs", "More Songs", 20f, new Color(0, 0, 0, 0.1f))
         {
@@ -32,6 +35,7 @@ namespace TootTally.SongDownloader
             base.Initialize();
             _trackRefList = new List<string>();
             _newDownloadedTrackRefs = new List<string>();
+            _downloadObjectList = new List<SongDownloadObject>();
 
             _inputField = TootTallySettingObjectFactory.CreateInputField(_fullPanel.transform, $"{name}InputField", DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, DEFAULT_INPUT_TEXT, false);
             _inputField.onSubmit.AddListener((value) => Search(_inputField.text));
@@ -39,7 +43,7 @@ namespace TootTally.SongDownloader
 
             _loadingIcon = GameObjectFactory.CreateLoadingIcon(_fullPanel.transform, new Vector2(-300, -75), new Vector2(128, 128), AssetManager.GetSprite("icon.png"), false, "SongSearchLoadingSwirly");
 
-            _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-375, -175), DEFAULT_OBJECT_SIZE, "Search" , $"{name}SearchButton", () => Search(_inputField.text)).gameObject;
+            _searchButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-375, -175), DEFAULT_OBJECT_SIZE, "Search", $"{name}SearchButton", () => Search(_inputField.text)).gameObject;
 
             _toggleRated = TootTallySettingObjectFactory.CreateToggle(_fullPanel.transform, $"{name}ToggleRated", new Vector2(200, 60), "Rated", null);
             _toggleRated.GetComponent<RectTransform>().anchoredPosition = new Vector2(-725, -450);
@@ -48,6 +52,9 @@ namespace TootTally.SongDownloader
             _toggleUnrated = TootTallySettingObjectFactory.CreateToggle(_fullPanel.transform, $"{name}ToggleUnrated", new Vector2(200, 60), "Unrated", null);
             _toggleUnrated.GetComponent<RectTransform>().anchoredPosition = new Vector2(-725, -550);
             _toggleUnrated.onValueChanged.AddListener(value => { if (value) _toggleRated.SetIsOnWithoutNotify(!value); });
+
+            _downloadAllButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-1330, -87), new Vector2(200, 60), "Download All", "DownloadAllButton", DownloadAll).gameObject;
+            _downloadAllButton.SetActive(false);
 
             SetSongRowPrefab();
             _backButton.button.onClick.AddListener(() =>
@@ -77,6 +84,8 @@ namespace TootTally.SongDownloader
         {
             if (input == DEFAULT_INPUT_TEXT)
                 input = "";
+            _downloadObjectList.Clear();
+            _downloadAllButton.SetActive(false);
             RemoveAllObjects();
             _searchButton.SetActive(false);
             _loadingIcon.Show();
@@ -105,17 +114,34 @@ namespace TootTally.SongDownloader
             _loadingIcon.Hide();
             _verticalSlider.value = 0;
             searchInfo.results.OrderByDescending(x => x.id).ToList()?.ForEach(AddSongToPage);
+
+            _verticalSlider.gameObject.SetActive(searchInfo.results.Length > 5);
+            _scrollableSliderHandler.enabled = searchInfo.results.Length > 5;
             if (searchInfo.next != null)
                 _nextButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-350, -175), new Vector2(50, 50), ">>", $"{name}NextButton", () => Search(searchInfo.next, false)).gameObject;
             if (searchInfo.previous != null)
                 _prevButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-700, -175), new Vector2(50, 50), "<<", $"{name}PrevButton", () => Search(searchInfo.previous, false)).gameObject;
         }
 
+        public void UpdateDownloadAllButton()
+        {
+            if (!_downloadAllButton.activeSelf)
+                _downloadAllButton.SetActive(_downloadObjectList.Any(o => o.isDownloadAvailable));
+        }
+
+        private void DownloadAll()
+        {
+            _downloadAllButton.SetActive(false);
+            _downloadObjectList.Where(o => o.isDownloadAvailable).Do(o => o.DownloadChart());
+        }
+
         private void AddSongToPage(SongDataFromDB song)
         {
             if (_trackRefList.Contains(song.track_ref)) return;
             _trackRefList.Add(song.track_ref);
-            AddSettingObjectToList(new SongDownloadObject(gridPanel.transform, song, this));
+            var songDownloadObj = new SongDownloadObject(gridPanel.transform, song, this);
+            _downloadObjectList.Add(songDownloadObj);
+            AddSettingObjectToList(songDownloadObj);
         }
 
         public void SetSongRowPrefab()

@@ -28,8 +28,7 @@ namespace TootTally.Spectating
         public void Awake()
         {
             _spectatingSystemList ??= new List<SpectatingSystem>();
-            SpectatingOverlay.Initialize();
-            if (Plugin.Instance.AllowSpectate.Value)
+            if (Plugin.Instance.AllowSpectate.Value && Plugin.userInfo != null && Plugin.userInfo.id != 0)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSpectatorIDList(idList => currentSpectatorIDList = idList));
         }
@@ -46,20 +45,34 @@ namespace TootTally.Spectating
                 _spectatingSystemList.Last().RemoveFromManager();
             }
 
-            if (IsAnyConnectionPending() && !SpectatingOverlay.IsLoadingIconVisible())
-                SpectatingOverlay.ShowLoadingIcon();
-            else if (!IsAnyConnectionPending() && SpectatingOverlay.IsLoadingIconVisible())
-                SpectatingOverlay.HideLoadingIcon();
         }
 
         public static void StopAllSpectator()
         {
-            if (_spectatingSystemList != null)
+            if (_spectatingSystemList != null && _spectatingSystemList.Count > 0)
             {
+                SpectatingOverlay.UpdateViewerList(null);
+                SpectatingOverlay.SetCurrentUserState(UserState.None);
                 for (int i = 0; i < _spectatingSystemList.Count;)
                     RemoveSpectator(_spectatingSystemList[i]);
                 if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
                     hostedSpectatingSystem = null;
+            }
+        }
+
+        public static void CancelPendingConnections()
+        {
+
+            var toRemoveList = _spectatingSystemList?.Where(x => x.ConnectionPending);
+            if (toRemoveList.Count() > 0)
+            {
+                List<SpectatingSystem> canceledSpec = new();
+                toRemoveList.ToList().ForEach(spec =>
+                {
+                    spec.CancelConnection();
+                    canceledSpec.Add(spec);
+                });
+                canceledSpec.ForEach(RemoveSpectator);
             }
         }
 
@@ -112,7 +125,7 @@ namespace TootTally.Spectating
 
         public static void OnAllowHostConfigChange(bool value)
         {
-            if (value && hostedSpectatingSystem == null)
+            if (value && hostedSpectatingSystem == null && Plugin.userInfo.id != 0)
                 CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username);
             else if (!value && hostedSpectatingSystem != null)
             {
@@ -281,6 +294,11 @@ namespace TootTally.Spectating
             private static bool _spectatingStarting;
             private static bool _wasSpectating;
 
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+
+            public static void InitOverlay() { SpectatingOverlay.Initialize(); }
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void SetLevelSelectUserStatusOnAdvanceSongs(LevelSelectController __instance)
@@ -295,7 +313,7 @@ namespace TootTally.Spectating
                     SetCurrentUserState(UserState.SelectingSong);
                 else if (IsSpectating)
                     SpectatingOverlay.SetCurrentUserState(UserState.SelectingSong);
-                else if (Plugin.Instance.AllowSpectate.Value)
+                else if (Plugin.Instance.AllowSpectate.Value && Plugin.userInfo.id != 0)
                 {
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
                     SpectatingOverlay.HideViewerIcon();
@@ -314,6 +332,7 @@ namespace TootTally.Spectating
                         hostedSpectatingSystem.SendSongInfoToSocket(_lastHostSongInfo);
                     SetCurrentUserState(UserState.GettingReady);
                 }
+                _isQuickRestarting = false;
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = null;
                 _gameControllerInstance = __instance;
@@ -398,6 +417,8 @@ namespace TootTally.Spectating
                 _pointSceneControllerInstance = __instance;
                 if (IsHosting)
                     SetCurrentUserState(UserState.PointScene);
+                SpectatingOverlay.HideViewerIcon();
+                SpectatingOverlay.HideStopSpectatingButton();
                 SpectatingOverlay.HideMarquee();
             }
 
@@ -447,7 +468,7 @@ namespace TootTally.Spectating
                 if (_lastFrame != _currentFrame && currentMapPosition <= _currentFrame.noteHolder)
                     _lastFrame = _currentFrame;
 
-                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder)) //smaller or equal to because noteholder goes toward negative
+                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder))
                 {
                     _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => currentMapPosition > x.noteHolder);
                     if (_frameData.Count > _frameIndex && _frameIndex != -1)
@@ -588,24 +609,15 @@ namespace TootTally.Spectating
                         if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                         {
                             _lastTrackData = TrackLookup.lookup(_lastSongInfo.trackRef);
-                            SetTrackToSpectatingTrackref(_lastSongInfo.trackRef);
-                            if (_levelSelectControllerInstance.alltrackslist[_levelSelectControllerInstance.songindex].trackref == _lastSongInfo.trackRef)
-                            {
-                                _currentSongInfo = _lastSongInfo;
-                                _spectatingStarting = true;
-                                ClearSpectatingData();
-                                ReplaySystemManager.SetSpectatingMode();
-                                GlobalLeaderboardManager.SetGameSpeedSlider((_lastSongInfo.gameSpeed - 0.5f) / .05f);
-                                GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
-                                TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
-                                GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
-                                _levelSelectControllerInstance.clickPlay();
-                            }
-                            else
-                            {
-                                PopUpNotifManager.DisplayNotif($"Clear song organizer filters for auto start to work properly.");
-                                TootTallyLogger.LogWarning("Clear song organizer filters for auto start to work properly.");
-                            }
+                            _currentSongInfo = _lastSongInfo;
+                            _spectatingStarting = true;
+                            ClearSpectatingData();
+                            ReplaySystemManager.SetSpectatingMode();
+                            ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
+                            GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
+                            TootTallyLogger.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
+                            GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
+                            ClickPlay(_lastTrackData);
                         }
                         else
                         {
@@ -619,6 +631,20 @@ namespace TootTally.Spectating
                     PopUpNotifManager.DisplayNotif($"Waiting for host to start a song.");
 
             }
+
+            //Yoinked from DNSpy~ish: Token: 0x0600041F RID: 1055 RVA: 0x0003CFAC File Offset: 0x0003B1AC
+            private static void ClickPlay(TromboneTrack track)
+            {
+                _levelSelectControllerInstance.back_clicked = true;
+                _levelSelectControllerInstance.bgmus.Stop();
+                _levelSelectControllerInstance.clipPlayer.cancelCrossfades();
+                _levelSelectControllerInstance.doSfx(_levelSelectControllerInstance.sfx_musend);
+                LeanTween.moveX(_levelSelectControllerInstance.playbtnobj, 640f, 0.6f).setEaseInQuart();
+                GlobalVariables.chosen_track = track.trackref;
+                GlobalVariables.chosen_track_data = TrackLookup.toTrackData(track);
+                _levelSelectControllerInstance.fadeOut("loader", 0.65f);
+            }
+
 
             private static void ResumeSong()
             {
@@ -652,37 +678,25 @@ namespace TootTally.Spectating
 
             public static void QuitSong()
             {
-                _gameControllerInstance.paused = true;
                 _gameControllerInstance.quitting = true;
                 ClearSpectatingData();
                 _gameControllerInstance.pauseQuitLevel();
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
             }
 
             private static void RestartSong()
             {
                 ClearSpectatingData();
                 _waitingToSync = IsSpectating;
+                _gameControllerInstance.quitting = true;
                 _gameControllerInstance.pauseRetryLevel();
                 SpectatingOverlay.HidePauseText();
                 SpectatingOverlay.HideMarquee();
-            }
-
-            private static void SetTrackToSpectatingTrackref(string trackref)
-            {
-                if (_levelSelectControllerInstance == null) return;
-                for (int i = 0; i < _levelSelectControllerInstance.alltrackslist.Count; i++)
-                {
-                    if (_levelSelectControllerInstance.alltrackslist[i].trackref == trackref)
-                    {
-                        if (i - _levelSelectControllerInstance.songindex != 0)
-                        {
-                            _levelSelectControllerInstance.advanceSongs(i - _levelSelectControllerInstance.songindex, true);
-                            return;
-                        }
-                    }
-                }
+                SpectatingOverlay.HideStopSpectatingButton();
+                SpectatingOverlay.HideViewerIcon();
             }
 
             [HarmonyPatch(typeof(PauseCanvasController), nameof(PauseCanvasController.showPausePanel))]
@@ -695,8 +709,7 @@ namespace TootTally.Spectating
 
                 if (Input.GetKeyDown(KeyCode.Escape) && IsSpectating)
                 {
-                    SpectatingOverlay.SetCurrentUserState(UserState.None);
-                    SpectatingOverlay.UpdateViewerList(null);
+
                     __instance.gc.quitting = true;
                     __instance.gc.pauseQuitLevel();
                     StopAllSpectator();
@@ -758,6 +771,7 @@ namespace TootTally.Spectating
             }
 
             private static float _elapsedTime;
+            private static bool _isQuickRestarting;
             private static readonly float _targetFramerate = Application.targetFrameRate > 60 || Application.targetFrameRate < 1 ? 60 : Application.targetFrameRate;
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
@@ -782,10 +796,15 @@ namespace TootTally.Spectating
                     if (_elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time + (__instance.latency_offset / 1000f), __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
-                
+                else if (IsHosting && __instance.restarttimer > .4f && !_isQuickRestarting)
+                {
+                    _isQuickRestarting = true;
+                    SetCurrentUserState(UserState.Restarting);
+                }
+
             }
 
 
@@ -812,7 +831,7 @@ namespace TootTally.Spectating
                     gamemodifiers = GameModifierManager.GetModifiersString()
                 };
 
-                if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value)
+                if (!IsHosting && !IsSpectating && Plugin.Instance.AllowSpectate.Value && Plugin.userInfo.id != 0)
                     CreateUniqueSpectatingConnection(Plugin.userInfo.id, Plugin.userInfo.username); //Remake Hosting connection just in case it wasnt reopened correctly
 
                 if (IsHosting)

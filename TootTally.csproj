@@ -4,10 +4,14 @@
 		<TargetFramework>net472</TargetFramework>
 		<AssemblyName>TootTally</AssemblyName>
 		<Description>Companion mod for TootTally.com</Description>
-		<Version>0.5.2</Version>
+		<Version>0.5.4</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</SourceRevisionId>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <Optimize>True</Optimize>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,7 +19,7 @@
 		<PackageReference Include="BepInEx.Core" Version="5.*" />
 		<PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-		<PackageReference Include="TromboneChamp.GameLibs" Version="1.13.0-beta" />
+		<PackageReference Include="TromboneChamp.GameLibs" Version="1.17.0-beta" />
 		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.5.0" />
 		<PackageReference Include="TromboneChamp.TrombLoader" Version="2.0.0-rc.1" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.4.40" />

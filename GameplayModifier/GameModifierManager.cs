@@ -31,11 +31,9 @@ namespace TootTally.GameplayModifier
         static void OnLevelSelectControllerStartPostfix(LevelSelectController __instance)
         {
             if (!_isInitialized) Initialize();
-
-
             _modifierButtonDict.Clear();
 
-            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", false, ShowModifierPanel);
+            _showModifierPanelButton = GameObjectFactory.CreateModifierButton(__instance.fullpanel.transform, AssetManager.GetSprite("ModifierButton.png"), "OpenModifierPanelButton", "", false, ShowModifierPanel);
             _showModifierPanelButton.transform.localScale = Vector2.one;
             _showModifierPanelButton.GetComponent<RectTransform>().pivot = Vector2.one / 2f;
             _showModifierPanelButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(365, -160);
@@ -56,16 +54,20 @@ namespace TootTally.GameplayModifier
             layout.ignoreLayout = true;
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Hidden,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Hidden),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("HD.png"), "HiddenButton","Hidden: Notes will disappear as they\n approach the left", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Hidden),
                 delegate { Toggle(GameModifiers.ModifierType.Hidden); }));
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Flashlight,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Flashlight),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("FL.png"), "FlashlightButton", "Flashlight: Only a small circle around the\n cursor is visible", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Flashlight),
                 delegate { Toggle(GameModifiers.ModifierType.Flashlight); }));
 
             _modifierButtonDict.Add(GameModifiers.ModifierType.Brutal,
-                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("BT.png"), "BrutalButton", "Brutal: Game will speed up if you do good and\n slow down when you are bad", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.Brutal),
                 delegate { Toggle(GameModifiers.ModifierType.Brutal); }));
+
+            _modifierButtonDict.Add(GameModifiers.ModifierType.InstaFail,
+                GameObjectFactory.CreateModifierButton(_modifierPanelContainer.transform, AssetManager.GetSprite("IF.png"), "InstaFailButton", "Insta Fail: Restart the song as soon as you miss.", _gameModifierDict.ContainsKey(GameModifiers.ModifierType.InstaFail),
+                delegate { Toggle(GameModifiers.ModifierType.InstaFail); }));
         }
 
         public static void Initialize()
@@ -77,6 +79,7 @@ namespace TootTally.GameplayModifier
                 {"HD", GameModifiers.ModifierType.Hidden },
                 {"FL", GameModifiers.ModifierType.Flashlight },
                 {"BT", GameModifiers.ModifierType.Brutal },
+                {"IF", GameModifiers.ModifierType.InstaFail },
             };
             _modifierTypesToRemove = new List<GameModifierBase>();
             _modifiersBackup = "None";
@@ -96,9 +99,10 @@ namespace TootTally.GameplayModifier
 
             _showModifierPanelButton.transform.localScale = Vector2.zero;
             _openAnimation = AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one / 2f, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f));
-            AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), (sender) =>
+            AnimationManager.AddNewScaleAnimation(_modifierPanel, Vector2.one, 0.1f, new EasingHelper.SecondOrderDynamics(0f, 0f, 0f), sender =>
             {
-                _modifierButtonDict.Values.Do(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f), (sender) => { _canClickButtons = true; }));
+                _canClickButtons = true;
+                _modifierButtonDict.Values.Do(b => AnimationManager.AddNewScaleAnimation(b, Vector2.one, 0.75f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 0f)));
             });
         }
 
@@ -123,14 +127,14 @@ namespace TootTally.GameplayModifier
             _canClickButtons = false;
             if (!_gameModifierDict.ContainsKey(modifierType))
             {
-                AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.35f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
+                AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], new Vector3(0, 0, 8), 0.15f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), sender => { _canClickButtons = true; });
                 _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(true);
                 PopUpNotifManager.DisplayNotif($"{modifierType} mod enabled.", GameTheme.themeColors.notification.defaultText);
                 Add(modifierType);
                 return;
             }
 
-            AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.5f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), (sender) => { _canClickButtons = true; });
+            AnimationManager.AddNewEulerAngleAnimation(_modifierButtonDict[modifierType], Vector3.zero, 0.15f, new EasingHelper.SecondOrderDynamics(2.5f, 1f, 2.5f), sender => { _canClickButtons = true; });
             _modifierButtonDict[modifierType].transform.Find("glow").gameObject.SetActive(false);
             PopUpNotifManager.DisplayNotif($"{modifierType} mod disabled.", GameTheme.themeColors.notification.defaultText);
             Remove(modifierType);
@@ -160,6 +164,23 @@ namespace TootTally.GameplayModifier
             {
                 mod.Update(__instance);
             }
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.doScoreText))]
+        [HarmonyPostfix]
+        public static void UpdateBurtalMode(GameController __instance, int whichtext)
+        {
+            if (!_isInitialized) return;
+
+            _gameModifierDict.TryGetValue(GameModifiers.ModifierType.Brutal, out GameModifierBase brutal);
+            brutal?.SpecialUpdate(__instance);
+
+            if (whichtext <= 2)
+            {
+                _gameModifierDict.TryGetValue(GameModifiers.ModifierType.InstaFail, out GameModifierBase instaFail);
+                instaFail?.SpecialUpdate(__instance);
+            }
+            
         }
 
         public static void Remove(GameModifiers.ModifierType modifierType)
@@ -193,6 +214,9 @@ namespace TootTally.GameplayModifier
                     break;
                 case GameModifiers.ModifierType.Brutal:
                     _gameModifierDict.Add(GameModifiers.ModifierType.Brutal, new GameModifiers.Brutal());
+                    break;
+                case GameModifiers.ModifierType.InstaFail:
+                    _gameModifierDict.Add(GameModifiers.ModifierType.InstaFail, new GameModifiers.InstaFails());
                     break;
             };
         }

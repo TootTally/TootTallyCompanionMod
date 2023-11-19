@@ -1,9 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using Steamworks;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Xml.Linq;
+using TMPro;
 using TootTally.Replays;
+using TootTally.Spectating;
 using TootTally.Utils;
 using UnityEngine;
 using UnityEngine.UI;
+using static Unity.Audio.Handle;
 
 namespace TootTally.GameplayModifier
 {
@@ -19,20 +25,18 @@ namespace TootTally.GameplayModifier
             public Hidden() : base() { }
 
             public static List<GameObject> _allnoteList;
-            public static List<GameObject> _processedNotes;
             public static List<FullNoteComponents> _activeNotesComponents;
             public static List<FullNoteComponents> _notesToRemove;
             public static Color _headOutColor, _headInColor, _headOutColorLerpEnd, _headInColorLerpEnd;
             public static Color _tailOutColor, _tailInColor, _tailOutColorLerpEnd, _tailInColorLerpEnd;
             public static Color _bodyOutStartColor, _bodyOutEndColor, _bodyOutStartColorLerpEnd, _bodyOutEndColorLerpEnd;
             public static Color _bodyInStartColor, _bodyInEndColor, _bodyInStartColorLerpEnd, _bodyInEndColorLerpEnd;
-            public const float START_FADEOUT_POSX = 3.8f;
-            public const float END_FADEOUT_POSX = -0.75f;
+            public const float START_FADEOUT_POSX = 3.7f;
+            public const float END_FADEOUT_POSX = -0.7f;
 
             public override void Initialize(GameController __instance)
             {
                 _allnoteList = __instance.allnotes;
-                _processedNotes = new List<GameObject>();
                 _activeNotesComponents = new List<FullNoteComponents>();
                 _notesToRemove = new List<FullNoteComponents>();
 
@@ -65,9 +69,10 @@ namespace TootTally.GameplayModifier
 
             public override void Update(GameController __instance)
             {
-                foreach (GameObject currentNote in _allnoteList.Where(n => !_processedNotes.Contains(n)))
+                //Start pos * 2.7f is roughly the complete right of the screen, which means the notes are added as they enter the screen
+                foreach (GameObject currentNote in _allnoteList.Where(n => n.transform.position.x <= START_FADEOUT_POSX * 2.7f && !_activeNotesComponents.Any(c => c.note == n)))
                 {
-                    if (currentNote.transform.position.x <= START_FADEOUT_POSX && currentNote.transform.Find("EndPoint").position.x > END_FADEOUT_POSX + 1)
+                    if (currentNote.transform.position.x <= START_FADEOUT_POSX * 2.7f && currentNote.transform.Find("EndPoint").position.x > END_FADEOUT_POSX + 1)
                     {
                         var noteComp = new FullNoteComponents()
                         {
@@ -79,7 +84,11 @@ namespace TootTally.GameplayModifier
                             line = currentNote.transform.Find("Line").GetComponent<LineRenderer>(),
                             note = currentNote,
                         };
-                        _processedNotes.Add(currentNote);
+
+                        noteComp.outlineLine.startColor = _bodyOutStartColor;
+                        noteComp.outlineLine.endColor = _bodyOutEndColor;
+                        noteComp.line.startColor = _bodyInStartColor;
+                        noteComp.line.endColor = _bodyInEndColor;
                         _activeNotesComponents.Add(noteComp);
                     }
                 }
@@ -128,7 +137,6 @@ namespace TootTally.GameplayModifier
             public static Color GetColorZeroAlpha(Color color) => new(color.r, color.g, color.b, 0);
         }
 
-
         public class Flashlight : GameModifierBase
         {
             public override string Name => "FL";
@@ -144,19 +152,14 @@ namespace TootTally.GameplayModifier
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 rightSquare.transform.SetParent(__instance.pointer.transform);
                 rightSquare.transform.position = new Vector3(5, 0, 1);
-                rightSquare.transform.localScale = new Vector2(IsAspect16_10() ? 8.8f : 8.35f, 20);
+                rightSquare.transform.localScale = new Vector2(IsAspect16_10() ? 8.75f : 8.3f, 20);
                 var image = rightSquare.GetComponent<Image>();
                 image.maskable = true;
                 image.color = new Color(0, 0, 0, 1f);
                 var topSquare = GameObject.Instantiate(rightSquare, __instance.pointer.transform);
                 var bottomSquare = GameObject.Instantiate(topSquare, __instance.pointer.transform);
                 var cursorMask = GameObject.Instantiate(topSquare, __instance.pointer.transform);
-                if (Camera.main.aspect >= 1.7)
-                    Debug.Log("16:9");
-                else if (Camera.main.aspect >= 1.5)
-                    Debug.Log("3:2");
-                else
-                    Debug.Log("4:3");
+
                 topSquare.transform.localScale = new Vector2(8.35f, 3f);
                 topSquare.GetComponent<RectTransform>().pivot = new Vector2(0.5f, -0.45f);
 
@@ -187,33 +190,72 @@ namespace TootTally.GameplayModifier
 
             public override ModifierType ModifierType => ModifierType.Brutal;
 
+            private float _defaultSpeed;
+            private float _speed;
+            private int _lastCombo;
 
             public override void Initialize(GameController __instance)
             {
-                ReplaySystemManager.gameSpeedMultiplier = 1f;
+                _defaultSpeed = ReplaySystemManager.gameSpeedMultiplier;
+                _speed = _defaultSpeed;
+                _lastCombo = 0;
             }
 
             public override void Update(GameController __instance)
             {
-                if (__instance.paused || __instance.quitting || __instance.retrying)
-                    Time.timeScale = 1f;
-                else
+                if (__instance.paused || __instance.quitting || __instance.retrying || __instance.level_finished)
                 {
-                    if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
-                        __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
-                    Time.timeScale = Mathf.Clamp(1 + (__instance.highestcombocounter / 100f), 1, 2);
-                    __instance.musictrack.pitch = Time.timeScale;
-                    __instance.audmix.SetFloat("pitchShifterMult", 1f / Time.timeScale);
+                    _speed = _defaultSpeed;
+                    Time.timeScale = 1f;
                 }
-                
+                else if (__instance.musictrack.outputAudioMixerGroup == __instance.audmix_bgmus)
+                    __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
             }
+
+            public override void SpecialUpdate(GameController __instance)
+            {
+                if (_lastCombo != __instance.highestcombocounter || __instance.highestcombocounter == 0)
+                {
+                    var shouldIncreaseSpeed = _lastCombo < __instance.highestcombocounter && __instance.highestcombocounter != 0;
+                    _speed = Mathf.Clamp(_speed + (shouldIncreaseSpeed ? .015f : -.07f), _defaultSpeed, 2f);
+                    Time.timeScale = _speed / _defaultSpeed;
+                    __instance.musictrack.pitch = _speed;
+                    __instance.audmix.SetFloat("pitchShifterMult", 1f / _speed);
+                }
+                _lastCombo = __instance.highestcombocounter;
+            }
+        }
+
+        public class InstaFails : GameModifierBase
+        {
+            public override string Name => "IF";
+
+            public override ModifierType ModifierType => ModifierType.InstaFail;
+
+            public override void Initialize(GameController __instance) { }
+
+            public override void Update(GameController __instance) { }
+
+            public override void SpecialUpdate(GameController __instance)
+            {
+                if (!__instance.paused && !__instance.quitting && !__instance.retrying && !__instance.level_finished && !SpectatingManager.IsSpectating)
+                {
+                    __instance.notebuttonpressed = false;
+                    __instance.musictrack.Pause();
+                    __instance.sfxrefs.backfromfreeplay.Play();
+                    __instance.quitting = true;
+                    __instance.pauseRetryLevel();
+                }
+            }
+
         }
 
         public enum ModifierType
         {
             Hidden,
             Flashlight,
-            Brutal
+            Brutal,
+            InstaFail
         }
     }
 }

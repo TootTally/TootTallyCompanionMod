@@ -4,6 +4,7 @@ using TootTally.Utils;
 using WebSocketSharp;
 using System.Collections.Concurrent;
 using static TootTally.Spectating.SpectatingManager;
+using System.Security.Policy;
 
 namespace TootTally.Spectating
 {
@@ -16,7 +17,6 @@ namespace TootTally.Spectating
         private ConcurrentQueue<SocketUserState> _receivedUserStateQueue;
         private ConcurrentQueue<SocketSpectatorInfo> _receivedSpecInfoQueue;
 
-        //int ID is for future tournament host so you can sort data when receiving it :)
         public Action<SocketFrameData> OnSocketFrameDataReceived;
         public Action<SocketTootData> OnSocketTootDataReceived;
         public Action<SocketNoteData> OnSocketNoteDataReceived;
@@ -26,10 +26,10 @@ namespace TootTally.Spectating
 
         public Action<SpectatingSystem> OnWebSocketOpenCallback;
 
-        public int GetSpectatorUserId => _id;
+        public string GetSpectatorUserId => _id;
         public string spectatorName;
 
-        public SpectatingSystem(int id, string name) : base(id)
+        public SpectatingSystem(int id, string name) : base(id.ToString(), "wss://spec.toottally.com:443/spec/", "1.3.0")
         {
             spectatorName = name;
             _receivedFrameDataQueue = new ConcurrentQueue<SocketFrameData>();
@@ -38,6 +38,9 @@ namespace TootTally.Spectating
             _receivedSongInfoQueue = new ConcurrentQueue<SocketSongInfo>();
             _receivedUserStateQueue = new ConcurrentQueue<SocketUserState>();
             _receivedSpecInfoQueue = new ConcurrentQueue<SocketSpectatorInfo>();
+
+            ConnectionPending = true;
+            ConnectToWebSocketServer(_url + id, id == Plugin.userInfo.id);
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed, string gamemodifiers)
@@ -176,6 +179,11 @@ namespace TootTally.Spectating
                 PopUpNotifManager.DisplayNotif($"Disconnected from Spectating server.");
             if (IsConnected)
                 CloseWebsocket();
+        }
+
+        public void CancelConnection()
+        {
+            CloseWebsocket();
         }
 
         public void RemoveFromManager()

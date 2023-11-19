@@ -54,12 +54,20 @@ namespace TootTally.Utils
             "HD.png",
             "FL.png",
             "BT.png",
+            "IF.png",
             "FLMask.png",
             "ModifierButton.png",
             "glow.png",
             "SpectatorIcon.png",
             "UsersIcon.png",
             "rated64.png",
+            "lock.png",
+            "toottally128.png",
+            "patreon128.png",
+            "twitter128.png",
+            "discord128.png",
+            "question128.png",
+            "refresh.png"
         };
 
         public static Dictionary<string, Texture2D> textureDictionary;

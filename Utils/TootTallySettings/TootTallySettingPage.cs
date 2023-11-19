@@ -30,6 +30,7 @@ namespace TootTally.Utils.TootTallySettings
         protected ScrollableSliderHandler _scrollableSliderHandler;
         public GameObject gridPanel;
         private Color _bgColor;
+        private bool _isInitialized;
         public TootTallySettingPage(string pageName, string headerName, float elementSpacing, Color bgColor)
         {
             this.name = pageName;
@@ -46,14 +47,17 @@ namespace TootTally.Utils.TootTallySettings
             _fullPanel = TootTallySettingObjectFactory.CreateSettingPanel(GameObject.Find("MainCanvas").transform, name, headerName, elementSpacing, _bgColor);
 
             _backButton = GameObjectFactory.CreateCustomButton(_fullPanel.transform, new Vector2(-1570, -66), new Vector2(250, 80), "Return", $"{name}ReturnButton", TootTallySettingsManager.OnBackButtonClick);
+
+            gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
+
             _verticalSlider = TootTallySettingObjectFactory.CreateVerticalSlider(_fullPanel.transform, $"{name}VerticalSlider", new Vector2(1700, -200), new Vector2(-1080, 20));
             _verticalSlider.onValueChanged.AddListener(delegate { OnSliderValueChangeScrollGridPanel(gridPanel, _verticalSlider.value); });
             _scrollableSliderHandler = _verticalSlider.gameObject.AddComponent<ScrollableSliderHandler>();
             _scrollableSliderHandler.enabled = false;
 
-            gridPanel = _fullPanel.transform.Find("SettingsPanelGridHolder").gameObject;
             _pageButton = GameObjectFactory.CreateCustomButton(TootTallySettingsManager.GetSettingPanelGridHolderTransform, Vector2.zero, new Vector2(250, 60), name, $"Open{name}Button", () => TootTallySettingsManager.SwitchActivePage(this)).gameObject;
             _settingObjectList.ForEach(obj => obj.Initialize());
+            _isInitialized = true;
         }
 
         public virtual void OnPageAdd() { }
@@ -77,8 +81,8 @@ namespace TootTally.Utils.TootTallySettings
                 TootTallyLogger.LogInfo($"{name} object couldn't be found.");
                 return;
             }
-
             RemoveSettingObjectFromList(settingObject);
+            UpdateVerticalSlider();
         }
         private static void OnSliderValueChangeScrollGridPanel(GameObject gridPanel, float value)
         {
@@ -90,7 +94,11 @@ namespace TootTally.Utils.TootTallySettings
         {
             if (!settingObject.isDisposed)
                 settingObject.Dispose();
+
             _settingObjectList.Remove(settingObject);
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
         }
 
         public void RemoveAllObjects()
@@ -98,11 +106,18 @@ namespace TootTally.Utils.TootTallySettings
             BaseTootTallySettingObject[] allObjectsList = new BaseTootTallySettingObject[_settingObjectList.Count];
             _settingObjectList.CopyTo(allObjectsList);
             allObjectsList.ToList().ForEach(o => o.Remove());
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
         }
 
         public BaseTootTallySettingObject AddSettingObjectToList(BaseTootTallySettingObject settingObject)
         {
             _settingObjectList.Add(settingObject);
+
+            if (_isInitialized)
+                UpdateVerticalSlider();
+
             return settingObject;
         }
 
@@ -118,8 +133,15 @@ namespace TootTally.Utils.TootTallySettings
         public void Show()
         {
             _fullPanel.SetActive(true);
-            _scrollableSliderHandler.enabled = true;
+            UpdateVerticalSlider();
             OnShow();
+        }
+
+        private void UpdateVerticalSlider()
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridPanel.GetComponent<RectTransform>());
+            _verticalSlider.gameObject.SetActive(gridPanel.GetComponent<RectTransform>().sizeDelta.y > -100f);
+            _scrollableSliderHandler.enabled = gridPanel.GetComponent<RectTransform>().sizeDelta.y > -100f;
         }
 
         internal virtual void OnHide() { }
@@ -131,7 +153,8 @@ namespace TootTally.Utils.TootTallySettings
             OnHide();
         }
 
-        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, string description = "", Action OnClick = null) => AddSettingObjectToList(new TootTallySettingButton(this, name, size, text, description, OnClick)) as TootTallySettingButton;
+        public TootTallySettingButton AddButton(string name, Vector2 size, string text, Action OnClick = null) => AddButton(name, size, text, "", OnClick);
         public TootTallySettingButton AddButton(string name, Action OnClick = null) => AddButton(name, DEFAULT_OBJECT_SIZE, name, OnClick);
 
         public TootTallySettingSlider AddSlider(string name, float min, float max, float length, string text, ConfigEntry<float> config, bool integerOnly) => AddSettingObjectToList(new TootTallySettingSlider(this, name, min, max, length, text, config, integerOnly)) as TootTallySettingSlider;
@@ -142,9 +165,11 @@ namespace TootTally.Utils.TootTallySettings
 
         public TootTallySettingDropdown AddDropdown(string name, string text, ConfigEntry<string> config, params string[] optionValues) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, text, config, optionValues)) as TootTallySettingDropdown;
         public TootTallySettingDropdown AddDropdown(string name, ConfigEntry<string> config, params string[] optionValues) => AddDropdown(name, name, config, optionValues);
+        public TootTallySettingDropdown AddDropdown(string name, ConfigEntryBase config) => AddSettingObjectToList(new TootTallySettingDropdown(this, name, config)) as TootTallySettingDropdown;
 
-        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
-        public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword, onSubmit)) as TootTallySettingTextField;
+        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, string description = "", bool isPassword = false, Action<string> onSubmit = null) => AddSettingObjectToList(new TootTallySettingTextField(this, name, size, fontSize, defaultValue, description, isPassword, onSubmit)) as TootTallySettingTextField;
+        public TootTallySettingTextField AddTextField(string name, Vector2 size, float fontSize, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddTextField(name, size, fontSize, defaultValue,"", isPassword, onSubmit);
+        public TootTallySettingTextField AddTextField(string name, string defaultValue, bool isPassword = false, Action<string> onSubmit = null) => AddTextField(name, DEFAULT_OBJECT_SIZE, DEFAULT_FONTSIZE, defaultValue, isPassword, onSubmit);
         
         public TootTallySettingColorSliders AddColorSliders(string name, string text, float length, ConfigEntry<Color> config) => AddSettingObjectToList(new TootTallySettingColorSliders(this, name, text, length, config)) as TootTallySettingColorSliders;
         public TootTallySettingColorSliders AddColorSliders(string name, string text, ConfigEntry<Color> config) => AddColorSliders(name, text, DEFAULT_SLIDER_LENGTH, config);

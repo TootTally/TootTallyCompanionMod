@@ -1,10 +1,10 @@
 {
     "name": "TootTally",
-    "version_number": "0.5.3",
+    "version_number": "0.5.4",
     "website_url": "https://toottally.com/",
     "description": "Competitive leaderboards and replays for Trombone Champ",
     "dependencies": [
-        "TromboneChamps-TrombLoader-2.1.0",
+        "TromboneChamps-TrombLoader-2.2.1",
         "TromboneChamps-BaboonAPI-2.5.0",
         "BepInEx-BepInExPack_TromboneChamp-5.4.21"
     ]

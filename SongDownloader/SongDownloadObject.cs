@@ -27,6 +27,8 @@ namespace TootTally.SongDownloader
         private ProgressBar _progressBar;
         private TMP_Text _fileSizeText;
         private TMP_Text _durationText;
+        public bool isDownloadAvailable;
+        private Coroutine _fileSizeCoroutine;
 
         public SongDownloadObject(Transform canvasTransform, SongDataFromDB song, SongDownloadPage page) : base($"Song{song.track_ref}", page)
         {
@@ -49,6 +51,7 @@ namespace TootTally.SongDownloader
             _durationText.GetComponent<RectTransform>().sizeDelta = new Vector2(230, 128);
             songNameText.overflowMode = charterText.overflowMode = _durationText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
 
+
             //lol
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(song.track_ref)) && !(_page as SongDownloadPage).IsAlreadyDownloaded(song.track_ref))
             {
@@ -56,7 +59,7 @@ namespace TootTally.SongDownloader
 
                 if (link != null)
                 {
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, fileData =>
+                    _fileSizeCoroutine = Plugin.Instance.StartCoroutine(TootTallyAPIService.GetFileSize(link, fileData =>
                     {
                         if (fileData != null)
                         {
@@ -65,9 +68,12 @@ namespace TootTally.SongDownloader
                                 DisplayNotAvailableText(4);
                             else
                             {
+                                _fileSizeCoroutine = null;
+                                isDownloadAvailable = true;
                                 _downloadButton = GameObjectFactory.CreateCustomButton(_songRowContainer.transform, Vector2.zero, new Vector2(64, 64), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
                                 _downloadButton.transform.SetSiblingIndex(4);
                                 _progressBar = GameObjectFactory.CreateProgressBar(_songRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
+                                (_page as SongDownloadPage).UpdateDownloadAllButton();
                             }
                         }
                         else
@@ -118,10 +124,13 @@ namespace TootTally.SongDownloader
         public override void Dispose()
         {
             GameObject.DestroyImmediate(_songRow);
+            if (_fileSizeCoroutine != null)
+                Plugin.Instance.StopCoroutine(_fileSizeCoroutine);
         }
 
         public void DownloadChart()
         {
+            isDownloadAvailable = false;
             _downloadButton.SetActive(false);
             _fileSizeText.gameObject.SetActive(false);
             string link = _song.mirror ?? _song.download;

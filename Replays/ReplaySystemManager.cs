@@ -55,6 +55,13 @@ namespace TootTally.Replays
         #region GameControllerPatches
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
+        [HarmonyPrefix]
+        public static void GameControllerPrefixPatch(GameController __instance)
+        {
+            wasPlayingReplay = _replayFileName != null && _replayFileName != "Spectating";
+        }
+
+        [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
         [HarmonyPostfix]
         public static void GameControllerPostfixPatch(GameController __instance)
         {
@@ -64,6 +71,17 @@ namespace TootTally.Replays
                 gameSpeedMultiplier = __instance.smooth_scrolling_move_mult = 1f;
                 return;
             }
+
+            if (GlobalVariables.turbomode)
+            {
+                gameSpeedMultiplier = 2f;
+            }
+            else if (GlobalVariables.practicemode != 1f)
+            {
+                gameSpeedMultiplier = GlobalVariables.practicemode;
+            }
+            else if (!Plugin.Instance.ShowLeaderboard.Value)
+                gameSpeedMultiplier = 1f;
 
             if (_replayFileName == null)
                 OnRecordingStart();
@@ -130,7 +148,7 @@ namespace TootTally.Replays
                     TootTallyLogger.LogInfo("Couldn't find VideoPlayer in background");
                 }
             }
-            else
+            else if (Plugin.Instance.ShowLeaderboard.Value)
             {
                 //Have to set the speed here because the pitch is changed in 2 different places? one time during GC.Start and one during GC.loadAssetBundleResources... Derp
                 _currentGCInstance.smooth_scrolling_move_mult = gameSpeedMultiplier;
@@ -143,7 +161,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnFixAudioMixerStuffPostFix(GameController __instance)
         {
-            if (gameSpeedMultiplier != 1f && !Plugin.Instance.ChangePitchSpeed.Value)
+            if (gameSpeedMultiplier != 1f && !Plugin.Instance.ChangePitchSpeed.Value && Plugin.Instance.ShowLeaderboard.Value)
             {
                 __instance.musictrack.outputAudioMixerGroup = __instance.audmix_bgmus_pitchshifted;
                 __instance.audmix.SetFloat("pitchShifterMult", 1f / gameSpeedMultiplier);
@@ -154,7 +172,7 @@ namespace TootTally.Replays
         [HarmonyPostfix]
         public static void OnGameControllerStartDanceFixSpeedBackup(GameController __instance)
         {
-            if (gameSpeedMultiplier != 1f && __instance.musictrack.pitch != gameSpeedMultiplier)
+            if (gameSpeedMultiplier != 1f && __instance.musictrack.pitch != gameSpeedMultiplier && Plugin.Instance.ShowLeaderboard.Value)
             {
                 __instance.smooth_scrolling_move_mult = gameSpeedMultiplier;
                 __instance.musictrack.pitch = gameSpeedMultiplier;
@@ -306,10 +324,7 @@ namespace TootTally.Replays
                     break;
                 case ReplayManagerState.Replaying:
                     if (!_hasRewindReplay && !__instance.retrying) //have to skip a frame when rewinding because dev is using LeanTween to move the play area... and it only updates on the second frame after rewinding :|
-                    {
-                        double time = (double)__instance.musictrack.timeSamples / __instance.musictrack.clip.samples * __instance.musictrack.clip.length;
-                        _replay.PlaybackReplay(__instance, (float)time);
-                    }
+                        _replay.PlaybackReplay(__instance, __instance.musictrack.time);
                     _hasRewindReplay = false;
                     break;
             }
@@ -539,7 +554,6 @@ namespace TootTally.Replays
         {
             _replay.OnReplayPlayerStart();
             _lastIsTooting = _hasRewindReplay = false;
-            wasPlayingReplay = true;
             _replayManagerState = ReplayManagerState.Replaying;
             TootTallyLogger.LogInfo("Replay Started");
         }
@@ -632,6 +646,7 @@ namespace TootTally.Replays
             SetReplaySpeedSlider(UIHolder.transform, __instance);
             SetReplayTimestampSlider(UIHolder.transform, __instance);
             SetReplayMarquees(UIHolder.transform);
+            __instance.pointer.transform.localPosition -= new Vector3(2, 0, 0); //Small fix for cursor position
         }
 
 
@@ -698,23 +713,23 @@ namespace TootTally.Replays
 
             _replayTimestampSlider.onValueChanged.AddListener((float value) =>
             {
-                __instance.musictrack.time = __instance.musictrack.clip.length * value;
-                __instance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
-                var oldIndex = __instance.currentnoteindex;
-                var noteHolderNewLocalPosX = __instance.zeroxpos + (__instance.musictrack.time - __instance.latency_offset - __instance.noteoffset) * -__instance.trackmovemult;
-                __instance.currentnoteindex = Mathf.Clamp(__instance.allnotevals.FindIndex(note => note[0] >= Mathf.Abs(noteHolderNewLocalPosX)), 1, __instance.allnotevals.Count - 1) - 1;
-                __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
-                __instance.beatstoshow = __instance.currentnoteindex + 64; // hardcoded 64 for now but ultimately depends on what people use in Trombloader's config
-                for (int i = __instance.currentnoteindex; i <= oldIndex + 64; i++)
+                for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
                 {
+                    LeanTween.cancel(__instance.allnotes[i]);
                     __instance.allnotes[i].GetComponent<RectTransform>().localScale = Vector3.one;
                     __instance.allnotes[i].SetActive(i <= __instance.beatstoshow);
                 }
 
+                __instance.musictrack.time = __instance.musictrack.clip.length * value;
+                __instance.syncTrackPositions(__instance.musictrack.time); //SyncTrack in case smooth scrolling is on
+                __instance.currentnoteindex = Mathf.Clamp(__instance.leveldata.FindIndex(note => note[0] * __instance.defaultnotelength >= Mathf.Abs((float)__instance.track_xpos_smoothscrolling)) - 1, 0, __instance.leveldata.Count);
+                __instance.grabNoteRefs(0); //the parameter is the note increment. Putting 0 just gets the noteData for currentnoteindex's value
+                __instance.beatstoshow = __instance.currentnoteindex + TrombLoader.Plugin.Instance.beatsToShow.Value;
+                _replay.OnReplayRewind(__instance.musictrack.time, __instance);
+
                 for (int i = __instance.currentnoteindex; i <= __instance.beatstoshow && i < __instance.allnotes.Count - 1; i++)
                     __instance.allnotes[i].SetActive(true);
 
-                _replay.OnReplayRewind(noteHolderNewLocalPosX, __instance);
                 _hasRewindReplay = true;
                 EventSystem.current.SetSelectedGameObject(null);
             });

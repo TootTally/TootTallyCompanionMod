@@ -51,6 +51,8 @@ namespace TootTally.TootTallyOverlay
         {
             _kenoIndex = 0;
             _overlayCanvas = new GameObject("TootTallyOverlayCanvas");
+            GameObject.DontDestroyOnLoad(_overlayCanvas);
+
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = true;
@@ -60,7 +62,6 @@ namespace TootTally.TootTallyOverlay
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             _userObjectList = new List<GameObject>();
 
-            GameObject.DontDestroyOnLoad(_overlayCanvas);
 
             _overlayPanel = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1700, 900), 20f, "BonerBuddiesOverlayPanel");
             _overlayPanelContainer = _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG/MainPage").gameObject;
@@ -98,7 +99,7 @@ namespace TootTally.TootTallyOverlay
 
         private void Update()
         {
-            if (!_isInitialized || Plugin.userInfo == null) return;
+            if (!_isInitialized) return;
 
             if (Input.GetKeyDown(KeyCode.F2))
             {

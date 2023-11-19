@@ -23,7 +23,6 @@ namespace TootTally.Spectating
 
         private static CustomAnimation _pauseTextHolderAnimation, _marqueeAnimation;
 
-        private static LoadingIcon _loadingIcon;
         private static SpectatingViewerIcon _viewerIcon;
         private static bool _isInitialized;
         private static SocketSpectatorInfo _spectatorInfo;
@@ -60,10 +59,6 @@ namespace TootTally.Spectating
             _marqueeText.rectTransform.anchorMin = _marqueeText.rectTransform.anchorMax = new Vector2(0, .2f);
             _marqueeText.rectTransform.pivot = new Vector2(0, .5f);
             _marqueeText.gameObject.SetActive(false);
-
-            _loadingIcon = GameObjectFactory.CreateLoadingIcon(_overlayCanvas.transform, Vector2.zero, new Vector2(128, 128), AssetManager.GetSprite("icon.png"), false, "SpectatorLoadingSwirly");
-            var rect = _loadingIcon.iconHolder.GetComponent<RectTransform>();
-            rect.anchorMax = rect.anchorMin = new Vector2(.9f, .1f);
 
             _viewerIcon = GameObjectFactory.CreateDefaultViewerIcon(_overlayCanvas.transform, "ViewerIcon");
 
@@ -107,10 +102,9 @@ namespace TootTally.Spectating
         {
             if (!_isInitialized) return;
 
-            StopAllSpectator();
-            _stopSpectatingButton.gameObject.SetActive(false);
             if (IsInGameController)
                 SpectatingManagerPatches.QuitSong();
+            StopAllSpectator();
         }
 
         public static void UpdateViewIcon()
@@ -138,19 +132,19 @@ namespace TootTally.Spectating
         {
             if (!_isInitialized) return;
 
-            if (SpectatingManager.IsSpectating)
-                if (IsInLevelSelect)
-                {
-                    _stopSpectatingButton.gameObject.SetActive(true);
-                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.14f, 0.88f);
-                }
-                else if (IsInGameController)
-                {
-                    _stopSpectatingButton.gameObject.SetActive(true);
-                    _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.2f, 0.09f);
-                }
-                else
-                    _stopSpectatingButton.gameObject.SetActive(false);
+            if (IsInLevelSelect && SpectatingManager.IsSpectating)
+            {
+                _stopSpectatingButton.gameObject.SetActive(true);
+                _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.14f, 0.88f);
+            }
+            else if (IsInGameController && SpectatingManager.IsSpectating)
+            {
+                _stopSpectatingButton.gameObject.SetActive(true);
+                _stopSpectatingButton.GetComponent<RectTransform>().anchorMin = _stopSpectatingButton.GetComponent<RectTransform>().anchorMax = new Vector2(0.2f, 0.09f);
+            }
+            else
+                _stopSpectatingButton.gameObject.SetActive(false);
+
         }
 
         private static bool IsInGameController => _currentUserState == UserState.Playing || _currentUserState == UserState.Paused;
@@ -158,23 +152,6 @@ namespace TootTally.Spectating
 
         public static void ShowViewerIcon() => _viewerIcon?.Show();
         public static void HideViewerIcon() => _viewerIcon?.Hide();
-
-        public static void ShowLoadingIcon()
-        {
-            if (_loadingIcon == null) return;
-
-            _loadingIcon.StartRecursiveAnimation();
-            _loadingIcon.Show();
-        }
-
-        public static void HideLoadingIcon()
-        {
-            if (_loadingIcon == null) return;
-
-            _loadingIcon.Hide();
-            _loadingIcon.StopRecursiveAnimation(true);
-        }
-        public static bool IsLoadingIconVisible() => _loadingIcon.IsVisible();
 
         public static void ShowPauseText()
         {

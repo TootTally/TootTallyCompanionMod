@@ -28,7 +28,7 @@ namespace TootTally.Utils.TootTallySettings
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
-        static public void InitializeTootTallySettingsManager(HomeController __instance)
+        public static void InitializeTootTallySettingsManager(HomeController __instance)
         {
             _currentInstance = __instance;
 
@@ -61,7 +61,14 @@ namespace TootTally.Utils.TootTallySettings
 
             _settingPageList.ForEach(page => page.Initialize());
             isInitialized = true;
+        }
 
+        [HarmonyPatch(typeof(HomeController), nameof(HomeController.Update))]
+        [HarmonyPostfix]
+        public static void Update()
+        {
+            if (!isInitialized) return;
+            if (Input.GetKeyDown(KeyCode.Escape)) OnBackButtonClick();
         }
 
         public static void OnBackButtonClick()
@@ -72,7 +79,7 @@ namespace TootTally.Utils.TootTallySettings
                 _currentActivePage = null;
                 ShowMainSettingPanel();
             }
-            else
+            else if (_mainSettingPanel.activeSelf)
                 ReturnToMainMenu();
         }
 

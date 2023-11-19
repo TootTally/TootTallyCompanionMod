@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Policy;
 using HarmonyLib;
 using TMPro;
 using TootTally.CustomLeaderboard;
@@ -11,6 +12,7 @@ using TootTally.Utils;
 using TootTally.Utils.APIServices;
 using TootTally.Utils.Helpers;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TootTally.Graphics
@@ -27,6 +29,7 @@ namespace TootTally.Graphics
         private static GameObject _settingsGraphics, _creditPanel;
         private static GameObject _steamLeaderboardPrefab, _singleScorePrefab, _panelBodyPrefab;
         private static LeaderboardRowEntry _singleRowPrefab;
+        private static TMP_InputField _inputFieldPrefab;
 
         private static GameObject _overlayPanelPrefab, _userCardPrefab;
 
@@ -60,6 +63,7 @@ namespace TootTally.Graphics
 
             SetMulticoloreTextPrefab();
             SetComfortaaTextPrefab();
+            SetInputFieldPrefab();
             SetNotificationPrefab();
             SetBubblePrefab();
             SetCustomButtonPrefab();
@@ -145,6 +149,43 @@ namespace TootTally.Graphics
             _comfortaaTextPrefab.richText = true;
             _comfortaaTextPrefab.enableWordWrapping = false;
             GameObject.DontDestroyOnLoad(_comfortaaTextPrefab);
+        }
+
+        private static void SetInputFieldPrefab()
+        {
+            var inputHolder = new GameObject("InputFieldHolder");
+            var rectHolder = inputHolder.AddComponent<RectTransform>();
+            rectHolder.anchoredPosition = Vector2.zero;
+            rectHolder.sizeDelta = new Vector2(350, 50);
+            var inputImageHolder = GameObject.Instantiate(inputHolder, inputHolder.transform);
+            var inputTextHolder = GameObject.Instantiate(inputImageHolder, inputHolder.transform);
+            inputImageHolder.name = "Image";
+            inputTextHolder.name = "Text";
+
+            _inputFieldPrefab = inputHolder.AddComponent<TMP_InputField>();
+
+            rectHolder.anchorMax = rectHolder.anchorMin = Vector2.zero;
+
+            //pain... @_@
+            _inputFieldPrefab.image = inputImageHolder.AddComponent<Image>();
+            RectTransform rectImage = inputImageHolder.GetComponent<RectTransform>();
+
+            rectImage.anchorMin = rectImage.anchorMax = rectImage.pivot = Vector2.zero;
+            rectImage.anchoredPosition = new Vector2(0, 4);
+            rectImage.sizeDelta = new Vector2(350, 2);
+
+            RectTransform rectText = inputTextHolder.GetComponent<RectTransform>();
+            rectText.anchoredPosition = rectText.anchorMin = rectText.anchorMax = rectText.pivot = Vector2.zero;
+            rectText.sizeDelta = new Vector2(350, 50);
+
+            _inputFieldPrefab.textComponent = GameObjectFactory.CreateSingleText(inputTextHolder.transform, $"TextLabel", "", GameTheme.themeColors.leaderboard.text);
+            _inputFieldPrefab.textComponent.rectTransform.pivot = new Vector2(0, 0.5f);
+            _inputFieldPrefab.textComponent.alignment = TextAlignmentOptions.Left;
+            _inputFieldPrefab.textComponent.margin = new Vector4(5, 0, 0, 0);
+            _inputFieldPrefab.textComponent.enableWordWrapping = true;
+            _inputFieldPrefab.textViewport = _inputFieldPrefab.textComponent.rectTransform;
+
+            GameObject.DontDestroyOnLoad(_inputFieldPrefab);
         }
 
         private static void SetNotificationPrefab()
@@ -636,6 +677,19 @@ namespace TootTally.Graphics
             return imageHolder;
         }
 
+        public static GameObject CreateClickableImageHolder(Transform canvasTransform, Vector2 position, Vector2 size, Sprite sprite, string name, Action onClick)
+        {
+            var imageHolder = CreateImageHolder(canvasTransform, position, size, sprite, name);
+            var eventTrigger = imageHolder.AddComponent<EventTrigger>();
+
+            EventTrigger.Entry pointerClickEvent = new EventTrigger.Entry();
+            pointerClickEvent.eventID = EventTriggerType.PointerClick;
+            pointerClickEvent.callback.AddListener((data) => onClick?.Invoke());
+            eventTrigger.triggers.Add(pointerClickEvent);
+
+            return imageHolder;
+        }
+
         public static ProgressBar CreateProgressBar(Transform canvasTransform, Vector2 position, Vector2 size, bool active, string name)
         {
             Slider slider = GameObject.Instantiate(_settingsPanelVolumeSlider, canvasTransform);
@@ -665,7 +719,7 @@ namespace TootTally.Graphics
 
             var pfp = leftContent.transform.parent.Find("PFP/ImageMask/Image").GetComponent<Image>();
             if (user.picture != null)
-                AssetManager.GetProfilePictureByID(user.id, (sprite) => pfp.sprite = sprite);
+                AssetManager.GetProfilePictureByID(user.id, sprite => pfp.sprite = sprite);
 
 
             var t1 = CreateSingleText(leftContent.transform, "Name", $"{user.username}", GameTheme.themeColors.leaderboard.text);
@@ -709,212 +763,12 @@ namespace TootTally.Graphics
                 _ => new Color(0, 0, 0, 1),
             };
 
-        public static GameObject CreateLoginPanel(HomeController __instance)
+        public static TootTallyLoginPanel CreateLoginPanelV2()
         {
-            GameObject playTesterPopup = __instance.ext_credits_go.transform.parent.gameObject;
-            GameObject loginPanelPopup = GameObject.Instantiate(playTesterPopup);
-            loginPanelPopup.name = "LoginPanel";
-            loginPanelPopup.SetActive(true);
-
-            GameObject fsLatencyPanel = loginPanelPopup.transform.Find("FSLatencyPanel").gameObject;
-            fsLatencyPanel.SetActive(true);
-            GameObject.DestroyImmediate(fsLatencyPanel.transform.Find("LatencyBG2").gameObject);
-            fsLatencyPanel.transform.Find("LatencyBG").gameObject.GetComponent<Image>().color = GameTheme.themeColors.notification.border;
-
-            GameObject latencyFGPanel = fsLatencyPanel.transform.Find("LatencyFG").gameObject; //this where most objects are located
-            latencyFGPanel.GetComponent<Image>().color = GameTheme.themeColors.notification.background;
-
-            Text title = latencyFGPanel.transform.Find("title").gameObject.GetComponent<Text>();
-            Text subtitle = latencyFGPanel.transform.Find("subtitle").gameObject.GetComponent<Text>();
-            title.text = "TootTally Login";
-            title.color = GameTheme.themeColors.notification.defaultText;
-            subtitle.text = "Press ENTER after typing your username and password to confirm the inputs.";
-            subtitle.color = GameTheme.themeColors.notification.defaultText;
-
-
-            GameObject loginPage = latencyFGPanel.transform.Find("page1").gameObject;
-            GameObject.DestroyImmediate(loginPage.GetComponent<HorizontalLayoutGroup>());
-            VerticalLayoutGroup vgroup = loginPage.AddComponent<VerticalLayoutGroup>();
-            vgroup.childForceExpandHeight = vgroup.childScaleHeight = vgroup.childControlHeight = false;
-            vgroup.childForceExpandWidth = vgroup.childScaleWidth = vgroup.childControlWidth = false;
-            vgroup.padding.left = (int)(loginPage.GetComponent<RectTransform>().sizeDelta.x / 2) - 125;
-            vgroup.spacing = 20;
-            loginPage.name = "LoginPage";
-
-            GameObject.DestroyImmediate(loginPage.transform.Find("col1").gameObject);
-            GameObject.DestroyImmediate(loginPage.transform.Find("col3").gameObject);
-
-            //username
-            GameObject usernameTextHolder = loginPage.transform.Find("col2").gameObject;
-            usernameTextHolder.name = "UsernameText";
-            usernameTextHolder.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 35);
-            usernameTextHolder.GetComponent<RectTransform>().anchoredPosition = new Vector2(125, 0);
-            Text usernameText = usernameTextHolder.GetComponent<Text>();
-            usernameText.text = "Username:";
-            usernameText.color = GameTheme.themeColors.notification.defaultText;
-
-            GameObject usernameInputHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
-            GameObject usernameInputTextHolder = GameObject.Instantiate(usernameInputHolder, usernameInputHolder.transform);
-            usernameInputTextHolder.name = "Text";
-            GameObject.DestroyImmediate(usernameInputHolder.GetComponent<Text>());
-            usernameInputHolder.name = "UsernameInput";
-            InputField usernameInput = usernameInputHolder.AddComponent<InputField>();
-            usernameInput.onEndEdit.AddListener(text => usernameInput.text = text);
-            usernameInput.textComponent = usernameInputTextHolder.GetComponent<Text>();
-            usernameInput.textComponent.alignment = TextAnchor.MiddleCenter;
-            usernameInput.image = usernameInputHolder.AddComponent<Image>();
-            usernameInput.image.color = GameTheme.themeColors.leaderboard.rowEntry;
-            usernameInput.text = "Enter Username";
-
-            //password
-            GameObject passwordTextHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
-            passwordTextHolder.name = "PasswordText";
-            Text passwordText = passwordTextHolder.GetComponent<Text>();
-            passwordText.text = "Password:";
-
-            GameObject passwordInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
-            passwordInputHolder.name = "PasswordInput";
-            InputField passwordInput = passwordInputHolder.GetComponent<InputField>();
-            passwordInput.onEndEdit.AddListener(text => passwordInput.text = text);
-            passwordInput.inputType = InputField.InputType.Password;
-            passwordInput.textComponent = passwordInputHolder.transform.Find("Text").GetComponent<Text>();
-            passwordInput.image = latencyFGPanel.GetComponent<Image>();
-            passwordInput.text = "Password";
-
-            //login button
-            GameObject loginButtonHolder = latencyFGPanel.transform.Find("NEXT").gameObject;
-            loginButtonHolder.name = "LoginButton";
-            Button loginButton = loginButtonHolder.GetComponent<Button>();
-            loginButton.onClick = new Button.ButtonClickedEvent();
-            loginButton.onClick.AddListener(delegate
-            {
-                __instance.playSfx(4);// click button sfx             
-                PopUpNotifManager.DisplayNotif("Sending login info... Please wait.", GameTheme.themeColors.notification.defaultText);
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
-                {
-                    if (token.token == "")
-                    {
-                        PopUpNotifManager.DisplayNotif("Username or password wrong... Try login in again.", GameTheme.themeColors.notification.errorText);
-                        return;
-                    }
-
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, (user) =>
-                    {
-                        if (user == null)
-                        {
-                            PopUpNotifManager.DisplayNotif("Couldn't get user info... Please contact TootTally's moderator on discord.", GameTheme.themeColors.notification.errorText);
-                            return;
-                        }
-                        PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
-                        Plugin.OnUserLogin(user);
-                        Plugin.userInfo = user;
-                        Plugin.Instance.APIKey.Value = user.api_key;
-                        AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                        AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
-                        {
-                            GameObject.DestroyImmediate(sender);
-                        });
-                    }));
-                }));
-            });
-
-            //close button
-            GameObject closeButtonHolder = latencyFGPanel.transform.Find("CloseBtn").gameObject;
-            Button closeButton = closeButtonHolder.GetComponent<Button>();
-            closeButton.onClick = new Button.ButtonClickedEvent();
-            closeButton.onClick.AddListener(delegate
-            {
-                __instance.playSfx(0);// click button sfx
-                AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
-                {
-                    GameObject.DestroyImmediate(sender);
-                });
-            });
-
-            //sign up button
-            CustomButton signUpButton = CreateCustomButton(loginPage.transform, Vector2.zero, new Vector2(250, 50), "SignUp", "SignUpButton");
-            signUpButton.button.onClick.AddListener(delegate
-            {
-                //confirm password
-                GameObject confirmTextHolder = GameObject.Instantiate(usernameText.gameObject, loginPage.transform);
-                confirmTextHolder.name = "ConfirmText";
-                Text confirmText = confirmTextHolder.GetComponent<Text>();
-                confirmText.text = "Confirm Password:";
-
-                GameObject confirmInputHolder = GameObject.Instantiate(usernameInputHolder, loginPage.transform);
-                confirmInputHolder.name = "ConfirmInput";
-                InputField confirmInput = confirmInputHolder.GetComponent<InputField>();
-                confirmInput.onEndEdit.AddListener(text => confirmInput.text = text);
-                confirmInput.inputType = InputField.InputType.Password;
-                confirmInput.textComponent = confirmInputHolder.transform.Find("Text").GetComponent<Text>();
-                confirmInput.image = latencyFGPanel.GetComponent<Image>();
-                confirmInput.text = "Confirm";
-                GameObject.DestroyImmediate(signUpButton.gameObject);
-                loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "SignUp";
-                loginButton.onClick.RemoveAllListeners();
-                loginButton.onClick.AddListener(delegate
-                {
-                    __instance.playSfx(4);// click button sfx
-
-                    if (usernameInput.text == "" || usernameInput.text.ToLower().Contains("username"))
-                    {
-                        PopUpNotifManager.DisplayNotif("Please enter a valid Username.", GameTheme.themeColors.notification.defaultText);
-                        return;
-                    }
-                    if (passwordInput.text.ToLower().Contains("password") || passwordInput.text.Length <= 5 || passwordInput.text.ToLower().Contains(usernameInput.text))
-                    {
-                        if (passwordInput.text.Length <= 5)
-                            PopUpNotifManager.DisplayNotif("Password has to be at least 5 characters long.", GameTheme.themeColors.notification.defaultText);
-                        else
-                            PopUpNotifManager.DisplayNotif("Please enter a valid Password.", GameTheme.themeColors.notification.defaultText);
-                        return;
-                    }
-
-                    if (passwordInput.text != confirmInput.text)
-                    {
-                        passwordInput.text = "";
-                        confirmInput.text = "Confirm";
-                        PopUpNotifManager.DisplayNotif($"Passwords did not match! Type your password again.", GameTheme.themeColors.notification.errorText);
-                        return; //skip requests
-                    }
-                    PopUpNotifManager.DisplayNotif($"Sending sign up request... Please wait.", GameTheme.themeColors.notification.defaultText);
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.SignUpRequest(usernameInput.text, passwordInput.text, confirmInput.text, (isValid) =>
-                    {
-                        if (isValid)
-                        {
-                            PopUpNotifManager.DisplayNotif($"Getting new user info...", GameTheme.themeColors.notification.defaultText);
-                            Plugin.Instance.StartCoroutine(TootTallyAPIService.GetLoginToken(usernameInput.text, passwordInput.text, (token) =>
-                            {
-                                if (token.token != "")
-                                {
-                                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetUserFromToken(token.token, (user) =>
-                                    {
-                                        if (user != null)
-                                        {
-                                            PopUpNotifManager.DisplayNotif($"Login with {user.username} successful!", GameTheme.themeColors.notification.defaultText);
-                                            Plugin.userInfo = user;
-                                            Plugin.Instance.APIKey.Value = user.api_key;
-                                            AnimationManager.AddNewPositionAnimation(fsLatencyPanel, loginPanelPopup.GetComponent<RectTransform>().anchoredPosition + new Vector2(0, -900), .8f, new EasingHelper.SecondOrderDynamics(0.75f, 1f, 0f));
-                                            AnimationManager.AddNewScaleAnimation(fsLatencyPanel, Vector2.zero, 0.8f, new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f), (sender) =>
-                                            {
-                                                GameObject.DestroyImmediate(sender);
-                                            });
-                                        }
-                                    }));
-                                }
-                            }));
-                        }
-                    }));
-
-                });
-            });
-
-
-            loginButtonHolder.transform.Find("Text").GetComponent<Text>().text = "Login";
-
-            return loginPanelPopup;
+            TootTallyLoginPanel panel = new TootTallyLoginPanel();
+            return panel;
         }
+
 
         public static GameObject CreateOverlayPanel(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, float borderThiccness, string name)
         {
@@ -960,6 +814,24 @@ namespace TootTally.Graphics
             return newButton;
         }
 
+        public static CustomButton CreateDefaultButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string text, int fontsize, string name, Action onClick = null)
+        {
+            CustomButton newButton = UnityEngine.Object.Instantiate(_buttonPrefab, canvasTransform);
+            newButton.name = name;
+            newButton.textHolder.text = text;
+            newButton.textHolder.alignment = TextAnchor.MiddleCenter;
+            newButton.textHolder.fontSize = fontsize;
+            newButton.textHolder.horizontalOverflow = HorizontalWrapMode.Wrap;
+            newButton.textHolder.verticalOverflow = VerticalWrapMode.Overflow;
+            newButton.GetComponent<RectTransform>().sizeDelta = size;
+            newButton.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
+
+            newButton.button.onClick.AddListener(() => onClick?.Invoke());
+
+            newButton.gameObject.SetActive(true);
+            return newButton;
+        }
+
         //Backward Compatibility
         public static CustomButton CreateCustomButton(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, Sprite sprite, string name, Action onClick = null)
         => CreateCustomButton(canvasTransform, anchoredPosition, size, sprite, true, name, onClick);
@@ -996,9 +868,11 @@ namespace TootTally.Graphics
             return newButton;
         }
 
-        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, bool active, Action onClick = null)
+        public static GameObject CreateModifierButton(Transform canvasTransform, Sprite sprite, string name, string description, bool active, Action onClick = null)
         {
             var btn = CreateCustomButton(canvasTransform, new Vector2(350, -200), new Vector2(32, 32), sprite, name, onClick).gameObject;
+            if (description != "")
+                btn.AddComponent<BubblePopupHandler>().Initialize(CreateBubble(Vector2.zero, $"{name}Bubble", description, 6, true, 16));
             var glow = new GameObject("glow", typeof(Image));
             var image = glow.GetComponent<Image>();
             image.maskable = true;
@@ -1084,6 +958,21 @@ namespace TootTally.Graphics
             return panel;
         }
 
+        public static TMP_InputField CreateInputField(Transform canvasTransform, Vector2 anchoredPosition, Vector2 size, string name, bool isPassword)
+        {
+            TMP_InputField inputField = GameObject.Instantiate(_inputFieldPrefab, canvasTransform);
+            inputField.name = name;
+            inputField.inputType = isPassword ? TMP_InputField.InputType.Password : TMP_InputField.InputType.Standard;
+
+            //Have to do this so the input text actually updates after we're done typing :derp:
+            inputField.onEndEdit.AddListener((text) => inputField.text = text);
+
+            inputField.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
+            inputField.GetComponent<RectTransform>().sizeDelta = size;
+
+            return inputField;
+        }
+
         public static GameObject CreateSteamLeaderboardFromPrefab(Transform canvasTransform, string name)
         {
             GameObject steamLeaderboard = GameObject.Instantiate(_steamLeaderboardPrefab, canvasTransform);
@@ -1105,7 +994,8 @@ namespace TootTally.Graphics
             return slider;
         }
 
-        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Color color, TextFont textFont = TextFont.Comfortaa)
+        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Color color, TextFont textFont = TextFont.Comfortaa) => CreateSingleText(canvasTransform, name, text, new Vector2(0,1), canvasTransform.GetComponent<RectTransform>().sizeDelta, color, textFont);
+        public static TMP_Text CreateSingleText(Transform canvasTransform, string name, string text, Vector2 pivot, Vector2 size, Color color, TextFont textFont = TextFont.Comfortaa)
         {
             TMP_Text singleText;
             switch (textFont)
@@ -1121,7 +1011,8 @@ namespace TootTally.Graphics
 
             singleText.text = text;
             singleText.color = color;
-            singleText.gameObject.GetComponent<RectTransform>().sizeDelta = canvasTransform.GetComponent<RectTransform>().sizeDelta;
+            singleText.gameObject.GetComponent<RectTransform>().pivot = pivot;
+            singleText.gameObject.GetComponent<RectTransform>().sizeDelta = size;
             singleText.enableWordWrapping = true;
 
             singleText.gameObject.SetActive(true);

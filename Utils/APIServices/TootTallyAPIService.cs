@@ -18,6 +18,7 @@ namespace TootTally.Utils
     {
         public const string APIURL = "https://toottally.com";
         public const string SPECURL = "https://spec.toottally.com";
+        public const string MULTURL = "https://spec.toottally.com/mp";
         //public const string APIURL = "http://localhost"; //localTesting
         public const string REPLAYURL = "http://cdn.toottally.com/replays/";
         public const string PFPURL = "https://cdn.toottally.com/profile/";
@@ -119,17 +120,10 @@ namespace TootTally.Utils
             {
                 user = JsonConvert.DeserializeObject<User>(webRequest.downloadHandler.text);
                 TootTallyLogger.LogInfo($"Welcome, {user.username}!");
+                callback(user);
             }
             else
-            {
-                user = new User()
-                {
-                    username = "Guest",
-                    id = 0,
-                };
-                TootTallyLogger.LogInfo($"Logged in with Guest Account");
-            }
-            callback(user);
+                callback(null);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetLoginToken(string username, string password, Action<LoginToken> callback)
@@ -169,7 +163,8 @@ namespace TootTally.Utils
                 TootTallyLogger.LogInfo($"Account {username} created!");
                 callback(true);
             }
-            callback(false);
+            else
+                callback(false);
         }
 
         public static IEnumerator<UnityWebRequestAsyncOperation> GetReplayUUID(string songHash, Action<string> callback)
@@ -545,7 +540,7 @@ namespace TootTally.Utils
             string filters = isRated ? "&rated=1" : "";
             filters += !isRated && isUnrated ? "&rated=0" : "";
             filters += "&page_size=100";
-            string query = $"{APIURL}/api/search/?song_name={songName}{filters}";
+            string query = $"{APIURL}/api/chartsearch/?song_name={songName}{filters}";
 
             UnityWebRequest webRequest = UnityWebRequest.Get(query);
 
@@ -618,6 +613,22 @@ namespace TootTally.Utils
                 var userList = JsonConvert.DeserializeObject<APIUsers>(webRequest.downloadHandler.text).results;
                 callback(userList);
             }
+            else
+                callback(null);
+        }
+
+        public static IEnumerator<UnityWebRequestAsyncOperation> CreateMultiplayerServerRequest(string name, string description, string password, int maxPlayer, Action<string> callback)
+        {
+            string query = $"{MULTURL}/create";
+
+            APISubmission APIKey = new APISubmission() { apiKey = Plugin.Instance.APIKey.Value };
+            var data = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(APIKey));
+            UnityWebRequest webRequest = PostUploadRequestWithHeader(query, data, new List<string[]> { new string[] { "Authorization", "APIKey " + Plugin.Instance.APIKey.Value } });
+
+            yield return webRequest.SendWebRequest();
+
+            if (!HasError(webRequest, query))
+                callback(webRequest.downloadHandler.text);
             else
                 callback(null);
         }

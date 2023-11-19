@@ -60,7 +60,7 @@ namespace TootTally.Graphics
                 },
                 replayButton = new ReplayButtonColors()
                 {
-                    text = new Color(0, 0, 0),
+                    text = new Color(1, 1, 1),
                     colors = new ColorBlock()
                     {
                         normalColor = new Color(0.95f, 0.22f, 0.35f),
