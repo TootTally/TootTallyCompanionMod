@@ -121,10 +121,31 @@ namespace TootTally.CustomLeaderboard
             if (globalLeaderboard == null) return;
             __instance.btnturbo.SetActive(false);
             __instance.btnpractice.SetActive(false);
+
         }
         #endregion
 
         #region update
+
+        [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.doneRandomizing))]
+        [HarmonyPostfix]
+        private static void OnDoneRandomizingUpdateLeaderboard(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
+        {
+            //randomizing is gonna be true if coming from instant random mod, which doesn't require a leaderboard update
+            if (!__instance.randomizing) return;
+
+            if (_hasLeaderboardFinishedLoading)
+            {
+                _hasLeaderboardFinishedLoading = false;
+                globalLeaderboard?.ShowLoadingSwirly();
+                globalLeaderboard?.HideSlider();
+                globalLeaderboard?.HideErrorText();
+                globalLeaderboard?.ClearLeaderboard();
+            }
+
+            globalLeaderboard?.UpdateLeaderboard(__instance, ___alltrackslist, OnUpdateLeaderboardCallback);
+        }
+
         [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
         [HarmonyPostfix]
         static void UpdateLeaderboardOnAdvanceSongsPostfix(List<SingleTrackData> ___alltrackslist, LevelSelectController __instance)
